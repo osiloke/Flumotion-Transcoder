@@ -362,7 +362,6 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         self.bus.connect("message", self._busMessageCb)
         
         ret = self.pipeline.set_state(gst.STATE_PLAYING)
-        print "THOMAS: ret", ret
         if ret == gst.STATE_CHANGE_FAILURE:
             filename = self.processing
             self._shutDownPipeline()
@@ -390,7 +389,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 self.log('Finished transcoding file to %s' % outfile)
             self.emit('done', filename)
         else:
-            print "THOMAS: msg", message
+            self.log('Unhandled message %r' % message)
 
     def _shutDownPipeline(self):
         if self.bus:
