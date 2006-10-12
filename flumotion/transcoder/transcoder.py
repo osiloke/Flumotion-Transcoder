@@ -317,7 +317,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 self.tempqueue[fullname] = os.path.getsize(fullname)
                 
         if newcomplete:
-            self.log(str(newcomplete))
+            self.log("newcomplete: %r" % newcomplete)
             self.queue.extend(newcomplete)
             self.emit('newfile', newfiles[0])
 
@@ -385,7 +385,11 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 # move files from temporary directories to outgoing directory
                 workfile = os.path.join(self.workdirectory, config.getOutputFilename(filename))
                 outfile = os.path.join(self.outputdirectory, config.getOutputFilename(filename))
-                shutil.move(workfile, outfile)
+                try:
+                    shutil.move(workfile, outfile)
+                except IOError, e:
+                    self.warning('Could not save transcoded file: %s' % (
+                        log.getExceptionMessage(e)))
                 self.log('Finished transcoding file to %s' % outfile)
             self.emit('done', filename)
         else:
@@ -509,6 +513,7 @@ class Transcoder(log.Loggable):
     """
     Transcoder
     """
+    logCategory = 'transcoder'
 
     def __init__(self):
         self.tasks = []
@@ -556,9 +561,10 @@ class Transcoder(log.Loggable):
         self._nextTask()
 
     def _taskNewFileCb(self, task, filename):
+        self.info("New incoming file '%s' in profile '%s'" % (
+            filename, task.name))
         self.log("NEWFILE in task %s with filename %s" % (task.name, filename))
         self._nextTask()
-
 
 def configure_transcoder(transcoder, configurationfile):
     """ Configure the transcoder with the given configuration file """
