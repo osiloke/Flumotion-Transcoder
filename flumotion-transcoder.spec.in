@@ -79,11 +79,16 @@ fi
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
 %{_sbindir}/flumotion-transcoder
+
+%{_libdir}/flumotion
+%{_libdir}/python?.?/site-packages/transcoder
+
 %attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder
 %attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion-transcoder.ini
 %attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder
 %dir %attr(750,flumotion,root) %{_localstatedir}/flumotion/transcoder
 %dir %attr(750,flumotion,root) /srv/flumotion/transcoder
+
 %changelog
 * Thu Oct 05 2006 Thomas Vander Stichele <thomas at apestaart dot org>
 - first spec file

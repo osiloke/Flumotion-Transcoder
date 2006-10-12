@@ -96,5 +96,8 @@ bin/Makefile
 common/Makefile
 conf/Makefile
 misc/Makefile
+transcoder/Makefile
+flumotion/Makefile
+flumotion/transcoder/Makefile
 flumotion-transcoder.spec
 )
