@@ -1,1 +1,1 @@
-EXTRA_DIST = flutterd.ini
+EXTRA_DIST = flumotion-transcoder.ini
