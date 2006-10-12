@@ -1,5 +1,14 @@
 2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* Makefile.am:
+	* configure.ac:
+	* doc/redhat/flutterd.init:
+	* doc/redhat/flutterd.sysconfig:
+	* flutter.spec.in:
+	  rename to flumotion-transcoder
+
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* bin/Makefile.am:
 	* bin/flumotion-transcoder.in:
 	* configure.ac:

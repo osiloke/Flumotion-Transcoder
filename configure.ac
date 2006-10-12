@@ -96,5 +96,5 @@ bin/Makefile
 common/Makefile
 conf/Makefile
 misc/Makefile
-flutter.spec
+flumotion-transcoder.spec
 )

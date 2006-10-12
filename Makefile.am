@@ -6,6 +6,6 @@ SUBDIRS = common conf misc bin
 
 EXTRA_DIST = \
 	LICENSE.Flumotion \
-	flutter.spec \
-	doc/redhat/flutterd.init \
-	doc/redhat/flutterd.sysconfig
+	flumotion-transcoder.spec \
+	doc/redhat/motion-transcoder.init \
+	doc/redhat/motion-transcoder.sysconfig
