@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Startup script for the Flutter daemon
+# Startup script for Flumotion Transcoder
 #
-# flutterd: Flumotion Transcoder daemon
+# flumotion-transcoder: Flumotion Transcoder daemon
 #
 # chkconfig: - 75 25
 #
@@ -13,7 +13,7 @@
 . /etc/rc.d/init.d/functions
 
 # paths to files and variables
-service=flutterd
+service=flumotion-transcoder
 shortservice=cluster-admin
 prog=/usr/sbin/$service
 lockdir=/var/lock/subsys
@@ -41,7 +41,7 @@ start() {
 	echo -n $"Starting $service: "
         # OPTIONS can be set from the config file as well
 
-	daemon --user flumotion $prog /etc/flutterd.ini /var/log/flutterd.log
+	daemon --user flumotion $prog /etc/flumotion-transcoder.ini /var/log/flumotion/transcoder.log
 	RETVAL=$?
 	echo
 	[ $RETVAL = 0 ] && touch ${lockfile}
