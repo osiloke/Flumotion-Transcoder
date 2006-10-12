@@ -8,6 +8,8 @@ transcoder_PYTHON =	\
 
 BUILT_SOURCES = setup.py
 
+CLEANFILES = $(BUILT_SOURCES)
+
 clean-local:
 	rm -rf *.pyc *.pyo
 
