@@ -3,7 +3,7 @@
 Name:           @PACKAGE@
 Version:        @VERSION@
 Release:        @RELEASE@
-Summary:        Flumotion Transcoding
+Summary:        Flumotion Transcoder
 
 Group:          Applications/Internet
 License:	Proprietary
@@ -40,53 +40,50 @@ rm -rf $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT install
 
 # create config dir
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/flutter
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/flumotion-transcoder
 
 # install service files
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 install -m 755 \
-        doc/redhat/flutterd.init \
-        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flutterd
+        doc/redhat/flumotion-transcoder.init \
+        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 \
-        doc/redhat/flutterd.sysconfig \
-        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flutterd
+        doc/redhat/flumotion-transcoder.sysconfig \
+        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}
 install -m 644 \
-        conf/flutterd.ini \
+        conf/flumotion-transcoder.ini \
         $RPM_BUILD_ROOT%{_sysconfdir}
 
 # create srv and tmp dir
-install -d $RPM_BUILD_ROOT/srv/flutter
-
-install -d $RPM_BUILD_ROOT%{_localstatedir}/flutter
-
+install -d $RPM_BUILD_ROOT/srv/flumotion/transcoder
+install -d $RPM_BUILD_ROOT%{_localstatedir}/flumotion/transcoder
 %post
-/sbin/chkconfig --add flutterd
+/sbin/chkconfig --add flumotion-transcoder
 
 %preun
 # if removal and not upgrade, stop the processes, clean up locks
 if [ $1 -eq 0 ]
 then
-  /sbin/service flutterd stop
+  /sbin/service flumotion-transcoder stop
 
-  /sbin/chkconfig --del flutterd
+  /sbin/chkconfig --del flumotion-transcoder
 
-  rm -rf %{_localstatedir}/flutter/*
+  rm -rf %{_localstatedir}/flumotion/transcoder*
 fi
 
 %files
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
-%{_sbindir}/flutterd
-%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flutterd
-%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flutterd.ini
-%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flutterd
-%dir %attr(750,flumotion,root) %{_localstatedir}/flutter
-%dir %attr(750,flumotion,root) /srv/flutter
-
+%{_sbindir}/flumotion-transcoder
+%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion-transcoder.ini
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder
+%dir %attr(750,flumotion,root) %{_localstatedir}/flumotion/transcoder
+%dir %attr(750,flumotion,root) /srv/flumotion/transcoder
 %changelog
 * Thu Oct 05 2006 Thomas Vander Stichele <thomas at apestaart dot org>
 - first spec file
