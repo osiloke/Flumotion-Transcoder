@@ -16,6 +16,9 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 dnl Add parameters for aclocal
 AC_SUBST(ACLOCAL_AMFLAGS, "-I m4 -I common")
 
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_MSG_NOTICE(Storing library files in $LIBDIR)
+
 dnl check for python
 AS_PATH_PYTHON(2.3)
 
@@ -86,6 +89,7 @@ dnl output stuff
 PREAMBLE=`cat $srcdir/misc/preamble.py`
 FLUMOTION_SETUP(transcoder/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 
+AC_CONFIG_FILES([bin/flumotion-transcoder], [chmod +x bin/flumotion-transcoder])
 AC_OUTPUT(
 Makefile
 bin/Makefile

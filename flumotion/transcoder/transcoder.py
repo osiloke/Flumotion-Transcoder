@@ -1,36 +1,27 @@
-#!/usr/bin/env python
 # -*- Mode: Python -*-
 # vi:si:et:sw=4:sts=4:ts=4
 #
 # Flumotion - a streaming media server
 # Copyright (C) 2004,2005,2006 Fluendo, S.L. (www.fluendo.com).
 # All rights reserved.
-# flutter - Flumotion Transcoding
+# Flumotion Transcoder
 
 # Licensees having purchased or holding a valid Flumotion Advanced
 # Streaming Server license may use this file in accordance with the
 # Flumotion Advanced Streaming Server Commercial License Agreement.
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
-# Headers in this file shall remain intact.
-
 import os
 import shutil
 import sys
-import gobject
-gobject.threads_init()
-import pygst
-pygst.require('0.10')
-import gst
 import ConfigParser
 import string
 import time
-import optparse
+
+import gobject
+import gst
 
 from gst.extend.discoverer import Discoverer
-
-from flumotion.common import setup
-setup.setup()
 
 from flumotion.common import log, common
 
@@ -618,37 +609,3 @@ def configure_transcoder(transcoder, configurationfile):
         transcoder.addTask(tasks[task])
 
     # from the parsed data, create TranscoderTask and pass it to the Transcoder
-
-def _createParser():
-    parser = optparse.OptionParser()
-    parser.add_option('-l', '--log',
-        action="store", type="string", dest="debug",
-        help="where to log to when daemonizing")
-    parser.add_option('-D', '--daemonize',
-        action="store_true", dest="daemonize",
-        help="run in background as a daemon")
-
-    return parser
-
-
-if __name__ == "__main__":
-    parser = _createParser()
-    options, args = parser.parse_args(sys.argv[1:])
-
-    if len(args) < 1:
-        print "Usage:\n\t%s <configuration file>" % sys.argv[0]
-        sys.exit()
-    if options.daemonize:
-        logPath = os.path.join(os.getcwd(), "flutterd.log")
-        if options.log:
-            logPath = options.log
-        log.info('flutter', 'Starting flutter')
-        log.info('flutter', 'Daemonizing')
-        common.daemonize(stdout=logPath, stderr=logPath)
-        log.info('flutter', 'Daemonized')
-
-    trans = Transcoder()
-    configure_transcoder(trans, args[0])
-    mainloop = gobject.MainLoop()
-    gobject.idle_add(trans.run)
-    mainloop.run()

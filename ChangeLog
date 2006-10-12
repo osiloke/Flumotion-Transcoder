@@ -1,5 +1,16 @@
 2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* bin/Makefile.am:
+	* bin/flumotion-transcoder.in:
+	* configure.ac:
+	* flumotion/__init__.py:
+	* flumotion/transcoder/__init__.py:
+	* flumotion/transcoder/main.py:
+	* flumotion/transcoder/transcoder.py:
+	  split out file in modules and a simple script that boots into them
+
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* configure.ac:
 	  check for Flumotion
 	* bin/flutterd:
