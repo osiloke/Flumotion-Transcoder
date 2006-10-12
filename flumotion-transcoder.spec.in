@@ -19,7 +19,6 @@ BuildRequires:  gcc-c++
 BuildRequires:	%{gstreamer}-devel >= @GST_010_REQ@
 BuildRequires:	%{gstreamer}-python
 BuildRequires:	pygtk2-devel
-BuildArch:      noarch
 
 %description
 Flumotion Transcoder.
