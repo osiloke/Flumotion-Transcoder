@@ -13,6 +13,7 @@
 
 # Headers in this file shall remain intact.
 
+import os
 import sys
 import optparse
 
