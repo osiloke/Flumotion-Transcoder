@@ -83,6 +83,9 @@ AC_CHECK_PROG(PYCHECKER, pychecker, yes, no)
 AM_CONDITIONAL(HAVE_PYCHECKER, test "x$PYCHECKER" = "xyes")
 
 dnl output stuff
+PREAMBLE=`cat $srcdir/misc/preamble.py`
+FLUMOTION_SETUP(transcoder/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
+
 AC_OUTPUT(
 Makefile
 bin/Makefile

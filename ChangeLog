@@ -8,6 +8,12 @@
 
 2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* configure.ac:
+	* misc/preamble.py:
+	  turn into a flumotion project
+
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* bin/flutterd:
 	  make documentation and comments respect 80 character width
 	  add/fix up logging so the log says something useful
