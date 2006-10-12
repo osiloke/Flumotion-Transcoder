@@ -24,7 +24,7 @@ from flumotion.transcoder import transcoder
 def _createParser():
     parser = optparse.OptionParser()
     parser.add_option('-l', '--log',
-        action="store", type="string", dest="debug",
+        action="store", type="string", dest="log",
         help="where to log to when daemonizing")
     parser.add_option('-D', '--daemonize',
         action="store_true", dest="daemonize",
