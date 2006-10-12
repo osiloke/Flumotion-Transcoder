@@ -1,0 +1,92 @@
+%{!?gstreamer:  %define         gstreamer       gstreamer}
+
+Name:           @PACKAGE@
+Version:        @VERSION@
+Release:        @RELEASE@
+Summary:        Flumotion Transcoding
+
+Group:          Applications/Internet
+License:	Proprietary
+URL:            http://www.fluendo.com/
+Source:         %{name}-%{version}.tar.bz2
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+
+Requires:	%{gstreamer}
+
+# sigh, libtool
+BuildRequires:  gcc-c++
+
+BuildRequires:	%{gstreamer}-devel >= @GST_010_REQ@
+BuildRequires:	%{gstreamer}-python
+BuildRequires:	pygtk2-devel
+BuildArch:      noarch
+
+%description
+Flumotion Transcoder.
+
+%prep
+%setup -q
+
+%build
+%configure
+
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+# use DESTDIR so compiled python files get tagged correctly with their
+# final location
+make DESTDIR=$RPM_BUILD_ROOT install
+
+# create config dir
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/flutter
+
+# install service files
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
+install -m 755 \
+        doc/redhat/flutterd.init \
+        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flutterd
+
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+install -m 644 \
+        doc/redhat/flutterd.sysconfig \
+        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flutterd
+
+install -d $RPM_BUILD_ROOT%{_sysconfdir}
+install -m 644 \
+        conf/flutterd.ini \
+        $RPM_BUILD_ROOT%{_sysconfdir}
+
+# create srv and tmp dir
+install -d $RPM_BUILD_ROOT/srv/flutter
+
+install -d $RPM_BUILD_ROOT%{_localstatedir}/flutter
+
+%post
+/sbin/chkconfig --add flutterd
+
+%preun
+# if removal and not upgrade, stop the processes, clean up locks
+if [ $1 -eq 0 ]
+then
+  /sbin/service flutterd stop
+
+  /sbin/chkconfig --del flutterd
+
+  rm -rf %{_localstatedir}/flutter/*
+fi
+
+%files
+%defattr(-,root,root,-)
+%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
+%{_sbindir}/flutterd
+%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flutterd
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flutterd.ini
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flutterd
+%dir %attr(750,flumotion,root) %{_localstatedir}/flutter
+%dir %attr(750,flumotion,root) /srv/flutter
+
+%changelog
+* Thu Oct 05 2006 Thomas Vander Stichele <thomas at apestaart dot org>
+- first spec file

@@ -1,0 +1,62 @@
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* configure.ac:
+	  check for Flumotion
+	* bin/flutterd:
+	  use flumotion logging
+	  add daemonize and options parsing
+
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* bin/flutterd:
+	  make documentation and comments respect 80 character width
+	  add/fix up logging so the log says something useful
+
+2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* bin/flutterd:
+	  remove print's that should not be there
+	* configure.ac:
+	  remove check for python headers
+	* flutter.spec.in:
+	  add buildrequires
+
+2006-10-06  Edward Hervey  <edward@fluendo.com>
+
+	* bin/flutterd:
+	Implemented code to create proper video caps depending on:
+	_input width, height and pixel-aspect-ratio
+	_configured width and/or height and/or pixel-aspect-ratio
+	_configured framerate
+
+2006-10-05  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* conf/flutterd.ini:
+	* flutter.spec.in:
+	* test.ini:
+	  update spec file and config
+
+2006-10-05  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* doc/redhat/flutterd.init:
+	* doc/redhat/flutterd.sysconfig:
+	* flutter.spec.in:
+	* misc/Makefile.am:
+	* misc/preamble.py:
+	  more autotools goodness
+
+2006-10-05  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* LICENSE.Flumotion:
+	* Makefile.am:
+	* autogen.sh:
+	* bin/Makefile.am:
+	* configure.ac:
+	* flutterd:
+	  adding autotools spread
+
+2006-10-05  Edward Hervey  <edward@fluendo.com>
+
+	* flutrans.py:
+	* test.ini:
+	Initial revision of the Fluendo Transcoding Daemon
