@@ -19,10 +19,14 @@ import optparse
 
 import gobject
 
+from flumotion.common import common, log
 from flumotion.transcoder import transcoder
 
 def _createParser():
     parser = optparse.OptionParser()
+    parser.add_option('-d', '--debug',
+        action="store", type="string", dest="debug",
+        help="set debug levels")
     parser.add_option('-l', '--log',
         action="store", type="string", dest="log",
         help="where to log to when daemonizing")
@@ -36,17 +40,20 @@ def main(argv):
     parser = _createParser()
     options, args = parser.parse_args(argv[1:])
 
+    if options.debug:
+        log.setFluDebug(options.debug)
+
     if len(args) < 1:
         print "Usage:\n\t%s <configuration file>" % argv[0]
         sys.exit()
     if options.daemonize:
-        logPath = os.path.join(os.getcwd(), "flutterd.log")
+        logPath = os.path.join(os.getcwd(), "transcoder.log")
         if options.log:
             logPath = options.log
-        log.info('flutter', 'Starting flutter')
-        log.info('flutter', 'Daemonizing')
+        log.debug('transcoder', 'Daemonizing')
         common.daemonize(stdout=logPath, stderr=logPath)
-        log.info('flutter', 'Daemonized')
+        log.debug('transcoder', 'Daemonized')
+        log.info('transcoder', 'Started')
 
     trans = transcoder.Transcoder()
     transcoder.configure_transcoder(trans, args[0])
