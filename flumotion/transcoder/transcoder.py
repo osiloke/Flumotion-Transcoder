@@ -469,7 +469,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
             linkPath = os.path.join(self.linkdirectory, outRelPath) + '.link'
             handle = open(linkPath, 'w')
-            handle.write('<iframe src="%s" width="%d" height="%d" frameborder="0" scrolling="no" />\n' % (link, args['width'], args['height']))
+            handle.write('<iframe src="%s" width="%s" height="%s" frameborder="0" scrolling="no" />\n' % (link, args['width'], args['height']))
             handle.close()
             self.info("Written link file %s" % linkPath)
 
