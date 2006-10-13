@@ -25,8 +25,18 @@ from gst.extend.discoverer import Discoverer
 
 from flumotion.common import log, common
 
-# Transcoder
+# FIXME: this would not work well if we want to save to a separate dir per
+# encoding profile
+def getOutputFilename(self, filename):
+    """
+    Returns the output filename for the given filename.
+    The returned filename is the basename, it does not contain the full
+    path.
+    """
+    prefix = os.path.basename(filename).rsplit('.', 1)[0]
+    return string.join([prefix, self.extension], '.')
 
+# Transcoder
 class TranscoderTaskConfiguration(log.Loggable):
     """
     Configuration for a TranscoderTask.
@@ -88,15 +98,6 @@ class TranscoderTaskConfiguration(log.Loggable):
             raise TypeError, "videoframerate should be a gst.Fraction"
         if self.audiorate:
             self.audiorate = int(self.audiorate)
-
-    def getOutputFilename(self, filename):
-        """
-        Returns the output filename for the given filename.
-        The returned filename is the basename, it does not contain the full
-        path.
-        """
-        prefix = os.path.basename(filename).rsplit('.', 1)[0]
-        return string.join([prefix, self.extension], '.')
 
     def getOutputVideoCaps(self, discoverer):
         """
@@ -279,7 +280,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         for infile in infiles:
             done = True
             for config in self.configs.itervalues():
-                if not config.getOutputFilename(infile) in outputfiles:
+                if not getOutputFilename(infile) in outputfiles:
                     done = False
                     break
             fullname = os.path.join(self.inputdirectory, infile)
@@ -398,11 +399,11 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         outputfiles = []
 
         for config in self.configs.itervalues():
-            outputfiles.append(config.getOutputFilename(inputfile))
+            outputfiles.append(getOutputFilename(inputfile))
 
         def _discoveredOutputFile(inputfile, config):
             self._moveOutputFile(inputfile, config)
-            outRelPath = config.getOutputFilename(inputfile)
+            outRelPath = getOutputFilename(inputfile)
             outputfiles.remove(outRelPath)
             if not outputfiles:
                 self.debug('All output files discovered, emitting done')
@@ -459,7 +460,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             if discoverer.videocaps:
                 args['video'] = '1'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
-            outRelPath = config.getOutputFilename(inputfile)
+            outRelPath = getOutputFilename(inputfile)
             link = self.urlprefix + outRelPath + "?" + argString
             # make sure we have width and height for audio too
             if not args.has_key('width'):
@@ -477,7 +478,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             gobject.timeout_add(0, callback, inputfile, config)
             return
 
-        outRelPath = config.getOutputFilename(inputfile)
+        outRelPath = getOutputFilename(inputfile)
         workfile = os.path.join(self.workdirectory, outRelPath)
         self.debug("Analyzing transcoded file '%s'" % workfile)
         discoverer = Discoverer(workfile)
@@ -562,7 +563,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
         # filesink
         filesink = gst.element_factory_make("filesink")
-        filesink.props.location = os.path.join(self.workdirectory, config.getOutputFilename(filename))
+        filesink.props.location = os.path.join(self.workdirectory, getOutputFilename(filename))
         # muxer
         muxer = gst.parse_launch(config.muxer)
 
@@ -601,7 +602,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         gst.element_link_many(vqueue, cspace, videorate, videoscale)
 
         # FIXME : Implement proper filtered caps !!!
-        caps = config.getOutputVideoCaps(discoverer)
+        caps = getOutputVideoCaps(discoverer)
         if caps:
             gst.log("%s" % caps.to_string())
             videoscale.link(venc, caps)
