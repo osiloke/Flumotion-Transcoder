@@ -1,3 +1,12 @@
+2006-10-13  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* conf/flumotion-transcoder.ini:
+	* flumotion/transcoder/main.py:
+	* flumotion/transcoder/transcoder.py:
+	  add discovery of transcoded files
+	  add generation of .link files for .ogg files that can be served
+	  by cortado
+
 2006-10-12  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* Makefile.am:

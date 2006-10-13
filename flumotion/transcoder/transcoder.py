@@ -200,13 +200,15 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         }
 
     def __init__(self, name, inputdirectory, outputdirectory,
-                 workdirectory=None,
+                 workdirectory=None, linkdirectory=None, urlprefix=None,
                  timeout=3):
         gobject.GObject.__init__(self)
         self.name = name
         self.inputdirectory = inputdirectory
         self.outputdirectory = outputdirectory
         self.workdirectory = workdirectory
+        self.linkdirectory = linkdirectory
+        self.urlprefix = urlprefix
         self.timeout = timeout
 
         # list of transcoding configurations
@@ -231,14 +233,12 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
     def _validateArguments(self):
         """ Makes sure given arguments are valid """
-        if not os.path.isdir(self.inputdirectory):
-            raise IOError, "Given input directory does not exist : %s" % self.inputdirectory
-        if not os.path.isdir(self.outputdirectory):
-            raise IOError, "Given output directory does not exist : %s" % self.outputdirectory
         if not self.workdirectory:
             self.workdirectory = os.path.join(self.outputdirectory, "temp")
-        if not os.path.exists(self.workdirectory):
-            os.makedirs(self.workdirectory)
+        for p in [self.inputdirectory, self.outputdirectory,
+                  self.linkdirectory, self.workdirectory]:
+            if p and not os.path.isdir(p):
+                os.makedirs(p)
 
     def addConfiguration(self, name, audioencoder, videoencoder, muxer, extension,
                          videowidth=None, videoheight=None, videopar=None,
@@ -381,19 +381,115 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         elif message.type == gst.MESSAGE_EOS:
             filename = self.processing
             self._shutDownPipeline()
-            for config in self.configs.itervalues():
-                # move files from temporary directories to outgoing directory
-                workfile = os.path.join(self.workdirectory, config.getOutputFilename(filename))
-                outfile = os.path.join(self.outputdirectory, config.getOutputFilename(filename))
-                try:
-                    shutil.move(workfile, outfile)
-                except IOError, e:
-                    self.warning('Could not save transcoded file: %s' % (
-                        log.getExceptionMessage(e)))
-                self.log('Finished transcoding file to %s' % outfile)
-            self.emit('done', filename)
+            self._handleOutputFiles(filename)
         else:
             self.log('Unhandled message %r' % message)
+
+    def _handleOutputFiles(self, inputfile):
+        """
+        Handle the output files created by the task.
+        Emits 'done' when all output files are handled.
+
+        @param inputfile: name of the input file
+        """
+        # "global" list that we can use to see when we can emit 'done'
+        outputfiles = []
+
+        for config in self.configs.itervalues():
+            outputfiles.append(config.getOutputFilename(inputfile))
+
+        def _discoveredOutputFile(inputfile, config):
+            self._moveOutputFile(inputfile, config)
+            outRelPath = config.getOutputFilename(inputfile)
+            outputfiles.remove(outRelPath)
+            print "THOMAS: outputfiles", outputfiles
+            if not outputfiles:
+                self.debug('All output files discovered, emitting done')
+                self.emit('done', inputfile)
+
+        for config in self.configs.itervalues():
+            self._discoverOutputFile(inputfile, config,
+                _discoveredOutputFile)
+
+    def _discoverOutputFile(self, inputfile, config, callback):
+        """
+        Possibly discover the output file if the config contains a
+        linkdirectory that we should write cortado links to.
+        Calls the callback when done discovering.
+
+        @param callback: callable that will be called with inputfile and config.
+        """
+        if not self.linkdirectory:
+            # call back immediately
+            gobject.timeout_add(0, callback, inputfile, config)
+            return
+
+        # discover the media
+        def _discoveredCb(discoverer, ismedia):
+            if not ismedia:
+                self.warning("Discoverer thinks output file '%s' is not a media file" % outputfile)
+                gobject.timeout_add(0, callback, inputfile, config)
+                return
+            self.debug("Work file '%s' has mime type %s" % (
+                workfile, discoverer.mimetype))
+            if discoverer.mimetype != 'application/ogg':
+                self.debug("File '%s' not an ogg file, not writing link" %
+                    workfile)
+                gobject.timeout_add(0, callback, inputfile, config)
+                return
+            # ogg file, write link
+            args = {'cortado': '1'}
+            if discoverer.videowidth:
+                args['width'] = str(discoverer.videowidth)
+            if discoverer.videoheight:
+                args['height'] = str(discoverer.videoheight)
+            if discoverer.videorate:
+                f = discoverer.videorate
+                args['framerate'] = str(float(f.num) / f.denom)
+            if discoverer.videolength:
+                args['duration'] = str(float(discoverer.videolength / gst.SECOND))
+            args['audio'] = '0'
+            args['video'] = '0'
+            if discoverer.audiocaps:
+                args['audio'] = '1'
+            if discoverer.videocaps:
+                args['video'] = '1'
+            argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
+            outRelPath = config.getOutputFilename(inputfile)
+            link = self.urlprefix + outRelPath + "?" + argString
+            linkPath = os.path.join(self.linkdirectory, outRelPath) + '.link'
+            handle = open(linkPath, 'w')
+            handle.write("%s\n" % link)
+            handle.close()
+            self.info("Written link file %s" % linkPath)
+
+            # done
+            gobject.timeout_add(0, callback, inputfile, config)
+            return
+
+        outRelPath = config.getOutputFilename(inputfile)
+        workfile = os.path.join(self.workdirectory, outRelPath)
+        self.debug("Analyzing transcoded file '%s'" % workfile)
+        discoverer = Discoverer(workfile)
+        print "THOMAS: finished ?", discoverer.finished
+
+        discoverer.connect('discovered', _discoveredCb)
+        discoverer.discover()
+        return True
+
+    def _moveOutputFile(self, inputfile, config):
+        """
+        move the output file from the work directory to the output directory.
+        """
+        outRelPath = config.getOutputFilename(inputfile)
+        workfile = os.path.join(self.workdirectory, outRelPath)
+        outfile = os.path.join(self.outputdirectory, outRelPath)
+        try:
+            shutil.move(workfile, outfile)
+        except IOError, e:
+            self.warning('Could not save transcoded file: %s' % (
+                log.getExceptionMessage(e)))
+        self.log('Finished transcoding file to %s' % outfile)
 
     def _shutDownPipeline(self):
         if self.bus:
@@ -607,7 +703,9 @@ def configure_transcoder(transcoder, configurationfile):
                                   contents['inputdirectory'],
                                   contents['outputdirectory'],
                                   contents.get('workdirectory', None),
-                                  int(contents.get('timeout', 30)))
+                                  linkdirectory=contents.get('linkdirectory', None),
+                                  urlprefix=contents.get('urlprefix', None),
+                                  timeout=int(contents.get('timeout', 30)))
             tasks[section] = task
 
     for task in tasks.keys():

@@ -53,7 +53,8 @@ def main(argv):
         log.debug('transcoder', 'Daemonizing')
         common.daemonize(stdout=logPath, stderr=logPath)
         log.debug('transcoder', 'Daemonized')
-        log.info('transcoder', 'Started')
+
+    log.info('transcoder', 'Started')
 
     trans = transcoder.Transcoder()
     transcoder.configure_transcoder(trans, args[0])
