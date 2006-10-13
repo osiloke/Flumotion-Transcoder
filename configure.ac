@@ -88,6 +88,7 @@ AM_CONDITIONAL(HAVE_PYCHECKER, test "x$PYCHECKER" = "xyes")
 dnl output stuff
 PREAMBLE=`cat $srcdir/misc/preamble.py`
 FLUMOTION_SETUP(transcoder/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
+FLUMOTION_SETUP(tests/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 
 AC_CONFIG_FILES([bin/flumotion-transcoder], [chmod +x bin/flumotion-transcoder])
 AC_OUTPUT(

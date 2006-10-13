@@ -3,3 +3,31 @@ HACKING NOTES
 - problem: gst.Discoverer discovers the "real" video size of theora files
   (ie with cropping applied), but cortado ignores cropping, so using
   the real size makes the iframe too small
+
+
+- objects:
+  - profile:
+    - contains the configuration for one encoding profile
+    - should not have any specifics about files
+
+  - transcoder:
+    - takes one input file and a config of one or more encoding profiles
+    - allows you to write a simple script that transcodes a file immediately,
+      not with delays
+    - written in such a way that it can be moved to GStreamer
+      (GObject, ...)
+    - interface:
+      - __init__(inputFile)
+      - addOutput(outputFile, profile)
+      - start()
+      - signals for reporting
+
+  - directory watcher:
+    - responsible for receiving incoming files, putting them on a queue, and
+      creating transcoder objects per file
+    - can possibly fork off the transcoder job
+    - can possibly look at cpu usage of transcoder job and have an inactivity
+      timeout so it can give up on a file
+    - at the end of transcoding, it moves the output files to their final
+      destination, and can generate cortado links
+    - glue between main transcode program and the transcoder object 
