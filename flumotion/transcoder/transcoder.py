@@ -348,14 +348,15 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
     def _discoveredCb(self, discoverer, ismedia):
         if not ismedia:
-            self.log("%s is not a media file, ignoring" % self.processing)
+            self.info("Incoming file '%s' is not a media file, ignoring" %
+                self.processing)
             self.log("not media")
             filename = self.processing
             self._shutDownPipeline()
             self.emit('error', filename)
             return
         
-        self.log("%s is a media file, transcoding" % self.processing)
+        self.info("'%s' is a media file, transcoding" % self.processing)
         self.pipeline = self._makePipeline(self.processing, discoverer)
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
@@ -374,8 +375,9 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         if message.type == gst.MESSAGE_ERROR:
             filename = self.processing
             gstgerror, debug = message.parse_error()
-            self.log("ERROR: %s" % gstgerror.message)
-            self.log("additional debug info: %s" % debug)
+            self.warning("GStreamer error while processing '%s': %s" % (
+                filename, gstgerror.message))
+            self.debug("additional debug info: %s" % debug)
             self._shutDownPipeline()
             self.emit('error', filename)
         elif message.type == gst.MESSAGE_EOS:
@@ -402,7 +404,6 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self._moveOutputFile(inputfile, config)
             outRelPath = config.getOutputFilename(inputfile)
             outputfiles.remove(outRelPath)
-            print "THOMAS: outputfiles", outputfiles
             if not outputfiles:
                 self.debug('All output files discovered, emitting done')
                 self.emit('done', inputfile)
@@ -471,7 +472,6 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         workfile = os.path.join(self.workdirectory, outRelPath)
         self.debug("Analyzing transcoded file '%s'" % workfile)
         discoverer = Discoverer(workfile)
-        print "THOMAS: finished ?", discoverer.finished
 
         discoverer.connect('discovered', _discoveredCb)
         discoverer.discover()
