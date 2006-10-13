@@ -1,0 +1,5 @@
+HACKING NOTES
+-------------
+- problem: gst.Discoverer discovers the "real" video size of theora files
+  (ie with cropping applied), but cortado ignores cropping, so using
+  the real size makes the iframe too small
