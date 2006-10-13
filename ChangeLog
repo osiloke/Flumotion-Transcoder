@@ -1,5 +1,13 @@
 2006-10-13  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* flumotion-transcoder.spec.in:
+	  add dep
+	* flumotion/transcoder/transcoder.py:
+	  write out a full iframe line
+	  round up width and height of applet to multiple of 16
+
+2006-10-13  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* flumotion/transcoder/transcoder.py:
 	  remove prints, clean up logging a little
 

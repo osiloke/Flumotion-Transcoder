@@ -440,10 +440,13 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 return
             # ogg file, write link
             args = {'cortado': '1'}
+            # cortado doesn't handle Theora cropping, so we need to round
+            # up width and height for display
+            rounder = lambda i: (i + (16 - 1)) / 16 * 16
             if discoverer.videowidth:
-                args['width'] = str(discoverer.videowidth)
+                args['width'] = str(rounder(discoverer.videowidth))
             if discoverer.videoheight:
-                args['height'] = str(discoverer.videoheight)
+                args['height'] = str(rounder(discoverer.videoheight))
             if discoverer.videorate:
                 f = discoverer.videorate
                 args['framerate'] = str(float(f.num) / f.denom)
@@ -458,9 +461,15 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
             outRelPath = config.getOutputFilename(inputfile)
             link = self.urlprefix + outRelPath + "?" + argString
+            # make sure we have width and height for audio too
+            if not args.has_key('width'):
+                args['width'] = 320
+            if not args.has_key('height'):
+                args['height'] = 40
+
             linkPath = os.path.join(self.linkdirectory, outRelPath) + '.link'
             handle = open(linkPath, 'w')
-            handle.write("%s\n" % link)
+            handle.write('<iframe src="%s" width="%d" height="%d" frameborder="0" scrolling="no" />\n' % (link, args['width'], args['height']))
             handle.close()
             self.info("Written link file %s" % linkPath)
 
