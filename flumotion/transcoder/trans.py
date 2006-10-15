@@ -25,23 +25,10 @@ from gst.extend.discoverer import Discoverer
 
 from flumotion.common import log, common
 
-# FIXME: this would not work well if we want to save to a separate dir per
-# encoding profile
-def getOutputFilename(self, filename):
-    """
-    Returns the output filename for the given filename.
-    The returned filename is the basename, it does not contain the full
-    path.
-    """
-    prefix = os.path.basename(filename).rsplit('.', 1)[0]
-    return string.join([prefix, self.extension], '.')
-
 # Transcoder
 class Profile(log.Loggable):
     """
     Encoding profile, describing settings for audio and video.
-
-    Configuration for a TranscoderTask.
 
     @param name:         name of the configuration, must be unique in the task
     @param audioencoder: name and parameters of the audio encoder (gst-launch
@@ -114,7 +101,8 @@ class Profile(log.Loggable):
         """
         if not discoverer.is_video:
             return None
-        inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio', gst.Fraction(1,1))
+        inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio',
+            gst.Fraction(1,1))
         inwidth = discoverer.videowidth
         inheight = discoverer.videoheight
 

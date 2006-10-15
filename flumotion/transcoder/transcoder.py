@@ -25,158 +25,20 @@ from gst.extend.discoverer import Discoverer
 
 from flumotion.common import log, common
 
+from flumotion.transcoder import trans
+
 # FIXME: this would not work well if we want to save to a separate dir per
 # encoding profile
-def getOutputFilename(self, filename):
+def getOutputFilename(filename, extension):
     """
-    Returns the output filename for the given filename.
+    Returns the output filename for the given input filename.
     The returned filename is the basename, it does not contain the full
     path.
     """
     prefix = os.path.basename(filename).rsplit('.', 1)[0]
-    return string.join([prefix, self.extension], '.')
+    return string.join([prefix, extension], '.')
 
-# Transcoder
-class TranscoderTaskConfiguration(log.Loggable):
-    """
-    Configuration for a TranscoderTask.
-
-    Required:
-    _ name : the name of the configuration, must be unique in the task
-    _ audioencoder : the name and parameters of the audio encoder (gst-launch
-      syntax)
-    _ videoencoder : the name and parameters of the video encoder (gst-launch
-      syntax)
-    _ muxer : the name and parameters of the muxer (gst-launch syntax)
-    _ extension : the extension for the output filename, must be unique in the
-      the task
-    
-    Optional:
-    _ videowidth : Width of the output video
-    _ videoheight : Height of the output video
-    _ videopar : Pixel Aspect Ratio of the output video (gst.Fraction)
-    _ videoframerate : Framerate of the output video (gst.Fraction)
-    _ audiorate : Sampling rate of the output audio
-    """
-
-    def __init__(self, name, audioencoder, videoencoder, muxer, extension,
-                 videowidth=None, videoheight=None, videopar=None,
-                 videoframerate=None, audiorate=None):
-        self.log("name:%s , audioencoder:%s , videoencoder:%s, muxer:%s" % (name, audioencoder, videoencoder, muxer))
-        self.log("extension:%s , videowidth:%s, videoheight:%s" % (extension, videowidth, videoheight))
-        self.log("par:%s, framerate:%s , audiorate:%s" % (videopar, videoframerate, audiorate))
-        self.name = name
-        self.audioencoder = audioencoder
-        self.videoencoder = videoencoder
-        self.muxer = muxer
-        self.extension = str(extension)
-        self.videowidth = videowidth
-        self.videoheight = videoheight
-        self.videopar = videopar
-        self.videoframerate = videoframerate
-        self.audiorate = audiorate
-
-        self._validateArguments()
-
-    def _validateArguments(self):
-        """ Makes sure the given arguments are valid """
-        for fac in [self.audioencoder, self.videoencoder, self.muxer]:
-            try:
-                elt = gst.parse_launch(fac)
-            except:
-                raise TypeError, "Given factory [%s] is not valid" % fac
-            if isinstance(elt, gst.Pipeline):
-                raise TypeError, "Given factory [%s] should be a simple element, and not a gst.Pipeline" % fac
-            del elt
-        if self.videowidth:
-            self.videowidth = int(self.videowidth)
-        if self.videoheight:
-            self.videoheight = int(self.videoheight)
-        if self.videopar and not isinstance(self.videopar, gst.Fraction):
-            raise TypeError, "videopar should be a gst.Fraction"
-        if self.videoframerate and not isinstance(self.videoframerate, gst.Fraction):
-            raise TypeError, "videoframerate should be a gst.Fraction"
-        if self.audiorate:
-            self.audiorate = int(self.audiorate)
-
-    def getOutputVideoCaps(self, discoverer):
-        """
-        Return the output video caps, according to the information from the
-        discoverer and the configuration.
-        Returns None if there was an error.
-        """
-        if not discoverer.is_video:
-            return None
-        inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio', gst.Fraction(1,1))
-        inwidth = discoverer.videowidth
-        inheight = discoverer.videoheight
-
-        gst.log('inpar:%s , inwidth:%d , inheight:%d' % (inpar, inwidth, inheight))
-        
-        # rate is straightforward
-        rate = self.videoframerate or discoverer.videorate
-        gst.log('rate:%s' % rate)
-        gst.log('outpar:%s , outwidth:%s, outheight:%s' % (self.videopar,
-                                                           self.videowidth,
-                                                           self.videoheight))
-        
-        # if we have fixed width,height,par then it's simple too
-        if self.videowidth and self.videoheight and self.videopar:
-            width = self.videowidth
-            height = self.videoheight
-            par = self.videopar
-        else:
-            # now for the tricky part :)
-            # the Display Aspect ratio is going to stay the same whatever
-            # happens
-            dar = gst.Fraction(inwidth * inpar.denom, inheight * inpar.num)
-
-            gst.log('DAR is %s' % dar)
-            
-            if self.videowidth:
-                width = self.videowidth
-                if self.videoheight:
-                    height = self.videoheight
-                    # calculate PAR, from width, height and DAR
-                    par = gst.Fraction(dar.num * height, dar.denom * width)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
-                else:
-                    if self.videopar:
-                        par = self.videopar
-                    else:
-                        par = inpar
-                    # Calculate height from width, PAR and DAR
-                    height = (par.num * width * dar.denom) / (par.denom * dar.num)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
-            elif self.videoheight:
-                height = self.videoheight
-                if self.videopar:
-                    par = self.videopar
-                else:
-                    # take input PAR
-                    par = inpar
-                # Calculate width from height, PAR and DAR
-                width = (dar.num * par.denom * height) / (dar.denom * par.num)
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
-            elif self.videopar:
-                # no width/heigh, just PAR
-                par = self.videopar
-                height = inheight
-                width = (dar.num * par.denom * height) / (dar.denom * par.num)
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
-            else:
-                # take everything from incoming
-                par = inpar
-                width = inwidth
-                height = inheight
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
-
-        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d,framerate=%d/%d" % (width, height,
-                                                                                   par.num, par.denom,
-                                                                                   rate.num, rate.denom)
-        fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
-        return gst.caps_from_string(fvtempl)
-                
+# FIXME: rename, a task is something that runs once for one operation
 class TranscoderTask(gobject.GObject, log.Loggable):
     """
     Task for the transcoder
@@ -212,24 +74,24 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         self.urlprefix = urlprefix
         self.timeout = timeout
 
-        # list of transcoding configurations
-        self.configs = {}
+        # dict of profile name -> (profile, extension)
+        self._profiles = {}
 
         # list of temporary files to encode
         # we need to do this since a file might still being transfered when we
-        # see it. List of (filename, filesize)
+        # see it.
+        # dict of file path -> file size   
         self.tempqueue = {}
         # list of queued complete files to encode
         self.queue = []
+
         # current processing file
+        # FIXME: describe lifetime of this variable
         self.processing = None
 
         # list of processed files
         self.processed = []
 
-        self.discoverer = None
-        self.pipeline = None
-        self.bus = None
         self._validateArguments()
 
     def _validateArguments(self):
@@ -239,39 +101,26 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         for p in [self.inputdirectory, self.outputdirectory,
                   self.linkdirectory, self.workdirectory]:
             if p and not os.path.isdir(p):
+                self.debug("Creating directory '%s'" % p)
                 os.makedirs(p)
 
-    def addConfiguration(self, name, audioencoder, videoencoder, muxer, extension,
-                         videowidth=None, videoheight=None, videopar=None,
-                         videoframerate=None, audiorate=None):
+    def addProfile(self, name, profile, extension):
         """
-        Add a configuration to the Task
-
-        Will create the TranscoderTaskConfiguration.
-        """
-        config = TranscoderTaskConfiguration(name, audioencoder, videoencoder, muxer,
-                                             extension, videowidth, videoheight,
-                                             videopar, videoframerate,
-                                             audiorate)
-        self.addTaskConfiguration(config)
-
-    def addTaskConfiguration(self, configuration):
-        """
-        Add a TranscoderTaskConfiguration to the Task.
-        If a configuration with the same name already exists, it will be
+        Add a Profile and extension to the task.
+        If a profile with the same name already exists, it will be
         overridden.
         """
-        if not isinstance(configuration, TranscoderTaskConfiguration):
-            raise TypeError, "Given configuration is not a TranscoderTaskConfiguration"
-        self.configs[configuration.name] = configuration
+        if not isinstance(profile, trans.Profile):
+            raise TypeError, "Given configuration is not a trans.Profile"
+        self._profiles[profile.name] = (profile, extension)
 
     def setUp(self):
         """
         Sets up the Task.
-        Fills up the queue with existing non-processed files,
+        Fills up the queue with existing non-processed files.
         Starts a watcher on the incoming directory.
         """
-        self.log("setup")
+        self.debug("setUp()")
         # analyze incoming directory
         infiles = os.listdir(self.inputdirectory)
         # check which files from the queue have already been processed
@@ -279,8 +128,8 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
         for infile in infiles:
             done = True
-            for config in self.configs.itervalues():
-                if not getOutputFilename(infile) in outputfiles:
+            for profile, ext in self._profiles.itervalues():
+                if not getOutputFilename(infile, ext) in outputfiles:
                     done = False
                     break
             fullname = os.path.join(self.inputdirectory, infile)
@@ -288,6 +137,8 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 self.processed.append(fullname)
             else:
                 # append it to temporary queue
+                self.debug("File '%s' not yet transcoded, adding to queue." %
+                    fullname)
                 self.tempqueue[fullname] = os.path.getsize(fullname)
         
         gobject.timeout_add(1000 * self.timeout, self._timeoutCb)
@@ -319,6 +170,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 
         if newcomplete:
             self.log("newcomplete: %r" % newcomplete)
+            self.debug("Adding files %r to task queue" % newcomplete)
             self.queue.extend(newcomplete)
             self.emit('newfile', newfiles[0])
 
@@ -336,57 +188,37 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self.log("task queue empty, returning")
             return False
         if self.processing:
-            self.log("Already processing a file !")
+            self.warning("Already processing %s" % self.processing)
             return False
         self.processing = self.queue.pop(0)
-        self.log("Start processing %s" % self.processing)
+        self.debug("Start processing %s" % self.processing)
+        self.debug("%d files left in queue after this" % len(self.queue))
 
-        # discover the media
-        self.discoverer = Discoverer(self.processing)
-        self.discoverer.connect('discovered', self._discoveredCb)
-        self.discoverer.discover()
+        name = os.path.basename(self.processing)
+        mt = trans.MultiTranscoder(name, self.processing)
+        # add each of our profiles
+        for profile, ext in self._profiles.values():
+            outputFilename = getOutputFilename(self.processing, ext)
+            outputPath = os.path.join(self.workdirectory, outputFilename)
+            mt.addOutput(outputPath, profile)
+
+        def _doneCb(mt, inputPath):
+            self._handleOutputFiles(inputPath)
+
+        def _errorCb(mt, inputPath, message):
+            self.emit('error', inputPath, message)
+            self._processed(inputPath)
+
+        mt.connect('done', _doneCb, self.processing)
+        mt.connect('error', _errorCb, self.processing)
+        mt.start()
         return True
 
-    def _discoveredCb(self, discoverer, ismedia):
-        if not ismedia:
-            self.info("Incoming file '%s' is not a media file, ignoring" %
-                self.processing)
-            self.log("not media")
-            filename = self.processing
-            self._shutDownPipeline()
-            self.emit('error', filename)
-            return
-        
-        self.info("'%s' is a media file, transcoding" % self.processing)
-        self.pipeline = self._makePipeline(self.processing, discoverer)
-        self.bus = self.pipeline.get_bus()
-        self.bus.add_signal_watch()
-        self.bus.connect("message", self._busMessageCb)
-        
-        ret = self.pipeline.set_state(gst.STATE_PLAYING)
-        if ret == gst.STATE_CHANGE_FAILURE:
-            filename = self.processing
-            self._shutDownPipeline()
-            self.emit('error', filename)
-            return
-
-    ## pipeline related
-
-    def _busMessageCb(self, bus, message):
-        if message.type == gst.MESSAGE_ERROR:
-            filename = self.processing
-            gstgerror, debug = message.parse_error()
-            self.warning("GStreamer error while processing '%s': %s" % (
-                filename, gstgerror.message))
-            self.debug("additional debug info: %s" % debug)
-            self._shutDownPipeline()
-            self.emit('error', filename)
-        elif message.type == gst.MESSAGE_EOS:
-            filename = self.processing
-            self._shutDownPipeline()
-            self._handleOutputFiles(filename)
-        else:
-            self.log('Unhandled message %r' % message)
+    def _processed(self, inputPath):
+        # called to mark the file as processed, regardless of error or not
+        self.processing = None
+        self.processed.append(inputPath)
+        self.debug('Processed %s' % inputPath)
 
     def _handleOutputFiles(self, inputfile):
         """
@@ -398,46 +230,48 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         # "global" list that we can use to see when we can emit 'done'
         outputfiles = []
 
-        for config in self.configs.itervalues():
-            outputfiles.append(getOutputFilename(inputfile))
+        for profile, ext in self._profiles.itervalues():
+            outputfiles.append(getOutputFilename(inputfile, ext))
 
-        def _discoveredOutputFile(inputfile, config):
-            self._moveOutputFile(inputfile, config)
-            outRelPath = getOutputFilename(inputfile)
+        def _discoveredOutputFile(inputfile, profile, ext):
+            self._moveOutputFile(inputfile, profile, ext)
+            outRelPath = getOutputFilename(inputfile, ext)
             outputfiles.remove(outRelPath)
             if not outputfiles:
                 self.debug('All output files discovered, emitting done')
+                self._processed(inputfile)
                 self.emit('done', inputfile)
 
-        for config in self.configs.itervalues():
-            self._discoverOutputFile(inputfile, config,
+        for profile, ext in self._profiles.itervalues():
+            self._discoverOutputFile(inputfile, profile, ext,
                 _discoveredOutputFile)
 
-    def _discoverOutputFile(self, inputfile, config, callback):
+    def _discoverOutputFile(self, inputfile, profile, extension, callback):
         """
         Possibly discover the output file if the config contains a
         linkdirectory that we should write cortado links to.
         Calls the callback when done discovering.
 
-        @param callback: callable that will be called with inputfile and config.
+        @param callback: callable that will be called with inputfile, profile
+                         and extension.
         """
         if not self.linkdirectory:
             # call back immediately
-            gobject.timeout_add(0, callback, inputfile, config)
+            gobject.timeout_add(0, callback, inputfile, profile, extension)
             return
 
         # discover the media
         def _discoveredCb(discoverer, ismedia):
             if not ismedia:
                 self.warning("Discoverer thinks output file '%s' is not a media file" % outputfile)
-                gobject.timeout_add(0, callback, inputfile, config)
+                gobject.timeout_add(0, callback, inputfile, profile, extension)
                 return
             self.debug("Work file '%s' has mime type %s" % (
                 workfile, discoverer.mimetype))
             if discoverer.mimetype != 'application/ogg':
                 self.debug("File '%s' not an ogg file, not writing link" %
                     workfile)
-                gobject.timeout_add(0, callback, inputfile, config)
+                gobject.timeout_add(0, callback, inputfile, profile, extension)
                 return
             # ogg file, write link
             args = {'cortado': '1'}
@@ -460,7 +294,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             if discoverer.videocaps:
                 args['video'] = '1'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
-            outRelPath = getOutputFilename(inputfile)
+            outRelPath = getOutputFilename(inputfile, extension)
             link = self.urlprefix + outRelPath + "?" + argString
             # make sure we have width and height for audio too
             if not args.has_key('width'):
@@ -475,10 +309,10 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self.info("Written link file %s" % linkPath)
 
             # done
-            gobject.timeout_add(0, callback, inputfile, config)
+            gobject.timeout_add(0, callback, inputfile, profile, extension)
             return
 
-        outRelPath = getOutputFilename(inputfile)
+        outRelPath = getOutputFilename(inputfile, extension)
         workfile = os.path.join(self.workdirectory, outRelPath)
         self.debug("Analyzing transcoded file '%s'" % workfile)
         discoverer = Discoverer(workfile)
@@ -487,11 +321,11 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         discoverer.discover()
         return True
 
-    def _moveOutputFile(self, inputfile, config):
+    def _moveOutputFile(self, inputfile, profile, ext):
         """
         move the output file from the work directory to the output directory.
         """
-        outRelPath = config.getOutputFilename(inputfile)
+        outRelPath = getOutputFilename(inputfile, ext)
         workfile = os.path.join(self.workdirectory, outRelPath)
         outfile = os.path.join(self.outputdirectory, outRelPath)
         try:
@@ -500,120 +334,6 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self.warning('Could not save transcoded file: %s' % (
                 log.getExceptionMessage(e)))
         self.log('Finished transcoding file to %s' % outfile)
-
-    def _shutDownPipeline(self):
-        if self.bus:
-            self.bus.remove_signal_watch()
-        self.bus = None
-        if self.pipeline:
-            self.log("about to set pipeline to NULL")
-            self.pipeline.set_state(gst.STATE_NULL)
-            self.log("pipeline set to NULL")
-        self.pipeline = None
-        filename = self.processing
-        self.processing = None
-        self.processed.append(filename)
-        if self.discoverer:
-            self.discoverer.set_state(gst.STATE_NULL)
-        self.discoverer = None
-        
-
-    def _makePipeline(self, filename, discoverer):
-        """
-        Build a gst.Pipeline for the given input filename and Discoverer.
-        """
-        pipeline = gst.Pipeline("%s-%s" % (self.name, filename))
-
-        src = gst.element_factory_make("filesrc")
-        src.props.location = filename
-        dbin = gst.element_factory_make("decodebin")
-
-        pipeline.add(src, dbin)
-        src.link(dbin)
-
-        dbin.connect('no-more-pads', self._decodebinNoMorePadsCb)
-        
-        return pipeline
-
-    def _decodebinNoMorePadsCb(self, dbin):
-        self.log('All encoded streams found, adding encoders')
-        # go over pads, adding encoding bins, creating tees, linking
-        encbins = [self._buildConfigEncodingBin(self.processing, self.discoverer, config) for config in self.configs.itervalues()]
-
-        # add encoding bins to pipeline and set them to paused
-        for bin in encbins:
-            self.pipeline.add(bin)
-            bin.set_state(gst.STATE_PLAYING)
-        
-        for srcpad in dbin.src_pads():
-            tee = gst.element_factory_make("tee")
-            self.pipeline.add(tee)
-            srcpad.link(tee.get_pad("sink"))
-            tee.set_state(gst.STATE_PLAYING)
-            if srcpad.get_caps().to_string().startswith('video/x-raw'):
-                sinkp = "videosink"
-            else:
-                sinkp = "audiosink"
-            for bin in encbins:
-                tee.get_pad("src%d").link(bin.get_pad(sinkp))
-
-    def _buildConfigEncodingBin(self, filename, discoverer, config):
-        """ Create an Encoding bin for the given file, config and information """
-        bin = gst.Bin("encoding-%s-%s" % (config.name, filename))
-
-        # filesink
-        filesink = gst.element_factory_make("filesink")
-        filesink.props.location = os.path.join(self.workdirectory, getOutputFilename(filename))
-        # muxer
-        muxer = gst.parse_launch(config.muxer)
-
-        bin.add(muxer, filesink)
-        muxer.link(filesink)
-
-        ## Audio
-        aenc = gst.parse_launch(config.audioencoder)
-        aqueue = gst.element_factory_make("queue", "audioqueue")
-        aconv = gst.element_factory_make("audioconvert")
-        ares = gst.element_factory_make("audioresample")
-
-        bin.add(aqueue, ares, aconv, aenc)
-        gst.element_link_many(aqueue, ares, aconv)
-
-        if (config.audiorate):
-            atmpl = "audio/x-raw-int,rate=%d;audio/x-raw-float,rate=%d"
-            caps = gst.caps_from_string(atmpl % (config.audiorate, config.audiorate))
-            aconv.link(aenc, caps)
-        else:
-            aconv.link(aenc)
-
-        aenc.link(muxer)
-        
-        bin.add_pad(gst.GhostPad("audiosink", aqueue.get_pad("sink")))
-
-        ## Video
-
-        venc = gst.parse_launch(config.videoencoder)
-        vqueue = gst.element_factory_make("queue", "videoqueue")
-        cspace = gst.element_factory_make("ffmpegcolorspace")
-        videorate = gst.element_factory_make("videorate")
-        videoscale = gst.element_factory_make("videoscale")
-
-        bin.add(vqueue, cspace, videorate, videoscale, venc)
-        gst.element_link_many(vqueue, cspace, videorate, videoscale)
-
-        # FIXME : Implement proper filtered caps !!!
-        caps = getOutputVideoCaps(discoverer)
-        if caps:
-            gst.log("%s" % caps.to_string())
-            videoscale.link(venc, caps)
-        else:
-            videoscale.link(venc)
-
-        venc.link(muxer)
-
-        bin.add_pad(gst.GhostPad("videosink", vqueue.get_pad("sink")))
-
-        return bin
 
 class Transcoder(log.Loggable):
     """
@@ -640,13 +360,16 @@ class Transcoder(log.Loggable):
         # Find the next task to run
         if self.working:
             return
+
         nb = len(self.tasks)
         idx = self.currentidx % nb
-        self.working = False
         for i in range(nb):
-            if len(self.tasks[(idx + nb) % nb].queue):
+            task = self.tasks[(idx + nb) % nb]
+            if len(task.queue):
                 self.working = True
-                self.tasks[(idx + nb) % nb].start()
+                self.debug('Task %s has %d files in queue, starting' % (
+                    task.name, len(task.queue)))
+                task.start()
                 break
             
     def addTask(self, task):
@@ -658,6 +381,7 @@ class Transcoder(log.Loggable):
 
     def _taskDoneCb(self, task, filename):
         self.log("DONE in task %s with filename %s" % (task.name, filename))
+        self.info("Input file '%s' transcoded successfully." % filename)
         self.working = False
         self._nextTask()
 
@@ -666,10 +390,10 @@ class Transcoder(log.Loggable):
         self.working = False
         self._nextTask()
 
-    def _taskNewFileCb(self, task, filename):
-        self.info("New incoming file '%s' in profile '%s'" % (
-            filename, task.name))
-        self.log("NEWFILE in task %s with filename %s" % (task.name, filename))
+    def _taskNewFilesCb(self, task, filenames):
+        # FIXME: a bit confusing to get only the first of a group of files
+        # as NEWFILE
+        self.info("New incoming files in task '%s'" % task.name)
         self._nextTask()
 
 def configure_transcoder(transcoder, configurationfile):
@@ -684,8 +408,25 @@ def configure_transcoder(transcoder, configurationfile):
 
     for section in sections:
         contents = dict(parser.items(section))
-        if ':' in section:
+
+        # each section has a name
+        # the tasks are named without :
+        # each profile in a task has : in the name
+        if ':' not in section:
+            # a task section
+            task = TranscoderTask(section,
+                                  contents['inputdirectory'],
+                                  contents['outputdirectory'],
+                                  contents.get('workdirectory', None),
+                                  linkdirectory=contents.get('linkdirectory', None),
+                                  urlprefix=contents.get('urlprefix', None),
+                                  timeout=int(contents.get('timeout', 30)))
+            tasks[section] = task
+
+        else:
+            # a profile section
             taskname = section.split(':')[0]
+            profilename = section.split(':')[1]
             try:
                 task = tasks[taskname]
             except:
@@ -699,25 +440,14 @@ def configure_transcoder(transcoder, configurationfile):
             if videoframerate:
                 videoframerate = gst.Fraction(*[int(x.strip()) for x in videoframerate.split('/')])
             audiorate = contents.get('audiorate', None) and int(contents['audiorate'])
-
-            task.addConfiguration(section.split(':')[1],
+            profile = trans.Profile(profilename,
                                   contents['audioencoder'],
                                   contents['videoencoder'],
                                   contents['muxer'],
-                                  contents['extension'],
                                   videowidth, videoheight, videopar, videoframerate,
                                   audiorate)
-        else:
-            # task
-            task = TranscoderTask(section,
-                                  contents['inputdirectory'],
-                                  contents['outputdirectory'],
-                                  contents.get('workdirectory', None),
-                                  linkdirectory=contents.get('linkdirectory', None),
-                                  urlprefix=contents.get('urlprefix', None),
-                                  timeout=int(contents.get('timeout', 30)))
-            tasks[section] = task
 
+            task.addProfile(profilename, profile, contents['extension'])
     for task in tasks.keys():
         transcoder.addTask(tasks[task])
 

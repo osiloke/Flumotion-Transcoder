@@ -1,5 +1,15 @@
 2006-10-15  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* TODO:
+	  add things to work on
+	* flumotion/transcoder/trans.py:
+	* flumotion/transcoder/transcoder.py:
+	  make the transcoder daemon use the factored-out
+	  MultiTranscoder object
+	  Clean up output, variable names, logging, ...
+
+2006-10-15  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* flumotion/transcoder/trans.py:
 	* tests/ogger.py:
 	  further cleanups

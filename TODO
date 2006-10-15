@@ -1,0 +1,9 @@
+- make sure it works for MPEG
+- make sure it handles every possible error correctly so it never locks up
+- make sure it can handle every file in gst/media
+- document
+- rename task to something less confusing
+- make sure log level 3 is human-readable and gives the sysadmin
+  exactly what he needs
+- get rid of GStreamer warnings
+
