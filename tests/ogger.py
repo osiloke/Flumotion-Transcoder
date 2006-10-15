@@ -34,19 +34,23 @@ if len(sys.argv) < 3:
 
 mainloop = gobject.MainLoop()
 
-def _done_callback():
+def _done_callback(mt):
     print "Done."
     mainloop.quit()
 
-def _error_callback(reason):
+def _error_callback(mt, reason):
     print "ERROR: %s" % reason
     mainloop.quit()
 
-mt = trans.MultiTranscoder(sys.argv[1])
-profile = trans.Profile('ogg', 'vorbisenc', 'theoraenc', 'oggmux')
+mt = trans.MultiTranscoder('ogger', sys.argv[1])
+# we make it very small because we just want to be make sure we can transcode
+profile = trans.Profile('ogg', 'vorbisenc', 'theoraenc', 'oggmux',
+    videowidth=32)
 mt.addOutput(sys.argv[2], profile)
 mt.connect('done', _done_callback)
 mt.connect('error', _error_callback)
-mt.start()
 
+# we idle_add becaust mt.start() could error immediately before we go in
+# the main loop
+gobject.idle_add(mt.start)
 mainloop.run()

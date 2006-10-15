@@ -61,9 +61,9 @@ class Profile(log.Loggable):
     def __init__(self, name, audioencoder, videoencoder, muxer,
                  videowidth=None, videoheight=None, videopar=None,
                  videoframerate=None, audiorate=None):
-        self.log("Profile: name:%s")
-        self.log("Profile: audioencoder:%s , videoencoder:%s, muxer:%s" % (
-            name, audioencoder, videoencoder, muxer))
+        self.log("Profile: name: %s" % name)
+        self.log("Profile: audioencoder: %s, videoencoder: %s, muxer: %s" % (
+            audioencoder, videoencoder, muxer))
         self.log("Profile: videowidth:%s, videoheight:%s" % (
             videowidth, videoheight))
         self.log("Profile: par:%s, framerate:%s , audiorate:%s" % (
@@ -72,7 +72,6 @@ class Profile(log.Loggable):
         self.audioencoder = audioencoder
         self.videoencoder = videoencoder
         self.muxer = muxer
-        self.extension = str(extension)
         self.videowidth = videowidth
         self.videoheight = videoheight
         self.videopar = videopar
@@ -83,21 +82,26 @@ class Profile(log.Loggable):
 
     def _validateArguments(self):
         """ Makes sure the given arguments are valid """
-        for fac in [self.audioencoder, self.videoencoder, self.muxer]:
+        for factory in [self.audioencoder, self.videoencoder, self.muxer]:
             try:
-                elt = gst.parse_launch(fac)
-            except:
-                raise TypeError, "Given factory [%s] is not valid" % fac
-            if isinstance(elt, gst.Pipeline):
-                raise TypeError, "Given factory [%s] should be a simple element, and not a gst.Pipeline" % fac
-            del elt
+                element = gst.parse_launch(factory)
+            except Exception, e:
+                self.warning('Could not parse_launch %s: %r' % (factory, e))
+                raise TypeError, "Given factory [%s] cannot be parsed" % factory
+            if isinstance(element, gst.Pipeline):
+                raise TypeError(
+                    "Given factory [%s] should be a simple element, "
+                    "not a gst.Pipeline" % factory)
+            # FIXME: why an explicit del ?
+            del element
         if self.videowidth:
             self.videowidth = int(self.videowidth)
         if self.videoheight:
             self.videoheight = int(self.videoheight)
         if self.videopar and not isinstance(self.videopar, gst.Fraction):
             raise TypeError, "videopar should be a gst.Fraction"
-        if self.videoframerate and not isinstance(self.videoframerate, gst.Fraction):
+        if self.videoframerate and not isinstance(
+            self.videoframerate, gst.Fraction):
             raise TypeError, "videoframerate should be a gst.Fraction"
         if self.audiorate:
             self.audiorate = int(self.audiorate)
@@ -114,7 +118,8 @@ class Profile(log.Loggable):
         inwidth = discoverer.videowidth
         inheight = discoverer.videoheight
 
-        gst.log('inpar:%s , inwidth:%d , inheight:%d' % (inpar, inwidth, inheight))
+        gst.log('inpar:%s , inwidth:%d , inheight:%d' % (
+            inpar, inwidth, inheight))
         
         # rate is straightforward
         rate = self.videoframerate or discoverer.videorate
@@ -142,15 +147,18 @@ class Profile(log.Loggable):
                     height = self.videoheight
                     # calculate PAR, from width, height and DAR
                     par = gst.Fraction(dar.num * height, dar.denom * width)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
+                    gst.log('outgoing par:%s , width:%d , height:%d' % (
+                        par, width, height))
                 else:
                     if self.videopar:
                         par = self.videopar
                     else:
                         par = inpar
                     # Calculate height from width, PAR and DAR
-                    height = (par.num * width * dar.denom) / (par.denom * dar.num)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
+                    height = (par.num * width * dar.denom) / (
+                        par.denom * dar.num)
+                    gst.log('outgoing par:%s , width:%d , height:%d' % (
+                        par, width, height))
             elif self.videoheight:
                 height = self.videoheight
                 if self.videopar:
@@ -160,23 +168,26 @@ class Profile(log.Loggable):
                     par = inpar
                 # Calculate width from height, PAR and DAR
                 width = (dar.num * par.denom * height) / (dar.denom * par.num)
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
+                gst.log('outgoing par:%s , width:%d , height:%d' % (
+                    par, width, height))
             elif self.videopar:
                 # no width/heigh, just PAR
                 par = self.videopar
                 height = inheight
                 width = (dar.num * par.denom * height) / (dar.denom * par.num)
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
+                gst.log('outgoing par:%s , width:%d , height:%d' % (
+                    par, width, height))
             else:
                 # take everything from incoming
                 par = inpar
                 width = inwidth
                 height = inheight
-                gst.log('outgoing par:%s , width:%d , height:%d' % (par, width, height))
+                gst.log('outgoing par:%s , width:%d , height:%d' % (
+                    par, width, height))
 
-        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d,framerate=%d/%d" % (width, height,
-                                                                                   par.num, par.denom,
-                                                                                   rate.num, rate.denom)
+        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d," \
+            "framerate=%d/%d" % (width, height, par.num, par.denom,
+               rate.num, rate.denom)
         fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
         return gst.caps_from_string(fvtempl)
                 
@@ -235,6 +246,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         assert not self._started, "MultiTranscoder already started"
         self._started = True
 
+        if not os.path.exists(self.inputfile):
+            self.emit('error', "'%s' does not exist" % self.inputfile)
+            return
+
         # discover the media
         self._discoverer = Discoverer(self.inputfile)
         self._discoverer.connect('discovered', self._discoveredCb)
@@ -251,7 +266,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             return
         
         self.info("'%s' is a media file, transcoding" % self.inputfile)
-        self._pipeline = self._makePipeline(self.inputfile, discoverer)
+        self._pipeline = self._makePipeline(self.inputfile)
         self._bus = self._pipeline.get_bus()
         self._bus.add_signal_watch()
         self._bus.connect("message", self._busMessageCb)
@@ -289,7 +304,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         # encoding
         self.log('All encoded streams found, adding encoders')
         # go over pads, adding encoding bins, creating tees, linking
-        encbins = [self._buildConfigEncodingBin(self.inputfile, self._discoverer, config) for config in self.configs.itervalues()]
+        encbins = []
+        for outputPath, profile in self._outputs.items():
+            encbins.append(self._buildEncodingBin(
+                outputPath, profile, self._discoverer))
 
         # add encoding bins to pipeline and set them to paused
         for bin in encbins:
@@ -297,6 +315,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             bin.set_state(gst.STATE_PLAYING)
         
         for srcpad in dbin.src_pads():
+            self.debug('Connecting decodebin srcpad %r with caps %s' % (
+                srcpad, srcpad.get_caps().to_string()))
             tee = gst.element_factory_make("tee")
             self._pipeline.add(tee)
             srcpad.link(tee.get_pad("sink"))
@@ -308,22 +328,26 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             for bin in encbins:
                 tee.get_pad("src%d").link(bin.get_pad(sinkp))
 
-    def _buildConfigEncodingBin(self, outputPath, discoverer, config):
+    # FIXME: why not just use self._discoverer ?
+    def _buildEncodingBin(self, outputPath, profile, discoverer):
         """
-        Create an Encoding bin for the given file, config and information """
-        bin = gst.Bin("encoding-%s-%s" % (config.name, filename))
+        Create an Encoding bin for the given output file, profile,
+        and discoverer.
+        """
+        outputName = os.path.basename(outputPath)
+        bin = gst.Bin("encoding-%s-%s" % (profile.name, outputName))
 
         # filesink
         filesink = gst.element_factory_make("filesink")
-        filesink.props.location = os.path.join(self.workdirectory, getOutputFilename(filename))
-        # muxer
-        muxer = gst.parse_launch(config.muxer)
+        filesink.props.location = outputPath
 
+        # muxer
+        muxer = gst.parse_launch(profile.muxer)
         bin.add(muxer, filesink)
         muxer.link(filesink)
 
-        ## Audio
-        aenc = gst.parse_launch(config.audioencoder)
+        # audio
+        aenc = gst.parse_launch(profile.audioencoder)
         aqueue = gst.element_factory_make("queue", "audioqueue")
         aconv = gst.element_factory_make("audioconvert")
         ares = gst.element_factory_make("audioresample")
@@ -331,9 +355,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         bin.add(aqueue, ares, aconv, aenc)
         gst.element_link_many(aqueue, ares, aconv)
 
-        if (config.audiorate):
+        if (profile.audiorate):
             atmpl = "audio/x-raw-int,rate=%d;audio/x-raw-float,rate=%d"
-            caps = gst.caps_from_string(atmpl % (config.audiorate, config.audiorate))
+            caps = gst.caps_from_string(atmpl % (
+                profile.audiorate, profile.audiorate))
             aconv.link(aenc, caps)
         else:
             aconv.link(aenc)
@@ -342,9 +367,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         
         bin.add_pad(gst.GhostPad("audiosink", aqueue.get_pad("sink")))
 
-        ## Video
-
-        venc = gst.parse_launch(config.videoencoder)
+        # video
+        venc = gst.parse_launch(profile.videoencoder)
         vqueue = gst.element_factory_make("queue", "videoqueue")
         cspace = gst.element_factory_make("ffmpegcolorspace")
         videorate = gst.element_factory_make("videorate")
@@ -354,7 +378,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         gst.element_link_many(vqueue, cspace, videorate, videoscale)
 
         # FIXME : Implement proper filtered caps !!!
-        caps = self.getOutputVideoCaps(discoverer)
+        caps = profile.getOutputVideoCaps(discoverer)
         if caps:
             gst.log("%s" % caps.to_string())
             videoscale.link(venc, caps)
@@ -366,16 +390,20 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         bin.add_pad(gst.GhostPad("videosink", vqueue.get_pad("sink")))
 
         return bin
+
     def _busMessageCb(self, bus, message):
-        filename = self.inputfile
-        if message.type == gst.MESSAGE_ERROR:
+        if message.type == gst.MESSAGE_STATE_CHANGED:
+            pass
+        elif message.type == gst.MESSAGE_ERROR:
             gstgerror, debug = message.parse_error()
-            self.warning("GStreamer error while processing '%s': %s" % (
-                filename, gstgerror.message))
+            msg = "GStreamer error while processing '%s': %s" % (
+                self.inputfile, gstgerror.message)
+            self.warning(msg)
             self.debug("additional debug info: %s" % debug)
             self._shutDownPipeline()
-            self.emit('error', filename)
+            self.emit('error', msg)
         elif message.type == gst.MESSAGE_EOS:
+            self.debug('EOS, done')
             self._shutDownPipeline()
             self.emit('done')
         else:

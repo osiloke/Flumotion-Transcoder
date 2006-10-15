@@ -1,3 +1,18 @@
+2006-10-15  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/transcoder/trans.py:
+	* tests/ogger.py:
+	  further cleanups
+	  handle non-existing files
+
+2006-10-15  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/transcoder/trans.py:
+	  further cleanups, now has a MultiTranscoder separated out
+	  that we can test standalone
+	* tests/ogger.py:
+	  fix up test for standalone MultiTranscoder
+
 2006-10-13  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion-transcoder.spec.in:
