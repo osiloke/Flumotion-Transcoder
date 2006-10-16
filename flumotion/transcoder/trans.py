@@ -19,11 +19,14 @@ import string
 import time
 
 import gobject
+gobject.threads_init()
 import gst
 
 from gst.extend.discoverer import Discoverer
 
 from flumotion.common import log, common
+
+from flumotion.transcoder.watcher import FilesWatcher
 
 # Transcoder
 class Profile(log.Loggable):
@@ -209,6 +212,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
 
         self._discoverer = None
         self._pipeline = None
+        self._watcher = None
         self._bus = None
 
     def addOutput(self, outputPath, profile):
@@ -248,6 +252,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         if not ismedia:
             self.info("Incoming file '%s' is not a media file, ignoring" %
                 self.inputfile)
+            for otherstream in discoverer.otherstreams:
+                self.info("File contains unknown type : %s" % otherstream)
             self.log("not media")
             self._shutDownPipeline()
             self.emit('error', "'%s' is not a media file" % self.inputfile)
@@ -266,8 +272,21 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             self.emit('error', "Could not play pipeline for file '%s'" %
                 self.inputfile)
             return
+        
+        # start a FilesWatcher on the expected output files
+        self._watcher = FilesWatcher([path for path,profile in self._outputs.items()])
+        self._watcher.connect('complete-file', self._watcherCompleteFileCb)
+        self._watcher.connect('file-not-present', self._watcherCompleteFileCb)
+        self._watcher.start()
 
     ## pipeline related
+
+    def _watcherCompleteFileCb(self, watcher, filename):
+        # a file has gone unchanged in size for the past 30s, we consider
+        # we have a timeout
+        self._shutDownPipeline()
+        self.emit('error', "Got a timeout while trying to transcode '%s'" %
+                  self.inputfile)
 
     # called after discovering
     def _makePipeline(self, filename):
@@ -420,3 +439,6 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             self._pipeline.set_state(gst.STATE_NULL)
             self.log("pipeline set to NULL")
         self._pipeline = None
+        if self._watcher:
+            self._watcher.stop()
+            self._watcher = None

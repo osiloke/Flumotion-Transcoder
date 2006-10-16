@@ -4,6 +4,8 @@ componentdir = $(libdir)/flumotion/python/flumotion/transcoder
 component_PYTHON =		\
 	__init__.py		\
 	transcoder.py		\
+	trans.py		\
+	watcher.py		\
 	main.py
 
 clean-local:

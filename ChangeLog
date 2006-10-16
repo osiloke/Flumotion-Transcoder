@@ -1,5 +1,21 @@
 2006-10-16  Edward Hervey  <edward@fluendo.com>
 
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/watcher.py:
+	New Watcher class with two subclasses:
+	DirectoryWatcher to watch a directory
+	FilesWatcher to watch a series of files
+	* flumotion/transcoder/trans.py:
+	Use the FilesWatcher to figure out when a Pipeline is no longer
+	outputting data (deadlocked?) and report the error.
+	If the discoverer reports a file isn't a media file, include the
+	discovered mimetypes in the logs.
+	* flumotion/transcoder/transcoder.py:
+	Use the DirectoryWatcher from watcher.py
+	small fixes.
+
+2006-10-16  Edward Hervey  <edward@fluendo.com>
+
 	* flumotion/transcoder/trans.py:
 	(_decodebinNoMorePadsCb): handle case where decodebin emits
 	'no-more-pads' more than once. Make sure we don't connect pads to

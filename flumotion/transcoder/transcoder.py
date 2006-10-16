@@ -27,6 +27,8 @@ from flumotion.common import log, common
 
 from flumotion.transcoder import trans
 
+from flumotion.transcoder.watcher import DirectoryWatcher
+
 # FIXME: this would not work well if we want to save to a separate dir per
 # encoding profile
 def getOutputFilename(filename, extension):
@@ -77,11 +79,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         # dict of profile name -> (profile, extension)
         self._profiles = {}
 
-        # list of temporary files to encode
-        # we need to do this since a file might still being transfered when we
-        # see it.
-        # dict of file path -> file size   
-        self.tempqueue = {}
+        self.watcher = None
         # list of queued complete files to encode
         self.queue = []
 
@@ -132,51 +130,18 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 if not getOutputFilename(infile, ext) in outputfiles:
                     done = False
                     break
-            fullname = os.path.join(self.inputdirectory, infile)
             if done:
-                self.processed.append(fullname)
-            else:
-                # append it to temporary queue
-                self.debug("File '%s' not yet transcoded, adding to queue." %
-                    fullname)
-                self.tempqueue[fullname] = os.path.getsize(fullname)
-        
-        gobject.timeout_add(1000 * self.timeout, self._timeoutCb)
+                self.processed.append(infile)
 
-    def _checkDirectory(self):
-        """
-        Go over the contents of the input directory, and add new files to the
-        queue.
-        """
-        self.log("checking %s" % self.inputdirectory)
-        files = [os.path.join(self.inputdirectory, f) for f in os.listdir(self.inputdirectory)]
-        newfiles = [f for f in files if not (f in self.queue or f in self.processed or f == self.processing)]
+        # Create a new watcher to look over the input directory
+        watcher = DirectoryWatcher(self.inputdirectory, timeout=self.timeout,
+                                   ignorefiles=self.processed)
+        watcher.connect('complete-file', self._watcherCompleteFileCb)
+        watcher.start()
 
-        for filen in self.tempqueue.keys():
-            if not filen in newfiles:
-                newfiles.extend(filen)
-                
-        newcomplete = []
-        for newfile in newfiles:
-            fullname = os.path.join(self.inputdirectory, newfile)
-            if newfile in self.tempqueue.keys():
-                if os.path.getsize(fullname) == self.tempqueue[newfile]:
-                    newcomplete.append(newfile)
-                    del self.tempqueue[newfile]
-                else:
-                    self.tempqueue[newfile] = os.path.getsize(fullname)
-            else:
-                self.tempqueue[fullname] = os.path.getsize(fullname)
-                
-        if newcomplete:
-            self.log("newcomplete: %r" % newcomplete)
-            self.debug("Adding files %r to task queue" % newcomplete)
-            self.queue.extend(newcomplete)
-            self.emit('newfile', newfiles[0])
-
-    def _timeoutCb(self):
-        self._checkDirectory()
-        return True
+    def _watcherCompleteFileCb(self, watcher, filename):
+        self.queue.append(os.path.join(watcher.path, filename))
+        self.emit('newfile', filename)
 
     def start(self):
         """
@@ -206,7 +171,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self._handleOutputFiles(inputPath)
 
         def _errorCb(mt, inputPath, message):
-            self.emit('error', inputPath, message)
+            self.emit('error', '%s : %s' % (inputPath, message))
             self._processed(inputPath)
 
         mt.connect('done', _doneCb, self.processing)
@@ -390,9 +355,7 @@ class Transcoder(log.Loggable):
         self.working = False
         self._nextTask()
 
-    def _taskNewFilesCb(self, task, filenames):
-        # FIXME: a bit confusing to get only the first of a group of files
-        # as NEWFILE
+    def _taskNewFileCb(self, task, filename):
         self.info("New incoming files in task '%s'" % task.name)
         self._nextTask()
 
