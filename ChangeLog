@@ -1,3 +1,13 @@
+2006-10-16  Edward Hervey  <edward@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
+	(_decodebinNoMorePadsCb): handle case where decodebin emits
+	'no-more-pads' more than once. Make sure we don't connect pads to
+	non-existent bins.
+	(_buildEncodingBin): Don't create audio (or video) bin if the source
+	media doesn't have audio (or video). Don't put a time limit on the
+	pre-encoder queues.
+
 2006-10-15  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* TODO:
