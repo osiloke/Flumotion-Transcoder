@@ -260,7 +260,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 args['video'] = '1'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
             outRelPath = getOutputFilename(inputfile, extension)
-            link = self.urlprefix + outRelPath + "?" + argString
+            link = self.urlprefix + outRelPath + ".m3u?" + argString
             # make sure we have width and height for audio too
             if not args.has_key('width'):
                 args['width'] = 320

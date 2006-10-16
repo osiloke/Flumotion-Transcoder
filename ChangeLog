@@ -1,5 +1,10 @@
 2006-10-16  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* flumotion/transcoder/transcoder.py:
+	  fix cortado link
+
+2006-10-16  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* Makefile.am:
 	* configure.ac:
 	  add tests dir to be cleaned up
