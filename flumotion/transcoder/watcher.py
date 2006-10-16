@@ -41,6 +41,7 @@ class Watcher(gobject.GObject, log.Loggable):
         self.timeout = timeout
         self._sigid = None
         self._files = {}
+        self._checked = []
 
     def start(self, checknow=False):
         """

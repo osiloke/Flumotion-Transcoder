@@ -333,15 +333,27 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             else:
                 self.warning("Decodebin has got a pad we didn't find during discovery %s [caps:%s]" % (srcpad, srcpad.get_caps().to_string()))
                 continue
-                
+
             self.debug('Connecting decodebin srcpad %r with caps %s' % (
                 srcpad, srcpad.get_caps().to_string()))
             tee = gst.element_factory_make("tee")
             self._pipeline.add(tee)
             srcpad.link(tee.get_pad("sink"))
             tee.set_state(gst.STATE_PLAYING)
-            for bin in encbins:
-                tee.get_pad("src%d").link(bin.get_pad(sinkp))
+            try:
+                for bin in encbins:
+                    tee.get_pad("src%d").link(bin.get_pad(sinkp))
+            except gst.LinkError:
+                self.warning("Couldn't link to encoding bins, aborting transcoding")
+                # We are in the streaming thread, we have to shutdown and emit messages
+                # from the main thread :(
+                gobject.idle_add(self._shutDownPipeline)
+                gobject.idle_add(self._asyncError, "Couldn't link to encoding bins")
+                return
+
+    def _asyncError(self, message):
+        """ Use this method to emit an error message in the main thread """
+        self.emit('error', message)
 
     # FIXME: why not just use self._discoverer ?
     def _buildEncodingBin(self, outputPath, profile, discoverer):

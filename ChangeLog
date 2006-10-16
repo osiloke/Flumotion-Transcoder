@@ -1,5 +1,13 @@
 2006-10-16  Edward Hervey  <edward@fluendo.com>
 
+	* flumotion/transcoder/trans.py:
+	* flumotion/transcoder/transcoder.py:
+	* flumotion/transcoder/watcher.py:
+	Syntax fixes. Serialize state_change and signal emissions in
+	main thread.
+
+2006-10-16  Edward Hervey  <edward@fluendo.com>
+
 	* flumotion/transcoder/Makefile.am:
 	* flumotion/transcoder/watcher.py:
 	New Watcher class with two subclasses:

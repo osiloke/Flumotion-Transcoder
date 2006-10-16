@@ -170,9 +170,9 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         def _doneCb(mt, inputPath):
             self._handleOutputFiles(inputPath)
 
-        def _errorCb(mt, inputPath, message):
-            self.emit('error', '%s : %s' % (inputPath, message))
+        def _errorCb(mt, message, inputPath):
             self._processed(inputPath)
+            self.emit('error', '%s : %s' % (inputPath, message))
 
         mt.connect('done', _doneCb, self.processing)
         mt.connect('error', _errorCb, self.processing)
