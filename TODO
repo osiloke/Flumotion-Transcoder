@@ -27,13 +27,18 @@ gstreamer-fluendo-wmvdec-0.10.4-1.flu.5
 gstreamer-fluendo-mpeg2video-0.10.4-1.flu
 UPDATE: seems fixed with cvs version of oggmuxer
 
+- make sure log level 3 is human-readable and gives the sysadmin
+  exactly what he needs
+  THIS IS IMPORTANT ! AT LOG LEVEL 3, YOU SHOULD SEE FOR EACH FILE IF IT
+  MANAGED TO TRANSCODE, OR FAILED, and give a clear but short indication of
+  *WHY* it failed
+  All these services normally run at level 3!!!
+
 - make sure it handles every possible error correctly so it never locks up
 - make sure it works for MPEG
 - make sure it can handle every file in gst/media
 - document
 - rename task to something less confusing
-- make sure log level 3 is human-readable and gives the sysadmin
-  exactly what he needs
 - get rid of GStreamer warnings
 - make discoverer report why it doesn't think it's a media file (
   for example in the log I have:

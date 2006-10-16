@@ -352,6 +352,7 @@ class Transcoder(log.Loggable):
 
     def _taskErrorCb(self, task, filename):
         self.log("ERROR in task %s with filename %s" % (task.name, filename))
+        self.warning("Transcode of file '%s' timed out." % filename)
         self.working = False
         self._nextTask()
 
