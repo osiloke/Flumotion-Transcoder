@@ -1,3 +1,32 @@
+- keep all lines under 80 chars!
+- I had this traceback:
+LOG   [10967]                                  transcoder        Oct 16 20:57:59      ERROR in task fluendo with filename /home/file/fluendo/incoming/hellofluendo.3gp : Got a timeout while trying to transcode '/home/file/fluendo/incoming/hellofluendo.3gp' (flumotion/transcoder/transcoder.py:354)
+Traceback (most recent call last):
+  File "/usr/lib/flumotion/python/flumotion/transcoder/watcher.py", line 75, in _timeoutCb
+    if (newf in oldfiles) and newsize == self._files[newf]:
+KeyError: '/var/tmp/flumotion/transcoder/fluendo/hellofluendo.full.ogg'
+
+when starting up the transcoder with a file in incoming already that was
+not in outgoing
+
+- I can't transcode hellofluendo.3gp on the installed cluster; it times out
+  after connecting two pads
+  packages installed:
+gstreamer-tools-0.10.10-0.gst.1.5
+gstreamer-plugins-base-0.10.10-0.gst.1.5
+gstreamer-python-0.10.5-0.gst.1.5
+gstreamer-fluendo-mpeg4video-0.10.3-1.flu
+gstreamer-0.10.10-0.gst.1.5
+gstreamer-plugins-bad-0.10.3-0.gst.3.5
+gstreamer-plugins-ugly-0.10.4-0.gst.1.5
+gstreamer-fluendo-isodemux-0.10.0-1.flu
+gstreamer-ffmpeg-0.10.1-0.gst.1.5
+gstreamer-plugins-good-0.10.4-0.gst.1.5
+gstreamer-fluendo-wmadec-0.10.4-1.flu.5
+gstreamer-fluendo-wmvdec-0.10.4-1.flu.5
+gstreamer-fluendo-mpeg2video-0.10.4-1.flu
+UPDATE: seems fixed with cvs version of oggmuxer
+
 - make sure it handles every possible error correctly so it never locks up
 - make sure it works for MPEG
 - make sure it can handle every file in gst/media
