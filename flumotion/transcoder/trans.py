@@ -191,6 +191,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
     Signals:
     _ done : the given filename has succesfully been transcoded
     _ error: An error happened on the given filename
+
+    @ivar timeout: time out before giving up on a file because it's not growing
     """
     __gsignals__ = {
         "done" : ( gobject.SIGNAL_RUN_LAST,
@@ -214,6 +216,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         self._pipeline = None
         self._watcher = None
         self._bus = None
+
+        self.timeout = 30
 
     def addOutput(self, outputPath, profile):
         """
@@ -274,7 +278,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             return
         
         # start a FilesWatcher on the expected output files
-        self._watcher = FilesWatcher([path for path,profile in self._outputs.items()])
+        paths = [path for path,profile in self._outputs.items()]
+        self._watcher = FilesWatcher(paths, timeout=self.timeout)
         self._watcher.connect('complete-file', self._watcherCompleteFileCb)
         self._watcher.connect('file-not-present', self._watcherCompleteFileCb)
         self._watcher.start()
@@ -282,10 +287,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
     ## pipeline related
 
     def _watcherCompleteFileCb(self, watcher, filename):
-        # a file has gone unchanged in size for the past 30s, we consider
-        # we have a timeout
+        # a file has gone unchanged in size for the past self.timeout,
+        # we consider we have a timeout
         self._shutDownPipeline()
-        self.emit('error', "Got a timeout while trying to transcode '%s'" %
+        self.emit('error', "Timed out trying to transcode '%s'" %
                   self.inputfile)
 
     # called after discovering
@@ -326,12 +331,15 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                 return
         
         for srcpad in dbin.src_pads():
-            if srcpad.get_caps().to_string().startswith('video/x-raw') and self._discoverer.is_video:
+            if srcpad.get_caps().to_string().startswith('video/x-raw') \
+                and self._discoverer.is_video:
                 sinkp = "videosink"
             elif self._discoverer.is_audio:
                 sinkp = "audiosink"
             else:
-                self.warning("Decodebin has got a pad we didn't find during discovery %s [caps:%s]" % (srcpad, srcpad.get_caps().to_string()))
+                self.warning("Decodebin has got a pad we didn't find "
+                    "during discovery %s [caps:%s]" % (
+                        srcpad, srcpad.get_caps().to_string()))
                 continue
 
             self.debug('Connecting decodebin srcpad %r with caps %s' % (
@@ -344,11 +352,13 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                 for bin in encbins:
                     tee.get_pad("src%d").link(bin.get_pad(sinkp))
             except gst.LinkError:
-                self.warning("Couldn't link to encoding bins, aborting transcoding")
-                # We are in the streaming thread, we have to shutdown and emit messages
-                # from the main thread :(
+                self.warning("Couldn't link to encoding bins, "
+                    "aborting transcoding")
+                # We are in the streaming thread, we have to shutdown and emit
+                # messages from the main thread :(
                 gobject.idle_add(self._shutDownPipeline)
-                gobject.idle_add(self._asyncError, "Couldn't link to encoding bins")
+                gobject.idle_add(self._asyncError,
+                    "Couldn't link to encoding bins")
                 return
 
     def _asyncError(self, message):
@@ -362,7 +372,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         and discoverer.
         """
         outputName = os.path.basename(outputPath)
-        self.log("Creating Encoding bin for %s with profile %s" % (outputName, profile.name))
+        self.log("Creating Encoding bin for %s with profile %s" % (
+            outputName, profile.name))
         bin = gst.Bin("encoding-%s-%s" % (profile.name, outputName))
 
         # filesink

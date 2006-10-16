@@ -100,5 +100,6 @@ misc/Makefile
 transcoder/Makefile
 flumotion/Makefile
 flumotion/transcoder/Makefile
+tests/Makefile
 flumotion-transcoder.spec
 )
