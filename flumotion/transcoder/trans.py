@@ -47,17 +47,20 @@ class Profile(log.Loggable):
     @param videoframerate:  Framerate of the output video
     @type  videoframerate:  gst.Fraction
     @param audiorate:       Sampling rate of the output audio
+    @param audiochanns:     Number of audio channels
     """
     def __init__(self, name, audioencoder, videoencoder, muxer,
                  videowidth=None, videoheight=None, videopar=None,
-                 videoframerate=None, audiorate=None):
+                 videoframerate=None, audiorate=None, audiochanns=None):
         self.log("Profile: name: %s" % name)
         self.log("Profile: audioencoder: %s, videoencoder: %s, muxer: %s" % (
             audioencoder, videoencoder, muxer))
         self.log("Profile: videowidth:%s, videoheight:%s" % (
             videowidth, videoheight))
-        self.log("Profile: par:%s, framerate:%s , audiorate:%s" % (
-            videopar, videoframerate, audiorate))
+        self.log("Profile: par:%s, framerate:%s" % (
+            videopar, videoframerate))
+        self.log("Profile: audiorate:%s , audiochanns:%s" % (
+            audiorate, audiochanns))
         self.name = name
         self.audioencoder = audioencoder
         self.videoencoder = videoencoder
@@ -67,6 +70,7 @@ class Profile(log.Loggable):
         self.videopar = videopar
         self.videoframerate = videoframerate
         self.audiorate = audiorate
+        self.audiochanns = audiochanns
 
         self._validateArguments()
 
@@ -95,6 +99,8 @@ class Profile(log.Loggable):
             raise TypeError, "videoframerate should be a gst.Fraction"
         if self.audiorate:
             self.audiorate = int(self.audiorate)
+        if self.audiochanns:
+            self.audiochanns = int(self.audiochanns)
 
     def getOutputVideoCaps(self, discoverer):
         """
@@ -391,16 +397,19 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             aqueue = gst.element_factory_make("queue", "audioqueue")
             aconv = gst.element_factory_make("audioconvert")
             ares = gst.element_factory_make("audioresample")
+            arate = gst.element_factory_make("audiorate")
 
             aqueue.props.max_size_time = 0
             
-            bin.add(aqueue, ares, aconv, aenc)
-            gst.element_link_many(aqueue, ares, aconv)
+            bin.add(aqueue, arate, ares, aconv, aenc)
+            gst.element_link_many(aqueue, arate, ares, aconv)
             
-            if (profile.audiorate):
-                atmpl = "audio/x-raw-int,rate=%d;audio/x-raw-float,rate=%d"
-                caps = gst.caps_from_string(atmpl % (
-                    profile.audiorate, profile.audiorate))
+            if (profile.audiorate or profile.audiochanns):
+                audiochanns = profile.audiochanns or discoverer.audiochannels
+                astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochanns)
+                atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
+                    astmpl, astmpl)
+                caps = gst.caps_from_string(atmpl)
                 aconv.link(aenc, caps)
             else:
                 aconv.link(aenc)
@@ -418,6 +427,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             videoscale = gst.element_factory_make("videoscale")
 
             vqueue.props.max_size_time = 0
+            # use bilinear scaling for better image quality
+            videoscale.props.method = 1
             
             bin.add(vqueue, cspace, videorate, videoscale, venc)
             gst.element_link_many(vqueue, cspace, videorate, videoscale)

@@ -8,6 +8,8 @@ KeyError: '/var/tmp/flumotion/transcoder/fluendo/hellofluendo.full.ogg'
 
 when starting up the transcoder with a file in incoming already that was
 not in outgoing
+UPDATE: According to the code, it's (close to) impossible that this state ever
+happens. But added an extra test before in watcher.py.
 
 - I can't transcode hellofluendo.3gp on the installed cluster; it times out
   after connecting two pads
@@ -26,6 +28,8 @@ gstreamer-fluendo-wmadec-0.10.4-1.flu.5
 gstreamer-fluendo-wmvdec-0.10.4-1.flu.5
 gstreamer-fluendo-mpeg2video-0.10.4-1.flu
 UPDATE: seems fixed with cvs version of oggmuxer
+UPDATE: But latest cvs of oggmux breaks that for other files (doesn't emit EOS
+	even though all sinkpads have received an EOS).
 
 - make sure log level 3 is human-readable and gives the sysadmin
   exactly what he needs
@@ -34,12 +38,11 @@ UPDATE: seems fixed with cvs version of oggmuxer
   *WHY* it failed
   All these services normally run at level 3!!!
 
+- Have the actual transcoding task in a separate process so that segfaults in
+  plugins don't result in having the whole daemon go down.
 - make sure it handles every possible error correctly so it never locks up
 - make sure it works for MPEG
 - make sure it can handle every file in gst/media
 - document
 - rename task to something less confusing
 - get rid of GStreamer warnings
-- make discoverer report why it doesn't think it's a media file (
-  for example in the log I have:
-  unknown type : video/x-h263, width=(int)176, height=(int)144, framerate=(fraction)5/2

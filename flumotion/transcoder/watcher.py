@@ -70,7 +70,9 @@ class Watcher(gobject.GObject, log.Loggable):
         self.log("watching...")
         newfiles = self._getData()
         oldfiles = self._files.keys()
-        for newf in newfiles.keys():
+        self.log("Comparing new files (%d) to old files (%d)" % (
+            len(newfiles), len(oldfiles)))
+        for newf in [x for x in newfiles.keys() if x in oldfiles]:
             newsize = newfiles[newf]
             if (newf in oldfiles) and newsize == self._files[newf]:
                 self.emit('complete-file', newf)

@@ -1,3 +1,20 @@
+2006-10-17  Edward Hervey  <edward@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
+	Added audiochanns property to specify the number of audio channels in
+	output.
+	Added audiorate in the audio encoding bin.
+	Set scaling method of videoscale to bilinear.
+	* flumotion/transcoder/transcoder.py:
+	Added reason to the error signal, adjusted emission of that signal
+	accordingly.
+	* flumotion/transcoder/watcher.py:
+	Fix for files not present before.
+	* tests/ogger.py:
+	Added specific rate and channel for ogger test profile.
+	* TODO:
+	Extended items to do and commented others.
+
 2006-10-16  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/transcoder/transcoder.py:

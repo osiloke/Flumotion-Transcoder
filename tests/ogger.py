@@ -45,7 +45,7 @@ def _error_callback(mt, reason):
 mt = trans.MultiTranscoder('ogger', sys.argv[1])
 # we make it very small because we just want to be make sure we can transcode
 profile = trans.Profile('ogg', 'vorbisenc', 'theoraenc', 'oggmux',
-    videowidth=32)
+    videowidth=32, audiorate=22050, audiochanns=2)
 mt.addOutput(sys.argv[2], profile)
 mt.connect('done', _done_callback)
 mt.connect('error', _error_callback)

@@ -49,7 +49,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
     Signals:
     _ done : the given filename has succesfully been transcoded
-    _ error: An error happened on the given filename
+    _ error: An error happened on the given filename, with the given reason
     _ newfile : A new file has arrived in the incoming directory
     """
     __gsignals__ = {
@@ -58,7 +58,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                    (gobject.TYPE_STRING, )),
         "error": ( gobject.SIGNAL_RUN_LAST,
                    gobject.TYPE_NONE,
-                   (gobject.TYPE_STRING, )),
+                   (gobject.TYPE_STRING, gobject.TYPE_STRING)),
         "newfile" : (gobject.SIGNAL_RUN_LAST,
                      gobject.TYPE_NONE,
                      (gobject.TYPE_STRING, ))
@@ -172,7 +172,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
         def _errorCb(mt, message, inputPath):
             self._processed(inputPath)
-            self.emit('error', '%s : %s' % (inputPath, message))
+            self.emit('error', inputPath, message)
 
         mt.connect('done', _doneCb, self.processing)
         mt.connect('error', _errorCb, self.processing)
@@ -350,14 +350,14 @@ class Transcoder(log.Loggable):
         self.working = False
         self._nextTask()
 
-    def _taskErrorCb(self, task, filename):
-        self.log("ERROR in task %s with filename %s" % (task.name, filename))
-        self.warning("Transcode of file '%s' timed out." % filename)
+    def _taskErrorCb(self, task, filename, reason):
+        self.warning("ERROR in task %s with filename %s" % (task.name, filename))
+        self.warning("Reason for ERROR : %s" % reason)
         self.working = False
         self._nextTask()
 
     def _taskNewFileCb(self, task, filename):
-        self.info("New incoming files in task '%s'" % task.name)
+        self.info("New incoming file in task '%s' : %s" % (task.name, filename))
         self._nextTask()
 
 def configure_transcoder(transcoder, configurationfile):
@@ -404,12 +404,13 @@ def configure_transcoder(transcoder, configurationfile):
             if videoframerate:
                 videoframerate = gst.Fraction(*[int(x.strip()) for x in videoframerate.split('/')])
             audiorate = contents.get('audiorate', None) and int(contents['audiorate'])
+            audiochanns = contents.get('audiochanns', None) and int(contents['audiochanns'])
             profile = trans.Profile(profilename,
                                   contents['audioencoder'],
                                   contents['videoencoder'],
                                   contents['muxer'],
                                   videowidth, videoheight, videopar, videoframerate,
-                                  audiorate)
+                                  audiorate, audiochanns)
 
             task.addProfile(profilename, profile, contents['extension'])
     for task in tasks.keys():
