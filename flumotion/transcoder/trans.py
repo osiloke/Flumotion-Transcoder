@@ -47,11 +47,11 @@ class Profile(log.Loggable):
     @param videoframerate:  Framerate of the output video
     @type  videoframerate:  gst.Fraction
     @param audiorate:       Sampling rate of the output audio
-    @param audiochanns:     Number of audio channels
+    @param audiochannels:     Number of audio channels
     """
     def __init__(self, name, audioencoder, videoencoder, muxer,
                  videowidth=None, videoheight=None, videopar=None,
-                 videoframerate=None, audiorate=None, audiochanns=None):
+                 videoframerate=None, audiorate=None, audiochannels=None):
         self.log("Profile: name: %s" % name)
         self.log("Profile: audioencoder: %s, videoencoder: %s, muxer: %s" % (
             audioencoder, videoencoder, muxer))
@@ -59,8 +59,8 @@ class Profile(log.Loggable):
             videowidth, videoheight))
         self.log("Profile: par:%s, framerate:%s" % (
             videopar, videoframerate))
-        self.log("Profile: audiorate:%s , audiochanns:%s" % (
-            audiorate, audiochanns))
+        self.log("Profile: audiorate:%s , audiochannels:%s" % (
+            audiorate, audiochannels))
         self.name = name
         self.audioencoder = audioencoder
         self.videoencoder = videoencoder
@@ -70,7 +70,7 @@ class Profile(log.Loggable):
         self.videopar = videopar
         self.videoframerate = videoframerate
         self.audiorate = audiorate
-        self.audiochanns = audiochanns
+        self.audiochannels = audiochannels
 
         self._validateArguments()
 
@@ -99,8 +99,8 @@ class Profile(log.Loggable):
             raise TypeError, "videoframerate should be a gst.Fraction"
         if self.audiorate:
             self.audiorate = int(self.audiorate)
-        if self.audiochanns:
-            self.audiochanns = int(self.audiochanns)
+        if self.audiochannels:
+            self.audiochannels = int(self.audiochannels)
 
     def getOutputVideoCaps(self, discoverer):
         """
@@ -404,9 +404,9 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             bin.add(aqueue, arate, ares, aconv, aenc)
             gst.element_link_many(aqueue, arate, ares, aconv)
             
-            if (profile.audiorate or profile.audiochanns):
-                audiochanns = profile.audiochanns or discoverer.audiochannels
-                astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochanns)
+            if (profile.audiorate or profile.audiochannels):
+                audiochannels = profile.audiochannels or discoverer.audiochannels
+                astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochannels)
                 atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
                     astmpl, astmpl)
                 caps = gst.caps_from_string(atmpl)

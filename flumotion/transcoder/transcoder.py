@@ -404,13 +404,13 @@ def configure_transcoder(transcoder, configurationfile):
             if videoframerate:
                 videoframerate = gst.Fraction(*[int(x.strip()) for x in videoframerate.split('/')])
             audiorate = contents.get('audiorate', None) and int(contents['audiorate'])
-            audiochanns = contents.get('audiochanns', None) and int(contents['audiochanns'])
+            audiochannels = contents.get('audiochannels', None) and int(contents['audiochannels'])
             profile = trans.Profile(profilename,
                                   contents['audioencoder'],
                                   contents['videoencoder'],
                                   contents['muxer'],
                                   videowidth, videoheight, videopar, videoframerate,
-                                  audiorate, audiochanns)
+                                  audiorate, audiochannels)
 
             task.addProfile(profilename, profile, contents['extension'])
     for task in tasks.keys():

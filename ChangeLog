@@ -1,3 +1,10 @@
+2006-10-18  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/transcoder/trans.py:
+	* flumotion/transcoder/transcoder.py:
+	* tests/ogger.py:
+	  s/audiochanns/audiochannels/g
+
 2006-10-17  Edward Hervey  <edward@fluendo.com>
 
 	* flumotion/transcoder/trans.py:
