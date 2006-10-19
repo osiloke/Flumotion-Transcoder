@@ -217,11 +217,15 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         self._outputs = {} # dict of output file name -> profile
 
         self._started = False
+        self._exposed = False
 
         self._discoverer = None
         self._pipeline = None
         self._watcher = None
         self._bus = None
+
+        self._queuetype = gst.element_factory_make("queue").__gtype__
+        self._queues = {} # element -> Full (gboolean)
 
         self.timeout = 30
 
@@ -314,13 +318,35 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         src.link(dbin)
 
         dbin.connect('no-more-pads', self._decodebinNoMorePadsCb)
+        dbin.connect('element-added', self._elementAddedCb)
         
         return pipeline
+
+    def _elementAddedCb(self, dbin, element):
+        self.log("element added %s" % element.get_name())
+        if element.__gtype__ == self._queuetype:
+            self._queues[element] = False
+            element.connect('overrun', self._queueOverrunCb, dbin)
+
+    def _queueOverrunCb(self, queue, dbin):
+        self.log("overrun in queue %s" % queue.get_name())
+        if self._queues[queue]:
+            return
+        self.log("unique overrun")
+        self._queues[queue] = True
+        for queue, isfull in self._queues.items():
+            if not isfull:
+                return
+        self._decodebinNoMorePadsCb(dbin)
 
     def _decodebinNoMorePadsCb(self, dbin):
         # called when decodebin has all the pads and we can start
         # encoding
+        if self._exposed:
+            return
+        self._exposed = True
         self.log('All encoded streams found, adding encoders')
+        
         # go over pads, adding encoding bins, creating tees, linking
         encbins = []
         for outputPath, profile in self._outputs.items():
@@ -402,7 +428,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             aqueue.props.max_size_time = 0
             
             bin.add(aqueue, arate, ares, aconv, aenc)
-            gst.element_link_many(aqueue, arate, ares, aconv)
+            gst.element_link_many(aqueue, arate, aconv, ares)
             
             if (profile.audiorate or profile.audiochannels):
                 audiochannels = profile.audiochannels or discoverer.audiochannels
@@ -410,9 +436,9 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                 atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
                     astmpl, astmpl)
                 caps = gst.caps_from_string(atmpl)
-                aconv.link(aenc, caps)
+                ares.link(aenc, caps)
             else:
-                aconv.link(aenc)
+                ares.link(aenc)
                 
             aenc.link(muxer)
         

@@ -1,3 +1,11 @@
+2006-10-19  Edward Hervey  <edward@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
+	Invert the order of audio filters, it is now:
+	RAWAUDIO ! audiorate ! audioconvert ! audioresample ! ENCODER
+	Implement queue-overrun detection system for streams that don't
+	emit 'no-more-pads'
+
 2006-10-18  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/transcoder/trans.py:
