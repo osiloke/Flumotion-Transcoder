@@ -14,11 +14,11 @@
 
 # paths to files and variables
 service=flumotion-transcoder
-shortservice=cluster-admin
+shortservice=transcoder
 prog=/usr/sbin/$service
 lockdir=/var/lock/subsys
 lockfile=${lockdir}/$service.lock
-pidfile=/var/run/$service.pid
+pidfile=/var/run/flumotion/$shortservice.pid
 logfile=/var/log/$service.log
 sysconfig=/etc/sysconfig/$service
 
@@ -57,7 +57,7 @@ stop() {
 		killproc -p $pidfile $service
 		RETVAL=$?
 		echo
-		[ $RETVAL = 0 ] && rm ${lockfile}
+		[ $RETVAL = 0 ] && rm ${lockfile} && rm ${pidfile}
 	fi
 	return $RETVAL
 }

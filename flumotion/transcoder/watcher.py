@@ -51,6 +51,7 @@ class Watcher(gobject.GObject, log.Loggable):
         if self._sigid:
             gobject.source_remove(self._sigid)
         if checknow:
+            # FIXME: there is no self._scanDir
             self._files = self._scanDir()
         else:
             self._files = {}

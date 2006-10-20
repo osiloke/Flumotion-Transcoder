@@ -12,11 +12,6 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
 import os
-import shutil
-import sys
-import ConfigParser
-import string
-import time
 
 import gobject
 gobject.threads_init()
@@ -281,7 +276,6 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
-            filename = self.processing
             self._shutDownPipeline()
             self.emit('error', "Could not play pipeline for file '%s'" %
                 self.inputfile)

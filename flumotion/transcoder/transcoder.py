@@ -40,12 +40,10 @@ def getOutputFilename(filename, extension):
     prefix = os.path.basename(filename).rsplit('.', 1)[0]
     return string.join([prefix, extension], '.')
 
-# FIXME: rename, a task is something that runs once for one operation
-class TranscoderTask(gobject.GObject, log.Loggable):
+class InputHandler(gobject.GObject, log.Loggable):
     """
-    Task for the transcoder
-
-    Handles the work directories and the output settings
+    I handle one incoming directory, watching it for new files and starting
+    transcoding tasks.
 
     Signals:
     _ done : the given filename has succesfully been transcoded
@@ -65,7 +63,8 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         }
 
     def __init__(self, name, inputdirectory, outputdirectory,
-                 workdirectory=None, linkdirectory=None, urlprefix=None,
+                 workdirectory=None, linkdirectory=None, errordirectory=None,
+                 urlprefix=None,
                  timeout=3):
         gobject.GObject.__init__(self)
         self.name = name
@@ -73,6 +72,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         self.outputdirectory = outputdirectory
         self.workdirectory = workdirectory
         self.linkdirectory = linkdirectory
+        self.errordirectory = errordirectory
         self.urlprefix = urlprefix
         self.timeout = timeout
 
@@ -97,14 +97,17 @@ class TranscoderTask(gobject.GObject, log.Loggable):
         if not self.workdirectory:
             self.workdirectory = os.path.join(self.outputdirectory, "temp")
         for p in [self.inputdirectory, self.outputdirectory,
-                  self.linkdirectory, self.workdirectory]:
+                  self.linkdirectory, self.workdirectory, self.errordirectory]:
             if p and not os.path.isdir(p):
                 self.debug("Creating directory '%s'" % p)
-                os.makedirs(p)
+                try:
+                    os.makedirs(p)
+                except OSError, e:
+                    self.warning("Could not create directory '%s'" % p)
 
     def addProfile(self, name, profile, extension):
         """
-        Add a Profile and extension to the task.
+        Add a Profile and extension to the InputHandler..
         If a profile with the same name already exists, it will be
         overridden.
         """
@@ -114,7 +117,7 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
     def setUp(self):
         """
-        Sets up the Task.
+        Sets up the InputHandler.
         Fills up the queue with existing non-processed files.
         Starts a watcher on the incoming directory.
         """
@@ -146,19 +149,71 @@ class TranscoderTask(gobject.GObject, log.Loggable):
     def start(self):
         """
         Start a transcoding task.
-        Returns True if the task could be started, else False.
+        Returns a pid if the task could be started, or None.
+
+        This should never return 0, because the child for the task will run
+        until it reaches sys.exit()
         """
         self.log("start()")
         if not self.queue:
-            self.log("task queue empty, returning")
-            return False
+            self.log("incoming queue empty, returning")
+            return None
         if self.processing:
             self.warning("Already processing %s" % self.processing)
-            return False
+            return None
+
         self.processing = self.queue.pop(0)
         self.debug("Start processing %s" % self.processing)
         self.debug("%d files left in queue after this" % len(self.queue))
+        
+        pid = os.fork()
+        if pid:
+            self._parent(pid)
+        else:
+            self._child()
 
+    def _parent(self, pid):
+        # waits for child blockingly
+        self.debug("Forked task with pid %d" % pid)
+        self.debug('Waiting for task with pid %r to finish' % pid)
+        (pid, status) = os.waitpid(pid, 0)
+
+        self.working = False
+        self.debug('Task with pid %d finished' % pid)
+
+        success = False
+
+        if os.WIFEXITED(status):
+            exitstatus = os.WEXITSTATUS(status)
+            if exitstatus == 0:
+                self.info('Task %r stopped successfully.' % pid)
+                success = True
+            else:
+                self.warning('Task %r failed.' % pid)
+        elif WIFSIGNALED(status):
+            signum = WTERMSIG(status)
+            if signum == signal.SIGKILL:
+                self.warning('Task %r was killed.' % pid)
+            elif signum == signal.SIGSEGV:
+                self.warning('Task %r segfaulted.' % pid)
+            else:
+                self.warning('Task %r signaled with signum %r.' % (
+                    pid, signum))
+        else:
+            self.warning('Unhandled status %r' % status)
+
+        if not success:
+            self.warning('Moving input file to errors')
+            try:
+                shutil.move(self.processing, self.errordirectory)
+            except IOError, e:
+                self.warning('Could not save transcoded file: %s' % (
+                    log.getExceptionMessage(e)))
+
+        self._processed(self.processing)
+
+
+    def _child(self):
         name = os.path.basename(self.processing)
         mt = trans.MultiTranscoder(name, self.processing)
         # add each of our profiles
@@ -171,14 +226,17 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             self._handleOutputFiles(inputPath)
 
         def _errorCb(mt, message, inputPath):
-            self._processed(inputPath)
             self.emit('error', inputPath, message)
 
         mt.connect('done', _doneCb, self.processing)
         mt.connect('error', _errorCb, self.processing)
         mt.start()
-        return True
 
+        # now make sure we don't return until we sys.exit
+        mainloop = gobject.MainLoop()
+        mainloop.run()
+
+    # called in parent
     def _processed(self, inputPath):
         # called to mark the file as processed, regardless of error or not
         self.processing = None
@@ -204,7 +262,6 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             outputfiles.remove(outRelPath)
             if not outputfiles:
                 self.debug('All output files discovered, emitting done')
-                self._processed(inputfile)
                 self.emit('done', inputfile)
 
         for profile, ext in self._profiles.itervalues():
@@ -323,57 +380,64 @@ class Transcoder(log.Loggable):
     logCategory = 'transcoder'
 
     def __init__(self):
-        self.tasks = []
+        self._incomings = []
         self.currentidx = 0
         self.working = False
+        self._inputHandlers = []
 
     def run(self):
         """ Start the Transcoder """
-        # setup the various tasks
-        if len(self.tasks) == 0:
-            raise IndexError, "No tasks available"
-        for task in self.tasks:
-            task.setUp()
+        # setup the various inputHandlers
+        if len(self._inputHandlers) == 0:
+            raise IndexError, "No _inputHandlers available"
+        for inputHandler in self._inputHandlers:
+            inputHandler.setUp()
         self._nextTask()
         
     def _nextTask(self):
         """ Start the next task """
-        # Find the next task to run
+
+        # Find the next inputHandler to run
         if self.working:
+            self.debug('Already working, returning')
             return
 
-        nb = len(self.tasks)
+        nb = len(self._inputHandlers)
         idx = self.currentidx % nb
         for i in range(nb):
-            task = self.tasks[(idx + nb) % nb]
-            if len(task.queue):
+            inputHandler = self._inputHandlers[(idx + i) % nb]
+            if len(inputHandler.queue):
                 self.working = True
                 self.debug('Task %s has %d files in queue, starting' % (
-                    task.name, len(task.queue)))
-                task.start()
+                    inputHandler.name, len(inputHandler.queue)))
+                # this blocks until the task is done
+                inputHandler.start()
+                self.working = False
                 break
             
-    def addTask(self, task):
-        """ Add a TranscoderTask """
-        task.connect('done', self._taskDoneCb)
-        task.connect('error', self._taskErrorCb)
-        task.connect('newfile', self._taskNewFileCb)
-        self.tasks.append(task)
+    def addInputHandler(self, inputHandler):
+        """
+        Add an InputHandler.
+        """
+        self.info('Adding inputHandler %s' % inputHandler.name)
+        inputHandler.connect('done', self._inputHandlerDoneCb)
+        inputHandler.connect('error', self._inputHandlerErrorCb)
+        inputHandler.connect('newfile', self._inputHandlerNewFileCb)
+        self._inputHandlers.append(inputHandler)
 
-    def _taskDoneCb(self, task, filename):
-        self.log("DONE in task %s with filename %s" % (task.name, filename))
+    def _inputHandlerDoneCb(self, inputHandler, filename):
+        self.log("DONE in inputHandler %s with filename %s" % (inputHandler.name, filename))
         self.info("Input file '%s' transcoded successfully." % filename)
-        self.working = False
-        self._nextTask()
+        sys.exit(0)
 
-    def _taskErrorCb(self, task, filename, reason):
-        self.warning("ERROR in task %s with filename %s" % (task.name, filename))
+    def _inputHandlerErrorCb(self, inputHandler, filename, reason):
+        # this comes from a child
+        self.warning("ERROR in inputHandler %s with filename %s" % (inputHandler.name, filename))
         self.warning("Reason for ERROR : %s" % reason)
-        self.working = False
-        self._nextTask()
+        sys.exit(1)
 
-    def _taskNewFileCb(self, task, filename):
-        self.info("New incoming file in task '%s' : %s" % (task.name, filename))
+    def _inputHandlerNewFileCb(self, inputHandler, filename):
+        self.info("New incoming file in inputHandler '%s' : %s" % (inputHandler.name, filename))
         self._nextTask()
 
 def configure_transcoder(transcoder, configurationfile):
@@ -384,31 +448,32 @@ def configure_transcoder(transcoder, configurationfile):
     sections = parser.sections()
     sections.sort()
 
-    tasks = {}
+    inputHandlers = {}
 
     for section in sections:
         contents = dict(parser.items(section))
 
         # each section has a name
-        # the tasks are named without :
-        # each profile in a task has : in the name
+        # the inputHandlers are named without :
+        # each profile in a inputHandler has : in the name
         if ':' not in section:
-            # a task section
-            task = TranscoderTask(section,
+            # a inputHandler section
+            inputHandler = InputHandler(section,
                                   contents['inputdirectory'],
                                   contents['outputdirectory'],
                                   contents.get('workdirectory', None),
                                   linkdirectory=contents.get('linkdirectory', None),
+                                  errordirectory=contents.get('errordirectory', None),
                                   urlprefix=contents.get('urlprefix', None),
                                   timeout=int(contents.get('timeout', 30)))
-            tasks[section] = task
+            inputHandlers[section] = inputHandler
 
         else:
             # a profile section
-            taskname = section.split(':')[0]
+            inputHandlerName = section.split(':')[0]
             profilename = section.split(':')[1]
             try:
-                task = tasks[taskname]
+                inputHandler = inputHandlers[inputHandlerName]
             except:
                 continue
             videowidth = contents.get('videowidth', None) and int(contents['videowidth'])
@@ -428,8 +493,7 @@ def configure_transcoder(transcoder, configurationfile):
                                   videowidth, videoheight, videopar, videoframerate,
                                   audiorate, audiochannels)
 
-            task.addProfile(profilename, profile, contents['extension'])
-    for task in tasks.keys():
-        transcoder.addTask(tasks[task])
+            inputHandler.addProfile(profilename, profile, contents['extension'])
 
-    # from the parsed data, create TranscoderTask and pass it to the Transcoder
+    for inputHandler in inputHandlers.keys():
+        transcoder.addInputHandler(inputHandlers[inputHandler])

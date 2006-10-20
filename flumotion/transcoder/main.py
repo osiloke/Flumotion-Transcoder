@@ -47,12 +47,20 @@ def main(argv):
         print "Usage:\n\t%s <configuration file>" % argv[0]
         sys.exit()
     if options.daemonize:
+        if common.getPid('transcoder'):
+            raise SystemError(
+                "A transcoder service is already running")
+
         logPath = os.path.join(os.getcwd(), "transcoder.log")
         if options.log:
             logPath = options.log
         log.debug('transcoder', 'Daemonizing')
         common.daemonize(stdout=logPath, stderr=logPath)
         log.debug('transcoder', 'Daemonized')
+        # from now on I should keep running, whatever happens
+        path = common.writePidFile('transcoder')
+        log.debug('transcoder', 'written pid file %s' % path)
+
 
     log.info('transcoder', 'Started')
 

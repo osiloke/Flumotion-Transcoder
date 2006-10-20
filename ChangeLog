@@ -1,3 +1,24 @@
+2006-10-21  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* configure.ac:
+	  add misc setup.py
+	* doc/redhat/flumotion-transcoder.init:
+	  fix it up with the new pid writing code;
+	  service flumotion-transcoder restart now works
+	* flumotion/transcoder/main.py:
+	  write pid file
+	* flumotion/transcoder/trans.py:
+	  remove unused imports
+	* flumotion/transcoder/transcoder.py:
+	  rename TranscoderTask to InputHandler since that's what it is
+	  add errordirectory and move files there that had an error when
+	  transcoding
+	  fork for a task
+	  fix a logic error in _nextTask that made it only ever run tasks
+	  for one customer
+	* flumotion/transcoder/watcher.py:
+	  add a FIXME about a missing method
+
 2006-10-19  Edward Hervey  <edward@fluendo.com>
 
 	* flumotion/transcoder/trans.py:
