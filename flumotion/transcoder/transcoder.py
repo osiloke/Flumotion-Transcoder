@@ -240,6 +240,18 @@ class TranscoderTask(gobject.GObject, log.Loggable):
                 return
             # ogg file, write link
             args = {'cortado': '1'}
+
+            duration = 0.0
+            if discoverer.videolength:
+                duration = float(discoverer.videolength / gst.SECOND)
+            elif discoverer.audiolength:
+                duration = float(discoverer.audiolength / gst.SECOND)
+
+            # let buffer time be at least 5 seconds
+            bytesPerSecond = os.stat(workfile).st_size / duration
+            # specified in Kb
+            bufferSize = int(bytesPerSecond * 5 / 1024)
+            args['buffer'] = str(bufferSize)
             # cortado doesn't handle Theora cropping, so we need to round
             # up width and height for display
             rounder = lambda i: (i + (16 - 1)) / 16 * 16
@@ -250,8 +262,8 @@ class TranscoderTask(gobject.GObject, log.Loggable):
             if discoverer.videorate:
                 f = discoverer.videorate
                 args['framerate'] = str(float(f.num) / f.denom)
-            if discoverer.videolength:
-                args['duration'] = str(float(discoverer.videolength / gst.SECOND))
+            if duration:
+                args['duration'] = str(duration)
             args['audio'] = '0'
             args['video'] = '0'
             if discoverer.audiocaps:
@@ -269,7 +281,11 @@ class TranscoderTask(gobject.GObject, log.Loggable):
 
             linkPath = os.path.join(self.linkdirectory, outRelPath) + '.link'
             handle = open(linkPath, 'w')
-            handle.write('<iframe src="%s" width="%s" height="%s" frameborder="0" scrolling="no" />\n' % (link, args['width'], args['height']))
+            handle.write(
+                '<iframe src="%s" width="%s" height="%s" '
+                'frameborder="0" scrolling="no" '
+                'marginwidth="0" marginheight="0" />\n' % (
+                    link, args['width'], args['height']))
             handle.close()
             self.info("Written link file %s" % linkPath)
 
