@@ -1,5 +1,12 @@
 2006-10-21  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* Makefile.am:
+	  add pychecker target
+	* flumotion/transcoder/transcoder.py:
+	  fix some bugs shown by pychecker
+
+2006-10-21  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* configure.ac:
 	  add misc setup.py
 	* doc/redhat/flumotion-transcoder.init:

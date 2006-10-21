@@ -12,11 +12,11 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
 import os
+import signal
 import shutil
 import sys
 import ConfigParser
 import string
-import time
 
 import gobject
 import gst
@@ -104,6 +104,7 @@ class InputHandler(gobject.GObject, log.Loggable):
                     os.makedirs(p)
                 except OSError, e:
                     self.warning("Could not create directory '%s'" % p)
+                    self.debug(log.getExceptionMessage(e))
 
     def addProfile(self, name, profile, extension):
         """
@@ -190,8 +191,8 @@ class InputHandler(gobject.GObject, log.Loggable):
                 success = True
             else:
                 self.warning('Task %r failed.' % pid)
-        elif WIFSIGNALED(status):
-            signum = WTERMSIG(status)
+        elif os.WIFSIGNALED(status):
+            signum = os.WTERMSIG(status)
             if signum == signal.SIGKILL:
                 self.warning('Task %r was killed.' % pid)
             elif signum == signal.SIGSEGV:
@@ -283,7 +284,7 @@ class InputHandler(gobject.GObject, log.Loggable):
             return
 
         # discover the media
-        def _discoveredCb(discoverer, ismedia):
+        def _discoveredCb(discoverer, ismedia, outputfile):
             if not ismedia:
                 self.warning("Discoverer thinks output file '%s' is not a media file" % outputfile)
                 gobject.timeout_add(0, callback, inputfile, profile, extension)
@@ -355,7 +356,7 @@ class InputHandler(gobject.GObject, log.Loggable):
         self.debug("Analyzing transcoded file '%s'" % workfile)
         discoverer = Discoverer(workfile)
 
-        discoverer.connect('discovered', _discoveredCb)
+        discoverer.connect('discovered', _discoveredCb, workfile)
         discoverer.discover()
         return True
 
