@@ -1,1 +1,1 @@
-EXTRA_DIST = ogger.py # flasher.py
+CLEANFILES = setup.py
