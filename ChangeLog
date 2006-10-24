@@ -1,5 +1,14 @@
 2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* conf/flumotion-transcoder.ini:
+	* flumotion/transcoder/transcoder.py:
+	  Add a "getrequest" config parameter through which creation
+	  of an output file can be announced.  Can interpolate some
+	  of the values related to the outgoing file.
+	  Add example config for it.
+
+2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* bin/flumotion-transcoder.in:
 	* flumotion/transcoder/main.py:
 	  Use twisted harder.

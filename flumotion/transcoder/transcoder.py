@@ -21,6 +21,8 @@ import string
 import gobject
 import gst
 
+from twisted.internet import reactor
+
 from gst.extend.discoverer import Discoverer
 
 from flumotion.common import log, common
@@ -28,6 +30,8 @@ from flumotion.common import log, common
 from flumotion.transcoder import trans
 
 from flumotion.transcoder.watcher import DirectoryWatcher
+
+GET_REQUEST_TIMEOUT = 60
 
 # FIXME: this would not work well if we want to save to a separate dir per
 # encoding profile
@@ -64,7 +68,7 @@ class InputHandler(gobject.GObject, log.Loggable):
 
     def __init__(self, name, inputdirectory, outputdirectory,
                  workdirectory=None, linkdirectory=None, errordirectory=None,
-                 urlprefix=None,
+                 urlprefix=None, getrequest=None,
                  timeout=3):
         gobject.GObject.__init__(self)
         self.name = name
@@ -74,6 +78,8 @@ class InputHandler(gobject.GObject, log.Loggable):
         self.linkdirectory = linkdirectory
         self.errordirectory = errordirectory
         self.urlprefix = urlprefix
+        self.getrequest = getrequest
+        self.debug('Preparing get request %s' % self.getrequest)
         self.timeout = timeout
 
         # dict of profile name -> (profile, extension)
@@ -347,6 +353,61 @@ class InputHandler(gobject.GObject, log.Loggable):
             handle.close()
             self.info("Written link file %s" % linkPath)
 
+            # if we need to post a get request, we should do that before we
+            # callback
+            if self.getrequest:
+                self.debug('Preparing get request')
+                args = args.copy()
+                # I actually had an incoming file get transcoded to two outgoing
+                # files where one was 1.999 secs and the other 2.000 secs
+                # so let's round.
+                s = int(round(duration))
+                m = s / 60
+                s -= m * 60
+                h = m / 60
+                m -= h * 60
+                args['hours'] = h
+                args['minutes'] = m
+                args['seconds'] = s
+                args['outputPath'] = outRelPath
+
+                url = self.getrequest % args
+
+                def doGetRequest(url, triesLeft=3):
+                    from twisted.web import client
+                    self.debug('Doing get request %s' % url)
+                    d = client.getPage(url, timeout=GET_REQUEST_TIMEOUT / 2)
+                    d.addCallback(getPageCb)
+                    d.addErrback(getPageEb, url, triesLeft)
+                    return d
+
+                def getPageCb(result):
+                    self.info('Done get request to inform server for %s' % outRelPath)
+                    self.debug('Got result %s' % result)
+                    # finish with the callback
+                    gobject.timeout_add(0, callback, inputfile, profile,
+                        extension)
+
+                def getPageEb(failure, url, triesLeft):
+                    if triesLeft == 0:
+                        self.warning('Could not inform server for %s' % outRelPath)
+                        # finish with the callback regardless
+                        gobject.timeout_add(0, callback, inputfile, profile,
+                            extension)
+                        return
+                    self.debug('failure: %s' % log.getFailureMessage(failure))
+                    triesLeft -= 1
+                    self.debug('%d tries left' % triesLeft)
+                    self.info('Could not do get request for %s, '
+                        'trying again in %d seconds' % (
+                            outRelPath, GET_REQUEST_TIMEOUT))
+                    reactor.callLater(GET_REQUEST_TIMEOUT,
+                        doGetRequest, url, triesLeft)
+
+                # start
+                doGetRequest(url)
+                return
+
             # done
             gobject.timeout_add(0, callback, inputfile, profile, extension)
             return
@@ -452,7 +513,8 @@ def configure_transcoder(transcoder, configurationfile):
     inputHandlers = {}
 
     for section in sections:
-        contents = dict(parser.items(section))
+        # set raw True so we can have getrequest contain %
+        contents = dict(parser.items(section, raw=True))
 
         # each section has a name
         # the inputHandlers are named without :
@@ -466,6 +528,7 @@ def configure_transcoder(transcoder, configurationfile):
                                   linkdirectory=contents.get('linkdirectory', None),
                                   errordirectory=contents.get('errordirectory', None),
                                   urlprefix=contents.get('urlprefix', None),
+                                  getrequest=contents.get('getrequest', None),
                                   timeout=int(contents.get('timeout', 30)))
             inputHandlers[section] = inputHandler
 
