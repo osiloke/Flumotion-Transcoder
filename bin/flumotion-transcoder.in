@@ -43,7 +43,8 @@ try:
     warnings.filterwarnings('ignore', category=UserWarning)
 
     # and boot!
-    from flumotion.transcoder import main
+    from flumotion.common import boot
+    boot.boot('flumotion.transcoder.main.main', gst=False)
     main.main(sys.argv)
 except KeyboardInterrupt:
     print 'Interrupted'

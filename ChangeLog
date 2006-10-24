@@ -1,3 +1,8 @@
+2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* bin/flumotion-transcoder.in:
+	  run as a twisted app
+
 2006-10-21  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* Makefile.am:
