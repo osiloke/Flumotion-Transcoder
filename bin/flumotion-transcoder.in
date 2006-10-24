@@ -45,6 +45,5 @@ try:
     # and boot!
     from flumotion.common import boot
     boot.boot('flumotion.transcoder.main.main', gst=False)
-    main.main(sys.argv)
 except KeyboardInterrupt:
     print 'Interrupted'

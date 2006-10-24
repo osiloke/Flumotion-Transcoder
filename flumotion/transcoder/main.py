@@ -19,6 +19,7 @@ import optparse
 
 import gobject
 
+from twisted.internet import reactor
 from flumotion.common import common, log
 from flumotion.transcoder import transcoder
 
@@ -66,6 +67,5 @@ def main(argv):
 
     trans = transcoder.Transcoder()
     transcoder.configure_transcoder(trans, args[0])
-    mainloop = gobject.MainLoop()
-    gobject.idle_add(trans.run)
-    mainloop.run()
+    reactor.callLater(0, trans.run)
+    reactor.run()

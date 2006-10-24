@@ -1,3 +1,9 @@
+2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* bin/flumotion-transcoder.in:
+	* flumotion/transcoder/main.py:
+	  Use twisted harder.
+
 2006-10-24  Edward Hervey  <edward@fluendo.com>
 
 	* conf/flumotion-transcoder.ini:
