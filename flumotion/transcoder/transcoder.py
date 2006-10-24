@@ -128,7 +128,6 @@ class InputHandler(gobject.GObject, log.Loggable):
         Fills up the queue with existing non-processed files.
         Starts a watcher on the incoming directory.
         """
-        self.debug("setUp()")
         # analyze incoming directory
         infiles = os.listdir(self.inputdirectory)
         # check which files from the queue have already been processed
