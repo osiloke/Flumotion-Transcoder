@@ -210,12 +210,15 @@ class InputHandler(gobject.GObject, log.Loggable):
             self.warning('Unhandled status %r' % status)
 
         if not success:
-            self.warning('Moving input file to errors')
-            try:
-                shutil.move(self.processing, self.errordirectory)
-            except IOError, e:
-                self.warning('Could not save transcoded file: %s' % (
-                    log.getExceptionMessage(e)))
+            if not self.errordirectory:
+                self.warning('Cannot move to error, not specified')
+            else:
+                try:
+                    shutil.move(self.processing, self.errordirectory)
+                    self.warning('Moving input file to errors')
+                except IOError, e:
+                    self.warning('Could not save transcoded file: %s' % (
+                        log.getExceptionMessage(e)))
 
         self._processed(self.processing)
 
@@ -490,13 +493,13 @@ class Transcoder(log.Loggable):
     def _inputHandlerDoneCb(self, inputHandler, filename):
         self.log("DONE in inputHandler %s with filename %s" % (inputHandler.name, filename))
         self.info("Input file '%s' transcoded successfully." % filename)
-        sys.exit(0)
+        os._exit(0)
 
     def _inputHandlerErrorCb(self, inputHandler, filename, reason):
         # this comes from a child
         self.warning("ERROR in inputHandler %s with filename %s" % (inputHandler.name, filename))
         self.warning("Reason for ERROR : %s" % reason)
-        sys.exit(1)
+        os._exit(1)
 
     def _inputHandlerNewFileCb(self, inputHandler, filename):
         self.info("New incoming file in inputHandler '%s' : %s" % (inputHandler.name, filename))
