@@ -1,3 +1,9 @@
+2006-10-24  Edward Hervey  <edward@fluendo.com>
+
+	* conf/flumotion-transcoder.ini:
+	Added example configuration for DV in Quicktime.
+	Renamed the configurations to something more sensible.
+
 2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* bin/flumotion-transcoder.in:
