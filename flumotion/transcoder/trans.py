@@ -417,12 +417,11 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             aqueue = gst.element_factory_make("queue", "audioqueue")
             aconv = gst.element_factory_make("audioconvert")
             ares = gst.element_factory_make("audioresample")
-            arate = gst.element_factory_make("audiorate")
 
             aqueue.props.max_size_time = 0
             
-            bin.add(aqueue, arate, ares, aconv, aenc)
-            gst.element_link_many(aqueue, arate, aconv, ares)
+            bin.add(aqueue, ares, aconv, aenc)
+            gst.element_link_many(aqueue, aconv, ares)
             
             if (profile.audiorate or profile.audiochannels):
                 audiochannels = profile.audiochannels or discoverer.audiochannels

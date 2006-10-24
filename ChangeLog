@@ -1,5 +1,11 @@
 2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* flumotion/transcoder/trans.py:
+	  remove audiorate, as it introduces clearly audible distortion
+	  in the result files, and it seems to work fine without it
+
+2006-10-24  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* conf/flumotion-transcoder.ini:
 	* flumotion/transcoder/transcoder.py:
 	  Add a "getrequest" config parameter through which creation
