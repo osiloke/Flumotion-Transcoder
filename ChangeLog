@@ -3,6 +3,7 @@
 	* flumotion/transcoder/trans.py (calculateOutputSize)
 	(getOutputVideoCaps): Factor out of the Profile object; these are
 	just functions now.
+	(MultiTranscoder._discoveredCb): Hah!
 
 	* flumotion/transcoder/config.py (Config.parse): Fix parsing of
 	whole files.
