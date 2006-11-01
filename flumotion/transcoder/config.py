@@ -17,7 +17,7 @@ import ConfigParser
 from flumotion.common import log
 
 class SectionParser(log.Loggable):
-    def parseFromTable(name, table, confDict):
+    def parseFromTable(self, name, table, confDict):
         for k, (attr, required, parser, default) in table.items():
             if required and k not in confDict:
                 raise TypeError, ('While parsing %s: missing required '
@@ -26,7 +26,7 @@ class SectionParser(log.Loggable):
 
         for k, v in confDict.items():
             try:
-                attr, required, parser, default = parseTable[k]
+                attr, required, parser, default = table[k]
             except KeyError:
                 raise KeyError, \
                       'Unknown conf key for %s: %s' % (name, k)
@@ -73,7 +73,7 @@ class Profile(SectionParser):
 class Customer(SectionParser):
     def __init__(self, name, confDict):
         parseTable = {'inputdirectory': ('inputDir', True, str, None),
-                      'outputdirectory': ('ouputDir', True, str, None),
+                      'outputdirectory': ('outputDir', True, str, None),
                       'workdirectory': ('workDir', False, str, None),
                       'linkdirectory': ('linkDir', False, str, None),
                       'errordirectory': ('errorDir', False, str, None),
@@ -87,9 +87,9 @@ class Customer(SectionParser):
 
         self.parseFromTable(name, parseTable, confDict)
 
-        for attr in ('inputDir', 'outputDir', 'linkDir', 'workDir',
-                     'errorDir'):
-            path = getattr(self, attr)
+    def ensureDirs(self):
+        for path in (self.inputDir, self.outputDir, self.linkDir,
+                     self.workDir, self.errorDir):
             if path and not os.path.isdir(path):
                 self.debug("Creating directory '%s'" % p)
                 try:

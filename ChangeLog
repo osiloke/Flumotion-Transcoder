@@ -1,5 +1,13 @@
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
+	* flumotion/transcoder/config.py (Customer.ensureDirs): Factor out
+	of __init__.
+	(SectionParser.parseFromTable, Customer.__init__): Fix bugs caught
+	by the test suite.
+
+	* flumotion/test/test_transcoder_config.py
+	(TestConfigParser.testParseCustomer): Test the customer parser.
+
 	* flumotion/transcoder/Makefile.am (component_PYTHON): 
 	* flumotion/transcoder/config.py: Refactor the config parser.
 
