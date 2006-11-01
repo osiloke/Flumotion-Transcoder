@@ -129,7 +129,7 @@ class Profile(log.Loggable):
             # now for the tricky part :)
             # the Display Aspect ratio is going to stay the same whatever
             # happens
-            dar = gst.Fraction(inwidth * inpar.denom, inheight * inpar.num)
+            dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
 
             gst.log('DAR is %s' % dar)
             
