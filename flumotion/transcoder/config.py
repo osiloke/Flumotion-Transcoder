@@ -94,14 +94,16 @@ class Customer(SectionParser):
         self.parseFromTable(name, parseTable, confDict)
 
     def ensureDirs(self):
+        __pychecker__ = 'no-classattr'
         for path in (self.inputDir, self.outputDir, self.linkDir,
                      self.workDir, self.errorDir):
             if path and not os.path.isdir(path):
-                self.debug("Creating directory '%s'" % p)
+                self.debug("Creating directory '%s'", path)
                 try:
-                    os.makedirs(p)
+                    os.makedirs(path)
                 except OSError, e:
-                    self.warning("Could not create directory '%s'" % p)
+                    self.warning("Could not create directory '%s'",
+                                 path)
                     self.debug(log.getExceptionMessage(e))
                     raise
 
@@ -120,7 +122,8 @@ class Config(log.Loggable):
 
     def parse(self):
         parser = ConfigParser.ConfigParser()
-        parser.read(self.confFile)
+        if not parser.read(self.confFile):
+            raise RuntimeError, 'could not read conf file %s' % self.confFile
         sections = parser.sections()
         sections.sort()
 
@@ -133,6 +136,6 @@ class Config(log.Loggable):
                 self.customers[section] = Customer(section, contents)
             else:
                 # a profile section
-                customerName, profileName = section.split(':')[0]
+                customerName, profileName = section.split(':')
                 customer = self.customers[customerName]
                 customer.addProfile(Profile(profileName, contents))

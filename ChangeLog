@@ -1,3 +1,41 @@
+2006-11-01  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/trans.py (calculateOutputSize)
+	(getOutputVideoCaps): Factor out of the Profile object; these are
+	just functions now.
+
+	* flumotion/transcoder/config.py (Config.parse): Fix parsing of
+	whole files.
+
+	* flumotion/transcoder/transcoder.py (InputHandler): Refactor to
+	use the new config interface.
+	(Transcoder): Refactor to use the new config interface.
+
+	* bin/Makefile.am (sbin_SCRIPTS): 
+	* bin/flumotion-transcoder-job.in: 
+	* configure.ac: s/transcode-job/transcoder-job/.
+
+	* flumotion/transcoder/config.py (Config.parse): Make sure we
+	notice errors reading the config files.
+
+	* flumotion/transcoder/main.py (main): Use the common daemonize
+	facilities. Convert to the new config interface.
+
+	* flumotion/transcoder/job.py (main): New file, not completely
+	implemented yet.
+
+	* bin/flumotion-transcoder-job.in: New file, will be what the
+	transcoder will run.
+
+	* bin/flumotion-transcoder.in: Make more conventional.
+
+	* flumotion/transcoder/config.py (Customer.ensureDirs): Fix error
+	caught by pychecker.
+	(Customer.ensureDirs): Appeasement.
+
+	* flumotion/test/test_transcoder_config.py (TestConfigParser):
+	Remove a test stub.
+
 2006-11-01  Michael Smith  <msmith@fluendo.com>
 
 	* conf/flumotion-transcoder-test.ini:

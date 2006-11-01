@@ -19,7 +19,7 @@ import sys
 
 # Variable templates
 LIBDIR = '@LIBDIR@'
-PROGRAM_PATH = 'flumotion.transcoder.main.main'
+PROGRAM_PATH = 'flumotion.transcoder.job.main'
 
 try:
     # setup the project root

@@ -66,25 +66,15 @@ class InputHandler(gobject.GObject, log.Loggable):
                      (gobject.TYPE_STRING, ))
         }
 
-    def __init__(self, name, inputdirectory, outputdirectory,
-                 workdirectory=None, linkdirectory=None, errordirectory=None,
-                 urlprefix=None, getrequest=None,
-                 timeout=3):
+    def __init__(self, config):
+        """
+        @param config: The configuration for this customer.
+        @type  config: L{flumotion.transcoder.config.Customer}
+        """
         gobject.GObject.__init__(self)
-        self.name = name
-        self.inputdirectory = inputdirectory
-        self.outputdirectory = outputdirectory
-        self.workdirectory = workdirectory
-        self.linkdirectory = linkdirectory
-        self.errordirectory = errordirectory
-        self.urlprefix = urlprefix
-        self.getrequest = getrequest
-        self.debug('Preparing get request %s' % self.getrequest)
-        self.timeout = timeout
-
-        # dict of profile name -> (profile, extension)
-        self._profiles = {}
-
+        self.name = config.name
+        self.config = config
+        config.ensureDirs()
         self.watcher = None
         # list of queued complete files to encode
         self.queue = []
@@ -96,32 +86,6 @@ class InputHandler(gobject.GObject, log.Loggable):
         # list of processed files
         self.processed = []
 
-        self._validateArguments()
-
-    def _validateArguments(self):
-        """ Makes sure given arguments are valid """
-        if not self.workdirectory:
-            self.workdirectory = os.path.join(self.outputdirectory, "temp")
-        for p in [self.inputdirectory, self.outputdirectory,
-                  self.linkdirectory, self.workdirectory, self.errordirectory]:
-            if p and not os.path.isdir(p):
-                self.debug("Creating directory '%s'" % p)
-                try:
-                    os.makedirs(p)
-                except OSError, e:
-                    self.warning("Could not create directory '%s'" % p)
-                    self.debug(log.getExceptionMessage(e))
-
-    def addProfile(self, name, profile, extension):
-        """
-        Add a Profile and extension to the InputHandler..
-        If a profile with the same name already exists, it will be
-        overridden.
-        """
-        if not isinstance(profile, trans.Profile):
-            raise TypeError, "Given configuration is not a trans.Profile"
-        self._profiles[profile.name] = (profile, extension)
-
     def setUp(self):
         """
         Sets up the InputHandler.
@@ -129,13 +93,14 @@ class InputHandler(gobject.GObject, log.Loggable):
         Starts a watcher on the incoming directory.
         """
         # analyze incoming directory
-        infiles = os.listdir(self.inputdirectory)
+        infiles = os.listdir(self.config.inputDir)
         # check which files from the queue have already been processed
-        outputfiles = os.listdir(self.outputdirectory)
+        outputfiles = os.listdir(self.config.outputDir)
 
         for infile in infiles:
             done = True
-            for profile, ext in self._profiles.itervalues():
+            for profile in self.config.profiles.itervalues():
+                ext = profile.extension
                 if not getOutputFilename(infile, ext) in outputfiles:
                     done = False
                     break
@@ -143,7 +108,8 @@ class InputHandler(gobject.GObject, log.Loggable):
                 self.processed.append(infile)
 
         # Create a new watcher to look over the input directory
-        watcher = DirectoryWatcher(self.inputdirectory, timeout=self.timeout,
+        watcher = DirectoryWatcher(self.config.inputDir,
+                                   timeout=self.config.timeout,
                                    ignorefiles=self.processed)
         watcher.connect('complete-file', self._watcherCompleteFileCb)
         watcher.start()
@@ -209,11 +175,11 @@ class InputHandler(gobject.GObject, log.Loggable):
             self.warning('Unhandled status %r' % status)
 
         if not success:
-            if not self.errordirectory:
+            if not self.config.errorDir:
                 self.warning('Cannot move to error, not specified')
             else:
                 try:
-                    shutil.move(self.processing, self.errordirectory)
+                    shutil.move(self.processing, self.config.errorDir)
                     self.warning('Moving input file to errors')
                 except IOError, e:
                     self.warning('Could not save transcoded file: %s' % (
@@ -226,9 +192,10 @@ class InputHandler(gobject.GObject, log.Loggable):
         name = os.path.basename(self.processing)
         mt = trans.MultiTranscoder(name, self.processing)
         # add each of our profiles
-        for profile, ext in self._profiles.values():
+        for profile in self.config.profiles.values():
+            ext = profile.extension
             outputFilename = getOutputFilename(self.processing, ext)
-            outputPath = os.path.join(self.workdirectory, outputFilename)
+            outputPath = os.path.join(self.config.workDir, outputFilename)
             mt.addOutput(outputPath, profile)
 
         def _doneCb(mt, inputPath):
@@ -262,7 +229,8 @@ class InputHandler(gobject.GObject, log.Loggable):
         # "global" list that we can use to see when we can emit 'done'
         outputfiles = []
 
-        for profile, ext in self._profiles.itervalues():
+        for profile in self.config.profiles.itervalues():
+            ext = profile.extension
             outputfiles.append(getOutputFilename(inputfile, ext))
 
         def _discoveredOutputFile(inputfile, profile, ext):
@@ -273,20 +241,21 @@ class InputHandler(gobject.GObject, log.Loggable):
                 self.debug('All output files discovered, emitting done')
                 self.emit('done', inputfile)
 
-        for profile, ext in self._profiles.itervalues():
+        for profile in self.config.profiles.itervalues():
+            ext = profile.extension
             self._discoverOutputFile(inputfile, profile, ext,
                 _discoveredOutputFile)
 
     def _discoverOutputFile(self, inputfile, profile, extension, callback):
         """
         Possibly discover the output file if the config contains a
-        linkdirectory that we should write cortado links to.
+        config.linkDir that we should write cortado links to.
         Calls the callback when done discovering.
 
         @param callback: callable that will be called with inputfile, profile
                          and extension.
         """
-        if not self.linkdirectory:
+        if not self.config.linkDir:
             # call back immediately
             gobject.timeout_add(0, callback, inputfile, profile, extension)
             return
@@ -338,14 +307,14 @@ class InputHandler(gobject.GObject, log.Loggable):
                 args['video'] = '1'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
             outRelPath = getOutputFilename(inputfile, extension)
-            link = self.urlprefix + outRelPath + ".m3u?" + argString
+            link = self.config.urlPrefix + outRelPath + ".m3u?" + argString
             # make sure we have width and height for audio too
             if not args.has_key('width'):
                 args['width'] = 320
             if not args.has_key('height'):
                 args['height'] = 40
 
-            linkPath = os.path.join(self.linkdirectory, outRelPath) + '.link'
+            linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
             handle = open(linkPath, 'w')
             handle.write(
                 '<iframe src="%s" width="%s" height="%s" '
@@ -357,7 +326,7 @@ class InputHandler(gobject.GObject, log.Loggable):
 
             # if we need to post a get request, we should do that before we
             # callback
-            if self.getrequest:
+            if self.config.getRequest:
                 self.debug('Preparing get request')
                 args = args.copy()
                 # I actually had an incoming file get transcoded to two outgoing
@@ -373,7 +342,7 @@ class InputHandler(gobject.GObject, log.Loggable):
                 args['seconds'] = s
                 args['outputPath'] = outRelPath
 
-                url = self.getrequest % args
+                url = self.config.getRequest % args
 
                 def doGetRequest(url, triesLeft=3):
                     from twisted.web import client
@@ -415,7 +384,7 @@ class InputHandler(gobject.GObject, log.Loggable):
             return
 
         outRelPath = getOutputFilename(inputfile, extension)
-        workfile = os.path.join(self.workdirectory, outRelPath)
+        workfile = os.path.join(self.config.workDir, outRelPath)
         self.debug("Analyzing transcoded file '%s'" % workfile)
         discoverer = Discoverer(workfile)
 
@@ -428,8 +397,8 @@ class InputHandler(gobject.GObject, log.Loggable):
         move the output file from the work directory to the output directory.
         """
         outRelPath = getOutputFilename(inputfile, ext)
-        workfile = os.path.join(self.workdirectory, outRelPath)
-        outfile = os.path.join(self.outputdirectory, outRelPath)
+        workfile = os.path.join(self.config.workDir, outRelPath)
+        outfile = os.path.join(self.config.outputDir, outRelPath)
         try:
             shutil.move(workfile, outfile)
         except IOError, e:
@@ -443,11 +412,43 @@ class Transcoder(log.Loggable):
     """
     logCategory = 'transcoder'
 
-    def __init__(self):
+    def __init__(self, config):
+        """
+        @param config: Transcoder configuration
+        @type  config: L{flumotion.transcoder.config.Config}
+        """
+        self.config = config
         self._incomings = []
         self.currentidx = 0
         self.working = False
         self._inputHandlers = []
+
+        def done(inputHandler, filename):
+            self.log("DONE in inputHandler %s with filename %s",
+                     inputHandler.name, filename)
+            self.info("Input file '%s' transcoded successfully.",
+                      filename)
+            os._exit(0)
+
+        def error(inputHandler, filename, reason):
+            # this comes from a child
+            self.warning("ERROR in inputHandler %s with filename %s",
+                         inputHandler.name, filename)
+            self.warning("Reason for ERROR : %s", reason)
+            os._exit(1)
+
+        def newFile(inputHandler, filename):
+            self.info("New incoming file in inputHandler '%s' : %s",
+                      inputHandler.name, filename)
+            self._nextTask()
+
+        for name, customer in config.customers.items():
+            self.info('Adding inputHandler %s', name)
+            inputHandler = InputHandler(customer)
+            inputHandler.connect('done', done)
+            inputHandler.connect('error', error)
+            inputHandler.connect('newfile', newFile)
+            self._inputHandlers.append(inputHandler)
 
     def run(self):
         """ Start the Transcoder """
@@ -478,90 +479,3 @@ class Transcoder(log.Loggable):
                 inputHandler.start()
                 self.working = False
                 break
-            
-    def addInputHandler(self, inputHandler):
-        """
-        Add an InputHandler.
-        """
-        self.info('Adding inputHandler %s' % inputHandler.name)
-        inputHandler.connect('done', self._inputHandlerDoneCb)
-        inputHandler.connect('error', self._inputHandlerErrorCb)
-        inputHandler.connect('newfile', self._inputHandlerNewFileCb)
-        self._inputHandlers.append(inputHandler)
-
-    def _inputHandlerDoneCb(self, inputHandler, filename):
-        self.log("DONE in inputHandler %s with filename %s" % (inputHandler.name, filename))
-        self.info("Input file '%s' transcoded successfully." % filename)
-        os._exit(0)
-
-    def _inputHandlerErrorCb(self, inputHandler, filename, reason):
-        # this comes from a child
-        self.warning("ERROR in inputHandler %s with filename %s" % (inputHandler.name, filename))
-        self.warning("Reason for ERROR : %s" % reason)
-        os._exit(1)
-
-    def _inputHandlerNewFileCb(self, inputHandler, filename):
-        self.info("New incoming file in inputHandler '%s' : %s" % (inputHandler.name, filename))
-        self._nextTask()
-
-def configure_transcoder(transcoder, configurationfile):
-    """ Configure the transcoder with the given configuration file """
-    # create a config parser and give the configuration file to it
-    parser = ConfigParser.ConfigParser()
-    parser.read(configurationfile)
-    sections = parser.sections()
-    sections.sort()
-
-    inputHandlers = {}
-
-    for section in sections:
-        # set raw True so we can have getrequest contain %
-        contents = dict(parser.items(section, raw=True))
-
-        # each section has a name
-        # the inputHandlers are named without :
-        # each profile in a inputHandler has : in the name
-        if ':' not in section:
-            # a inputHandler section
-            inputHandler = InputHandler(section,
-                                  contents['inputdirectory'],
-                                  contents['outputdirectory'],
-                                  contents.get('workdirectory', None),
-                                  linkdirectory=contents.get('linkdirectory', None),
-                                  errordirectory=contents.get('errordirectory', None),
-                                  urlprefix=contents.get('urlprefix', None),
-                                  getrequest=contents.get('getrequest', None),
-                                  timeout=int(contents.get('timeout', 30)))
-            inputHandlers[section] = inputHandler
-
-        else:
-            # a profile section
-            inputHandlerName = section.split(':')[0]
-            profilename = section.split(':')[1]
-            try:
-                inputHandler = inputHandlers[inputHandlerName]
-            except:
-                continue
-            videowidth = contents.get('videowidth', None) and int(contents['videowidth'])
-            videoheight = contents.get('videoheight', None) and int(contents['videoheight'])
-            videopar = contents.get('videopar', None)
-            maxwidth = contents.get('maxwidth', None) and int(contents['maxwidth'])
-            maxheight = contents.get('maxheight', None) and int(contents['maxheight'])
-            if videopar:
-                videopar = gst.Fraction(*[int(x.strip()) for x in videopar.split('/')])
-            videoframerate = contents.get('videoframerate', None)
-            if videoframerate:
-                videoframerate = gst.Fraction(*[int(x.strip()) for x in videoframerate.split('/')])
-            audiorate = contents.get('audiorate', None) and int(contents['audiorate'])
-            audiochannels = contents.get('audiochannels', None) and int(contents['audiochannels'])
-            profile = trans.Profile(profilename,
-                                  contents['audioencoder'],
-                                  contents['videoencoder'],
-                                  contents['muxer'],
-                                  videowidth, videoheight, videopar, videoframerate,
-                                  audiorate, audiochannels, maxwidth, maxheight)
-
-            inputHandler.addProfile(profilename, profile, contents['extension'])
-
-    for inputHandler in inputHandlers.keys():
-        transcoder.addInputHandler(inputHandlers[inputHandler])

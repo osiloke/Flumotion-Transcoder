@@ -20,16 +20,16 @@ from twisted.internet import reactor
 from flumotion.common import common, log
 from flumotion.transcoder import transcoder, config
 
-usage="usage: flumotion-transcoder [OPTIONS] CONF-FILE"
+usage="usage: flumotion-transcode-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
 
 def _createParser():
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-d', '--debug',
         action="store", type="string", dest="debug",
         help="set debug levels")
-    parser.add_option('-D', '--daemonize',
-        action="store_true", dest="daemonize",
-        help="run in background as a daemon")
+    parser.add_option('-C', '--customer',
+        action="store", type="string", dest="customer",
+        help="The name of the customer, as it appears in the conf file")
 
     return parser
 
@@ -40,21 +40,20 @@ def main(argv):
     if options.debug:
         log.setFluDebug(options.debug)
 
-    if len(args) < 1:
+    if not options.customer:
+        raise SystemError, 'Missing required argument: --customer'
+
+    if len(args) < 3:
         sys.stderr.write(usage + '\n')
         sys.exit(1)
 
-    # do this before daemonizing so that we can use relpaths
+    confFile = args[0]
+    inputFile = args[1]
+    profiles = args[2:]
+
+    log.info('transjob', 'Started')
+
     conf = config.Config(args[0])
-
-    if options.daemonize:
-        common.daemonizeHelper('transcoder')
-
-    log.info('transcoder', 'Started')
-
     trans = transcoder.Transcoder(conf)
     reactor.callLater(0, trans.run)
     reactor.run()
-
-    if options.daemonize:
-        common.deletePidFile('transcoder')

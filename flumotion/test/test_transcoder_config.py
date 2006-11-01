@@ -103,6 +103,3 @@ class TestConfigParser(unittest.TestCase):
         ae(c.urlPrefix, 'http://gk.bcn.fluendo.net/CustomerName/') 
         ae(c.getRequest, 'http://localhost/publish.php?video=%(incomingPath)s&duracion=%(hours)02d:%(minutes)02d:%(seconds)02d') 
         ae(c.timeout, 20)
-
-    def testParseFull(self):
-        pass

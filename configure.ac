@@ -93,7 +93,7 @@ FLUMOTION_SETUP(tests/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 FLUMOTION_SETUP(misc/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 
 AC_CONFIG_FILES([bin/flumotion-transcoder], [chmod +x bin/flumotion-transcoder])
-AC_CONFIG_FILES([bin/flumotion-transcode-job], [chmod +x bin/flumotion-transcode-job])
+AC_CONFIG_FILES([bin/flumotion-transcoder-job], [chmod +x bin/flumotion-transcoder-job])
 AC_OUTPUT(
 Makefile
 bin/Makefile

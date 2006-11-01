@@ -23,193 +23,121 @@ from flumotion.common import log, common
 
 from flumotion.transcoder.watcher import FilesWatcher
 
-# Transcoder
-class Profile(log.Loggable):
+def calculateOutputSize(inwidth, inheight, inpar, outwidth, 
+    outheight, outpar):
     """
-    Encoding profile, describing settings for audio and video.
-
-    @param name:         name of the configuration, must be unique in the task
-    @param audioencoder: name and parameters of the audio encoder (gst-launch
-                         syntax)
-    @param videoencoder: name and parameters of the video encoder (gst-launch
-                         syntax)
-    @param muxer:        name and parameters of the muxer (gst-launch syntax)
-    
-    @param videowidth:      Width of the output video
-    @param videoheight:     Height of the output video
-    @param videopar:        Pixel Aspect Ratio of the output video
-    @type  videopar:        gst.Fraction
-    @param videoframerate:  Framerate of the output video
-    @type  videoframerate:  gst.Fraction
-    @param audiorate:       Sampling rate of the output audio
-    @param audiochannels:     Number of audio channels
+    Return (outwidth,outheight,outpar) given the video's input width,
+    height, and par, and any or all of outwidth, outheight, outpar
     """
-    def __init__(self, name, audioencoder, videoencoder, muxer,
-                 videowidth=None, videoheight=None, videopar=None,
-                 videoframerate=None, audiorate=None, audiochannels=None,
-                 maxwidth=None,maxheight=None):
-        self.log("Profile: name: %s" % name)
-        self.log("Profile: audioencoder: %s, videoencoder: %s, muxer: %s" % (
-            audioencoder, videoencoder, muxer))
-        self.log("Profile: videowidth:%s, videoheight:%s" % (
-            videowidth, videoheight))
-        self.log("Profile: par:%s, framerate:%s" % (
-            videopar, videoframerate))
-        self.log("Profile: audiorate:%s , audiochannels:%s" % (
-            audiorate, audiochannels))
-        self.name = name
-        self.audioencoder = audioencoder
-        self.videoencoder = videoencoder
-        self.muxer = muxer
-        self.videowidth = videowidth
-        self.videoheight = videoheight
-        self.videopar = videopar
-        self.videoframerate = videoframerate
-        self.audiorate = audiorate
-        self.audiochannels = audiochannels
-        self.maxwidth = maxwidth
-        self.maxheight = maxheight
+    # if we have fixed width,height,par then it's simple too
+    if outwidth and outheight and outpar:
+        width = outwidth
+        height = outheight
+        par = outpar
+    else:
+        # now for the tricky part :)
+        # the Display Aspect ratio is going to stay the same whatever
+        # happens
+        dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
 
-        self._validateArguments()
-
-    def _validateArguments(self):
-        """ Makes sure the given arguments are valid """
-        for factory in [self.audioencoder, self.videoencoder, self.muxer]:
-            try:
-                element = gst.parse_launch(factory)
-            except Exception, e:
-                self.warning('Could not parse_launch %s: %r' % (factory, e))
-                raise TypeError, "Given factory [%s] cannot be parsed" % factory
-            if isinstance(element, gst.Pipeline):
-                raise TypeError(
-                    "Given factory [%s] should be a simple element, "
-                    "not a gst.Pipeline" % factory)
-            # FIXME: why an explicit del ?
-            del element
-        if self.videowidth:
-            self.videowidth = int(self.videowidth)
-        if self.videoheight:
-            self.videoheight = int(self.videoheight)
-        if self.videopar and not isinstance(self.videopar, gst.Fraction):
-            raise TypeError, "videopar should be a gst.Fraction"
-        if self.videoframerate and not isinstance(
-            self.videoframerate, gst.Fraction):
-            raise TypeError, "videoframerate should be a gst.Fraction"
-        if self.audiorate:
-            self.audiorate = int(self.audiorate)
-        if self.audiochannels:
-            self.audiochannels = int(self.audiochannels)
-
-    def getOutputVideoCaps(self, discoverer):
-        """
-        Return the output video caps, according to the information from the
-        discoverer and the configuration.
-        Returns None if there was an error.
-        """
-        if not discoverer.is_video:
-            return None
-        inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio',
-            gst.Fraction(1,1))
-        inwidth = discoverer.videowidth
-        inheight = discoverer.videoheight
-
-        gst.log('inpar:%s , inwidth:%d , inheight:%d' % (
-            inpar, inwidth, inheight))
+        gst.log('DAR is %s' % dar)
         
-        # rate is straightforward
-        rate = self.videoframerate or discoverer.videorate
-        gst.log('rate:%s' % rate)
-        gst.log('outpar:%s , outwidth:%s, outheight:%s' % (self.videopar,
-                                                           self.videowidth,
-                                                           self.videoheight))
-        
-        if self.maxwidth and self.maxheight:
-            dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
-            outpar = gst.Fraction(self.maxwidth, self.maxheight)
-            if dar.num * outpar.denom > outpar.num * dar.denom:
-                # Use width
-                (width, height, par) = self._calculateOutputSize(inwidth, 
-                    inheight, inpar, self.maxwidth, None, self.videopar)
-            else:
-                # Use height
-                (width, height, par) = self._calculateOutputSize(inwidth, 
-                    inheight, inpar, None, self.maxheight, self.videopar)
-            
-        else:
-            (width, height, par) = self._calculateOutputSize(
-                inwidth, inheight, inpar, self.videowidth, self.videoheight, 
-                self.videopar)
-
-        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d," \
-            "framerate=%d/%d" % (width, height, par.num, par.denom,
-               rate.num, rate.denom)
-        fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
-        return gst.caps_from_string(fvtempl)
-
-    def _calculateOutputSize(self, inwidth, inheight, inpar, outwidth, 
-        outheight, outpar):
-        """
-        Return (outwidth,outheight,outpar) given the video's input width,
-        height, and par, and any or all of outwidth, outheight, outpar
-        """
-        # if we have fixed width,height,par then it's simple too
-        if outwidth and outheight and outpar:
+        if outwidth:
             width = outwidth
-            height = outheight
-            par = outpar
-        else:
-            # now for the tricky part :)
-            # the Display Aspect ratio is going to stay the same whatever
-            # happens
-            dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
-
-            gst.log('DAR is %s' % dar)
-            
-            if outwidth:
-                width = outwidth
-                if outheight:
-                    height = outheight
-                    # calculate PAR, from width, height and DAR
-                    par = gst.Fraction(dar.num * height, dar.denom * width)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (
-                        par, width, height))
-                else:
-                    if outpar:
-                        par = outpar
-                    else:
-                        par = inpar
-                    # Calculate height from width, PAR and DAR
-                    height = (par.num * width * dar.denom) / (
-                        par.denom * dar.num)
-                    gst.log('outgoing par:%s , width:%d , height:%d' % (
-                        par, width, height))
-            elif outheight:
+            if outheight:
                 height = outheight
+                # calculate PAR, from width, height and DAR
+                par = gst.Fraction(dar.num * height, dar.denom * width)
+                gst.log('outgoing par:%s , width:%d , height:%d' % (
+                    par, width, height))
+            else:
                 if outpar:
                     par = outpar
                 else:
-                    # take input PAR
                     par = inpar
-                # Calculate width from height, PAR and DAR
-                width = (dar.num * par.denom * height) / (dar.denom * par.num)
+                # Calculate height from width, PAR and DAR
+                height = (par.num * width * dar.denom) / (
+                    par.denom * dar.num)
                 gst.log('outgoing par:%s , width:%d , height:%d' % (
                     par, width, height))
-            elif outpar:
-                # no width/height, just PAR
+        elif outheight:
+            height = outheight
+            if outpar:
                 par = outpar
-                height = inheight
-                width = (dar.num * par.denom * height) / (dar.denom * par.num)
-                gst.log('outgoing par:%s , width:%d , height:%d' % (
-                    par, width, height))
             else:
-                # take everything from incoming
+                # take input PAR
                 par = inpar
-                width = inwidth
-                height = inheight
-                gst.log('outgoing par:%s , width:%d , height:%d' % (
-                    par, width, height))
+            # Calculate width from height, PAR and DAR
+            width = (dar.num * par.denom * height) / (dar.denom * par.num)
+            gst.log('outgoing par:%s , width:%d , height:%d' % (
+                par, width, height))
+        elif outpar:
+            # no width/height, just PAR
+            par = outpar
+            height = inheight
+            width = (dar.num * par.denom * height) / (dar.denom * par.num)
+            gst.log('outgoing par:%s , width:%d , height:%d' % (
+                par, width, height))
+        else:
+            # take everything from incoming
+            par = inpar
+            width = inwidth
+            height = inheight
+            gst.log('outgoing par:%s , width:%d , height:%d' % (
+                par, width, height))
 
-        return (width,height,par)
+    return (width,height,par)
+
+def getOutputVideoCaps(discoverer, profile):
+    """
+    Return the output video caps, according to the information from the
+    discoverer and the configuration.
+    Returns None if there was an error.
+    """
+    if not discoverer.is_video:
+        return None
+    inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio',
+        gst.Fraction(1,1))
+    inwidth = discoverer.videowidth
+    inheight = discoverer.videoheight
+
+    gst.log('inpar:%s , inwidth:%d , inheight:%d' % (
+        inpar, inwidth, inheight))
+    
+    # rate is straightforward
+    if profile.videoframerate:
+        rate = gst.Fraction(*profile.videoframerate)
+    else:
+        rate = discoverer.videorate
+    gst.log('rate:%s' % rate)
+    gst.log('outpar:%s , outwidth:%s, outheight:%s' % (profile.videopar,
+                                                       profile.videowidth,
+                                                       profile.videoheight))
+    
+    videopar = profile.videopar and gst.Fraction(*profile.videopar)
+    if profile.maxwidth and profile.maxheight:
+        dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
+        outpar = gst.Fraction(profile.maxwidth, profile.maxheight)
+        if dar.num * outpar.denom > outpar.num * dar.denom:
+            # Use width
+            (width, height, par) = calculateOutputSize(inwidth, 
+                inheight, inpar, profile.maxwidth, None, videopar)
+        else:
+            # Use height
+            (width, height, par) = calculateOutputSize(inwidth, 
+                inheight, inpar, None, profile.maxheight, videopar)
+        
+    else:
+        (width, height, par) = calculateOutputSize(
+            inwidth, inheight, inpar, profile.videowidth, profile.videoheight, 
+            videopar)
+
+    svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d," \
+        "framerate=%d/%d" % (width, height, par.num, par.denom,
+           rate.num, rate.denom)
+    fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
+    return gst.caps_from_string(fvtempl)
+
                 
 class MultiTranscoder(gobject.GObject, log.Loggable):
     """
@@ -256,11 +184,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         """
         Add an output file to generate with the given profile.
 
-        @type profile: L{Profile}
+        @type profile: L{flumotion.transcoder.config.Profile}
         """
-        if not isinstance(profile, Profile):
-            raise TypeError, "Given profile is not a Profile"
-
         if self._started:
             self.warning("Cannot add output, already started")
             return
@@ -310,7 +235,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             return
         
         # start a FilesWatcher on the expected output files
-        paths = [path for path,profile in self._outputs.items()]
+        paths = list(self._outputs.keys())
         self._watcher = FilesWatcher(paths, timeout=self.timeout)
         self._watcher.connect('complete-file', self._watcherCompleteFileCb)
         self._watcher.connect('file-not-present', self._watcherCompleteFileCb)
@@ -480,7 +405,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             bin.add(vqueue, cspace, videorate, videoscale, venc)
             gst.element_link_many(vqueue, cspace, videorate, videoscale)
             
-            caps = profile.getOutputVideoCaps(discoverer)
+            caps = getOutputVideoCaps(discoverer, profile)
             if caps:
                 gst.log("%s" % caps.to_string())
                 videoscale.link(venc, caps)
