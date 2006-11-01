@@ -49,3 +49,4 @@ UPDATE: But latest cvs of oggmux breaks that for other files (doesn't emit EOS
 - move incoming files to an error dir so that customer knows a file couldn't
   transcode
 - delete 0-length files created by filesink if the encoding bins could not link
+- don't transcode directories (which happens in bad configs that overlap)

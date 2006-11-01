@@ -79,6 +79,7 @@ fi
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
 %{_sbindir}/flumotion-transcoder
+%{_sbindir}/flumotion-transcoder-job
 
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder

@@ -1,3 +1,10 @@
+2006-11-01  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* TODO:
+	  add a note
+	* flumotion-transcoder.spec.in:
+	  package -job
+
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/trans.py (calculateOutputSize)
