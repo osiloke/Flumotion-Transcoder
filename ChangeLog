@@ -1,5 +1,11 @@
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
+	* flumotion/transcoder/config.py (Profile.__init__): Add
+	maxheight, maxwidth, extension properties.
+
+	* flumotion/test/test_transcoder_config.py
+	(TestConfigParser.testParseProfile): Test the profile parser.
+
 	* flumotion/transcoder/config.py (Customer.ensureDirs): Factor out
 	of __init__.
 	(SectionParser.parseFromTable, Customer.__init__): Fix bugs caught

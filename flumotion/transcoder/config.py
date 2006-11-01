@@ -43,9 +43,12 @@ class Profile(SectionParser):
     @param videoencoder: name and parameters of the video encoder (gst-launch
                          syntax)
     @param muxer:        name and parameters of the muxer (gst-launch syntax)
+    @param extension:    extension to give to the output files
     
     @param videowidth:      Width of the output video
     @param videoheight:     Height of the output video
+    @param maxwidth:        Maximum width of the output video
+    @param maxheight:       Maximum height of the output video
     @param videopar:        Pixel Aspect Ratio of the output video
     @type  videopar:        2-tuple of int
     @param videoframerate:  Framerate of the output video
@@ -60,8 +63,11 @@ class Profile(SectionParser):
         parseTable = {'audioencoder': ('audioencoder', True, str, None),
                       'videoencoder': ('videoencoder', True, str, None),
                       'muxer': ('muxer', True, str, None),
+                      'extension': ('extension', True, str, None),
                       'videowidth': ('videowidth', False, int, None),
                       'videoheight': ('videoheight', False, int, None),
+                      'maxwidth': ('maxwidth', False, int, None),
+                      'maxheight': ('maxheight', False, int, None),
                       'videopar': ('videopar', False, fraction, None),
                       'videoframerate': ('videoframerate', False, fraction, None),
                       'audiorate': ('audiorate', False, int, 30),

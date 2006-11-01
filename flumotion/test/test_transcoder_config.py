@@ -46,9 +46,44 @@ getrequest=http://localhost/publish.php?video=%(incomingPath)s&duracion=%(hours)
 timeout = 20
 """
 
+smalloggprofile = """
+[CustomerName:SmallOgg]
+# the three following fields are gst-parse-launch compatible arguments
+videoencoder = theoraenc quality=32
+audioencoder = vorbisenc bitrate=32000
+muxer = oggmux
+extension = ogg
+
+videoframerate = 25/2
+videopar = 1/1
+videowidth = 320
+# since we dont specify videoheight, it will be calculated from the incoming
+# video resolution and par and the output videopar and videowidth.
+# The opposite would also be true if we had put videoheight and not
+# videowidth.
+
+audiorate=22050
+"""
+
 class TestConfigParser(unittest.TestCase):
     def testParseProfile(self):
-        pass
+        parser = ConfigParser.ConfigParser()
+        f = StringIO.StringIO(smalloggprofile)
+        parser.readfp(f)
+        sections = parser.sections()
+        self.assertEquals(sections, ['CustomerName:SmallOgg'])
+        contents = dict(parser.items('CustomerName:SmallOgg', raw=True))
+        c = config.Profile('SmallOgg', contents)
+        ae = self.assertEquals
+        ae(c.name, 'SmallOgg')
+        ae(c.videoencoder, 'theoraenc quality=32')
+        ae(c.audioencoder, 'vorbisenc bitrate=32000')
+        ae(c.muxer, 'oggmux')
+        ae(c.extension, 'ogg')
+        ae(c.videoframerate, (25, 2))
+        ae(c.videopar, (1, 1))
+        ae(c.videowidth, 320)
+        ae(c.audiorate, 22050)
 
     def testParseCustomer(self):
         parser = ConfigParser.ConfigParser()
