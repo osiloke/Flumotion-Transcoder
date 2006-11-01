@@ -1,5 +1,8 @@
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
+	* flumotion/transcoder/Makefile.am (component_PYTHON): 
+	* flumotion/transcoder/config.py: Refactor the config parser.
+
 	* configure.ac: 
 	* flumotion/Makefile.am: 
 	* flumotion/test/Makefile.am: 
