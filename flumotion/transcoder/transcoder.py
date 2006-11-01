@@ -289,30 +289,31 @@ class InputHandler(gobject.GObject, log.Loggable):
                 bufferSize = int(bytesPerSecond * 5 / 1024)
             else:
                 bufferSize = 128 # Default if we couldn't figure out duration
-            args['buffer'] = str(bufferSize)
+            args['c-bufferSize'] = str(bufferSize)
             # cortado doesn't handle Theora cropping, so we need to round
             # up width and height for display
             rounder = lambda i: (i + (16 - 1)) / 16 * 16
             if discoverer.videowidth:
-                args['width'] = str(rounder(discoverer.videowidth))
+                args['c-width'] = str(rounder(discoverer.videowidth))
             if discoverer.videoheight:
-                args['height'] = str(rounder(discoverer.videoheight))
+                args['c-height'] = str(rounder(discoverer.videoheight))
             if duration:
-                args['duration'] = str(duration)
-            args['audio'] = '0'
-            args['video'] = '0'
+                args['c-duration'] = str(duration)
+                args['c-seekable'] = '1'
+            args['c-audio'] = '0'
+            args['c-video'] = '0'
             if discoverer.audiocaps:
-                args['audio'] = '1'
+                args['c-audio'] = '1'
             if discoverer.videocaps:
-                args['video'] = '1'
+                args['c-video'] = '1'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
             outRelPath = getOutputFilename(inputfile, extension)
             link = self.config.urlPrefix + outRelPath + ".m3u?" + argString
             # make sure we have width and height for audio too
-            if not args.has_key('width'):
-                args['width'] = 320
+            if not args.has_key('c-width'):
+                args['c-width'] = 320
             if not args.has_key('height'):
-                args['height'] = 40
+                args['c-height'] = 40
 
             linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
             handle = open(linkPath, 'w')
@@ -320,7 +321,7 @@ class InputHandler(gobject.GObject, log.Loggable):
                 '<iframe src="%s" width="%s" height="%s" '
                 'frameborder="0" scrolling="no" '
                 'marginwidth="0" marginheight="0" />\n' % (
-                    link, args['width'], args['height']))
+                    link, args['c-width'], args['c-height']))
             handle.close()
             self.info("Written link file %s" % linkPath)
 
