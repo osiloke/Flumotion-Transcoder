@@ -1,6 +1,13 @@
 2006-11-01  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/transcoder/trans.py:
+	* flumotion/transcoder/transcoder.py:
+	  Add maxheight, maxwidth properties; doesn't change default
+	  behaviour.
+
+2006-11-01  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
 	  Calculate input display aspect ratio correctly.
 
 2006-11-01  Andy Wingo  <wingo@pobox.com>

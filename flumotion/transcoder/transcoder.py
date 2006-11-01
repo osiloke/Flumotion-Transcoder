@@ -545,6 +545,8 @@ def configure_transcoder(transcoder, configurationfile):
             videowidth = contents.get('videowidth', None) and int(contents['videowidth'])
             videoheight = contents.get('videoheight', None) and int(contents['videoheight'])
             videopar = contents.get('videopar', None)
+            maxwidth = contents.get('maxwidth', None) and int(contents['maxwidth'])
+            maxheight = contents.get('maxheight', None) and int(contents['maxheight'])
             if videopar:
                 videopar = gst.Fraction(*[int(x.strip()) for x in videopar.split('/')])
             videoframerate = contents.get('videoframerate', None)
@@ -557,7 +559,7 @@ def configure_transcoder(transcoder, configurationfile):
                                   contents['videoencoder'],
                                   contents['muxer'],
                                   videowidth, videoheight, videopar, videoframerate,
-                                  audiorate, audiochannels)
+                                  audiorate, audiochannels, maxwidth, maxheight)
 
             inputHandler.addProfile(profilename, profile, contents['extension'])
 

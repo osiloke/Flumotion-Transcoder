@@ -46,7 +46,8 @@ class Profile(log.Loggable):
     """
     def __init__(self, name, audioencoder, videoencoder, muxer,
                  videowidth=None, videoheight=None, videopar=None,
-                 videoframerate=None, audiorate=None, audiochannels=None):
+                 videoframerate=None, audiorate=None, audiochannels=None,
+                 maxwidth=None,maxheight=None):
         self.log("Profile: name: %s" % name)
         self.log("Profile: audioencoder: %s, videoencoder: %s, muxer: %s" % (
             audioencoder, videoencoder, muxer))
@@ -66,6 +67,8 @@ class Profile(log.Loggable):
         self.videoframerate = videoframerate
         self.audiorate = audiorate
         self.audiochannels = audiochannels
+        self.maxwidth = maxwidth
+        self.maxheight = maxheight
 
         self._validateArguments()
 
@@ -120,11 +123,40 @@ class Profile(log.Loggable):
                                                            self.videowidth,
                                                            self.videoheight))
         
+        if self.maxwidth and self.maxheight:
+            dar = gst.Fraction(inwidth * inpar.num, inheight * inpar.denom)
+            outpar = gst.Fraction(self.maxwidth, self.maxheight)
+            if dar.num * outpar.denom > outpar.num * dar.denom:
+                # Use width
+                (width, height, par) = self._calculateOutputSize(inwidth, 
+                    inheight, inpar, self.maxwidth, None, self.videopar)
+            else:
+                # Use height
+                (width, height, par) = self._calculateOutputSize(inwidth, 
+                    inheight, inpar, None, self.maxheight, self.videopar)
+            
+        else:
+            (width, height, par) = self._calculateOutputSize(
+                inwidth, inheight, inpar, self.videowidth, self.videoheight, 
+                self.videopar)
+
+        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d," \
+            "framerate=%d/%d" % (width, height, par.num, par.denom,
+               rate.num, rate.denom)
+        fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
+        return gst.caps_from_string(fvtempl)
+
+    def _calculateOutputSize(self, inwidth, inheight, inpar, outwidth, 
+        outheight, outpar):
+        """
+        Return (outwidth,outheight,outpar) given the video's input width,
+        height, and par, and any or all of outwidth, outheight, outpar
+        """
         # if we have fixed width,height,par then it's simple too
-        if self.videowidth and self.videoheight and self.videopar:
-            width = self.videowidth
-            height = self.videoheight
-            par = self.videopar
+        if outwidth and outheight and outpar:
+            width = outwidth
+            height = outheight
+            par = outpar
         else:
             # now for the tricky part :)
             # the Display Aspect ratio is going to stay the same whatever
@@ -133,17 +165,17 @@ class Profile(log.Loggable):
 
             gst.log('DAR is %s' % dar)
             
-            if self.videowidth:
-                width = self.videowidth
-                if self.videoheight:
-                    height = self.videoheight
+            if outwidth:
+                width = outwidth
+                if outheight:
+                    height = outheight
                     # calculate PAR, from width, height and DAR
                     par = gst.Fraction(dar.num * height, dar.denom * width)
                     gst.log('outgoing par:%s , width:%d , height:%d' % (
                         par, width, height))
                 else:
-                    if self.videopar:
-                        par = self.videopar
+                    if outpar:
+                        par = outpar
                     else:
                         par = inpar
                     # Calculate height from width, PAR and DAR
@@ -151,10 +183,10 @@ class Profile(log.Loggable):
                         par.denom * dar.num)
                     gst.log('outgoing par:%s , width:%d , height:%d' % (
                         par, width, height))
-            elif self.videoheight:
-                height = self.videoheight
-                if self.videopar:
-                    par = self.videopar
+            elif outheight:
+                height = outheight
+                if outpar:
+                    par = outpar
                 else:
                     # take input PAR
                     par = inpar
@@ -162,9 +194,9 @@ class Profile(log.Loggable):
                 width = (dar.num * par.denom * height) / (dar.denom * par.num)
                 gst.log('outgoing par:%s , width:%d , height:%d' % (
                     par, width, height))
-            elif self.videopar:
-                # no width/heigh, just PAR
-                par = self.videopar
+            elif outpar:
+                # no width/height, just PAR
+                par = outpar
                 height = inheight
                 width = (dar.num * par.denom * height) / (dar.denom * par.num)
                 gst.log('outgoing par:%s , width:%d , height:%d' % (
@@ -177,11 +209,7 @@ class Profile(log.Loggable):
                 gst.log('outgoing par:%s , width:%d , height:%d' % (
                     par, width, height))
 
-        svtempl = "width=%d,height=%d,pixel-aspect-ratio=%d/%d," \
-            "framerate=%d/%d" % (width, height, par.num, par.denom,
-               rate.num, rate.denom)
-        fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
-        return gst.caps_from_string(fvtempl)
+        return (width,height,par)
                 
 class MultiTranscoder(gobject.GObject, log.Loggable):
     """
