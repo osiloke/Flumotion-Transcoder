@@ -1,6 +1,7 @@
 include $(top_srcdir)/common/python.mk
 
 SUBDIRS = \
+	test \
 	transcoder
 
 clean-local:
