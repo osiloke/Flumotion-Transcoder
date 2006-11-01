@@ -312,7 +312,7 @@ class InputHandler(gobject.GObject, log.Loggable):
             # make sure we have width and height for audio too
             if not args.has_key('c-width'):
                 args['c-width'] = 320
-            if not args.has_key('height'):
+            if not args.has_key('c-height'):
                 args['c-height'] = 40
 
             linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'

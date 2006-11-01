@@ -1,6 +1,11 @@
 2006-11-01  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/transcoder/transcoder.py:
+	  Missing c- on height check.
+
+2006-11-01  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/transcoder.py:
 	  Use New Hotness, not Old Crapness, when generating links to
 	  cortado/gatekeeper.
 
