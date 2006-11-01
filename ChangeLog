@@ -1,3 +1,8 @@
+2006-11-01  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* doc/redhat/flumotion-transcoder.init:
+	  remove --log property since it was removed from the program
+
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/main.py (daemonizeHelper): Don't force a
