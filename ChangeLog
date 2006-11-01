@@ -37,6 +37,8 @@
 	* flumotion-transcoder.spec.in:
 	  package -job
 
+2006-11-01  Andy Wingo  <wingo@pobox.com>
+
 	* flumotion/transcoder/trans.py (calculateOutputSize)
 	(getOutputVideoCaps): Factor out of the Profile object; these are
 	just functions now.
