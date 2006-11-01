@@ -1,3 +1,10 @@
+2006-11-01  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/transcoder.py:
+	  Delete outputting 'framerate', since it was buggy, and is no longer
+	  needed.
+	  Don't divide by zero. Dividing by zero isn't cool.
+
 2006-10-25  Edward Hervey  <edward@fluendo.com>
 
 	* conf/flumotion-transcoder.ini:

@@ -313,10 +313,13 @@ class InputHandler(gobject.GObject, log.Loggable):
             elif discoverer.audiolength:
                 duration = float(discoverer.audiolength / gst.SECOND)
 
-            # let buffer time be at least 5 seconds
-            bytesPerSecond = os.stat(workfile).st_size / duration
-            # specified in Kb
-            bufferSize = int(bytesPerSecond * 5 / 1024)
+            if duration:
+                # let buffer time be at least 5 seconds
+                bytesPerSecond = os.stat(workfile).st_size / duration
+                # specified in Kb
+                bufferSize = int(bytesPerSecond * 5 / 1024)
+            else:
+                bufferSize = 128 # Default if we couldn't figure out duration
             args['buffer'] = str(bufferSize)
             # cortado doesn't handle Theora cropping, so we need to round
             # up width and height for display
@@ -325,9 +328,6 @@ class InputHandler(gobject.GObject, log.Loggable):
                 args['width'] = str(rounder(discoverer.videowidth))
             if discoverer.videoheight:
                 args['height'] = str(rounder(discoverer.videoheight))
-            if discoverer.videorate:
-                f = discoverer.videorate
-                args['framerate'] = str(float(f.num) / f.denom)
             if duration:
                 args['duration'] = str(duration)
             args['audio'] = '0'
