@@ -299,21 +299,21 @@ class InputHandler(gobject.GObject, log.Loggable):
                 args['c-height'] = str(rounder(discoverer.videoheight))
             if duration:
                 args['c-duration'] = str(duration)
-                args['c-seekable'] = '1'
-            args['c-audio'] = '0'
-            args['c-video'] = '0'
+                args['c-seekable'] = 'true'
+            args['c-audio'] = 'false'
+            args['c-video'] = 'false'
             if discoverer.audiocaps:
-                args['c-audio'] = '1'
+                args['c-audio'] = 'true'
             if discoverer.videocaps:
-                args['c-video'] = '1'
+                args['c-video'] = 'true'
             argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
             outRelPath = getOutputFilename(inputfile, extension)
             link = self.config.urlPrefix + outRelPath + ".m3u?" + argString
             # make sure we have width and height for audio too
             if not args.has_key('c-width'):
-                args['c-width'] = 320
+                args['c-width'] = '320'
             if not args.has_key('c-height'):
-                args['c-height'] = 40
+                args['c-height'] = '40'
 
             linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
             handle = open(linkPath, 'w')
