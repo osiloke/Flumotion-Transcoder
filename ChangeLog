@@ -7,6 +7,9 @@
 
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
+	* flumotion/transcoder/main.py (daemonizeHelper): Don't force a
+	dep on new flumotion.
+
 	* flumotion/transcoder/trans.py (calculateOutputSize)
 	(getOutputVideoCaps): Factor out of the Profile object; these are
 	just functions now.

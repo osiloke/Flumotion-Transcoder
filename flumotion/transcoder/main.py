@@ -22,6 +22,50 @@ from flumotion.transcoder import transcoder, config
 
 usage="usage: flumotion-transcoder [OPTIONS] CONF-FILE"
 
+def daemonizeHelper(processType, daemonizeTo='/', processName=None):
+    """
+    Daemonize a process, writing log files and PID files to conventional
+    locations.
+
+    @param processType: The process type, for example 'worker'. Used
+    as part of the log file and PID file names.
+    @type  processType: str
+    @param daemonizeTo: The directory that the daemon should run in.
+    @type  daemonizeTo: str
+    @param processName: The service name of the process. Used to
+    disambiguate different instances of the same daemon.
+    @type  processName: str
+    """
+    from flumotion.configure import configure
+    import os
+    common.ensureDir(configure.logdir, "log file")
+    common.ensureDir(configure.rundir, "run file")
+
+    if common.getPid(processType, processName):
+        raise SystemError(
+            "A %s service named '%s' is already running"
+            % (processType, processName or processType))
+
+    log.info(processType, "%s service named '%s' daemonizing",
+             processType, processName)
+
+    if processName:
+        logPath = os.path.join(configure.logdir,
+                               '%s.%s.log' % (processType, processName))
+    else:
+        logPath = os.path.join(configure.logdir,
+                               '%s.log' % (processType,))
+    log.debug(processType, 'Further logging will be done to %s', logPath)
+
+    # here we daemonize; so we also change our pid
+    common.daemonize(stdout=logPath, stderr=logPath, directory=daemonizeTo)
+
+    log.info(processType, 'Started daemon')
+
+    # from now on I should keep running until killed, whatever happens
+    path = common.writePidFile(processType, processName)
+    log.debug(processType, 'written pid file %s', path)
+
 def _createParser():
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-d', '--debug',
@@ -48,7 +92,10 @@ def main(argv):
     conf = config.Config(args[0])
 
     if options.daemonize:
-        common.daemonizeHelper('transcoder')
+        # FIXME: remove the above copy whenever we can dep on new
+        # flumotion
+        # common.daemonizeHelper('transcoder')
+        daemonizeHelper('transcoder')
 
     log.info('transcoder', 'Started')
 
