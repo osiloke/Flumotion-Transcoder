@@ -7,3 +7,5 @@ EXTRA_DIST = 				\
 	test_transcoder_config.py
 
 check-local: trial
+
+CLEANFILES = setup.py
