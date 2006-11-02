@@ -94,7 +94,7 @@ class Transcoder(log.Loggable):
                    len(self.queue), len(self.processing))
 
     def startJob(self):
-        self.queue.sort()
+        self.queue.sort(key=lambda tup: tup[0])
         # because python's sort is stable this should offer FIFO
         # scheduling within the same priority
         negpriority, customer, relpath = self.queue.pop(0)
