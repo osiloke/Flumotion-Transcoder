@@ -1,3 +1,12 @@
+2006-11-02  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/config.py (Config): Make a SectionParser so
+	that we can handle options in [global].
+
+	* flumotion/test/test_transcoder_config.py
+	(TestConfigParser.testParseFull): Test [global] parsing, and
+	parsing of entire config files.
+
 2006-11-01  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/job.py (Job): Implement a job object to do

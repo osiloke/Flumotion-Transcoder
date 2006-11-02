@@ -85,7 +85,8 @@ class Customer(SectionParser):
                       'errordirectory': ('errorDir', False, str, None),
                       'urlprefix': ('urlPrefix', False, str, None),
                       'getrequest': ('getRequest', False, str, None),
-                      'timeout': ('timeout', False, int, 30)}
+                      'timeout': ('timeout', False, int, 30),
+                      'priority': ('priority', False, int, 50)}
 
         self.name = name
         # profile name -> profile
@@ -113,7 +114,7 @@ class Customer(SectionParser):
         """
         self.profiles[profile.name] = profile
 
-class Config(log.Loggable):
+class Config(SectionParser):
     def __init__(self, confFile):
         self.confFile = confFile
         self.customers = {}
@@ -132,8 +133,13 @@ class Config(log.Loggable):
             contents = dict(parser.items(section, raw=True))
 
             if ':' not in section:
-                # a customer
-                self.customers[section] = Customer(section, contents)
+                if section.lower() == 'global':
+                    # the global configuration
+                    parseTable = {'maxjobs': ('maxJobs', False, int, 1)}
+                    self.parseFromTable('global', parseTable, contents)
+                else:
+                    # a customer
+                    self.customers[section] = Customer(section, contents)
             else:
                 # a profile section
                 customerName, profileName = section.split(':')

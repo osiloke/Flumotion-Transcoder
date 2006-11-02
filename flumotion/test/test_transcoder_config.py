@@ -15,10 +15,16 @@
 
 import common
 
+import tempfile
 import ConfigParser
 import StringIO
 from twisted.trial import unittest
 from flumotion.transcoder import config
+
+globalSection = """
+[global]
+maxjobs=3
+"""
 
 customer = """
 [CustomerName]
@@ -103,3 +109,16 @@ class TestConfigParser(unittest.TestCase):
         ae(c.urlPrefix, 'http://gk.bcn.fluendo.net/CustomerName/') 
         ae(c.getRequest, 'http://localhost/publish.php?video=%(incomingPath)s&duracion=%(hours)02d:%(minutes)02d:%(seconds)02d') 
         ae(c.timeout, 20)
+
+    def testParseFull(self):
+        tmp = tempfile.NamedTemporaryFile()
+        tmp.write(globalSection + customer + smalloggprofile)
+        tmp.flush()
+        conf = config.Config(tmp.name)
+        # makes the file will go away
+        del tmp
+
+        self.assertEquals(conf.customers.keys(), ['CustomerName'])
+        self.assertEquals(conf.customers['CustomerName'].profiles.keys(),
+                          ['SmallOgg'])
+        self.assertEquals(conf.maxJobs, 3)
