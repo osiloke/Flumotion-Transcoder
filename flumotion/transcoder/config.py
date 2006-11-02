@@ -76,6 +76,15 @@ class Profile(SectionParser):
         self.name = name
         self.parseFromTable(name, parseTable, confDict)
 
+    def getOutputBasename(self, filename):
+        """
+        Returns the output basename for the given input file. This is
+        done by taking the basename of the input file and replacing its
+        extension with our own.
+        """
+        prefix = os.path.basename(filename).rsplit('.', 1)[0]
+        return '.'.join([prefix, self.extension])
+
 class Customer(SectionParser):
     def __init__(self, name, confDict):
         parseTable = {'inputdirectory': ('inputDir', True, str, None),
@@ -108,6 +117,20 @@ class Customer(SectionParser):
                     self.debug(log.getExceptionMessage(e))
                     raise
 
+    def alreadyProcessedFiles(self):
+        def all(proc, seq):
+            return (not seq) or (proc(seq[0]) and all(proc, seq[1:]))
+        def outExists(profile, path):
+            outFile = os.path.join(self.outputDir,
+                                   profile.getOutputBasename(path))
+            return os.path.exists(outFile)
+        ret = []
+        for infile in os.listdir(self.inputDir):
+            if all(lambda p: outExists(p, infile), self.profiles.values()):
+                self.debug('%s was already processed, ignoring', infile)
+                ret.append(infile)
+        return ret
+
     def addProfile(self, profile):
         """
         Add a profile to the customer.
@@ -128,6 +151,9 @@ class Config(SectionParser):
         sections = parser.sections()
         sections.sort()
 
+        globalParseTable = {'maxjobs': ('maxJobs', False, int, 1)}
+        self.parseFromTable('global', globalParseTable, {})
+
         for section in sections:
             # set raw True so we can have getrequest contain %
             contents = dict(parser.items(section, raw=True))
@@ -135,8 +161,8 @@ class Config(SectionParser):
             if ':' not in section:
                 if section.lower() == 'global':
                     # the global configuration
-                    parseTable = {'maxjobs': ('maxJobs', False, int, 1)}
-                    self.parseFromTable('global', parseTable, contents)
+                    self.parseFromTable('global', globalParseTable,
+                                        contents) 
                 else:
                     # a customer
                     self.customers[section] = Customer(section, contents)

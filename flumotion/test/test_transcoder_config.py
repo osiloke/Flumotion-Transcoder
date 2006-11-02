@@ -90,6 +90,9 @@ class TestConfigParser(unittest.TestCase):
         ae(c.videopar, (1, 1))
         ae(c.videowidth, 320)
         ae(c.audiorate, 22050)
+        ae(c.getOutputBasename('foo.mp3'), 'foo.ogg')
+        ae(c.getOutputBasename('foo.bar.mp3'), 'foo.bar.ogg')
+        ae(c.getOutputBasename('/krazy/path/foo.bar.mp3'), 'foo.bar.ogg')
 
     def testParseCustomer(self):
         parser = ConfigParser.ConfigParser()

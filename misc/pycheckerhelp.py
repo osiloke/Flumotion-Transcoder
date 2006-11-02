@@ -7,5 +7,7 @@ pygtk.require('2.0')
 import pygst
 pygst.require('0.10')
 
+from twisted.internet import reactor
+
 import setup
 setup.setup()

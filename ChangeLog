@@ -1,5 +1,36 @@
 2006-11-02  Andy Wingo  <wingo@pobox.com>
 
+	* flumotion/transcoder/transcoder.py (InputHandler): Removed, no
+	longer necessary.
+	(JobProcessProtocol): Implemented a process protocol for jobs.
+	(Transcoder): Track watched directories directly. Use the
+	JobProcessProtocol to spawn jobs, allowing us to spawn multiple
+	jobs. Sort tasks using a priority queue.
+
+	* flumotion/transcoder/main.py (main): No need to tell the
+	transcoder to run.
+
+	* flumotion/transcoder/job.py (Job.get_output_filename): Use
+	getOutputBasename from the profile.
+	(Job.perform_get_request): Fix pychecker-caught errors.
+	(usage): Fix usage.
+	(Job.output_recognized): Update to use new cortado arguments, as
+	in [4354], [4355], [4356].
+
+	* conf/flumotion-transcoder-test.ini (maxjobs): Add maxjobs to the
+	example.
+
+	* flumotion/transcoder/config.py (Profile.getOutputBasename): New
+	method.
+	(Customer.alreadyProcessedFiles): New method.
+	(Customer.alreadyProcessedFiles.all): Pithy!
+	(Config.parse): Always set default values for [global] section.
+
+	* flumotion/test/test_transcoder_config.py
+	(TestConfigParser.testParseProfile): Test getOutputBasename.
+
+	* misc/pycheckerhelp.py: Pacify pychecker?
+
 	* flumotion/transcoder/config.py (Config): Make a SectionParser so
 	that we can handle options in [global].
 

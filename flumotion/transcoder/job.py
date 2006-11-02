@@ -20,11 +20,13 @@ import optparse
 import shutil
 
 from gst.extend.discoverer import Discoverer
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from flumotion.common import common, log
 from flumotion.transcoder import config, trans
 
-usage="usage: flumotion-transcode-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
+usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
+
+GET_REQUEST_TIMEOUT = 60
 
 class Job(log.Loggable):
     def __init__(self, infile, customer, profiles):
@@ -44,8 +46,7 @@ class Job(log.Loggable):
         The returned filename is the basename, it does not contain the full
         path.
         """
-        prefix = os.path.basename(self.processing).rsplit('.', 1)[0]
-        return '.'.join([prefix, profile.extension])
+        return profile.getOutputBasename(self.processing)
 
     def fail(self, message):
         self.warning('Error processing %s: %s', self.processing,
@@ -130,30 +131,31 @@ class Job(log.Loggable):
             bufferSize = int(bytesPerSecond * 5 / 1024)
         else:
             bufferSize = 128 # Default if we couldn't figure out duration
-        args['buffer'] = str(bufferSize)
+        args['c-bufferSize'] = str(bufferSize)
         # cortado doesn't handle Theora cropping, so we need to round
         # up width and height for display
         rounder = lambda i: (i + (16 - 1)) / 16 * 16
         if discoverer.videowidth:
-            args['width'] = str(rounder(discoverer.videowidth))
+            args['c-width'] = str(rounder(discoverer.videowidth))
         if discoverer.videoheight:
-            args['height'] = str(rounder(discoverer.videoheight))
+            args['c-height'] = str(rounder(discoverer.videoheight))
         if duration:
-            args['duration'] = str(duration)
-        args['audio'] = '0'
-        args['video'] = '0'
+            args['c-duration'] = str(duration)
+            args['c-seekable'] = 'true'
+        args['c-audio'] = 'false'
+        args['c-video'] = 'false'
         if discoverer.audiocaps:
-            args['audio'] = '1'
+            args['c-audio'] = 'true'
         if discoverer.videocaps:
-            args['video'] = '1'
+            args['c-video'] = 'true'
         argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
         outRelPath = self.get_output_filename(profile)
         link = self.config.urlPrefix + outRelPath + ".m3u?" + argString
         # make sure we have width and height for audio too
-        if not args.has_key('width'):
-            args['width'] = 320
-        if not args.has_key('height'):
-            args['height'] = 40
+        if not args.has_key('c-width'):
+            args['c-width'] = 320
+        if not args.has_key('c-height'):
+            args['c-height'] = 40
 
         linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
         handle = open(linkPath, 'w')
@@ -161,7 +163,7 @@ class Job(log.Loggable):
             '<iframe src="%s" width="%s" height="%s" '
             'frameborder="0" scrolling="no" '
             'marginwidth="0" marginheight="0" />\n' % (
-                link, args['width'], args['height']))
+                link, args['c-width'], args['c-height']))
         handle.close()
         self.info("Written link file %s" % linkPath)
         return args, duration
@@ -169,6 +171,7 @@ class Job(log.Loggable):
     def perform_get_request(self, profile, args, duration):
         self.debug('Preparing get request')
         args = args.copy()
+        outRelPath = self.get_output_filename(profile)
         # I actually had an incoming file get transcoded to two outgoing
         # files where one was 1.999 secs and the other 2.000 secs
         # so let's round.
@@ -262,7 +265,7 @@ def main(argv):
 
     log.info('transjob', 'Started')
 
-    conf = config.Config(args[0])
+    conf = config.Config(confFile)
     try:
         customer = conf.customers[options.customer]
     except KeyError:

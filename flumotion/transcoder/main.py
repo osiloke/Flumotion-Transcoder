@@ -100,7 +100,6 @@ def main(argv):
     log.info('transcoder', 'Started')
 
     trans = transcoder.Transcoder(conf)
-    reactor.callLater(0, trans.run)
     reactor.run()
 
     if options.daemonize:
