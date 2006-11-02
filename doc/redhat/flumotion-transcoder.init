@@ -57,7 +57,7 @@ stop() {
 		killproc -p $pidfile $service
 		RETVAL=$?
 		echo
-		[ $RETVAL = 0 ] && rm ${lockfile} && rm ${pidfile}
+		[ $RETVAL = 0 ] && rm ${lockfile}
 	fi
 	return $RETVAL
 }
