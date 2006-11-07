@@ -223,9 +223,9 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         
         self.info("'%s' is a media file, transcoding" % self.inputfile)
         if discoverer.is_audio:
-            self.log("%r has audio", self.inputfile)
+            self.debug("%r has audio", self.inputfile)
         if discoverer.is_video:
-            self.log("%r has video", self.inputfile)
+            self.debug("%r has video", self.inputfile)
         self._pipeline = self._makePipeline(self.inputfile)
         self._bus = self._pipeline.get_bus()
         self._bus.add_signal_watch()
