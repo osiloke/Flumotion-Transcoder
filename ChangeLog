@@ -1,3 +1,17 @@
+2006-11-07  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/config.py (Profile.__init__): Don't default
+	to 30 channels of audio at 30 Hz.
+
+	* flumotion/transcoder/trans.py (MultiTranscoder._makeEncodingBin)
+	(MultiTranscoder._makeAudioEncodebin)
+	(MultiTranscoder._makeVideoEncodebin)
+	(MultiTranscoder._makePipeline): Construct the whole pipeline at
+	the beginning, only linking the tee's sinks at PAUSED.
+
+	* conf/flumotion-transcoder-test.ini: Add another config for
+	testing two-at-a-time goodness.
+
 2006-11-07  Edward Hervey  <edward@fluendo.com>
 
 	* flumotion/transcoder/trans.py:
