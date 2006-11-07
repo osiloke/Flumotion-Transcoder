@@ -17,7 +17,8 @@ import gobject
 gobject.threads_init()
 import gst
 
-from gst.extend.discoverer import Discoverer
+#from gst.extend.discoverer import Discoverer
+from discoverer import Discoverer
 
 from flumotion.common import log, common
 
@@ -175,8 +176,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         self._watcher = None
         self._bus = None
 
-        self._queuetype = gst.element_factory_make("queue").__gtype__
-        self._queues = {} # element -> Full (gboolean)
+        self._tees = {}
 
         self.timeout = 30
 
@@ -222,6 +222,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             return
         
         self.info("'%s' is a media file, transcoding" % self.inputfile)
+        if discoverer.is_audio:
+            self.log("%r has audio", self.inputfile)
+        if discoverer.is_video:
+            self.log("%r has video", self.inputfile)
         self._pipeline = self._makePipeline(self.inputfile)
         self._bus = self._pipeline.get_bus()
         self._bus.add_signal_watch()
@@ -264,89 +268,39 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         pipeline.add(src, dbin)
         src.link(dbin)
 
-        dbin.connect('no-more-pads', self._decodebinNoMorePadsCb)
-        dbin.connect('element-added', self._elementAddedCb)
-        
-        return pipeline
+        if self._discoverer.is_audio:
+            self._tees['audiosink'] = gst.element_factory_make('tee')
+        if self._discoverer.is_video:
+            self._tees['videosink'] = gst.element_factory_make('tee')
 
-    def _elementAddedCb(self, dbin, element):
-        self.log("element added %s" % element.get_name())
-        if element.__gtype__ == self._queuetype:
-            element.props.max_size_bytes = 10 * 1024 * 1024
-            self._queues[element] = False
-            element.connect('overrun', self._queueOverrunCb, dbin)
-
-    def _queueOverrunCb(self, queue, dbin):
-        self.log("overrun in queue %s" % queue.get_name())
-        if self._queues[queue]:
-            return
-        self.log("unique overrun")
-        self._queues[queue] = True
-        for queue, isfull in self._queues.items():
-            if not isfull:
-                return
-        self._decodebinNoMorePadsCb(dbin)
-
-    def _decodebinNoMorePadsCb(self, dbin):
-        # called when decodebin has all the pads and we can start
-        # encoding
-        if self._exposed:
-            return
-        self._exposed = True
-        self.log('All encoded streams found, adding encoders')
-        
-        # go over pads, adding encoding bins, creating tees, linking
+        for tee in self._tees.values():
+            pipeline.add(tee)
+            
         encbins = []
         for outputPath, profile in self._outputs.items():
-            encbins.append(self._buildEncodingBin(
-                outputPath, profile, self._discoverer))
+            enc = self._makeEncodingBin(outputPath, profile,
+                                        self._discoverer)
+            encbins.append(enc)
+            pipeline.add(enc)
+            for pad_name, tee in self._tees.items():
+                tee.get_pad('src%d').link(enc.get_pad(pad_name))
 
-        # add encoding bins to pipeline and set them to paused
-        for bin in encbins:
-            try:
-                self._pipeline.add(bin)
-                bin.set_state(gst.STATE_PLAYING)
-            except gst.AddError:
-                self.log("decodebin already emitted no-more-pads")
-                return
-        
-        for srcpad in dbin.src_pads():
-            if srcpad.get_caps().to_string().startswith('video/x-raw') \
-                and self._discoverer.is_video:
-                sinkp = "videosink"
-            elif self._discoverer.is_audio:
-                sinkp = "audiosink"
+        def pad_added(dbin, pad):
+            if str(pad.get_caps()).startswith('audio/x-raw'):
+                pad.link(self._tees['audiosink'].get_pad('sink'))
+            elif str(pad.get_caps()).startswith('video/x-raw'):
+                pad.link(self._tees['videosink'].get_pad('sink'))
             else:
-                self.warning("Decodebin has got a pad we didn't find "
-                    "during discovery %s [caps:%s]" % (
-                        srcpad, srcpad.get_caps().to_string()))
-                continue
-
-            self.debug('Connecting decodebin srcpad %r with caps %s' % (
-                srcpad, srcpad.get_caps().to_string()))
-            tee = gst.element_factory_make("tee")
-            self._pipeline.add(tee)
-            srcpad.link(tee.get_pad("sink"))
-            tee.set_state(gst.STATE_PLAYING)
-            try:
-                for bin in encbins:
-                    tee.get_pad("src%d").link(bin.get_pad(sinkp))
-            except gst.LinkError:
-                self.warning("Couldn't link to encoding bins, "
-                    "aborting transcoding")
-                # We are in the streaming thread, we have to shutdown and emit
-                # messages from the main thread :(
-                gobject.idle_add(self._shutDownPipeline)
-                gobject.idle_add(self._asyncError,
-                    "Couldn't link to encoding bins")
-                return
-
-    def _asyncError(self, message):
-        """ Use this method to emit an error message in the main thread """
-        self.emit('error', message)
-
+                self.info('unknown pad from decodebin: %r (caps %s)',
+                          pad, pad.get_caps())
+        dbin.connect('pad-added', pad_added)
+        
+        # at this point we're ready to go, once the tees' sinks are
+        # connected.
+        return pipeline
+        
     # FIXME: why not just use self._discoverer ?
-    def _buildEncodingBin(self, outputPath, profile, discoverer):
+    def _makeEncodingBin(self, outputPath, profile, discoverer):
         """
         Create an Encoding bin for the given output file, profile,
         and discoverer.
@@ -366,56 +320,70 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         muxer.link(filesink)
 
         if discoverer.is_audio:
-            # audio
-            aenc = gst.parse_launch(profile.audioencoder)
-            aqueue = gst.element_factory_make("queue", "audioqueue")
-            aconv = gst.element_factory_make("audioconvert")
-            ares = gst.element_factory_make("audioresample")
-
-            aqueue.props.max_size_time = 0
-            
-            bin.add(aqueue, ares, aconv, aenc)
-            gst.element_link_many(aqueue, aconv, ares)
-            
-            if (profile.audiorate or profile.audiochannels):
-                audiochannels = profile.audiochannels or discoverer.audiochannels
-                astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochannels)
-                atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
-                    astmpl, astmpl)
-                caps = gst.caps_from_string(atmpl)
-                ares.link(aenc, caps)
-            else:
-                ares.link(aenc)
-                
+            aenc = self._makeAudioEncodebin(profile, discoverer)
+            bin.add(aenc)
             aenc.link(muxer)
-        
-            bin.add_pad(gst.GhostPad("audiosink", aqueue.get_pad("sink")))
+            bin.add_pad(gst.GhostPad("audiosink", aenc.get_pad("sink")))
 
         if discoverer.is_video:
-            # video
-            venc = gst.parse_launch(profile.videoencoder)
-            vqueue = gst.element_factory_make("queue", "videoqueue")
-            cspace = gst.element_factory_make("ffmpegcolorspace")
-            videorate = gst.element_factory_make("videorate")
-            videoscale = gst.element_factory_make("videoscale")
-
-            vqueue.props.max_size_time = 0
-            # use bilinear scaling for better image quality
-            videoscale.props.method = 1
-            
-            bin.add(vqueue, cspace, videorate, videoscale, venc)
-            gst.element_link_many(vqueue, cspace, videorate, videoscale)
-            
-            caps = getOutputVideoCaps(discoverer, profile)
-            if caps:
-                gst.log("%s" % caps.to_string())
-                videoscale.link(venc, caps)
-            else:
-                videoscale.link(venc)
-                
+            venc = self._makeVideoEncodebin(profile, discoverer)
+            bin.add(venc)
             venc.link(muxer)
-                
-            bin.add_pad(gst.GhostPad("videosink", vqueue.get_pad("sink")))
+            bin.add_pad(gst.GhostPad("videosink", venc.get_pad("sink")))
+
+        return bin
+
+    def _makeAudioEncodebin(self, profile, discoverer):
+        """
+        Create an Encoding bin for the given output file, profile,
+        and discoverer.
+        """
+        bin = gst.Bin()
+        conv = gst.element_factory_make("audioconvert")
+        res = gst.element_factory_make("audioresample")
+        capsfilter = gst.element_factory_make("capsfilter")
+        enc = gst.parse_launch(profile.audioencoder)
+        queue = gst.element_factory_make("queue", "audioqueue")
+
+        if (profile.audiorate or profile.audiochannels):
+            audiochannels = profile.audiochannels or discoverer.audiochannels
+            astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochannels)
+            atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
+                astmpl, astmpl)
+            self.log('filter: %s', atmpl)
+            capsfilter.props.caps = gst.caps_from_string(atmpl)
+
+        bin.add(conv, res, capsfilter, enc, queue)
+        gst.element_link_many(conv, res, capsfilter, enc, queue)
+        
+        bin.add_pad(gst.GhostPad("sink", conv.get_pad("sink")))
+        bin.add_pad(gst.GhostPad("src", queue.get_pad("src")))
+
+        return bin
+
+    def _makeVideoEncodebin(self, profile, discoverer):
+        bin = gst.Bin()
+        cspace = gst.element_factory_make("ffmpegcolorspace")
+        videorate = gst.element_factory_make("videorate")
+        videoscale = gst.element_factory_make("videoscale")
+        capsfilter = gst.element_factory_make("capsfilter")
+        enc = gst.parse_launch(profile.videoencoder)
+        queue = gst.element_factory_make("queue", "videoqueue")
+
+        # use bilinear scaling for better image quality
+        videoscale.props.method = 1
+        
+        caps = getOutputVideoCaps(discoverer, profile)
+        if caps:
+            gst.log("%s" % caps.to_string())
+            capsfilter.props.caps = caps
+
+        bin.add(cspace, videorate, videoscale, capsfilter, enc, queue)
+        gst.element_link_many(cspace, videorate, videoscale, capsfilter,
+                              enc, queue)
+            
+        bin.add_pad(gst.GhostPad("sink", cspace.get_pad("sink")))
+        bin.add_pad(gst.GhostPad("src", queue.get_pad("src")))
 
         return bin
 

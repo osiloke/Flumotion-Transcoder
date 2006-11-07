@@ -70,8 +70,8 @@ class Profile(SectionParser):
                       'maxheight': ('maxheight', False, int, None),
                       'videopar': ('videopar', False, fraction, None),
                       'videoframerate': ('videoframerate', False, fraction, None),
-                      'audiorate': ('audiorate', False, int, 30),
-                      'audiochannels': ('audiochannels', False, int, 30)}
+                      'audiorate': ('audiorate', False, int, None),
+                      'audiochannels': ('audiochannels', False, int, None)}
 
         self.name = name
         self.parseFromTable(name, parseTable, confDict)
