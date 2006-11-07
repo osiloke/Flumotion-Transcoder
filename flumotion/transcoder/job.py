@@ -84,7 +84,9 @@ class Job(log.Loggable):
                 self.debug("Analyzing transcoded file '%s'", workfile)
                 discoverer = Discoverer(workfile)
                 discoverer.connect('discovered',
-                                   self.output_discovered, profile) 
+                                   self.output_discovered, profile,
+                                   mt._discoverer.is_audio,
+                                   mt._discoverer.is_video)
                 discoverer.discover()
         else:
             self.finish()
@@ -92,8 +94,10 @@ class Job(log.Loggable):
     def transcode_error(self, mt, message):
         self.fail(message)
 
-    def output_discovered(self, discoverer, ismedia, profile):
-        if ismedia:
+    def output_discovered(self, discoverer, ismedia, profile, is_audio,
+                          is_video):
+        if ismedia and (discoverer.is_audio == is_audio
+                        and discoverer.is_video == is_video):
             args = self.output_recognized(profile, discoverer)
             if args and self.config.getRequest:
                 d = self.perform_get_request(profile, *args)
@@ -103,6 +107,12 @@ class Job(log.Loggable):
         else:
             self.warning("Couldn't recognize the output for profile %s",
                          profile.name)
+            if ismedia:
+                gota, gotv = discoverer.is_audio, discoverer.is_video
+                self.warning("Expected %saudio and %svideo, but got "
+                             "%saudio and %svideo", is_audio or 'no ',
+                             is_video or 'no ', gota or 'no ', gotv or
+                             'no ')
             self.unrecognized_outputs.append(profile)
             self.move_output_file(profile)
 

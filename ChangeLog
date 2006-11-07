@@ -1,3 +1,10 @@
+2006-11-07  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/job.py (Job.transcode_done): Tell the
+	output discoverers whether they should expect audio and video.
+	(Job.output_discovered): Consider the output a failure if e.g. we
+	expected video but didn't get it. Fixes #389.
+
 2006-11-02  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/transcoder.py (Transcoder.startJob): Damn
