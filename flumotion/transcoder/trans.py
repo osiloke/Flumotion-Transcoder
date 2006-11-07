@@ -272,6 +272,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
     def _elementAddedCb(self, dbin, element):
         self.log("element added %s" % element.get_name())
         if element.__gtype__ == self._queuetype:
+            element.props.max_size_bytes = 10 * 1024 * 1024
             self._queues[element] = False
             element.connect('overrun', self._queueOverrunCb, dbin)
 

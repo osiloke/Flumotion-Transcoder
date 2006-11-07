@@ -1,3 +1,9 @@
+2006-11-07  Edward Hervey  <edward@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
+	Set the maximum bytes size of decodebin's internal queues to
+	10 Mbytes.
+
 2006-11-07  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/job.py (Job.transcode_done): Tell the
