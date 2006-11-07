@@ -17,8 +17,8 @@ import gobject
 gobject.threads_init()
 import gst
 
-#from gst.extend.discoverer import Discoverer
-from discoverer import Discoverer
+from gst.extend.discoverer import Discoverer
+#from discoverer import Discoverer
 
 from flumotion.common import log, common
 
