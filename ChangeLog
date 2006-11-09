@@ -1,3 +1,9 @@
+2006-11-09  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/transcoder.py
+	(JobProcessProtocol.sendMessage): Fix handling of translatables.
+	Fixes #402.
+
 2006-11-07  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/config.py (Profile.__init__): Don't default

@@ -17,7 +17,7 @@ import socket
 import sys
 
 from twisted.internet import reactor
-from flumotion.common import log, common, worker
+from flumotion.common import log, common, worker, messages
 from flumotion.transcoder.watcher import DirectoryWatcher
 
 class JobProcessProtocol(worker.ProcessProtocol):
@@ -33,8 +33,9 @@ class JobProcessProtocol(worker.ProcessProtocol):
 
     def sendMessage(self, message):
         trans = self.loggable
+        translated = messages.Translator().translate(message)
         trans.warning('Message from job: %s: %r (%s)', message.id,
-                      message.translatable, message.debug)
+                      translated, message.debug)
 
     def processEnded(self, status):
         trans = self.loggable
