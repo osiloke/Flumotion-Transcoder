@@ -333,6 +333,30 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
 
         return bin
 
+    def _parse_bin_from_description(self, description, ghost_unconnected_pads):
+        """
+        Implement gst_parse_bin_from_description() in pure python, since the
+        C function isn't wrapped.
+        """
+        # Specify the type as a bin 
+        desc = "bin.( %s )" % description
+
+        bin = gst.parse_launch(desc)
+
+        if not bin:
+            return None
+
+        if ghost_unconnected_pads:
+            pad = bin.find_unconnected_pad(gst.PAD_SRC)
+            if pad:
+                bin.add_pad(gst.GhostPad("src", pad))
+
+            pad = bin.find_unconnected_pad(gst.PAD_SINK)
+            if pad:
+                bin.add_pad(gst.GhostPad("sink", pad))
+
+        return bin
+
     def _makeAudioEncodebin(self, profile, discoverer):
         """
         Create an Encoding bin for the given output file, profile,
@@ -342,7 +366,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         conv = gst.element_factory_make("audioconvert")
         res = gst.element_factory_make("audioresample")
         capsfilter = gst.element_factory_make("capsfilter")
-        enc = gst.parse_launch(profile.audioencoder)
+        enc = self._parse_bin_from_description(profile.audioencoder, True)
         queue = gst.element_factory_make("queue", "audioqueue")
 
         if (profile.audiorate or profile.audiochannels):
@@ -367,7 +391,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         videorate = gst.element_factory_make("videorate")
         videoscale = gst.element_factory_make("videoscale")
         capsfilter = gst.element_factory_make("capsfilter")
-        enc = gst.parse_launch(profile.videoencoder)
+        enc = self._parse_bin_from_description(profile.videoencoder, True)
         queue = gst.element_factory_make("queue", "videoqueue")
 
         # use bilinear scaling for better image quality
