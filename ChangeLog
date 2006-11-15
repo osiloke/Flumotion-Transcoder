@@ -3,6 +3,7 @@
 	* flumotion/transcoder/job.py (Job.finish, Job.fail): _exit
 	instead of exit, so as to work correctly from deferred callbacks
 	and other quoi.
+	(Job.finish): Thanks distributed pychecker!
 
 2006-11-09  Andy Wingo  <wingo@pobox.com>
 

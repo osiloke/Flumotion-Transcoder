@@ -53,16 +53,16 @@ class Job(log.Loggable):
                      message)
         print 'Error processing %s\n' % self.processing
         print message
-        sys._exit(1)
+        os._exit(1)
 
     def finish(self):
         if not self.unrecognized_outputs:
             print 'Success processing %s' % self.processing
-            sys._exit(0)
+            os._exit(0)
         else:
             print 'Some outputs failed: %r' % ([p.name for p in
                                                 self.unrecognized_outputs],)
-            sys._exit(2)
+            os._exit(2)
 
     def start(self):
         name = os.path.basename(self.processing)
