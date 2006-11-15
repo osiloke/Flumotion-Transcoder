@@ -1,3 +1,9 @@
+2006-11-15  Andy Wingo  <wingo@pobox.com>
+
+	* flumotion/transcoder/job.py (Job.finish, Job.fail): _exit
+	instead of exit, so as to work correctly from deferred callbacks
+	and other quoi.
+
 2006-11-09  Andy Wingo  <wingo@pobox.com>
 
 	* flumotion/transcoder/transcoder.py

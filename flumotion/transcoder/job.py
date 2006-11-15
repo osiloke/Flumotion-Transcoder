@@ -53,16 +53,16 @@ class Job(log.Loggable):
                      message)
         print 'Error processing %s\n' % self.processing
         print message
-        sys.exit(1)
+        sys._exit(1)
 
     def finish(self):
         if not self.unrecognized_outputs:
             print 'Success processing %s' % self.processing
-            sys.exit(0)
+            sys._exit(0)
         else:
             print 'Some outputs failed: %r' % ([p.name for p in
                                                 self.unrecognized_outputs],)
-            sys.exit(2)
+            sys._exit(2)
 
     def start(self):
         name = os.path.basename(self.processing)
@@ -207,7 +207,7 @@ class Job(log.Loggable):
 
         def getPageCb(result):
             self.info('Done get request to inform server for %s' % outRelPath)
-            self.debug('Got result %s' % result)
+            self.debug('Got result %s', result)
 
         def getPageEb(failure, url, triesLeft):
             if triesLeft == 0:
