@@ -368,6 +368,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         capsfilter = gst.element_factory_make("capsfilter")
         enc = self._parse_bin_from_description(profile.audioencoder, True)
         queue = gst.element_factory_make("queue", "audioqueue")
+        queue.props.max_size_time = gst.SECOND * 10
 
         if (profile.audiorate or profile.audiochannels):
             audiochannels = profile.audiochannels or discoverer.audiochannels
@@ -393,13 +394,14 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         capsfilter = gst.element_factory_make("capsfilter")
         enc = self._parse_bin_from_description(profile.videoencoder, True)
         queue = gst.element_factory_make("queue", "videoqueue")
+        queue.props.max_size_time = gst.SECOND * 10
 
         # use bilinear scaling for better image quality
         videoscale.props.method = 1
         
         caps = getOutputVideoCaps(discoverer, profile)
         if caps:
-            gst.log("%s" % caps.to_string())
+            self.log("%s" % caps.to_string())
             capsfilter.props.caps = caps
 
         bin.add(cspace, videorate, videoscale, capsfilter, enc, queue)
