@@ -221,7 +221,7 @@ class Job(log.Loggable):
                     outRelPath, GET_REQUEST_TIMEOUT))
             d = defer.Deferred()
             d.addCallback(lambda _: doGetRequest(url, triesLeft))
-            reactor.callLater(GET_REQUEST_TIMEOUT, d.callback(None))
+            reactor.callLater(GET_REQUEST_TIMEOUT, d.callback, None)
             return d
 
         return doGetRequest(url)

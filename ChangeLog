@@ -1,3 +1,9 @@
+2006-11-27  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/job.py:
+	  Fix up deferred usage so we don't get tracebacks/fatal failures if
+	  the get request fails the first time.
+
 2006-11-22  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/transcoder/trans.py:
