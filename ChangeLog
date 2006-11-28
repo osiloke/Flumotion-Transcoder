@@ -1,3 +1,8 @@
+2006-11-28  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/transcoder.py:
+	  Log full command line (modulo quoting issues) at debug level.
+
 2006-11-27  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/transcoder/job.py:

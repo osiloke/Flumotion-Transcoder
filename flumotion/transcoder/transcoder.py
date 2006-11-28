@@ -15,6 +15,7 @@ import os
 import shutil
 import socket
 import sys
+import string
 
 from twisted.internet import reactor
 from flumotion.common import log, common, worker, messages
@@ -108,6 +109,7 @@ class Transcoder(log.Loggable):
                 os.path.join(customer.inputDir, relpath)]
         argv.extend(customer.profiles.keys())
         self.log('Job arguments: %r', argv)
+        self.debug('Job command line: %s', string.join(argv, ' '))
         # stdin/stderr from parent, but capture stdout
         childFDs = {0: 0, 1: 'r', 2: 2}
         env = dict(os.environ)
