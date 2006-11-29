@@ -1,3 +1,9 @@
+2006-11-29  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* flumotion/transcoder/trans.py:
+	  add debugging for when a pad gets added so that I can see why
+	  I have five pads on one file
+
 2006-11-28  Michael Smith  <msmith@fluendo.com>
 
 	* flumotion/transcoder/transcoder.py:

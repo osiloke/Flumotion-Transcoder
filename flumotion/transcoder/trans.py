@@ -286,6 +286,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                 tee.get_pad('src%d').link(enc.get_pad(pad_name))
 
         def pad_added(dbin, pad):
+            self.debug('added pad %r, caps %s' % (pad, str(pad.get_caps())))
             if str(pad.get_caps()).startswith('audio/x-raw'):
                 pad.link(self._tees['audiosink'].get_pad('sink'))
             elif str(pad.get_caps()).startswith('video/x-raw'):
