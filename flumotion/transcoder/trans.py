@@ -97,6 +97,7 @@ def getOutputVideoCaps(discoverer, profile):
     """
     if not discoverer.is_video:
         return None
+    gst.log("Caps is: %s" % discoverer.videocaps.to_string())
     inpar = dict(discoverer.videocaps[0]).get('pixel-aspect-ratio',
         gst.Fraction(1,1))
     inwidth = discoverer.videowidth
@@ -369,7 +370,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         capsfilter = gst.element_factory_make("capsfilter")
         enc = self._parse_bin_from_description(profile.audioencoder, True)
         queue = gst.element_factory_make("queue", "audioqueue")
-        queue.props.max_size_time = gst.SECOND * 10
+        queue.props.max_size_time = gst.SECOND * 20
+        queue.props.max_size_buffers = 0
 
         if (profile.audiorate or profile.audiochannels):
             audiochannels = profile.audiochannels or discoverer.audiochannels
@@ -395,7 +397,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         capsfilter = gst.element_factory_make("capsfilter")
         enc = self._parse_bin_from_description(profile.videoencoder, True)
         queue = gst.element_factory_make("queue", "videoqueue")
-        queue.props.max_size_time = gst.SECOND * 10
+        queue.props.max_size_time = gst.SECOND * 20
+        queue.props.max_size_buffers = 0
 
         # use bilinear scaling for better image quality
         videoscale.props.method = 1

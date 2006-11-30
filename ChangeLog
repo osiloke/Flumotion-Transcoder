@@ -1,3 +1,9 @@
+2006-11-30  Michael Smith  <msmith@fluendo.com>
+
+	* flumotion/transcoder/trans.py:
+	  Increase max queue size in time, disable buffers.
+	  We retain max size in bytes, to avoid Infinite Memory Usage.
+
 2006-11-29  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/transcoder/trans.py:
