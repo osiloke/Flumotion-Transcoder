@@ -12,6 +12,7 @@ Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 Requires:	%{gstreamer}
+Requires:       flumotion
 
 # sigh, libtool
 BuildRequires:  gcc-c++
@@ -91,5 +92,8 @@ fi
 %dir %attr(750,flumotion,root) /srv/flumotion/transcoder
 
 %changelog
+* Fri Dec 15 2006 Thomas Vander Stichele <thomas at apestaart dot org>
+- require flumotion
+
 * Thu Oct 05 2006 Thomas Vander Stichele <thomas at apestaart dot org>
 - first spec file
