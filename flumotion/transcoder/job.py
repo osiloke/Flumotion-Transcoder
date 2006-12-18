@@ -113,6 +113,9 @@ class Job(log.Loggable):
                              "%saudio and %svideo", is_audio or 'no ',
                              is_video or 'no ', gota or 'no ', gotv or
                              'no ')
+            else:
+                self.warning(
+                    "Discoverer does not think the output is a media file")
             self.unrecognized_outputs.append(profile)
             self.move_output_file(profile)
 
