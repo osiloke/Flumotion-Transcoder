@@ -55,6 +55,8 @@ class Profile(SectionParser):
     @type  videoframerate:  2-tuple of int
     @param audiorate:       Sampling rate of the output audio
     @param audiochannels:   Number of audio channels
+    @param postprocess:     Command line to call for inplace post-process,
+                            ${FILE} will be replaced by the full path of the file.
     """
     def __init__(self, name, confDict):
         def fraction(str):
@@ -71,7 +73,8 @@ class Profile(SectionParser):
                       'videopar': ('videopar', False, fraction, None),
                       'videoframerate': ('videoframerate', False, fraction, None),
                       'audiorate': ('audiorate', False, int, None),
-                      'audiochannels': ('audiochannels', False, int, None)}
+                      'audiochannels': ('audiochannels', False, int, None),
+                      'postprocess': ('postprocess', False, str, None)}
 
         self.name = name
         self.parseFromTable(name, parseTable, confDict)

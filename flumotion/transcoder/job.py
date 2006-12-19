@@ -18,15 +18,48 @@ import os
 import sys
 import optparse
 import shutil
+import socket
+import re
 
 from gst.extend.discoverer import Discoverer
 from twisted.internet import reactor, defer
-from flumotion.common import common, log
+from flumotion.common import common, log, messages, worker
 from flumotion.transcoder import config, trans
 
 usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
 
 GET_REQUEST_TIMEOUT = 60
+
+class PostProcessProtocol(worker.ProcessProtocol, log.Loggable):
+    
+    def __init__(self, job, name):
+        self.logName = name
+        self.job = job
+        self.output = ''
+        self.terminated = defer.Deferred()
+        worker.ProcessProtocol.__init__(self, job, job.processing,
+                                        'post-process', socket.gethostname())
+
+    def getTerminatedDeferred(self):
+        return self.terminated
+
+    def outReceived(self, data):
+        self.output += data
+        lines = self.output.split('\n')
+        for l in lines[:-1]:
+            self.log(l)
+        self.output = lines[-1]
+
+    def sendMessage(self, message):
+        translated = messages.Translator().translate(message)
+        self.job.warning('Message from post-process %s: %r (%s)', message.id,
+                      translated, message.debug)
+
+    def processEnded(self, status):
+        if self.output:
+            self.log(self.output)
+        self.terminated.callback(status.value.exitCode==0)
+        worker.ProcessProtocol.processEnded(self, status)
 
 class Job(log.Loggable):
     def __init__(self, infile, customer, profiles):
@@ -34,7 +67,9 @@ class Job(log.Loggable):
         self.config = customer
         self.profiles = profiles
         self.unrecognized_outputs = []
+        self.failed_post_processes = []
         self.pending_outputs = []
+        self.post_processes = {}
 
         for profile in self.profiles:
             outfile = self.get_output_filename(profile)
@@ -56,12 +91,16 @@ class Job(log.Loggable):
         os._exit(1)
 
     def finish(self):
-        if not self.unrecognized_outputs:
+        if not self.unrecognized_outputs and not self.failed_post_processes:
             print 'Success processing %s' % self.processing
             os._exit(0)
         else:
-            print 'Some outputs failed: %r' % ([p.name for p in
-                                                self.unrecognized_outputs],)
+            if self.unrecognized_outputs:
+                self.warning('Some outputs failed: %r' % ([p.name for p in
+                                                    self.unrecognized_outputs],))
+            if self.failed_post_processes:
+                self.warning('Some post-processes failed: %r' % ([p.name for p in
+                                                    self.failed_post_processes],))
             os._exit(2)
 
     def start(self):
@@ -101,9 +140,9 @@ class Job(log.Loggable):
             args = self.output_recognized(profile, discoverer)
             if args and self.config.getRequest:
                 d = self.perform_get_request(profile, *args)
-                d.addCallback(lambda _: self.move_output_file(profile))
+                d.addCallback(lambda _: self.apply_post_process(profile))
             else:
-                self.move_output_file(profile)
+                self.apply_post_process(profile)
         else:
             self.warning("Couldn't recognize the output for profile %s",
                          profile.name)
@@ -228,6 +267,39 @@ class Job(log.Loggable):
             return d
 
         return doGetRequest(url)
+
+    def apply_post_process(self, profile):
+        if profile.postprocess:
+            outRelPath = self.get_output_filename(profile)
+            workfile = os.path.join(self.config.workDir, outRelPath)
+            self.info('starting post-processing of %s', workfile);
+            command = profile.postprocess.replace('${FILE}', workfile)
+            argv = re.split('(?<!\\\\) ', command)
+            self.log('Post-process arguments: %r', argv)
+            self.debug('Job command line: %s', ' '.join(argv))
+            childFDs = {0: 0, 1: 'r', 2: 2}
+            env = dict(os.environ)
+            env['FLU_DEBUG'] = log._FLU_DEBUG
+            p = PostProcessProtocol(self, argv[0])
+            def processTerminated(success):
+                self.post_processes.pop((profile, self.processing))
+                if not success:
+                    self.failed_post_processes.append(profile)
+                return profile
+            def processFailure(failure):
+                self.post_processes.pop((profile, self.processing))
+                self.failed_post_processes.append(profile)
+                return profile
+            d = p.getTerminatedDeferred()
+            d.addCallbacks(processTerminated, processFailure)
+            d.addCallback(self.move_output_file)
+            process = reactor.spawnProcess(p, argv[0], env=env,
+                                       args=argv, childFDs=childFDs)
+            p.setPid(process.pid)
+            self.post_processes[(profile, self.processing)] = p
+            
+        else:
+            self.move_output_file(profile)
 
     def move_output_file(self, profile):
         """

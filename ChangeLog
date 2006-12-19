@@ -1,3 +1,16 @@
+2006-12-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/job.py: 
+	* flumotion/transcoder/config.py: 
+	Added an option to execute a post-processing command on the 
+	output files. The config option is named 'postprocess' and 
+	is None by default so no post-processing. The option value should
+	be a command line with a ${FILE} parameter that will be substituted
+	by the absolute path of a transcoded file before being moved 
+	to the outgoing directory.
+	Ex: postprocess = md5sum -b ${FILE}
+	Fixes #517
+
 2006-12-18  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* flumotion/transcoder/job.py:
