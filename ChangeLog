@@ -1,3 +1,13 @@
+2006-12-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/config.py: 
+	* flumotion/transcoder/job.py: 
+	Added some variables to be substituted in the post-process command line:
+	${REL_FILE} ${INPUT_ROOT} ${OUTPUT_ROOT} 
+	${ERROR_ROOT} ${LINK_ROOT} ${WORK_ROOT}
+	For example, to automatically generate thumbnails, add:
+	postprocess = totem-video-thumbnailer ${FILE} ${OUTPUT_ROOT}/${REL_FILE}.png
+
 2006-12-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/job.py: 

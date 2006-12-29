@@ -273,7 +273,14 @@ class Job(log.Loggable):
             outRelPath = self.get_output_filename(profile)
             workfile = os.path.join(self.config.workDir, outRelPath)
             self.info('starting post-processing of %s', workfile);
-            command = profile.postprocess.replace('${FILE}', workfile)
+            command = profile.postprocess
+            command = command.replace('${FILE}', workfile)
+            command = command.replace('${REL_FILE}', outRelPath)            
+            command = command.replace('${WORK_ROOT}', self.config.workDir)
+            command = command.replace('${INPUT_ROOT}', self.config.inputDir)
+            command = command.replace('${OUTPUT_ROOT}', self.config.outputDir)
+            command = command.replace('${ERROR_ROOT}', self.config.errorDir)
+            command = command.replace('${LINK_ROOT}', self.config.linkDir)
             argv = re.split('(?<!\\\\) ', command)
             self.log('Post-process arguments: %r', argv)
             self.debug('Job command line: %s', ' '.join(argv))

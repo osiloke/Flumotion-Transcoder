@@ -57,6 +57,12 @@ class Profile(SectionParser):
     @param audiochannels:   Number of audio channels
     @param postprocess:     Command line to call for inplace post-process,
                             ${FILE} will be replaced by the full path of the file.
+                            ${REL_FILE} will be replaced by the relative path of the file.
+                            ${INPUT_ROOT} will be replaced by the incoming root directory.
+                            ${OUTPUT_ROOT} will be replaced by the outgoing root directory.
+                            ${ERROR_ROOT} will be replaced by the errors root directory.
+                            ${LINK_ROOT} will be replaced by the links root directory.
+                            ${WORK_ROOT} will be replaced by the working root directory.
     """
     def __init__(self, name, confDict):
         def fraction(str):
