@@ -1,3 +1,10 @@
+2007-01-03  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion-transcoder.spec.in: 
+	Make sure that trunk packages are treates as having a later
+	version that release packages.
+	Better fix needed ? See fsp revision 4705
+
 2006-12-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/config.py: 

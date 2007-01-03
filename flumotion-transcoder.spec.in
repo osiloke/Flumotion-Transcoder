@@ -2,7 +2,7 @@
 
 Name:           @PACKAGE@
 Version:        @VERSION@
-Release:        @RELEASE@
+Release:        3_@RELEASE@
 Summary:        Flumotion Transcoder
 
 Group:          Applications/Internet
