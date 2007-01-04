@@ -373,9 +373,10 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         queue.props.max_size_time = gst.SECOND * 20
         queue.props.max_size_buffers = 0
 
-        if (profile.audiorate or profile.audiochannels):
+        if profile.audiorate or profile.audiochannels:
             audiochannels = profile.audiochannels or discoverer.audiochannels
-            astmpl = "rate=%d,channels=%d" % (profile.audiorate, audiochannels)
+            audiorate = profile.audiorate or discoverer.audiorate
+            astmpl = "rate=%d,channels=%d" % (audiorate, audiochannels)
             atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
                 astmpl, astmpl)
             self.log('filter: %s', atmpl)
