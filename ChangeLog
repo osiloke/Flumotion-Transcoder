@@ -1,3 +1,9 @@
+2007-01-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/job.py: 
+	Do GET request and post-process even if linkDir is not set.
+	Fix #554
+
 2007-01-03  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion-transcoder.spec.in: 

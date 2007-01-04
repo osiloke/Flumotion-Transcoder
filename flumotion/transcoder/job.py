@@ -116,17 +116,16 @@ class Job(log.Loggable):
         mt.start()
 
     def transcode_done(self, mt):
-        if self.config.linkDir:
-            for profile in self.profiles:
-                workfile = os.path.join(self.config.workDir,
-                                        self.get_output_filename(profile))
-                self.debug("Analyzing transcoded file '%s'", workfile)
-                discoverer = Discoverer(workfile)
-                discoverer.connect('discovered',
-                                   self.output_discovered, profile,
-                                   mt._discoverer.is_audio,
-                                   mt._discoverer.is_video)
-                discoverer.discover()
+        for profile in self.profiles:
+            workfile = os.path.join(self.config.workDir,
+                                    self.get_output_filename(profile))
+            self.debug("Analyzing transcoded file '%s'", workfile)
+            discoverer = Discoverer(workfile)
+            discoverer.connect('discovered',
+                               self.output_discovered, profile,
+                               mt._discoverer.is_audio,
+                               mt._discoverer.is_video)
+            discoverer.discover()
         else:
             self.finish()
 
@@ -209,15 +208,16 @@ class Job(log.Loggable):
         if not args.has_key('c-height'):
             args['c-height'] = 40
 
-        linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
-        handle = open(linkPath, 'w')
-        handle.write(
-            '<iframe src="%s" width="%s" height="%s" '
-            'frameborder="0" scrolling="no" '
-            'marginwidth="0" marginheight="0" />\n' % (
-                link, args['c-width'], args['c-height']))
-        handle.close()
-        self.info("Written link file %s" % linkPath)
+        if self.config.linkDir:
+            linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
+            handle = open(linkPath, 'w')
+            handle.write(
+                '<iframe src="%s" width="%s" height="%s" '
+                'frameborder="0" scrolling="no" '
+                'marginwidth="0" marginheight="0" />\n' % (
+                    link, args['c-width'], args['c-height']))
+            handle.close()
+            self.info("Written link file %s" % linkPath)
         return args, duration
 
     def perform_get_request(self, profile, args, duration):
