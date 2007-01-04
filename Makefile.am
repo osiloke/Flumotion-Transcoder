@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I common
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 
-SUBDIRS = common conf misc bin transcoder flumotion tests
+SUBDIRS = common conf misc src bin transcoder flumotion tests
 
 PYCHECKER_WHITELIST = \
 	flumotion/transcoder/*.py

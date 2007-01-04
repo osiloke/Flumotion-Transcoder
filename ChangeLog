@@ -1,5 +1,14 @@
 2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
 
+	* Makefile.am:
+	* configure.ac:
+	* src/Makefile.am:
+	* src/mmf-crc.c:
+	* flumotion-transcoder.spec.in:
+	  Add the mmf-crc postprocessing binary to fix mmf files.
+
+2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
+
 	* flumotion/transcoder/trans.py:
 	  Also work when audiorate is not set and audiochannels is.
 

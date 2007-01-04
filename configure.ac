@@ -19,6 +19,8 @@ AC_SUBST(ACLOCAL_AMFLAGS, "-I m4 -I common")
 AS_AC_EXPAND(LIBDIR, $libdir)
 AC_MSG_NOTICE(Storing library files in $LIBDIR)
 
+AC_PROG_CC
+
 dnl check for python
 AS_PATH_PYTHON(2.3)
 
@@ -31,6 +33,9 @@ if test $GST_010_SUPPORTED = "no"; then
 Please install GStreamer development packages for version 0.10.
 Also, check your PKG_CONFIG_PATH.])
 fi  
+
+dnl check for GLIB
+PKG_CHECK_MODULES(GLIB, glib-2.0)
 
 export PYTHONPATH=$PYGTK_DIR:$PYTHONPATH
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_010_REQ)
@@ -96,6 +101,7 @@ AC_CONFIG_FILES([bin/flumotion-transcoder], [chmod +x bin/flumotion-transcoder])
 AC_CONFIG_FILES([bin/flumotion-transcoder-job], [chmod +x bin/flumotion-transcoder-job])
 AC_OUTPUT(
 Makefile
+src/Makefile
 bin/Makefile
 common/Makefile
 conf/Makefile
