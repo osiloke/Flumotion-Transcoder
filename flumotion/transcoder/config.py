@@ -56,13 +56,13 @@ class Profile(SectionParser):
     @param audiorate:       Sampling rate of the output audio
     @param audiochannels:   Number of audio channels
     @param postprocess:     Command line to call for inplace post-process,
-                            ${FILE} will be replaced by the full path of the file.
-                            ${REL_FILE} will be replaced by the relative path of the file.
-                            ${INPUT_ROOT} will be replaced by the incoming root directory.
-                            ${OUTPUT_ROOT} will be replaced by the outgoing root directory.
-                            ${ERROR_ROOT} will be replaced by the errors root directory.
-                            ${LINK_ROOT} will be replaced by the links root directory.
-                            ${WORK_ROOT} will be replaced by the working root directory.
+                            %(file)s will be replaced by the full path of the file.
+                            %(relFile)s will be replaced by the relative path of the file.
+                            %(inputRoot)s will be replaced by the incoming root directory.
+                            %(outputRoot)s will be replaced by the outgoing root directory.
+                            %(errorRoot) will be replaced by the errors root directory.
+                            %(linkRoot) will be replaced by the links root directory.
+                            %(workRoot) will be replaced by the working root directory.
     """
     def __init__(self, name, confDict):
         def fraction(str):
@@ -103,6 +103,8 @@ class Customer(SectionParser):
                       'errordirectory': ('errorDir', False, str, None),
                       'urlprefix': ('urlPrefix', False, str, None),
                       'getrequest': ('getRequest', False, str, None),
+                      'errgetreq': ('errGetRequest', False, str, None),
+                      'errmail': ('errMail', False, str, None),
                       'timeout': ('timeout', False, int, 30),
                       'priority': ('priority', False, int, 50)}
 

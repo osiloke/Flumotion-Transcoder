@@ -1,3 +1,24 @@
+2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/config.py: 
+	* flumotion/transcoder/job.py:
+	Changed post-process parameter format from ${XX_XX} to %(xxxXxx)s
+	for consistency with GET request.
+	To automatically generate thumbnails you should now use:
+	postprocess = totem-video-thumbnailer %(file)s %(outputRoot)s/%(relFile)s.png
+	
+	* flumotion/transcoder/config.py: 
+	Added a configuration option for error GET request: errgetreq
+	Added a configuration option for error notification mail: errmail
+	
+	* flumotion/transcoder/job.py:
+	Made a refactoring of the profile processing.
+	Fix #552 and definitely fix #554
+	Added a GET request on error: Fix #551
+
+	* flumotion/transcoder/transcoder.py: 
+	Send a mail when a transcoding fail: Fix #518	
+
 2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* Makefile.am:
@@ -16,7 +37,7 @@
 
 	* flumotion/transcoder/job.py: 
 	Do GET request and post-process even if linkDir is not set.
-	Fix #554
+	Fix #554	
 
 2007-01-03  Sebastien Merle  <sebastien@fluendo.com>
 

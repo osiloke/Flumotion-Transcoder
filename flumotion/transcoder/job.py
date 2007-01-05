@@ -23,12 +23,17 @@ import re
 
 from gst.extend.discoverer import Discoverer
 from twisted.internet import reactor, defer
+from twisted.python import failure
 from flumotion.common import common, log, messages, worker
 from flumotion.transcoder import config, trans
 
 usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
 
-GET_REQUEST_TIMEOUT = 60
+#GET_REQUEST_TIMEOUT = 60
+GET_REQUEST_TIMEOUT = 3
+
+class TranscodingError(Exception):
+    pass
 
 class PostProcessProtocol(worker.ProcessProtocol, log.Loggable):
     
@@ -70,6 +75,7 @@ class Job(log.Loggable):
         self.failed_post_processes = []
         self.pending_outputs = []
         self.post_processes = {}
+        self.fatalError = False
 
         for profile in self.profiles:
             outfile = self.get_output_filename(profile)
@@ -91,12 +97,13 @@ class Job(log.Loggable):
         os._exit(1)
 
     def finish(self):
-        if not self.unrecognized_outputs and not self.failed_post_processes:
-            print 'Success processing %s' % self.processing
+        if not self.fatalError:
+            self.info('Success processing %s', self.processing)
             os._exit(0)
         else:
+            self.warning('Error Processing %s', self.processing)
             if self.unrecognized_outputs:
-                self.warning('Some outputs failed: %r' % ([p.name for p in
+                self.warning('Some unknown outputs: %r' % ([p.name for p in
                                                     self.unrecognized_outputs],))
             if self.failed_post_processes:
                 self.warning('Some post-processes failed: %r' % ([p.name for p in
@@ -126,25 +133,33 @@ class Job(log.Loggable):
                                mt._discoverer.is_audio,
                                mt._discoverer.is_video)
             discoverer.discover()
-        else:
-            self.finish()
 
     def transcode_error(self, mt, message):
         self.fail(message)
 
     def output_discovered(self, discoverer, ismedia, profile, is_audio,
                           is_video):
-        if ismedia and (discoverer.is_audio == is_audio
+        if ismedia and (discoverer.is_audio == is_audio 
                         and discoverer.is_video == is_video):
-            args = self.output_recognized(profile, discoverer)
-            if args and self.config.getRequest:
-                d = self.perform_get_request(profile, *args)
-                d.addCallback(lambda _: self.apply_post_process(profile))
-            else:
-                self.apply_post_process(profile)
+            args = self.buildArgs(profile, discoverer)
+            d = defer.Deferred()
+            if self.config.linkDir:
+                d.addCallback(self.writeLinkFile, profile)
+                d.addErrback(self.recoverFailure, profile, args, "link writing")
+            if profile.postprocess:
+                d.addCallback(self.applyPostProcess, profile)
+                d.addErrback(self.fatalFailure, profile, args, "post-processing")
+            d.addCallback(self.moveOutputFile, profile)
+            d.addErrback(self.fatalFailure, profile, args, "file moving")
+            if self.config.getRequest:
+                d.addCallback(self.performGetRequest, profile, self.config.getRequest)
+                d.addErrback(self.recoverFailure, profile, args, "GET request")            
+            if self.config.errGetRequest:
+                d.addErrback(self.performErrorGetRequest, profile, args, self.config.errGetRequest)
+            d.addBoth(self.profileFinished, profile)
+            d.callback(args)
         else:
-            self.warning("Couldn't recognize the output for profile %s",
-                         profile.name)
+            self.warning("Couldn't recognize the output for profile %s", profile.name)
             if ismedia:
                 gota, gotv = discoverer.is_audio, discoverer.is_video
                 self.warning("Expected %saudio and %svideo, but got "
@@ -155,26 +170,40 @@ class Job(log.Loggable):
                 self.warning(
                     "Discoverer does not think the output is a media file")
             self.unrecognized_outputs.append(profile)
-            self.move_output_file(profile)
+            self.profileFinished(None, profile)
 
-    def output_recognized(self, profile, discoverer):
+            
+    def fatalFailure(self, failure, profile, args, task):
+        if args.get('fatalError', None):
+            self.warning("Skipping %s because of fatal error during %s"
+                         % (task, args['fatalError']))
+            return failure
+        args['fatalError'] = task
+        self.warning("Fatal error during %s: %s", task, 
+                     log.getExceptionMessage(failure.value))
+        return failure
+
+    def recoverFailure(self, failure, profile, args, task):
+        if args.get('fatalError', None):
+            self.warning("Skipping %s because of fatal error during %s"
+                         % (task, args['fatalError']))
+            return failure
+        self.warning("Recoverable error during %s: %s", task, 
+                     log.getExceptionMessage(failure.value))
+        return args
+
+    def buildArgs(self, profile, discoverer):
         relpath = self.get_output_filename(profile)
         workfile = os.path.join(self.config.workDir, relpath)
         self.debug("Work file '%s' has mime type %s", workfile,
                    discoverer.mimetype)
-        if discoverer.mimetype != 'application/ogg':
-            self.debug("File '%s' not an ogg file, not writing link" %
-                workfile)
-            return None
-        # ogg file, write link
-        args = {'cortado': '1'}
-
+        args = {'cortado': '1', 'mimetype': discoverer.mimetype}           
         duration = 0.0
         if discoverer.videolength:
             duration = float(discoverer.videolength / gst.SECOND)
         elif discoverer.audiolength:
             duration = float(discoverer.audiolength / gst.SECOND)
-
+        args['duration'] = duration
         if duration:
             # let buffer time be at least 5 seconds
             bytesPerSecond = os.stat(workfile).st_size / duration
@@ -198,46 +227,52 @@ class Job(log.Loggable):
         if discoverer.audiocaps:
             args['c-audio'] = 'true'
         if discoverer.videocaps:
-            args['c-video'] = 'true'
-        argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
-        outRelPath = self.get_output_filename(profile)
-        link = self.config.urlPrefix + outRelPath + ".m3u?" + argString
+            args['c-video'] = 'true'        
         # make sure we have width and height for audio too
         if not args.has_key('c-width'):
             args['c-width'] = 320
         if not args.has_key('c-height'):
             args['c-height'] = 40
+        return args
 
-        if self.config.linkDir:
-            linkPath = os.path.join(self.config.linkDir, outRelPath) + '.link'
-            handle = open(linkPath, 'w')
-            handle.write(
-                '<iframe src="%s" width="%s" height="%s" '
-                'frameborder="0" scrolling="no" '
-                'marginwidth="0" marginheight="0" />\n' % (
-                    link, args['c-width'], args['c-height']))
-            handle.close()
-            self.info("Written link file %s" % linkPath)
-        return args, duration
+    def writeLinkFile(self, args, profile):
+        relpath = self.get_output_filename(profile)
+        workfile = os.path.join(self.config.workDir, relpath)
+        if args['mimetype'] != 'application/ogg':
+            self.debug("File '%s' not an ogg file, not writing link" %
+                       workfile)
+            return args
+        argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
+        link = self.config.urlPrefix + relpath + ".m3u?" + argString
+        linkPath = os.path.join(self.config.linkDir, relpath) + '.link'
+        handle = open(linkPath, 'w')
+        handle.write(
+            '<iframe src="%s" width="%s" height="%s" '
+            'frameborder="0" scrolling="no" '
+            'marginwidth="0" marginheight="0" />\n' % (
+                link, args['c-width'], args['c-height']))
+        handle.close()
+        self.info("Written link file %s" % linkPath)
+        return args
 
-    def perform_get_request(self, profile, args, duration):
+    def performGetRequest(self, args, profile, template):
         self.debug('Preparing get request')
-        args = args.copy()
+        largs = args.copy()
         outRelPath = self.get_output_filename(profile)
         # I actually had an incoming file get transcoded to two outgoing
         # files where one was 1.999 secs and the other 2.000 secs
         # so let's round.
-        s = int(round(duration))
+        s = int(round(largs['duration']))
         m = s / 60
         s -= m * 60
         h = m / 60
         m -= h * 60
-        args['hours'] = h
-        args['minutes'] = m
-        args['seconds'] = s
-        args['outputPath'] = outRelPath
+        largs['hours'] = h
+        largs['minutes'] = m
+        largs['seconds'] = s
+        largs['outputPath'] = outRelPath
 
-        url = self.config.getRequest % args
+        url = template % largs
 
         def doGetRequest(url, triesLeft=3):
             from twisted.web import client
@@ -249,12 +284,13 @@ class Job(log.Loggable):
 
         def getPageCb(result):
             self.info('Done get request to inform server for %s' % outRelPath)
-            self.debug('Got result %s', result)
+            self.log('Got result %s', result)
+            return args
 
         def getPageEb(failure, url, triesLeft):
             if triesLeft == 0:
-                self.warning('Could not inform server for %s' % outRelPath)
-                return
+                raise TranscodingError, ('Fail to perform GET request for profile %s'
+                        ', Could not inform server for %s') % (profile.name, outRelPath)
             self.debug('failure: %s' % log.getFailureMessage(failure))
             triesLeft -= 1
             self.debug('%d tries left' % triesLeft)
@@ -268,60 +304,68 @@ class Job(log.Loggable):
 
         return doGetRequest(url)
 
-    def apply_post_process(self, profile):
-        if profile.postprocess:
-            outRelPath = self.get_output_filename(profile)
-            workfile = os.path.join(self.config.workDir, outRelPath)
-            self.info('starting post-processing of %s', workfile);
-            command = profile.postprocess
-            command = command.replace('${FILE}', workfile)
-            command = command.replace('${REL_FILE}', outRelPath)            
-            command = command.replace('${WORK_ROOT}', self.config.workDir)
-            command = command.replace('${INPUT_ROOT}', self.config.inputDir)
-            command = command.replace('${OUTPUT_ROOT}', self.config.outputDir)
-            command = command.replace('${ERROR_ROOT}', self.config.errorDir)
-            command = command.replace('${LINK_ROOT}', self.config.linkDir)
-            argv = re.split('(?<!\\\\) ', command)
-            self.log('Post-process arguments: %r', argv)
-            self.debug('Job command line: %s', ' '.join(argv))
-            childFDs = {0: 0, 1: 'r', 2: 2}
-            env = dict(os.environ)
-            env['FLU_DEBUG'] = log._FLU_DEBUG
-            p = PostProcessProtocol(self, argv[0])
-            def processTerminated(success):
-                self.post_processes.pop((profile, self.processing))
-                if not success:
-                    self.failed_post_processes.append(profile)
-                return profile
-            def processFailure(failure):
-                self.post_processes.pop((profile, self.processing))
-                self.failed_post_processes.append(profile)
-                return profile
-            d = p.getTerminatedDeferred()
-            d.addCallbacks(processTerminated, processFailure)
-            d.addCallback(self.move_output_file)
-            process = reactor.spawnProcess(p, argv[0], env=env,
-                                       args=argv, childFDs=childFDs)
-            p.setPid(process.pid)
-            self.post_processes[(profile, self.processing)] = p
-            
-        else:
-            self.move_output_file(profile)
+    def performErrorGetRequest(self, failure, profile, args, template):
+        if args.get('fatalError', None):
+            self.info("Perform fatal error GET request")
+            def bothback(args_or_failure):
+                failure.raiseException()
+            d = self.performGetRequest(args, profile, template)
+            d.addBoth(bothback)
+            return d
+        return failure
 
-    def move_output_file(self, profile):
+    def applyPostProcess(self, args, profile):
+        outRelPath = self.get_output_filename(profile)
+        workfile = os.path.join(self.config.workDir, outRelPath)
+        self.info('starting post-processing of %s', workfile);
+        params = {"file": workfile,
+                  "relFile": outRelPath,
+                  "workRoot": self.config.workDir,
+                  "inputRoot": self.config.inputDir,
+                  "outputRoot": self.config.outputDir,
+                  "errorRoot": self.config.errorDir,
+                  "linkRoot": self.config.linkDir}
+        command = profile.postprocess % params
+        argv = re.split('(?<!\\\\) ', command)
+        self.debug('Post-process line: %s', ' '.join(argv))
+        childFDs = {0: 0, 1: 'r', 2: 2}
+        env = dict(os.environ)
+        env['FLU_DEBUG'] = log._FLU_DEBUG
+        p = PostProcessProtocol(self, argv[0])
+        def processTerminated(success):
+            self.post_processes.pop((profile, self.processing))
+            if not success:
+                self.failed_post_processes.append(profile)
+                raise TranscodingError, "Post-processing failed for profile %s" % profile.name
+            return args
+        def processFailure(failure):
+            self.post_processes.pop((profile, self.processing))
+            self.failed_post_processes.append(profile)
+            return failure
+        d = p.getTerminatedDeferred()
+        d.addCallbacks(processTerminated, processFailure)        
+        process = reactor.spawnProcess(p, argv[0], env=env,
+                                   args=argv, childFDs=childFDs)
+        p.setPid(process.pid)
+        self.post_processes[(profile, self.processing)] = p
+        return d
+
+    def moveOutputFile(self, args, profile):
         """
         move the output file from the work directory to the output directory.
         """
         outRelPath = self.get_output_filename(profile)
         workfile = os.path.join(self.config.workDir, outRelPath)
         outfile = os.path.join(self.config.outputDir, outRelPath)
-        try:
-            shutil.move(workfile, outfile)
-        except IOError, e:
-            self.warning('Could not save transcoded file: %s',
-                         log.getExceptionMessage(e))
-
+        shutil.move(workfile, outfile)
+        self.info("Output file moved to %s", outfile)
+        return args
+        
+    def profileFinished(self, args_or_failure, profile):
+        outRelPath = self.get_output_filename(profile)
         self.pending_outputs.remove(outRelPath)
+        if not args_or_failure or isinstance(args_or_failure, failure.Failure):
+            self.fatalError = True
         if not self.pending_outputs:
             self.debug('Totally finished dude')
             self.finish()

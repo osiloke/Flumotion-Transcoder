@@ -21,6 +21,8 @@ from twisted.internet import reactor
 from flumotion.common import log, common, worker, messages
 from flumotion.transcoder.watcher import DirectoryWatcher
 
+SENDMAIL = "/usr/sbin/sendmail"
+
 class JobProcessProtocol(worker.ProcessProtocol):
     def __init__(self, trans, customer, relpath):
         self.relpath = relpath
@@ -124,9 +126,30 @@ class Transcoder(log.Loggable):
                   success and 'successfully' or 'with failure')
         self.debug('Job stdout: %r', output)
         if not success:
+            self._sendErrorMail(customer, relpath)
             self._moveInputToErrors(customer, relpath)
         self.processing.pop((customer, relpath))
         self.schedule()
+
+    def _sendErrorMail(self, customer, relpath):
+      if customer.errMail:
+          if not os.path.exists(SENDMAIL):
+              self.warning("Cannot send error notification mail, sendmail not found at %s"
+                           % SENDMAIL)
+              return
+          p = os.popen("%s -t" % SENDMAIL, "w")
+          p.write("To: %s\n" % customer.errMail)
+          p.write("Subject: Transcoding Error (%s)\n" % customer.name)
+          p.write("\n")
+          p.write("Fail to transcode file '%s' for customer %s\n"
+                  % (os.path.join(customer.inputDir, relpath), customer.name))          
+          p.write("It will be moved to '%s'\n" % customer.errorDir)
+          sts = p.close()
+          if sts != 0:
+              self.warning("Failed to send error notification mail to %s : status %d"
+                           % (customer.errMail, sts))
+          else:
+              self.info("Error notification send to %s" % customer.errMail)
 
     def _moveInputToErrors(self, customer, relpath):
         infile = os.path.join(customer.inputDir, relpath)
