@@ -317,16 +317,20 @@ class Job(log.Loggable):
         outRelPath = self.get_output_filename(profile)
         workfile = os.path.join(self.config.workDir, outRelPath)
         self.info('starting post-processing of %s', workfile);
-        params = {"file": workfile,
-                  "relFile": outRelPath,
-                  "workRoot": self.config.workDir,
-                  "inputRoot": self.config.inputDir,
-                  "outputRoot": self.config.outputDir,
-                  "errorRoot": self.config.errorDir,
-                  "linkRoot": self.config.linkDir}
+        def escapeSpaces(str):
+            return str.replace(' ', '\ ')
+        params = {"file": escapeSpaces(workfile),
+                  "relFile": escapeSpaces(outRelPath),
+                  "workRoot": escapeSpaces(self.config.workDir),
+                  "inputRoot": escapeSpaces(self.config.inputDir),
+                  "outputRoot": escapeSpaces(self.config.outputDir),
+                  "errorRoot": escapeSpaces(self.config.errorDir),
+                  "linkRoot": escapeSpaces(self.config.linkDir)}
         command = profile.postprocess % params
         argv = re.split('(?<!\\\\) ', command)
-        self.debug('Post-process line: %s', ' '.join(argv))
+        for i, a in enumerate(argv):
+            argv[i] = a.replace('\ ', ' ')
+        self.debug('Post-process line: %s', '"' + '" "'.join(argv) + '"')
         childFDs = {0: 0, 1: 'r', 2: 2}
         env = dict(os.environ)
         env['FLU_DEBUG'] = log._FLU_DEBUG

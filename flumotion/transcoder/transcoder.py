@@ -12,6 +12,7 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
 import os
+import popen2
 import shutil
 import socket
 import sys
@@ -137,17 +138,18 @@ class Transcoder(log.Loggable):
               self.warning("Cannot send error notification mail, sendmail not found at %s"
                            % SENDMAIL)
               return
-          p = os.popen("%s -t" % SENDMAIL, "w")
-          p.write("To: %s\n" % customer.errMail)
-          p.write("Subject: Transcoding Error (%s)\n" % customer.name)
-          p.write("\n")
-          p.write("Fail to transcode file '%s' for customer %s\n"
+          p = popen2.Popen4("%s -t" % SENDMAIL)
+          p.tochild.write("To: %s\n" % customer.errMail)
+          p.tochild.write("Subject: Transcoding Error (%s)\n" % customer.name)
+          p.tochild.write("\n")
+          p.tochild.write("Fail to transcode file '%s' for customer %s\n"
                   % (os.path.join(customer.inputDir, relpath), customer.name))          
-          p.write("It will be moved to '%s'\n" % customer.errorDir)
-          sts = p.close()
-          if sts != 0:
-              self.warning("Failed to send error notification mail to %s : status %d"
-                           % (customer.errMail, sts))
+          p.tochild.write("It will be moved to '%s'\n" % customer.errorDir)
+          p.tochild.close()
+          exitCode = p.wait()
+          if exitCode != 0:
+              self.warning("Failed to send error notification mail to %s (Exit code %s)"
+                           % (customer.errMail, str(exitCode)))
           else:
               self.info("Error notification send to %s" % customer.errMail)
 

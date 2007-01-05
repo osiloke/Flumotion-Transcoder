@@ -1,5 +1,13 @@
 2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/transcoder.py: 
+	Changed os.popen for popen2.Popen4 to corect exit code retrieval
+	
+	* flumotion/transcoder/job.py:
+	Now handle nicely the filenames with spaces in the post-process command.
+
+2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/config.py: 
 	* flumotion/transcoder/job.py:
 	Changed post-process parameter format from ${XX_XX} to %(xxxXxx)s
@@ -17,7 +25,7 @@
 	Added a GET request on error: Fix #551
 
 	* flumotion/transcoder/transcoder.py: 
-	Send a mail when a transcoding fail: Fix #518	
+	Send a mail when a transcoding fail: Fix #518		
 
 2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
 
