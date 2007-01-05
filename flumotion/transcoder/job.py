@@ -29,8 +29,7 @@ from flumotion.transcoder import config, trans
 
 usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
 
-#GET_REQUEST_TIMEOUT = 60
-GET_REQUEST_TIMEOUT = 3
+GET_REQUEST_TIMEOUT = 60
 
 class TranscodingError(Exception):
     pass
