@@ -51,7 +51,7 @@ class PostProcessProtocol(worker.ProcessProtocol, log.Loggable):
         self.output += data
         lines = self.output.split('\n')
         for l in lines[:-1]:
-            self.log(l)
+            self.info(l)
         self.output = lines[-1]
 
     def sendMessage(self, message):
@@ -61,7 +61,7 @@ class PostProcessProtocol(worker.ProcessProtocol, log.Loggable):
 
     def processEnded(self, status):
         if self.output:
-            self.log(self.output)
+            self.info(self.output)
         self.terminated.callback(status.value.exitCode==0)
         worker.ProcessProtocol.processEnded(self, status)
 
