@@ -482,7 +482,7 @@ class Job(log.Loggable):
                 d.addErrback(showFailure)
                 defs.append(d)
         if len(defs) == 0:
-            return
+            return defer.succeed(targets)
         return defer.DeferredList(defs,
                                   fireOnOneCallback=False,
                                   fireOnOneErrback=False,
