@@ -162,7 +162,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                    (gobject.TYPE_STRING, )),
         }
 
-    def __init__(self, name, inputfile):
+    def __init__(self, name, inputfile, timeout=30):
         gobject.GObject.__init__(self)
         self.name = name
         self.inputfile = inputfile
@@ -179,7 +179,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
 
         self._tees = {}
 
-        self.timeout = 30
+        self.timeout = timeout
 
     def addOutput(self, outputPath, profile):
         """
@@ -227,24 +227,31 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             self.debug("%r has audio", self.inputfile)
         if discoverer.is_video:
             self.debug("%r has video", self.inputfile)
-        self._pipeline = self._makePipeline(self.inputfile)
-        self._bus = self._pipeline.get_bus()
-        self._bus.add_signal_watch()
-        self._bus.connect("message", self._busMessageCb)
-        
+        try:
+            self._pipeline = self._makePipeline(self.inputfile)
+            self._bus = self._pipeline.get_bus()
+            self._bus.add_signal_watch()
+            self._bus.connect("message", self._busMessageCb)
+        except Exception, e:
+            self._shutDownPipeline()
+            self.emit('error', "Could not setup pipeline for file '%s': %s" %
+                      (self.inputfile, str(e)))
+            return
+            
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
             self._shutDownPipeline()
             self.emit('error', "Could not play pipeline for file '%s'" %
                 self.inputfile)
             return
-        
+    
         # start a FilesWatcher on the expected output files
         paths = list(self._outputs.keys())
         self._watcher = FilesWatcher(paths, timeout=self.timeout)
         self._watcher.connect('complete-file', self._watcherCompleteFileCb)
         self._watcher.connect('file-not-present', self._watcherCompleteFileCb)
         self._watcher.start()
+        
 
     ## pipeline related
 
@@ -418,9 +425,9 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
 
         return bin
 
-    def _busMessageCb(self, bus, message):
+    def _busMessageCb(self, bus, message):        
         if message.type == gst.MESSAGE_STATE_CHANGED:
-            pass
+            pass        
         elif message.type == gst.MESSAGE_ERROR:
             gstgerror, debug = message.parse_error()
             msg = "GStreamer error while processing '%s': %s" % (

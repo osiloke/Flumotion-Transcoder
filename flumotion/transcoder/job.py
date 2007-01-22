@@ -15,11 +15,13 @@
 
 import gst
 import os
+import signal
 import sys
 import optparse
 import shutil
 import socket
 import re
+import urllib
 
 from gst.extend.discoverer import Discoverer
 from twisted.internet import reactor, defer
@@ -28,8 +30,6 @@ from flumotion.common import common, log, messages, worker
 from flumotion.transcoder import config, trans
 
 usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
-
-GET_REQUEST_TIMEOUT = 60
 
 class TranscodingError(Exception):
     pass
@@ -72,13 +72,7 @@ class Job(log.Loggable):
         self.profiles = profiles
         self.unrecognized_outputs = []
         self.failed_post_processes = []
-        self.pending_outputs = []
         self.post_processes = {}
-        self.fatalError = False
-
-        for profile in self.profiles:
-            outfile = self.get_output_filename(profile)
-            self.pending_outputs.append(outfile)
 
     def get_output_filename(self, profile):
         """
@@ -88,77 +82,168 @@ class Job(log.Loggable):
         """
         return profile.getOutputBasename(self.processing)
 
-    def fail(self, message):
-        self.warning('Error processing %s: %s', self.processing,
-                     message)
-        print 'Error processing %s\n' % self.processing
-        print message
-        os._exit(1)
+    def failed(self, message, code=1):
+        try:
+            if isinstance(message, failure.Failure):
+                self.debug(log.getFailureMessage(message))
+                message = message.getErrorMessage()
+            self.warning('Error processing %s: %s', self.processing,
+                         message)
+            if len(self.unrecognized_outputs) > 0:
+                profNames = [p.name for p in self.unrecognized_outputs]
+                self.warning("Profile(s) %s output file(s) not recognized"
+                             % ", ".join(profNames))
+            if len(self.failed_post_processes) > 0:
+                profNames = [p.name for p in self.failed_post_processes]
+                self.warning("Profile(s) %s post-process(es) failed"
+                             % ", ".join(profNames))
+            os._exit(code)
+        except Exception, e:
+            self.warning("Unexpected exception: %s" % str(e))
+            os._exit(11)
 
-    def finish(self):
-        if not self.fatalError:
-            self.info('Success processing %s', self.processing)
-            os._exit(0)
-        else:
-            self.warning('Error Processing %s', self.processing)
-            if self.unrecognized_outputs:
-                self.warning('Some unknown outputs: %r' % ([p.name for p in
-                                                    self.unrecognized_outputs],))
-            if self.failed_post_processes:
-                self.warning('Some post-processes failed: %r' % ([p.name for p in
-                                                    self.failed_post_processes],))
-            os._exit(2)
+    def succeed(self, results):
+        self.info('Success processing %s, %d output files created', 
+                  self.processing, len(results))
+        os._exit(0)
 
     def start(self):
-        name = os.path.basename(self.processing)
-        mt = trans.MultiTranscoder(name, self.processing)
-        for profile in self.profiles:
-            outputFilename = self.get_output_filename(profile)
-            outputPath = os.path.join(self.config.workDir, outputFilename)
-            mt.addOutput(outputPath, profile)
-
-        mt.connect('done', self.transcode_done)
-        mt.connect('error', self.transcode_error)
-        mt.start()
-
-    def transcode_done(self, mt):
-        for profile in self.profiles:
-            workfile = os.path.join(self.config.workDir,
-                                    self.get_output_filename(profile))
-            self.debug("Analyzing transcoded file '%s'", workfile)
-            discoverer = Discoverer(workfile)
-            discoverer.connect('discovered',
-                               self.output_discovered, profile,
-                               mt._discoverer.is_audio,
-                               mt._discoverer.is_video)
-            discoverer.discover()
+        try:
+            name = os.path.basename(self.processing)
+            mt = trans.MultiTranscoder(name, self.processing, self.config.transTimeout)
+            for profile in self.profiles:
+                outputFilename = self.get_output_filename(profile)
+                outputPath = os.path.join(self.config.workDir, outputFilename)
+                mt.addOutput(outputPath, profile)
+    
+            mt.connect('done', self.transcode_done)
+            mt.connect('error', self.transcode_error)
+            mt.start()
+        except:
+            self.failed(failure.Failure(), code=11)
 
     def transcode_error(self, mt, message):
-        self.fail(message)
+        if self.config.errGetRequest:
+            try:
+                f = failure.Failure(TranscodingError(message))
+                d = defer.Deferred()
+                d.addErrback(self.performGetRequest, 
+                             self.config.errGetRequest, 
+                             "failure")
+                #recover GET request failures to keep the correct message
+                def recoverGETFailure(newFailure):
+                    self.warning(log.getExceptionMessage(newFailure.value))
+                    return f
+                d.addErrback(recoverGETFailure)
+                d.addBoth(self.failed, code=2)
+                d.errback(f)
+                return
+            except:
+                self.failed(failure.Failure(), code=11)
+        else:
+            self.failed(message, code=2)
 
-    def output_discovered(self, discoverer, ismedia, profile, is_audio,
+    def transcode_done(self, mt):
+        try:
+            defs = []
+            for profile in self.profiles:
+                workfile = os.path.join(self.config.workDir,
+                                        self.get_output_filename(profile))
+                self.debug("Analyzing transcoded file '%s'", workfile)
+                
+                d = defer.Deferred()
+                discoverer = Discoverer(workfile)
+                discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
+                d.addCallback(self.outputDiscovered,
+                              profile,
+                              mt._discoverer.is_audio,
+                              mt._discoverer.is_video)
+                d.addBoth(self.profileFinished, profile)
+                defs.append(d)
+                discoverer.discover()
+            dl = defer.DeferredList(defs,
+                                    fireOnOneCallback=False,
+                                    fireOnOneErrback=False,
+                                    consumeErrors=True)
+            targetFiles = []
+            dl.addCallback(self.targetsDone, targetFiles)
+            dl.addCallback(self.moveOutputFiles)
+            if self.config.errGetRequest:
+                def performRequestAndKeep(previousFailure):
+                    def keepFailure(f):
+                        self.warning(log.getExceptionMessage(f.value))
+                        return previousFailure
+                    try:
+                        d = self.performGetRequest(previousFailure,
+                                                   self.config.errGetRequest, 
+                                                   "failure")
+                        d.addErrback(keepFailure)
+                        return d
+                    except:
+                        return keepFailure(failure.Failure())
+                dl.addErrback(performRequestAndKeep)
+            dl.addErrback(self.failed)
+            if self.config.getRequest:
+                dl.addCallback(self.performGetRequest, 
+                               self.config.getRequest,
+                               "success")
+                #recover GET request failures
+                def recoverGETFailure(f):
+                    self.warning(log.getExceptionMessage(f.value))
+                    return targetFiles
+                dl.addErrback(recoverGETFailure)
+            #Proxy the call to performTargetsGetRequest
+            #to be able to recover on GET failure without
+            #recovering previous failures
+            def performTargetsGetRequestAndRecover(result):
+                def recover(f):
+                    self.warning(log.getExceptionMessage(f.value))
+                    return result
+                try:
+                    d = self.performTargetsGetRequest(result)
+                    d.addErrback(recover)
+                    return d
+                except:
+                    return recover(failure.Failure())
+            dl.addCallback(performTargetsGetRequestAndRecover)
+            dl.addCallbacks(self.succeed, self.failed)
+        except:
+            self.failed(failure.Failure(), code=11)
+
+    def targetsDone(self, results, targetFiles):
+        self.info("All Profiles Done")
+        errors = 0
+        errors = 0
+        for s, r in results:
+            if s != defer.SUCCESS:                
+                errors += 1
+                self.debug(log.getFailureMessage(r))
+            else:
+                targetFiles.append(r)
+        if errors > 0:
+            raise TranscodingError("%s profile(s) fail to transcode" % errors)
+        return targetFiles
+
+    def outputDiscovered(self, result, profile, is_audio,
                           is_video):
+        discoverer, ismedia = result
         if ismedia and (discoverer.is_audio == is_audio 
                         and discoverer.is_video == is_video):
             args = self.buildArgs(profile, discoverer)
             d = defer.Deferred()
-            if self.config.linkDir:
+            if self.config.linkDir and self.config.urlPrefix:
                 d.addCallback(self.writeLinkFile, profile)
-                d.addErrback(self.recoverFailure, profile, args, "link writing")
+                d.addErrback(self.recoverFailure, profile, 
+                             args, "link writing")
             if profile.postprocess:
                 d.addCallback(self.applyPostProcess, profile)
-                d.addErrback(self.fatalFailure, profile, args, "post-processing")
-            d.addCallback(self.moveOutputFile, profile)
-            d.addErrback(self.fatalFailure, profile, args, "file moving")
-            if self.config.getRequest:
-                d.addCallback(self.performGetRequest, profile, self.config.getRequest)
-                d.addErrback(self.recoverFailure, profile, args, "GET request")            
-            if self.config.errGetRequest:
-                d.addErrback(self.performErrorGetRequest, profile, args, self.config.errGetRequest)
-            d.addBoth(self.profileFinished, profile)
+                d.addErrback(self.fatalFailure, profile, 
+                             args, "post-processing")
             d.callback(args)
+            return d
         else:
-            self.warning("Couldn't recognize the output for profile %s", profile.name)
+            self.warning("Couldn't recognize the output for profile %s", 
+                         profile.name)
             if ismedia:
                 gota, gotv = discoverer.is_audio, discoverer.is_video
                 self.warning("Expected %saudio and %svideo, but got "
@@ -166,11 +251,11 @@ class Job(log.Loggable):
                              is_video or 'no ', gota or 'no ', gotv or
                              'no ')
             else:
-                self.warning(
-                    "Discoverer does not think the output is a media file")
+                self.warning("Discoverer does not think "
+                             + "the output is a media file")
             self.unrecognized_outputs.append(profile)
-            self.profileFinished(None, profile)
-
+            raise TranscodingError("Couldn't recognize the output for profile %s", 
+                                   profile.name)
             
     def fatalFailure(self, failure, profile, args, task):
         if args.get('fatalError', None):
@@ -242,7 +327,7 @@ class Job(log.Loggable):
                        workfile)
             return args
         argString = "&".join("%s=%s" % (k, v) for (k, v) in args.items())
-        link = self.config.urlPrefix + relpath + ".m3u?" + argString
+        link = self.config.urlPrefix + urllib.quote(relpath) + ".m3u?" + argString
         linkPath = os.path.join(self.config.linkDir, relpath) + '.link'
         handle = open(linkPath, 'w')
         handle.write(
@@ -254,124 +339,187 @@ class Job(log.Loggable):
         self.info("Written link file %s" % linkPath)
         return args
 
-    def performGetRequest(self, args, profile, template):
-        self.debug('Preparing get request')
-        largs = args.copy()
-        outRelPath = self.get_output_filename(profile)
-        # I actually had an incoming file get transcoded to two outgoing
-        # files where one was 1.999 secs and the other 2.000 secs
-        # so let's round.
-        s = int(round(largs['duration']))
-        m = s / 60
-        s -= m * 60
-        h = m / 60
-        m -= h * 60
-        largs['hours'] = h
-        largs['minutes'] = m
-        largs['seconds'] = s
-        largs['outputPath'] = outRelPath
-
-        url = template % largs
-
-        def doGetRequest(url, triesLeft=3):
-            from twisted.web import client
-            self.debug('Doing get request %s' % url)
-            d = client.getPage(url, timeout=GET_REQUEST_TIMEOUT / 2)
-            d.addCallback(getPageCb)
-            d.addErrback(getPageEb, url, triesLeft)
-            return d
-
-        def getPageCb(result):
-            self.info('Done get request to inform server for %s' % outRelPath)
-            self.log('Got result %s', result)
-            return args
-
-        def getPageEb(failure, url, triesLeft):
-            if triesLeft == 0:
-                raise TranscodingError, ('Fail to perform GET request for profile %s'
-                        ', Could not inform server for %s') % (profile.name, outRelPath)
-            self.debug('failure: %s' % log.getFailureMessage(failure))
-            triesLeft -= 1
-            self.debug('%d tries left' % triesLeft)
-            self.info('Could not do get request for %s, '
-                'trying again in %d seconds' % (
-                    outRelPath, GET_REQUEST_TIMEOUT))
-            d = defer.Deferred()
-            d.addCallback(lambda _: doGetRequest(url, triesLeft))
-            reactor.callLater(GET_REQUEST_TIMEOUT, d.callback, None)
-            return d
-
-        return doGetRequest(url)
-
-    def performErrorGetRequest(self, failure, profile, args, template):
-        if args.get('fatalError', None):
-            self.info("Perform fatal error GET request")
-            def bothback(args_or_failure):
-                failure.raiseException()
-            d = self.performGetRequest(args, profile, template)
-            d.addBoth(bothback)
-            return d
-        return failure
-
     def applyPostProcess(self, args, profile):
-        outRelPath = self.get_output_filename(profile)
-        workfile = os.path.join(self.config.workDir, outRelPath)
+        
+        def processTerminated(success):
+            p, to = self.post_processes.pop((profile, self.processing))
+            to.cancel()
+            self.debug("Profile %s post-process with PID %s terminated", 
+                       profile.name, str(p.pid))
+            if not success:
+                self.failed_post_processes.append(profile)
+                raise TranscodingError("Post-processing failed for profile %s" 
+                                     % profile.name)
+            return args
+                
+        def processFailure(failure):
+            p, to = self.post_processes.pop((profile, self.processing))
+            to.cancel()
+            self.debug("Profile %s post-process with PID %s failed", 
+                       profile.name, str(p.pid))
+            self.failed_post_processes.append(profile)
+            return failure
+            
+        def killProcessTimeout(process):
+            self.warning("Profile %s post-process with PID %d didn't stop, "
+                         + "trying to kill it", profile.name, process.pid)
+            os.kill(process.pid, signal.SIGKILL)
+            to = reactor.callLater(20, killProcessTimeout, process)
+            self.post_processes[(profile, self.processing)] = (process, to)
+            
+        def processTimeout(process):
+            self.warning("Profile %s post-process with PID %d timeout", 
+                         profile.name, process.pid)
+            os.kill(process.pid, signal.SIGTERM)
+            to = reactor.callLater(20, killProcessTimeout, process)
+            self.post_processes[(profile, self.processing)] = (process, to)
+            
+        outputFile = self.get_output_filename(profile)
+        workfile = os.path.join(self.config.workDir, outputFile)
         self.info('starting post-processing of %s', workfile);
-        def escapeSpaces(str):
-            return str.replace(' ', '\ ')
-        params = {"file": escapeSpaces(workfile),
-                  "relFile": escapeSpaces(outRelPath),
-                  "workRoot": escapeSpaces(self.config.workDir),
-                  "inputRoot": escapeSpaces(self.config.inputDir),
-                  "outputRoot": escapeSpaces(self.config.outputDir),
-                  "errorRoot": escapeSpaces(self.config.errorDir),
-                  "linkRoot": escapeSpaces(self.config.linkDir)}
+        inputPath = self.processing
+        inputFile = os.path.basename(inputPath)
+        params = {"file": workfile,
+                  "relOutputFile": outputFile,
+                  "inputFile": inputPath,
+                  "relInputFile": inputFile,
+                  "workRoot": self.config.workDir,
+                  "inputRoot": self.config.inputDir,
+                  "outputRoot": self.config.outputDir,
+                  "errorRoot": self.config.errorDir,
+                  "linkRoot": self.config.linkDir}
+        for k, v in params.iteritems():
+            params[k] = v.replace(' ', '\ ')
         command = profile.postprocess % params
         argv = re.split('(?<!\\\\) ', command)
         for i, a in enumerate(argv):
             argv[i] = a.replace('\ ', ' ')
         self.debug('Post-process line: %s', '"' + '" "'.join(argv) + '"')
-        childFDs = {0: 0, 1: 'r', 2: 2}
+        childFDs = {0: 0, 1: 'r', 2: 'r'}
         env = dict(os.environ)
         env['FLU_DEBUG'] = log._FLU_DEBUG
+        
         p = PostProcessProtocol(self, argv[0])
-        def processTerminated(success):
-            self.post_processes.pop((profile, self.processing))
-            if not success:
-                self.failed_post_processes.append(profile)
-                raise TranscodingError, "Post-processing failed for profile %s" % profile.name
-            return args
-        def processFailure(failure):
-            self.post_processes.pop((profile, self.processing))
-            self.failed_post_processes.append(profile)
-            return failure
         d = p.getTerminatedDeferred()
-        d.addCallbacks(processTerminated, processFailure)        
+        d.addCallbacks(processTerminated, processFailure)
         process = reactor.spawnProcess(p, argv[0], env=env,
-                                   args=argv, childFDs=childFDs)
+                                       args=argv, childFDs=childFDs)
         p.setPid(process.pid)
-        self.post_processes[(profile, self.processing)] = p
+        to = reactor.callLater(self.config.ppTimeout, processTimeout, p)
+        self.post_processes[(profile, self.processing)] = (p, to)
         return d
 
-    def moveOutputFile(self, args, profile):
-        """
-        move the output file from the work directory to the output directory.
-        """
-        outRelPath = self.get_output_filename(profile)
-        workfile = os.path.join(self.config.workDir, outRelPath)
-        outfile = os.path.join(self.config.outputDir, outRelPath)
-        shutil.move(workfile, outfile)
-        self.info("Output file moved to %s", outfile)
-        return args
-        
-    def profileFinished(self, args_or_failure, profile):
-        outRelPath = self.get_output_filename(profile)
-        self.pending_outputs.remove(outRelPath)
-        if not args_or_failure or isinstance(args_or_failure, failure.Failure):
-            self.fatalError = True
-        if not self.pending_outputs:
-            self.debug('Totally finished dude')
-            self.finish()
+    def profileFinished(self, result, profile):
+        if isinstance(result, failure.Failure):
+            result.raiseException()
+        return (profile, result)
+
+    def moveOutputFiles(self, targets):
+        for profile, args in targets:
+            outRelPath = self.get_output_filename(profile)
+            workfile = os.path.join(self.config.workDir, outRelPath)
+            outfile = os.path.join(self.config.outputDir, outRelPath)
+            shutil.move(workfile, outfile)
+            self.info("Output file for profile %s moved to %s", 
+                      profile.name, outfile)
+        return targets
+
+    def performGetRequest(self, result, template, identifier):
+        self.debug('Preparing GET request for %s' % identifier)
+        inputPath = self.processing
+        inputFile = os.path.basename(inputPath)
+        vars = {"inputFile": urllib.quote(inputPath),
+                "relInputFile": urllib.quote(inputFile),
+                "workRoot": urllib.quote(self.config.workDir),
+                "inputRoot": urllib.quote(self.config.inputDir),
+                "outputRoot": urllib.quote(self.config.outputDir),
+                "errorRoot": urllib.quote(self.config.errorDir),
+                "linkRoot": urllib.quote(self.config.linkDir),
+                "message": ""}
+        if isinstance(result, failure.Failure):
+            vars["message"] = urllib.quote(result.getErrorMessage())
+        return self.startGetRequest(result, template % vars, identifier)
+    
+    def performTargetsGetRequest(self, targets):
+        defs = []
+        for profile, args in targets:
+            if profile.getRequest:
+                self.debug('Preparing GET request for profile %s'
+                           % profile.name)
+                largs = args.copy()
+                outputFile = self.get_output_filename(profile)
+                outPath = os.path.join(self.config.outputDir, outputFile)
+                inputPath = self.processing
+                inputFile = os.path.basename(inputPath)
+                # I actually had an incoming file get transcoded to two outgoing
+                # files where one was 1.999 secs and the other 2.000 secs
+                # so let's round.
+                s = int(round(largs['duration']))
+                m = s / 60
+                s -= m * 60
+                h = m / 60
+                m -= h * 60
+                largs['hours'] = h
+                largs['minutes'] = m
+                largs['seconds'] = s
+                largs['relOutputFile'] = urllib.quote(outputFile)
+                largs["outputFile"] = urllib.quote(outPath)
+                largs["inputFile"] = urllib.quote(inputPath)
+                largs["relInputFile"] = urllib.quote(inputFile)
+                largs["workRoot"] = urllib.quote(self.config.workDir)
+                largs["inputRoot"] = urllib.quote(self.config.inputDir)
+                largs["outputRoot"] = urllib.quote(self.config.outputDir)
+                largs["errorRoot"] = urllib.quote(self.config.errorDir)
+                largs["linkRoot"] = urllib.quote(self.config.linkDir)
+                url = profile.getRequest % largs
+                d = self.startGetRequest(None, url, profile.name)
+                def showFailure(f):
+                    self.warning(log.getExceptionMessage(f.value))
+                    return f
+                d.addErrback(showFailure)
+                defs.append(d)
+        if len(defs) == 0:
+            return
+        return defer.DeferredList(defs,
+                                  fireOnOneCallback=False,
+                                  fireOnOneErrback=False,
+                                  consumeErrors=True)
+
+    def startGetRequest(self, result, url, identifier):
+
+        def doGetRequest(url, triesLeft=3):
+            from twisted.web import client
+            self.debug('Doing get request %s' % url)
+            d = client.getPage(url, timeout=self.config.getTimeout / 2)            
+            d.addCallbacks(getPageCb,
+                           getPageEb,
+                           errbackArgs=[url, triesLeft])
+            return d
+
+        def getPageCb(page):
+            self.info('GET request done for %s' % identifier)
+            self.log('Got result %s', page)
+            if isinstance(result, failure.Failure):
+                result.raiseException()
+            return result
+
+        def getPageEb(failure, url, triesLeft):
+            if triesLeft == 0:
+                raise TranscodingError('Fail to perform GET request for %s'
+                                       % identifier)
+            self.debug('failure: %s' % log.getFailureMessage(failure))
+            triesLeft -= 1
+            self.debug('%d tries left' % triesLeft)
+            self.info(('Could not do GET request for %s, '
+                      + 'trying again in %d seconds')
+                      % (identifier, self.config.getTimeout))
+            d = defer.Deferred()
+            d.addCallback(lambda _: doGetRequest(url, triesLeft))
+            reactor.callLater(self.config.getTimeout, d.callback, None)
+            return d
+
+        return doGetRequest(url)
+
 
 def _createParser():
     parser = optparse.OptionParser(usage=usage)

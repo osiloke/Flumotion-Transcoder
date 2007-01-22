@@ -13,7 +13,7 @@ usage() {
         echo "Error: $msg"
         echo
     fi 
-    echo "Usage: $0 VIDEO_FILE WORKING_DIRECTORY [OUTGOING_DIRECTORY]"
+    echo "Usage: $0 VIDEO_FILE WORK_DIR [INPUT_DIR] [OUTPUT_DIR]"
     echo
     exit $code
 }
@@ -32,43 +32,55 @@ VIDEO_FILE="$1"
 if test "x$VIDEO_FILE" = "x"; then
     usage 1 "Video file not specified"
 fi
-WORKING_DIRECTORY="$2"
-if test "x$WORKING_DIRECTORY" = "x"; then
+WORK_DIR="$2"
+if test "x$WORK_DIR" = "x"; then
     usage 1 "Working directory not specified"
 fi
-OUTGOING_DIRECTORY="${3:-$WORKING_DIRECTORY}"
-if test "x$OUTGOING_DIRECTORY" = "x"; then
-    usage 1 "Outgoing directory not specified"
+INPUT_DIR="${3:-$WORK_DIR}"
+if test "x$INPUT_DIR" = "x"; then
+    usage 1 "Input directory not specified"
+fi
+OUTPUT_DIR="${4:-$WORK_DIR}"
+if test "x$OUTPUT_DIR" = "x"; then
+    usage 1 "Output directory not specified"
 fi
 
-if test ! -d "$WORKING_DIRECTORY"; then
-    usage 1 "Working directory '$WORKING_DIRECTORY' not found"
+if test ! -d "$WORK_DIR"; then
+    usage 1 "Working directory '$WORK_DIR' not found"
 fi
-if test ! -w "$WORKING_DIRECTORY"; then
-    usage 1 "Working directory '$WORKING_DIRECTORY' cannot be written (permision denied)"
-fi
-
-if test ! -d "$OUTGOING_DIRECTORY"; then
-    usage 1 "Outgoing directory '$OUTGOING_DIRECTORY' not found"
-fi
-if test ! -w "$OUTGOING_DIRECTORY"; then
-    usage 1 "Outgoing directory '$OUTGOING_DIRECTORY' cannot be written (permision denied)"
+if test ! -w "$WORK_DIR"; then
+    usage 1 "Working directory '$WORK_DIR' cannot be written (permision denied)"
 fi
 
-WORKING_VIDEO="$WORKING_DIRECTORY/$VIDEO_FILE"
-WORKING_PNG_THUMBNAIL="$WORKING_DIRECTORY/$VIDEO_FILE.png"
-WORKING_JPG_THUMBNAIL="$WORKING_DIRECTORY/$VIDEO_FILE.jpg"
-OUTGOING_JPG_THUMBNAIL="$OUTGOING_DIRECTORY/$VIDEO_FILE.jpg"
-
-if test ! -f "$WORKING_VIDEO"; then
-    usage 1 "Video file '$WORKING_VIDEO' not found or invalid"
+if test ! -d "$INPUT_DIR"; then
+    usage 1 "Input directory '$INPUT_DIR' not found"
 fi
-if test ! -r "$WORKING_VIDEO"; then
-    usage 1 "Video file '$WORKING_VIDEO' cannot be read (permission denied)"
+if test ! -r "$INPUT_DIR"; then
+    usage 1 "Input directory '$INPUT_DIR' cannot be read (permision denied)"
+fi
+
+if test ! -d "$OUTPUT_DIR"; then
+    usage 1 "Output directory '$OUTPUT_DIR' not found"
+fi
+if test ! -w "$OUTPUT_DIR"; then
+    usage 1 "Output directory '$OUTPUT_DIR' cannot be written (permision denied)"
+fi
+
+INPUT_VIDEO="$INPUT_DIR/$VIDEO_FILE"
+#THUMBNAIL_FILE=${VIDEO_FILE//.flv/}
+WORKING_PNG_THUMBNAIL="$WORK_DIR/$THUMBNAIL_FILE.png"
+WORKING_JPG_THUMBNAIL="$WORK_DIR/$THUMBNAIL_FILE.jpg"
+OUTPUT_JPG_THUMBNAIL="$OUTPUT_DIR/$THUMBNAIL_FILE.jpg"
+
+if test ! -f "$INPUT_VIDEO"; then
+    usage 1 "Video file '$INPUT_VIDEO' not found or invalid"
+fi
+if test ! -r "$INPUT_VIDEO"; then
+    usage 1 "Video file '$INPUT_VIDEO' cannot be read (permission denied)"
 fi
 
 while /bin/true; do
-    $THUMBNAILER "$WORKING_VIDEO" "$WORKING_PNG_THUMBNAIL" \
+    $THUMBNAILER "$INPUT_VIDEO" "$WORKING_PNG_THUMBNAIL" \
         || error $? "Failed to thumbnail video"
     if test ! -f "$WORKING_PNG_THUMBNAIL"; then
         MAX_ATTEMPTS=$((MAX_ATTEMPTS-1))
@@ -80,8 +92,8 @@ while /bin/true; do
         || usage $? "Failed to convert from PNG to JPG"
     rm "$WORKING_PNG_THUMBNAIL" \
         || usage $? "Failed to delete temporary PNG thumbnail"
-    if test "$WORKING_JPG_THUMBNAIL" != "$OUTGOING_JPG_THUMBNAIL"; then
-        mv "$WORKING_JPG_THUMBNAIL" "$OUTGOING_JPG_THUMBNAIL" \
+    if test "$WORKING_JPG_THUMBNAIL" != "$OUTPUT_JPG_THUMBNAIL"; then
+        mv "$WORKING_JPG_THUMBNAIL" "$OUTPUT_JPG_THUMBNAIL" \
             || error $? "Failed to move thumbnail to outgoing directory"
     fi
     break

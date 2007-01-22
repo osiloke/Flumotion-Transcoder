@@ -32,6 +32,13 @@ class SectionParser(log.Loggable):
                       'Unknown conf key for %s: %s' % (name, k)
             setattr(self, attr, parser(v))
             self.log('%s = %r', attr, parser(v))
+
+def bool(s):
+    if s.lower() in ("1", "true", "yes"):
+        return True
+    if s.lower() in ("0", "false", "no"):
+        return False
+    raise TypeError("Invalid boolean value '%s'" % s)
         
 class Profile(SectionParser):
     """
@@ -55,6 +62,7 @@ class Profile(SectionParser):
     @type  videoframerate:  2-tuple of int
     @param audiorate:       Sampling rate of the output audio
     @param audiochannels:   Number of audio channels
+    @param getrequest:      URL to be call for each target completed
     @param postprocess:     Command line to call for inplace post-process,
                             %(file)s will be replaced by the full path of the file.
                             %(relFile)s will be replaced by the relative path of the file.
@@ -80,7 +88,9 @@ class Profile(SectionParser):
                       'videoframerate': ('videoframerate', False, fraction, None),
                       'audiorate': ('audiorate', False, int, None),
                       'audiochannels': ('audiochannels', False, int, None),
-                      'postprocess': ('postprocess', False, str, None)}
+                      'postprocess': ('postprocess', False, str, None),
+                      'appendext': ('appendExt', False, bool, True),
+                      'getrequest': ('getRequest', False, str, None)}
 
         self.name = name
         self.parseFromTable(name, parseTable, confDict)
@@ -88,11 +98,14 @@ class Profile(SectionParser):
     def getOutputBasename(self, filename):
         """
         Returns the output basename for the given input file. This is
-        done by taking the basename of the input file and replacing its
-        extension with our own.
+        done by taking the basename of the input file and adding
+        our own extension.
         """
-        prefix = os.path.basename(filename).rsplit('.', 1)[0]
-        return '.'.join([prefix, self.extension])
+        if self.appendExt:
+            return'.'.join([os.path.basename(filename), self.extension])
+        else:
+            prefix = os.path.basename(filename).rsplit('.', 1)[0]
+            return '.'.join([prefix, self.extension])
 
 class Customer(SectionParser):
     def __init__(self, name, confDict):
@@ -106,6 +119,9 @@ class Customer(SectionParser):
                       'errgetreq': ('errGetRequest', False, str, None),
                       'errmail': ('errMail', False, str, None),
                       'timeout': ('timeout', False, int, 30),
+                      'pptimeout': ('ppTimeout', False, int, 60),
+                      'gettimeout': ('getTimeout', False, int, 60),
+                      'transtimeout': ('transTimeout', False, int, 30),
                       'priority': ('priority', False, int, 50)}
 
         self.name = name

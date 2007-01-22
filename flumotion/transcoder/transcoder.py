@@ -62,7 +62,7 @@ class Transcoder(log.Loggable):
         self.config = config
         self.currentidx = 0
         self.working = False
-        self.watchers = []
+        self.watchers = {}
         self.queue = []
         self.processing = {}
 
@@ -75,7 +75,7 @@ class Transcoder(log.Loggable):
                                        ignorefiles=ignorefiles)
             watcher.connect('complete-file', self.newFile, customer)
             watcher.start()
-            self.watchers.append(watcher)
+            self.watchers[customer] = watcher
 
     def newFile(self, watcher, filename, customer):
         self.info('queueing file %s for customer %s (priority %d)',
@@ -154,7 +154,8 @@ class Transcoder(log.Loggable):
               self.info("Error notification send to %s" % customer.errMail)
 
     def _moveInputToErrors(self, customer, relpath):
-        infile = os.path.join(customer.inputDir, relpath)
+        self.watchers[customer].remove(relpath)
+        infile = os.path.join(customer.inputDir, relpath)        
         if os.path.exists(infile):
             if not customer.errorDir:
                 self.warning('Cannot move %s to to errordir: customer '

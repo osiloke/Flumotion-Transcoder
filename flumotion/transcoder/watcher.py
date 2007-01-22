@@ -67,6 +67,9 @@ class Watcher(gobject.GObject, log.Loggable):
         # reset the watched files
         self._files = {}
 
+    def remove(self, file):
+        self._checked.remove(file)
+
     def _timeoutCb(self):
         self.log("watching...")
         newfiles = self._getData()
@@ -75,7 +78,7 @@ class Watcher(gobject.GObject, log.Loggable):
             len(newfiles), len(oldfiles)))
         for newf in [x for x in newfiles.keys() if x in oldfiles]:
             newsize = newfiles[newf]
-            if (newf in oldfiles) and newsize == self._files[newf]:
+            if (newf in self._files) and (newsize == self._files[newf]):
                 self.emit('complete-file', newf)
                 self._checked.append(newf)
                 del newfiles[newf]

@@ -1,9 +1,47 @@
+2007-01-18  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/watcher.py: 
+	* flumotion/transcoder/transcoder.py: 
+	Now the files that failed and are moved to the error directory
+	can be moved back to incoming and transcoded again without 
+	having to restart the transcoder.
+	* flumotion/transcoder/config.py: 
+	Now keep the extention of the input file to prevent name clash
+	in case of diffrent types of input files with a same name,
+	can be deactivated setting the property appendext to false in
+	the profiles configuration sections.
+	Added pptimeout, gettimeout and transtimeout properties 
+	to the customer section to configure the post-process, 
+	get request and transcoding timeout.
+	* flumotion/transcoder/trans.py: 
+	Better exception handling for gstreamer errors.
+	The timeout can now be specified to the constructor.
+	* flumotion/transcoder/job.py: 
+	Now quote the filenames before inserting it in the URLs.
+	Added a timeout for post-processes.
+	Made files to be moved to outgoing only if ALL profiles are successfull.
+	Added a getrequest option in each profiles, the customer's one is
+	called only one time if all profiles are transcoded well, and
+	the profile getrequest is called for each profiles with more
+	information related to the output file (like duration...).
+	Made the errgetreq to be called only one time and for any kind of error.
+	Better overrall exception catching to prevent zombie jobs.
+	* bin/flumotion-thumbnailer.sh:
+	Added a parameter to be able to get the source video from incomming.
+
+2007-01-08  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/flumotion-thumbnailer.sh:
+	Add a script to make a JPG thumbnail of a video.
+	It uses totem-video-thumbnailer and ImageMagick convert.
+	It test for output and loop if no thumbnail has been
+	generated because totem-video-thumbnailer may timeout
+	under heavy load.
+	
 2007-01-05  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* configure.ac:
 	  back to TRUNK
-
-=== release 0.0.2 ===
 
 2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
 
