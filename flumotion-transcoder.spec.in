@@ -83,6 +83,7 @@ fi
 %{_sbindir}/flumotion-transcoder
 %{_sbindir}/flumotion-transcoder-job
 %{_bindir}/mmf-crc
+%{_bindir}/flumotion-thumbnailer.sh
 
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
@@ -94,6 +95,9 @@ fi
 %dir %attr(750,flumotion,root) /srv/flumotion/transcoder
 
 %changelog
+* Thu Jan 22 2007 Sebastien Merle  <sebastien@fluendo.com>
+- add flumotion-thumbnailer.sh script
+
 * Thu Jan 04 2007 Thomas Vander Stichele <thomas at apestaart dot org>
 - add mmf-crc binary
 
