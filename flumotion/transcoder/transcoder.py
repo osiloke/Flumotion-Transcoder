@@ -146,7 +146,15 @@ class Transcoder(log.Loggable):
                   % (os.path.join(customer.inputDir, relpath), customer.name))          
           p.tochild.write("It will be moved to '%s'\n" % customer.errorDir)
           p.tochild.close()
-          exitCode = p.wait()
+          while True:
+              try:
+                exitCode = p.wait()
+                break
+              except OSError, e:
+                if e.errno == errno.EINTR:
+                    continue
+                else:
+                    raise
           if exitCode != 0:
               self.warning("Failed to send error notification mail to %s (Exit code %s)"
                            % (customer.errMail, str(exitCode)))
