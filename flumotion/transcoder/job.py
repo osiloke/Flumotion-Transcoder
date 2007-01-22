@@ -375,14 +375,17 @@ class Job(log.Loggable):
             self.post_processes[(profile, self.processing)] = (process, to)
             
         outputFile = self.get_output_filename(profile)
+        outputPath = os.path.join(self.config.outputDir, outputFile)
         workfile = os.path.join(self.config.workDir, outputFile)
         self.info('starting post-processing of %s', workfile);
         inputPath = self.processing
         inputFile = os.path.basename(inputPath)
-        params = {"file": workfile,
-                  "relOutputFile": outputFile,
-                  "inputFile": inputPath,
-                  "relInputFile": inputFile,
+        params = {"workPath": workfile,
+                  "workFile": outputFile,
+                  "outputFile": outputFile,
+                  "outputPath": outputPath,
+                  "inputPath": inputPath,
+                  "inputFile": inputFile,
                   "workRoot": self.config.workDir,
                   "inputRoot": self.config.inputDir,
                   "outputRoot": self.config.outputDir,
@@ -428,8 +431,8 @@ class Job(log.Loggable):
         self.debug('Preparing GET request for %s' % identifier)
         inputPath = self.processing
         inputFile = os.path.basename(inputPath)
-        vars = {"inputFile": urllib.quote(inputPath),
-                "relInputFile": urllib.quote(inputFile),
+        vars = {"inputPath": urllib.quote(inputPath),
+                "inputFile": urllib.quote(inputFile),
                 "workRoot": urllib.quote(self.config.workDir),
                 "inputRoot": urllib.quote(self.config.inputDir),
                 "outputRoot": urllib.quote(self.config.outputDir),
@@ -448,7 +451,7 @@ class Job(log.Loggable):
                            % profile.name)
                 largs = args.copy()
                 outputFile = self.get_output_filename(profile)
-                outPath = os.path.join(self.config.outputDir, outputFile)
+                outputPath = os.path.join(self.config.outputDir, outputFile)
                 inputPath = self.processing
                 inputFile = os.path.basename(inputPath)
                 # I actually had an incoming file get transcoded to two outgoing
@@ -462,10 +465,10 @@ class Job(log.Loggable):
                 largs['hours'] = h
                 largs['minutes'] = m
                 largs['seconds'] = s
-                largs['relOutputFile'] = urllib.quote(outputFile)
-                largs["outputFile"] = urllib.quote(outPath)
-                largs["inputFile"] = urllib.quote(inputPath)
-                largs["relInputFile"] = urllib.quote(inputFile)
+                largs['outputFile'] = urllib.quote(outputFile)
+                largs["outputPath"] = urllib.quote(outputPath)
+                largs["inputPath"] = urllib.quote(inputPath)
+                largs["inputFile"] = urllib.quote(inputFile)
                 largs["workRoot"] = urllib.quote(self.config.workDir)
                 largs["inputRoot"] = urllib.quote(self.config.inputDir)
                 largs["outputRoot"] = urllib.quote(self.config.outputDir)
