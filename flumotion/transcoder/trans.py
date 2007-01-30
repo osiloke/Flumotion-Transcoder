@@ -206,7 +206,13 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             return
 
         # discover the media
-        self._discoverer = Discoverer(self.inputfile)
+        #Is the discover patch from #603 applied ? 
+        if gst.get_pygst_version() <= (0, 10, 7, 0):    
+            self.log("Cannot change the maximum scan time "
+                     + "of the discoverer, update gst-python")
+            self._discoverer = Discoverer(self.inputfile)
+        else:
+            self._discoverer = Discoverer(self.inputfile, maxscan=10)
         self._discoverer.connect('discovered', self._discoveredCb)
         self._discoverer.discover()
 

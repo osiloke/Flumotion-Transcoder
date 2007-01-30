@@ -152,7 +152,13 @@ class Job(log.Loggable):
                 self.debug("Analyzing transcoded file '%s'", workfile)
                 
                 d = defer.Deferred()
-                discoverer = Discoverer(workfile)
+                #Is the discover patch from #603 applied ? 
+                if gst.get_pygst_version() <= (0, 10, 7, 0):
+                    self.warning("Cannot change the maximum scan time "
+                             + "of the discoverer, update gst-python")
+                    discoverer = Discoverer(workfile)
+                else:
+                    discoverer = Discoverer(workfile, maxscan=10)
                 discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
                 d.addCallback(self.outputDiscovered,
                               profile,
