@@ -2,10 +2,15 @@
 
 	* flumotion/transcoder/trans.py: 
 	* flumotion/transcoder/job.py: 
+	Changed the name of the extra parameter added by #603 patch.
+
+2007-01-30  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/trans.py: 
+	* flumotion/transcoder/job.py: 
 	If the gst-python version > 0.10.7.0, assume the 
 	Discoverer patch from #603 has been applied and
 	set the maximum scan time to 10 seconds.
-	
 
 2007-01-22  Sebastien Merle  <sebastien@fluendo.com>
 

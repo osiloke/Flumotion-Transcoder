@@ -154,11 +154,11 @@ class Job(log.Loggable):
                 d = defer.Deferred()
                 #Is the discover patch from #603 applied ? 
                 if gst.get_pygst_version() <= (0, 10, 7, 0):
-                    self.warning("Cannot change the maximum scan time "
+                    self.warning("Cannot change the maximum frame interleave "
                              + "of the discoverer, update gst-python")
                     discoverer = Discoverer(workfile)
                 else:
-                    discoverer = Discoverer(workfile, maxscan=10)
+                    discoverer = Discoverer(workfile, max_interleave=10)
                 discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
                 d.addCallback(self.outputDiscovered,
                               profile,
