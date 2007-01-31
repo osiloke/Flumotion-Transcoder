@@ -1,5 +1,12 @@
 2007-01-31  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/trans.py: 
+	* flumotion/transcoder/job.py: 
+	Test if the patch #603 has been applied with introspection.
+
+2007-01-31  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/job.py: 
 	* flumotion/transcoder/config.py: 
 	Changed the default value of appendext to false.
 

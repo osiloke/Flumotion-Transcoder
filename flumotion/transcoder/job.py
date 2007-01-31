@@ -153,12 +153,13 @@ class Job(log.Loggable):
                 
                 d = defer.Deferred()
                 #Is the discover patch from #603 applied ? 
-                if gst.get_pygst_version() <= (0, 10, 7, 0):
-                    self.warning("Cannot change the maximum frame interleave "
-                             + "of the discoverer, update gst-python")
-                    discoverer = Discoverer(workfile)
-                else:
+                discovererArgs = Discoverer.__init__.im_func.func_code.co_varnames
+                if "max_interleave" in discovererArgs:
                     discoverer = Discoverer(workfile, max_interleave=10)
+                else:
+                    self.warning("Cannot change the maximum frame interleave "
+                                 + "of the discoverer, update gst-python")
+                    discoverer = Discoverer(workfile)
                 discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
                 d.addCallback(self.outputDiscovered,
                               profile,
