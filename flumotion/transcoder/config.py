@@ -89,7 +89,7 @@ class Profile(SectionParser):
                       'audiorate': ('audiorate', False, int, None),
                       'audiochannels': ('audiochannels', False, int, None),
                       'postprocess': ('postprocess', False, str, None),
-                      'appendext': ('appendExt', False, bool, True),
+                      'appendext': ('appendExt', False, bool, False),
                       'getrequest': ('getRequest', False, str, None)}
 
         self.name = name
