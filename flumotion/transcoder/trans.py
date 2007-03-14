@@ -162,7 +162,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
                    (gobject.TYPE_STRING, )),
         }
 
-    def __init__(self, name, inputfile, timeout=30):
+    def __init__(self, name, inputfile, timeout=30, max_interleave=1.0):
         gobject.GObject.__init__(self)
         self.name = name
         self.inputfile = inputfile
@@ -180,6 +180,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         self._tees = {}
 
         self.timeout = timeout
+        self._max_interleave = max_interleave
 
     def addOutput(self, outputPath, profile):
         """
@@ -209,7 +210,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         #Is the discover patch from #603 applied ? 
         discovererArgs = Discoverer.__init__.im_func.func_code.co_varnames
         if "max_interleave" in discovererArgs:
-            self._discoverer = Discoverer(self.inputfile, max_interleave=10)
+            self._discoverer = Discoverer(self.inputfile, 
+                                          max_interleave=self._max_interleave)
         else:
             self.warning("Cannot change the maximum frame interleave "
                          + "of the discoverer, update gst-python")
@@ -380,6 +382,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         """
         bin = gst.Bin()
         conv = gst.element_factory_make("audioconvert")
+        #rate = gst.element_factory_make("audiorate")
         res = gst.element_factory_make("audioresample")
         capsfilter = gst.element_factory_make("capsfilter")
         enc = self._parse_bin_from_description(profile.audioencoder, True)
@@ -396,6 +399,8 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             self.log('filter: %s', atmpl)
             capsfilter.props.caps = gst.caps_from_string(atmpl)
 
+        #bin.add(conv, rate, res, capsfilter, enc, queue)
+		#gst.element_link_many(conv, rate, res, capsfilter, enc, queue)
         bin.add(conv, res, capsfilter, enc, queue)
         gst.element_link_many(conv, res, capsfilter, enc, queue)
         

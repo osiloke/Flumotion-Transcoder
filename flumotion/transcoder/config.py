@@ -178,7 +178,8 @@ class Config(SectionParser):
         sections = parser.sections()
         sections.sort()
 
-        globalParseTable = {'maxjobs': ('maxJobs', False, int, 1)}
+        globalParseTable = {'maxjobs': ('maxJobs', False, int, 1),
+                            'maxinterleave': ('maxInterleave', False, float, 1.0)}
         self.parseFromTable('global', globalParseTable, {})
 
         for section in sections:

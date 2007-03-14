@@ -66,13 +66,14 @@ class PostProcessProtocol(worker.ProcessProtocol, log.Loggable):
         worker.ProcessProtocol.processEnded(self, status)
 
 class Job(log.Loggable):
-    def __init__(self, infile, customer, profiles):
+    def __init__(self, infile, customer, profiles, max_interleave):
         self.processing = infile
         self.config = customer
         self.profiles = profiles
         self.unrecognized_outputs = []
         self.failed_post_processes = []
         self.post_processes = {}
+        self._max_interleave = max_interleave
 
     def get_output_filename(self, profile):
         """
@@ -110,7 +111,9 @@ class Job(log.Loggable):
     def start(self):
         try:
             name = os.path.basename(self.processing)
-            mt = trans.MultiTranscoder(name, self.processing, self.config.transTimeout)
+            mt = trans.MultiTranscoder(name, self.processing, 
+                                       self.config.transTimeout, 
+                                       self._max_interleave)
             for profile in self.profiles:
                 outputFilename = self.get_output_filename(profile)
                 outputPath = os.path.join(self.config.workDir, outputFilename)
@@ -155,7 +158,8 @@ class Job(log.Loggable):
                 #Is the discover patch from #603 applied ? 
                 discovererArgs = Discoverer.__init__.im_func.func_code.co_varnames
                 if "max_interleave" in discovererArgs:
-                    discoverer = Discoverer(workfile, max_interleave=10)
+                    discoverer = Discoverer(workfile, 
+                                            max_interleave=self._max_interleave)
                 else:
                     self.warning("Cannot change the maximum frame interleave "
                                  + "of the discoverer, update gst-python")
@@ -574,6 +578,6 @@ def main(argv):
     except KeyError:
         raise SystemError, 'Unknown profile: %s' % profileName
 
-    job = Job(inputFile, customer, profiles)
+    job = Job(inputFile, customer, profiles, conf.maxInterleave)
     job.start()
     reactor.run()
