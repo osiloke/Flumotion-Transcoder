@@ -13,7 +13,7 @@ usage() {
         echo "Error: $msg"
         echo
     fi 
-    echo "Usage: $0 VIDEO_FILE WORK_DIR [INPUT_DIR] [OUTPUT_DIR]"
+    echo "Usage: $0 THUMBNAIL_SIZE VIDEO_FILE WORK_DIR [INPUT_DIR] [OUTPUT_DIR]"
     echo
     exit $code
 }
@@ -28,19 +28,23 @@ error() {
     exit $code
 }
 
-VIDEO_FILE="$1"
+THUMBNAIL_SIZE=$1
+if test "x$THUMBNAIL_SIZE" = "x"; then
+    usage 1 "No video size specified"
+fi
+VIDEO_FILE="$2"
 if test "x$VIDEO_FILE" = "x"; then
     usage 1 "Video file not specified"
 fi
-WORK_DIR="$2"
+WORK_DIR="$3"
 if test "x$WORK_DIR" = "x"; then
     usage 1 "Working directory not specified"
 fi
-INPUT_DIR="${3:-$WORK_DIR}"
+INPUT_DIR="${4:-$WORK_DIR}"
 if test "x$INPUT_DIR" = "x"; then
     usage 1 "Input directory not specified"
 fi
-OUTPUT_DIR="${4:-$WORK_DIR}"
+OUTPUT_DIR="${5:-$WORK_DIR}"
 if test "x$OUTPUT_DIR" = "x"; then
     usage 1 "Output directory not specified"
 fi
@@ -81,7 +85,7 @@ if test ! -r "$INPUT_VIDEO"; then
 fi
 
 while /bin/true; do
-    $THUMBNAILER "$INPUT_VIDEO" "$WORKING_PNG_THUMBNAIL" \
+    $THUMBNAILER --s "$THUMBNAIL_SIZE" "$INPUT_VIDEO" "$WORKING_PNG_THUMBNAIL" \
         || error $? "Failed to thumbnail video"
     if test ! -f "$WORKING_PNG_THUMBNAIL"; then
         MAX_ATTEMPTS=$((MAX_ATTEMPTS-1))
