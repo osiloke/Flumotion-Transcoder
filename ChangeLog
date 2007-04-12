@@ -1,3 +1,11 @@
+2007-04-12  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/flumotion-thumbnailer.sh: 
+	Change the script parameter to use getopts, to handle 
+	more complicated options and to easy the upgrades.
+	Added the possibility to pass converter parameters.
+	Added the possibility to specify output format.
+
 2007-03-14  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/config.py: 

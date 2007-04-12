@@ -29,6 +29,45 @@ from twisted.python import failure
 from flumotion.common import common, log, messages, worker
 from flumotion.transcoder import config, trans
 
+# Template Variables
+#
+#    Post-processes:
+#        workPath
+#        workFile
+#        outputFile
+#        outputPath
+#        inputPath
+#        inputFile
+#        workRoot
+#        inputRoot
+#        outputRoot
+#        errorRoot
+#        linkRoot
+#    
+#    By Source GET Requestes:
+#        inputPath
+#        inputFile
+#        workRoot
+#        inputRoot
+#        outputRoot
+#        errorRoot
+#        linkRoot
+#        message (private)
+#    
+#    By Target GET Requests:
+#        hours
+#        minutes
+#        seconds
+#        outputFile
+#        outputPath
+#        inputPath
+#        inputFile
+#        workRoot
+#        inputRoot
+#        outputRoot
+#        errorRoot
+#        linkRoot
+
 usage="usage: flumotion-transcoder-job [OPTIONS] CONF-FILE INPUT-FILE PROFILE1 PROFILE2..."
 
 class TranscodingError(Exception):
