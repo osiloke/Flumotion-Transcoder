@@ -8,9 +8,7 @@ MAX_ATTEMPTS=8
 #DEFAULT VALUES
 DEFAULT_THUMBNAIL_SIZE="320x240"
 DEFAULT_FORMAT_EXT="jpg"
-
-REMOVE_EXT="0"
-FORCE_WIDTH=""
+DEFAULT_REMOVE_EXT="0"
 
 usage() {
     local code=${1:="0"}
@@ -24,7 +22,6 @@ usage() {
     echo "Usage: $0 [OPTIONS] WORK_DIR VIDEO_FILE"
     echo "Options:"
     echo "   -s THUMBNAIL_SIZE: Size wanted thumbnail size, no guarentee. Default: $DEFAULT_THUMBNAIL_SIZE."
-    echo "   -w FORCED_WIDTH: Force the with of the thumbnail, guarennteed. Default: don't force."
     echo "   -x FORMAT_EXT: The thumbnail format extension to use. Default: $DEFAULT_FORMAT_EXT"
     echo "   -c CONVERT_PARAMS: Additional convert filters like '-resize 160' to force the thumbnail width"
     echo "   -i INPUT_DIR: the directory where the video to thumbnail is."
@@ -46,7 +43,7 @@ error() {
 }
 
 
-while getopts "hrs:w:x:c:i:o:" o; do
+while getopts "hrs:c:x:i:o:" o; do
     case $o in
     h)  usage 0;;
     r)  REMOVE_EXT=1;;
@@ -71,6 +68,7 @@ if test "x$VIDEO_FILE" = "x"; then
 fi
 
 
+REMOVE_EXT=${REMOVE_EXT:-$DEFAULT_REMOVE_EXT}
 THUMBNAIL_SIZE=${THUMBNAIL_SIZE:-$DEFAULT_THUMBNAIL_SIZE}
 FORMAT_EXT=${FORMAT_EXT:-$DEFAULT_FORMAT_EXT}
 INPUT_DIR="${INPUT_DIR:-$WORK_DIR}"
