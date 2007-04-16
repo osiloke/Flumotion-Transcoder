@@ -444,9 +444,16 @@ class Job(log.Loggable):
         for k, v in params.iteritems():
             params[k] = v.replace(' ', '\ ')
         command = profile.postprocess % params
-        argv = re.split('(?<!\\\\) ', command)
-        for i, a in enumerate(argv):
-            argv[i] = a.replace('\ ', ' ')
+        argv = list()
+        for odd, args in enumerate(re.split('(?<!\\\\)"', command)):
+            if (odd % 2) == 0:
+                for i, a in enumerate(re.split('(?<!\\\\) ', args)):
+                    arg = a.replace('\ ', ' ').strip()
+                    if arg:
+                        argv.append(arg)
+            else:
+                arg = args.strip()
+                argv.append(arg)
         self.debug('Post-process line: %s', '"' + '" "'.join(argv) + '"')
         childFDs = {0: 0, 1: 'r', 2: 'r'}
         env = dict(os.environ)
