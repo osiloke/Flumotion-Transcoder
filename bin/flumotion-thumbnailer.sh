@@ -121,7 +121,6 @@ while /bin/true; do
         sleep 5
         continue
     fi
-    set -x
     $CONVERTER "$WORKING_PNG_THUMBNAIL" $CONVERTER_PARAMS "$WORKING_OUT_THUMBNAIL" \
         || usage $? "Failed to convert from PNG to JPG"
     rm "$WORKING_PNG_THUMBNAIL" \
