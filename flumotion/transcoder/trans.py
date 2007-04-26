@@ -285,6 +285,11 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         pipeline.add(src, dbin)
         src.link(dbin)
 
+        if self._discoverer.videocaps:
+            self.debug("Source video caps: %s" % self._discoverer.videocaps.to_string())
+        if self._discoverer.audiocaps:
+            self.debug("Source audio caps: %s" % self._discoverer.audiocaps.to_string())        
+
         if self._discoverer.is_audio:
             self._tees['audiosink'] = gst.element_factory_make('tee')
         if self._discoverer.is_video:
@@ -293,7 +298,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         for tee in self._tees.values():
             pipeline.add(tee)
             
-        encbins = []
+        encbins = []        
         for outputPath, profile in self._outputs.items():
             enc = self._makeEncodingBin(outputPath, profile,
                                         self._discoverer)
@@ -305,8 +310,18 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         def pad_added(dbin, pad):
             self.debug('added pad %r, caps %s' % (pad, str(pad.get_caps())))
             if str(pad.get_caps()).startswith('audio/x-raw'):
+                if not ('audiosink' in self._tees):
+                    self.warning("Found an audio sink not previously discovered. Try a bigger max-interleave.")
+                    self._shutDownPipeline()
+                    self.emit('error', "'%s' frame interleave not supported (change the max-interleave option)" % self.inputfile)
+                    return
                 pad.link(self._tees['audiosink'].get_pad('sink'))
             elif str(pad.get_caps()).startswith('video/x-raw'):
+                if not ('videosink' in self._tees):
+                    self.warning("Found a video sink not previously discovered. Try a bigger max-interleave.")
+                    self._shutDownPipeline()
+                    self.emit('error', "'%s' frame interleave not supported (change the max-interleave option)" % self.inputfile)
+                    return
                 pad.link(self._tees['videosink'].get_pad('sink'))
             else:
                 self.info('unknown pad from decodebin: %r (caps %s)',
@@ -390,15 +405,24 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         queue.props.max_size_time = gst.SECOND * 20
         queue.props.max_size_buffers = 0
 
-        if profile.audiorate or profile.audiochannels:
-            audiochannels = profile.audiochannels or discoverer.audiochannels
-            audiorate = profile.audiorate or discoverer.audiorate
-            astmpl = "rate=%d,channels=%d" % (audiorate, audiochannels)
-            atmpl = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (
-                astmpl, astmpl)
-            self.log('filter: %s', atmpl)
-            capsfilter.props.caps = gst.caps_from_string(atmpl)
-
+        #Because the discoverer not reliably give channel info, not rely on it.
+        if profile.audiorate or profile.audiochannels:            
+            capsList = []
+            if profile.audiorate:
+                capsList.append("rate=%d" % profile.audiorate)
+            elif discoverer.audiorate:
+                capsList.append("rate=%d" % discoverer.audiorate)
+            if profile.audiochannels:
+                capsList.append("channels=%d" % profile.audiochannels)
+            elif discoverer.audiochannels:
+                capsList.append("channels=%d" % discoverer.audiochannels)
+            caps = ",".join(capsList)
+            if caps:
+                fullcaps = ("audio/x-raw-int,%s;audio/x-raw-float,%s" 
+                            % (caps, caps))
+                self.debug("Audio capsfilter for '%s': %s", profile.name, fullcaps)
+                capsfilter.props.caps = gst.caps_from_string(fullcaps)
+        
         #bin.add(conv, rate, res, capsfilter, enc, queue)
 		#gst.element_link_many(conv, rate, res, capsfilter, enc, queue)
         bin.add(conv, res, capsfilter, enc, queue)
@@ -425,7 +449,7 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
         
         caps = getOutputVideoCaps(discoverer, profile)
         if caps:
-            self.log("%s" % caps.to_string())
+            self.debug("Video capsfilter for '%s': %s", profile.name, caps.to_string())
             capsfilter.props.caps = caps
 
         bin.add(cspace, videorate, videoscale, capsfilter, enc, queue)

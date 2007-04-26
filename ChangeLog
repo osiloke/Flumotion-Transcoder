@@ -1,3 +1,10 @@
+2007-04-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/trans.py: 
+	Better handling of inconsistent discoverer info.
+	Better error handling of video with large frame interleave.
+	Added more logging of caps information.
+
 2007-04-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/job.py: 
