@@ -1,5 +1,13 @@
 2007-05-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/transcoder.py: 
+	* flumotion/transcoder/config.py: 
+	Added a config option gstdebug to set the GST_DEBUG environment variable
+	for the transcoder jobs. By default it does nothing you have to 
+	specify the option like gstdebug=2 in the global section.
+
+2007-05-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/trans.py: 
 	Corrected a bug when an unexpected pad is detected. 
 	It now shutdown the pipeline in the main thread.

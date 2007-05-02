@@ -117,6 +117,8 @@ class Transcoder(log.Loggable):
         childFDs = {0: 0, 1: 'r', 2: 2}
         env = dict(os.environ)
         env['FLU_DEBUG'] = log._FLU_DEBUG
+        if self.config.gstDebug:
+            env['GST_DEBUG'] = self.config.gstDebug
         process = reactor.spawnProcess(p, argv[0], env=env,
                                        args=argv, childFDs=childFDs)
         p.setPid(process.pid)
