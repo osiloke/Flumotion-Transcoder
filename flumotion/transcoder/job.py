@@ -187,37 +187,13 @@ class Job(log.Loggable):
 
     def transcode_done(self, mt):
         try:
-            defs = []
+            d = defer.Deferred()
+            targets = []
             for profile in self.profiles:
-                workfile = os.path.join(self.config.workDir,
-                                        self.get_output_filename(profile))
-                self.debug("Analyzing transcoded file '%s'", workfile)
-                
-                d = defer.Deferred()
-                #Is the discover patch from #603 applied ? 
-                discovererArgs = Discoverer.__init__.im_func.func_code.co_varnames
-                if "max_interleave" in discovererArgs:
-                    discoverer = Discoverer(workfile, 
-                                            max_interleave=self._max_interleave)
-                else:
-                    self.warning("Cannot change the maximum frame interleave "
-                                 + "of the discoverer, update gst-python")
-                    discoverer = Discoverer(workfile)
-                discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
-                d.addCallback(self.outputDiscovered,
-                              profile,
-                              mt._discoverer.is_audio,
-                              mt._discoverer.is_video)
-                d.addBoth(self.profileFinished, profile)
-                defs.append(d)
-                discoverer.discover()
-            dl = defer.DeferredList(defs,
-                                    fireOnOneCallback=False,
-                                    fireOnOneErrback=False,
-                                    consumeErrors=True)
-            targetFiles = []
-            dl.addCallback(self.targetsDone, targetFiles)
-            dl.addCallback(self.moveOutputFiles)
+                d.addCallback(self.discoverTarget, profile, 
+                              mt._discoverer.is_audio, mt._discoverer.is_video)
+                d.addCallback(lambda r, p, l: l.append((p, r)) or l, profile, targets)
+            d.addCallback(self.moveOutputFiles)
             if self.config.errGetRequest:
                 def performRequestAndKeep(previousFailure):
                     def keepFailure(f):
@@ -231,17 +207,17 @@ class Job(log.Loggable):
                         return d
                     except:
                         return keepFailure(failure.Failure())
-                dl.addErrback(performRequestAndKeep)
-            dl.addErrback(self.failed)
+                d.addErrback(performRequestAndKeep)
+            d.addErrback(self.failed)
             if self.config.getRequest:
-                dl.addCallback(self.performGetRequest, 
-                               self.config.getRequest,
+                d.addCallback(self.performGetRequest, 
+                              self.config.getRequest,
                                "success")
                 #recover GET request failures
                 def recoverGETFailure(f):
                     self.warning(log.getExceptionMessage(f.value))
-                    return targetFiles
-                dl.addErrback(recoverGETFailure)
+                    return targets
+                d.addErrback(recoverGETFailure)
             #Proxy the call to performTargetsGetRequest
             #to be able to recover on GET failure without
             #recovering previous failures
@@ -255,24 +231,32 @@ class Job(log.Loggable):
                     return d
                 except:
                     return recover(failure.Failure())
-            dl.addCallback(performTargetsGetRequestAndRecover)
-            dl.addCallbacks(self.succeed, self.failed)
+            d.addCallback(performTargetsGetRequestAndRecover)
+            d.addCallbacks(self.succeed, self.failed)
+            d.callback(defer._nothing)
         except:
             self.failed(failure.Failure(), code=11)
 
-    def targetsDone(self, results, targetFiles):
-        self.info("All Profiles Done")
-        errors = 0
-        errors = 0
-        for s, r in results:
-            if s != defer.SUCCESS:                
-                errors += 1
-                self.debug(log.getFailureMessage(r))
-            else:
-                targetFiles.append(r)
-        if errors > 0:
-            raise TranscodingError("%s profile(s) fail to transcode" % errors)
-        return targetFiles
+    def discoverTarget(self, previous_results, profile, is_audio, is_video):
+        workfile = os.path.join(self.config.workDir,
+                                self.get_output_filename(profile))
+        self.debug("Analyzing transcoded file '%s'", workfile)
+        d = defer.Deferred()
+        #Is the discover patch from #603 applied ? 
+        discovererArgs = Discoverer.__init__.im_func.func_code.co_varnames
+        if "max_interleave" in discovererArgs:
+            discoverer = Discoverer(workfile, 
+                                    max_interleave=self._max_interleave)
+        else:
+            self.warning("Cannot change the maximum frame interleave "
+                         + "of the discoverer, update gst-python")
+            discoverer = Discoverer(workfile)
+        discoverer.connect('discovered', lambda a, b, d: d.callback((a, b)), d)
+        d.addCallback(self.outputDiscovered,
+                      profile, is_audio, is_video)
+        d.addBoth(self.profileFinished, profile)
+        discoverer.discover()
+        return d
 
     def outputDiscovered(self, result, profile, is_audio,
                           is_video):

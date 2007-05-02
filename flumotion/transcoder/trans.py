@@ -307,20 +307,24 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             for pad_name, tee in self._tees.items():
                 tee.get_pad('src%d').link(enc.get_pad(pad_name))
 
+        def abort_transcoding(message):
+            self._shutDownPipeline()
+            self.emit('error', message)
+
         def pad_added(dbin, pad):
             self.debug('added pad %r, caps %s' % (pad, str(pad.get_caps())))
             if str(pad.get_caps()).startswith('audio/x-raw'):
                 if not ('audiosink' in self._tees):
                     self.warning("Found an audio sink not previously discovered. Try a bigger max-interleave.")
-                    self._shutDownPipeline()
-                    self.emit('error', "'%s' frame interleave not supported (change the max-interleave option)" % self.inputfile)
+                    gobject.idle_add(abort_transcoding, "'%s' frame interleave not supported "
+                                     "(change the max-interleave option)" % self.inputfile)
                     return
                 pad.link(self._tees['audiosink'].get_pad('sink'))
             elif str(pad.get_caps()).startswith('video/x-raw'):
                 if not ('videosink' in self._tees):
                     self.warning("Found a video sink not previously discovered. Try a bigger max-interleave.")
-                    self._shutDownPipeline()
-                    self.emit('error', "'%s' frame interleave not supported (change the max-interleave option)" % self.inputfile)
+                    gobject.idle_add(abort_transcoding, "'%s' frame interleave not supported "
+                                     "(change the max-interleave option)" % self.inputfile)
                     return
                 pad.link(self._tees['videosink'].get_pad('sink'))
             else:

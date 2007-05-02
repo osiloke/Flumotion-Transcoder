@@ -1,3 +1,12 @@
+2007-05-02  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/trans.py: 
+	Corrected a bug when an unexpected pad is detected. 
+	It now shutdown the pipeline in the main thread.
+	* flumotion/transcoder/job.py: 
+	Changed the discovering of the targets to be serialized to consume 
+	less memory, be more scallable and to be able to use large max_interleave.
+
 2007-04-26  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/trans.py: 
