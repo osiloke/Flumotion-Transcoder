@@ -315,18 +315,26 @@ class MultiTranscoder(gobject.GObject, log.Loggable):
             self.debug('added pad %r, caps %s' % (pad, str(pad.get_caps())))
             if str(pad.get_caps()).startswith('audio/x-raw'):
                 if not ('audiosink' in self._tees):
-                    self.warning("Found an audio sink not previously discovered. Try a bigger max-interleave.")
+                    self.warning("Found an audio sink not previously discovered. Try a bigger maxinterleave.")
                     gobject.idle_add(abort_transcoding, "'%s' frame interleave not supported "
-                                     "(change the max-interleave option)" % self.inputfile)
+                                     "(change the maxinterleave option)" % self.inputfile)
                     return
-                pad.link(self._tees['audiosink'].get_pad('sink'))
+                peer = self._tees['audiosink'].get_pad('sink')
+                if peer.is_linked():
+                    self.warning("Input file contains more than one audio stream. Using the first one.")
+                else:
+                    pad.link(peer)
             elif str(pad.get_caps()).startswith('video/x-raw'):
                 if not ('videosink' in self._tees):
-                    self.warning("Found a video sink not previously discovered. Try a bigger max-interleave.")
+                    self.warning("Found a video sink not previously discovered. Try a bigger maxinterleave.")
                     gobject.idle_add(abort_transcoding, "'%s' frame interleave not supported "
-                                     "(change the max-interleave option)" % self.inputfile)
+                                     "(change the maxinterleave option)" % self.inputfile)
                     return
-                pad.link(self._tees['videosink'].get_pad('sink'))
+                peer = self._tees['videosink'].get_pad('sink')
+                if peer.is_linked():
+                    self.warning("Input file contains more than one video stream. Using the first one.")
+                else:
+                    pad.link(peer)
             else:
                 self.info('unknown pad from decodebin: %r (caps %s)',
                           pad, pad.get_caps())

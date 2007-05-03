@@ -13,6 +13,7 @@
 
 import os
 import popen2
+import commands
 import shutil
 import socket
 import sys
@@ -134,6 +135,20 @@ class Transcoder(log.Loggable):
         self.processing.pop((customer, relpath))
         self.schedule()
 
+    def _writeInfo(self, out, filepath):
+        if not os.path.isfile(filepath):
+            out.write("    File '%s' not found\n" % filepath)
+            return
+        escapedpath = filepath.replace(" ", "\\ ")
+        out.write("    File Type: %s\n" % commands.getoutput("file -b %s" % escapedpath))
+        out.write("    File Size: %d KB\n" % (os.stat(filepath).st_size / 1024))
+        out.write("    Discoverer:\n")
+        gstfile = commands.getoutput("GST_DEBUG_NO_COLOR=1 GST_DEBUG=2 python "
+                                     "/usr/share/gst-python/0.10/examples/gstfile.py %s" 
+                                     % escapedpath).split('\n')
+        for l in gstfile:
+            out.write("> %s\n" % l)
+
     def _sendErrorMail(self, customer, relpath):
       if customer.errMail:
           if not os.path.exists(SENDMAIL):
@@ -144,9 +159,38 @@ class Transcoder(log.Loggable):
           p.tochild.write("To: %s\n" % customer.errMail)
           p.tochild.write("Subject: Transcoding Error (%s)\n" % customer.name)
           p.tochild.write("\n")
-          p.tochild.write("Fail to transcode file '%s' for customer %s\n"
-                  % (os.path.join(customer.inputDir, relpath), customer.name))          
-          p.tochild.write("It will be moved to '%s'\n" % customer.errorDir)
+          p.tochild.write("Transcoding Error Report:\n")
+          p.tochild.write("=========================\n")
+          p.tochild.write('\n\n')
+          incomingpath = os.path.join(customer.inputDir, relpath)
+          errorpath = os.path.join(customer.errorDir, relpath)
+          p.tochild.write("  Customer Name: %s\n" % customer.name)
+          p.tochild.write("  --------------\n")
+          p.tochild.write('\n')
+          p.tochild.write("  Incoming File: '%s'\n" % incomingpath)
+          p.tochild.write("  --------------\n")
+          p.tochild.write('\n')
+          p.tochild.write("  Error File: '%s'\n" % errorpath)
+          p.tochild.write("  -----------\n")
+          p.tochild.write('\n')
+          p.tochild.write("  Source File Information:\n")
+          p.tochild.write("  ------------------------\n")
+          self._writeInfo(p.tochild, incomingpath)
+          for name, profile in customer.profiles.iteritems():
+              p.tochild.write('\n')
+              p.tochild.write("  Profile '%s' File Information:\n" % name)
+              p.tochild.write("  ----------------------------------------\n")
+              outname = profile.getOutputBasename(relpath)
+              filepath = os.path.join(customer.workDir, outname)
+              self._writeInfo(p.tochild, filepath)
+          p.tochild.write('\n')
+          p.tochild.write("  Last 20 log lines:\n")
+          p.tochild.write("  ------------------\n")
+          loglines = commands.getoutput("tail -n 20 /var/log/flumotion/transcoder.log"
+                                        " | perl -e 'while (<STDIN>) "
+                                        "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'").split('\n')
+          for l in loglines:
+              p.tochild.write("> %s\n" % l)
           p.tochild.close()
           while True:
               try:
