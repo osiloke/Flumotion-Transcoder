@@ -231,7 +231,7 @@ class Transcoder(log.Loggable):
               p.tochild.write("  ------------------\n")
               try:
                   loglines = commands.getoutput("cat /var/log/flumotion/transcoder.log"
-                                                " | grep '\[ *%s\]' | tail -n 20 | perl -e 'while (<STDIN>) "
+                                                " | grep '%s' | tail -n 20 | perl -e 'while (<STDIN>) "
                                                 "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'"
                                                 % str(pid)).split('\n')
               except Exception, e:
