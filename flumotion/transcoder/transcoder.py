@@ -27,7 +27,7 @@ from flumotion.common import log, common, worker, messages
 from flumotion.transcoder.watcher import DirectoryWatcher
 
 SENDMAIL = "/usr/sbin/sendmail"
-SENDMAIL_TIMEOUT = 60.0
+SENDMAIL_TIMEOUT = 20.0
 
 class JobProcessProtocol(worker.ProcessProtocol):
     def __init__(self, trans, customer, relpath):
