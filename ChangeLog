@@ -1,6 +1,13 @@
 2007-05-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/transcoder.py: 
+	Added a small hexdump of the file header to the error report.
+	Added the command to start the job and the PID of the failed job.
+	Now filter the 20 lines of log with the job PID.
+
+2007-05-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/transcoder.py: 
 	Made the mailing function a LOT more robust.
 
 2007-05-03  Sebastien Merle  <sebastien@fluendo.com>

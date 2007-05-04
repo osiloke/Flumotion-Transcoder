@@ -48,7 +48,7 @@ class JobProcessProtocol(worker.ProcessProtocol):
 
     def processEnded(self, status):
         trans = self.loggable
-        trans.jobFinished(self.customer, self.relpath, self.output,
+        trans.jobFinished(self.pid, self.customer, self.relpath, self.output,
                           status.value.exitCode==0)
         # chain up
         worker.ProcessProtocol.processEnded(self, status)
@@ -129,13 +129,13 @@ class Transcoder(log.Loggable):
         p.setPid(process.pid)
         self.processing[(customer, relpath)] = p
 
-    def jobFinished(self, customer, relpath, output, success):
+    def jobFinished(self, pid, customer, relpath, output, success):
         self.info('Job %s/%s finished %s', customer.name, relpath,
                   success and 'successfully' or 'with failure')
         self.debug('Job stdout: %r', output)
         try:
             if not success:
-                self._sendErrorMail(customer, relpath)
+                self._sendErrorMail(pid, customer, relpath)
                 self._moveInputToErrors(customer, relpath)
         finally:
             self.processing.pop((customer, relpath))
@@ -144,14 +144,18 @@ class Transcoder(log.Loggable):
     def _writeInfo(self, out, filepath):
         if not os.path.isfile(filepath):
             out.write("    File '%s' not found\n" % filepath)
-            return
+            return        
         escapedpath = filepath.replace(" ", "\\ ")
         try:
             filetype = commands.getoutput("file -b %s" % escapedpath)
         except Exception, e:
             filetype = "ERROR: %s" % str(e)
         try:
-            filesize = "%d KB" % (os.stat(filepath).st_size / 1024)
+            size = os.stat(filepath).st_size
+            if size == 0:
+                out.write("    File '%s' is empty\n" % filepath)
+                return
+            filesize = "%d KB" % (size / 1024)
         except Exception, e:
             filesize = "ERROR: %s" % str(e)
         try:
@@ -160,6 +164,10 @@ class Transcoder(log.Loggable):
                                          % escapedpath).split('\n')
         except Exception, e:
             gstfile = "ERROR: %s" % str(e)
+        try:
+            hexdump = commands.getoutput("hexdump -C -n 128 %s" % escapedpath).split('\n')
+        except Exception, e:
+            hexdump = "ERROR: %s" % str(e)            
         out.write("    File Type: %s\n" % filetype)
         out.write("    File Size: %s\n" % filesize)
         out.write("    Discoverer:\n")
@@ -168,8 +176,14 @@ class Transcoder(log.Loggable):
                 out.write("> %s\n" % l)
         else:
             out.write("%s\n" % gstfile)
+        out.write("    File Header:\n")
+        if isinstance(hexdump, list):
+            for l in hexdump:
+                out.write("> %s\n" % l)
+        else:
+            out.write("%s\n" % hexdump)
 
-    def _sendErrorMail(self, customer, relpath):
+    def _sendErrorMail(self, pid, customer, relpath):
       if customer.errMail:
           if not os.path.exists(SENDMAIL):
               self.warning("Cannot send error notification mail, sendmail not found at %s"
@@ -194,6 +208,14 @@ class Transcoder(log.Loggable):
               p.tochild.write("  Error File: '%s'\n" % errorpath)
               p.tochild.write("  -----------\n")
               p.tochild.write('\n')
+              p.tochild.write("  Job PID: %s\n" % str(pid))
+              p.tochild.write("  Job Command: 'GST_DEBUG=%s %s/flumotion-transcoder-job -d 4 -C %s %s %s %s'\n" 
+                              % (self.config.gstDebug or "1",
+                                 os.path.dirname(sys.argv[0]),
+                                 customer.name, self.config.confFile,
+                                 errorpath.replace(' ', '\\ '),
+                                 " ".join(customer.profiles.keys())))
+              p.tochild.write('\n')
               p.tochild.write("  Source File Information:\n")
               p.tochild.write("  ------------------------\n")
               self._writeInfo(p.tochild, incomingpath)
@@ -208,9 +230,10 @@ class Transcoder(log.Loggable):
               p.tochild.write("  Last 20 log lines:\n")
               p.tochild.write("  ------------------\n")
               try:
-                  loglines = commands.getoutput("tail -n 20 /var/log/flumotion/transcoder.log"
-                                                " | perl -e 'while (<STDIN>) "
-                                                "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'").split('\n')
+                  loglines = commands.getoutput("cat /var/log/flumotion/transcoder.log"
+                                                " | grep '\[ *%s\]' | tail -n 20 | perl -e 'while (<STDIN>) "
+                                                "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'"
+                                                % str(pid)).split('\n')
               except Exception, e:
                   loglines = "ERROR: %s" % str(e)
               if isinstance(loglines, list):
