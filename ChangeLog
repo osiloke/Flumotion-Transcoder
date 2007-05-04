@@ -1,3 +1,8 @@
+2007-05-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/transcoder.py: 
+	Made the mailing function a LOT more robust.
+
 2007-05-03  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/trans.py: 

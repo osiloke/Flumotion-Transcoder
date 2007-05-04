@@ -15,15 +15,19 @@ import os
 import popen2
 import commands
 import shutil
+import time
+import signal
 import socket
 import sys
 import string
+import errno
 
 from twisted.internet import reactor
 from flumotion.common import log, common, worker, messages
 from flumotion.transcoder.watcher import DirectoryWatcher
 
 SENDMAIL = "/usr/sbin/sendmail"
+SENDMAIL_TIMEOUT = 60.0
 
 class JobProcessProtocol(worker.ProcessProtocol):
     def __init__(self, trans, customer, relpath):
@@ -129,25 +133,41 @@ class Transcoder(log.Loggable):
         self.info('Job %s/%s finished %s', customer.name, relpath,
                   success and 'successfully' or 'with failure')
         self.debug('Job stdout: %r', output)
-        if not success:
-            self._sendErrorMail(customer, relpath)
-            self._moveInputToErrors(customer, relpath)
-        self.processing.pop((customer, relpath))
-        self.schedule()
+        try:
+            if not success:
+                self._sendErrorMail(customer, relpath)
+                self._moveInputToErrors(customer, relpath)
+        finally:
+            self.processing.pop((customer, relpath))
+            self.schedule()
 
     def _writeInfo(self, out, filepath):
         if not os.path.isfile(filepath):
             out.write("    File '%s' not found\n" % filepath)
             return
         escapedpath = filepath.replace(" ", "\\ ")
-        out.write("    File Type: %s\n" % commands.getoutput("file -b %s" % escapedpath))
-        out.write("    File Size: %d KB\n" % (os.stat(filepath).st_size / 1024))
+        try:
+            filetype = commands.getoutput("file -b %s" % escapedpath)
+        except Exception, e:
+            filetype = "ERROR: %s" % str(e)
+        try:
+            filesize = "%d KB" % (os.stat(filepath).st_size / 1024)
+        except Exception, e:
+            filesize = "ERROR: %s" % str(e)
+        try:
+            gstfile = commands.getoutput("GST_DEBUG_NO_COLOR=1 GST_DEBUG=2 python "
+                                         "/usr/share/gst-python/0.10/examples/gstfile.py %s" 
+                                         % escapedpath).split('\n')
+        except Exception, e:
+            gstfile = "ERROR: %s" % str(e)
+        out.write("    File Type: %s\n" % filetype)
+        out.write("    File Size: %s\n" % filesize)
         out.write("    Discoverer:\n")
-        gstfile = commands.getoutput("GST_DEBUG_NO_COLOR=1 GST_DEBUG=2 python "
-                                     "/usr/share/gst-python/0.10/examples/gstfile.py %s" 
-                                     % escapedpath).split('\n')
-        for l in gstfile:
-            out.write("> %s\n" % l)
+        if isinstance(gstfile, list):
+            for l in gstfile:
+                out.write("> %s\n" % l)
+        else:
+            out.write("%s\n" % gstfile)
 
     def _sendErrorMail(self, customer, relpath):
       if customer.errMail:
@@ -156,51 +176,85 @@ class Transcoder(log.Loggable):
                            % SENDMAIL)
               return
           p = popen2.Popen4("%s -t" % SENDMAIL)
-          p.tochild.write("To: %s\n" % customer.errMail)
-          p.tochild.write("Subject: Transcoding Error (%s)\n" % customer.name)
-          p.tochild.write("\n")
-          p.tochild.write("Transcoding Error Report:\n")
-          p.tochild.write("=========================\n")
-          p.tochild.write('\n\n')
-          incomingpath = os.path.join(customer.inputDir, relpath)
-          errorpath = os.path.join(customer.errorDir, relpath)
-          p.tochild.write("  Customer Name: %s\n" % customer.name)
-          p.tochild.write("  --------------\n")
-          p.tochild.write('\n')
-          p.tochild.write("  Incoming File: '%s'\n" % incomingpath)
-          p.tochild.write("  --------------\n")
-          p.tochild.write('\n')
-          p.tochild.write("  Error File: '%s'\n" % errorpath)
-          p.tochild.write("  -----------\n")
-          p.tochild.write('\n')
-          p.tochild.write("  Source File Information:\n")
-          p.tochild.write("  ------------------------\n")
-          self._writeInfo(p.tochild, incomingpath)
-          for name, profile in customer.profiles.iteritems():
+          try:
+              p.tochild.write("To: %s\n" % customer.errMail)
+              p.tochild.write("Subject: Transcoding Error (%s)\n" % customer.name)
+              p.tochild.write("\n")
+              p.tochild.write("Transcoding Error Report:\n")
+              p.tochild.write("=========================\n")
+              p.tochild.write('\n\n')
+              incomingpath = os.path.join(customer.inputDir, relpath)
+              errorpath = os.path.join(customer.errorDir, relpath)
+              p.tochild.write("  Customer Name: %s\n" % customer.name)
+              p.tochild.write("  --------------\n")
               p.tochild.write('\n')
-              p.tochild.write("  Profile '%s' File Information:\n" % name)
-              p.tochild.write("  ----------------------------------------\n")
-              outname = profile.getOutputBasename(relpath)
-              filepath = os.path.join(customer.workDir, outname)
-              self._writeInfo(p.tochild, filepath)
-          p.tochild.write('\n')
-          p.tochild.write("  Last 20 log lines:\n")
-          p.tochild.write("  ------------------\n")
-          loglines = commands.getoutput("tail -n 20 /var/log/flumotion/transcoder.log"
-                                        " | perl -e 'while (<STDIN>) "
-                                        "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'").split('\n')
-          for l in loglines:
-              p.tochild.write("> %s\n" % l)
-          p.tochild.close()
+              p.tochild.write("  Incoming File: '%s'\n" % incomingpath)
+              p.tochild.write("  --------------\n")
+              p.tochild.write('\n')
+              p.tochild.write("  Error File: '%s'\n" % errorpath)
+              p.tochild.write("  -----------\n")
+              p.tochild.write('\n')
+              p.tochild.write("  Source File Information:\n")
+              p.tochild.write("  ------------------------\n")
+              self._writeInfo(p.tochild, incomingpath)
+              for name, profile in customer.profiles.iteritems():
+                  p.tochild.write('\n')
+                  p.tochild.write("  Profile '%s' File Information:\n" % name)
+                  p.tochild.write("  ----------------------------------------\n")
+                  outname = profile.getOutputBasename(relpath)
+                  filepath = os.path.join(customer.workDir, outname)
+                  self._writeInfo(p.tochild, filepath)
+              p.tochild.write('\n')
+              p.tochild.write("  Last 20 log lines:\n")
+              p.tochild.write("  ------------------\n")
+              try:
+                  loglines = commands.getoutput("tail -n 20 /var/log/flumotion/transcoder.log"
+                                                " | perl -e 'while (<STDIN>) "
+                                                "{s/\\033\\[(?:\\d+(?:;\\d+)*)*m//go; print $_}'").split('\n')
+              except Exception, e:
+                  loglines = "ERROR: %s" % str(e)
+              if isinstance(loglines, list):
+                  for l in loglines:
+                      p.tochild.write("> %s\n" % l)
+              else:
+                  p.tochild.write("%s\n" % loglines)
+              p.tochild.close()
+          except Exception, e:
+              self.warning("Failed to send error notification mail to %s: %s"
+                           % (customer.errMail, str(e)))
+              return
+          start = time.time()
           while True:
               try:
-                exitCode = p.wait()
-                break
+                  if p.poll() < 0:
+                      if (time.time() - start) > SENDMAIL_TIMEOUT:
+                          self.warning("Timeout to send error notification mail to %s"
+                                       % customer.errMail)
+                          if p.pid:
+                              for i in range(3):
+                                  try:
+                                      os.kill(p.pid, signal.SIGKILL)
+                                  except OSError, e:
+                                      self.warning("Failed to kill sendmail process %s" % p.pid)
+                                      return
+                                  time.sleep(2)
+                                  if p.poll() < 0:
+                                      continue
+                                  break
+                              if p.poll() < 0:
+                                  self.warning("Failed to properly join sendmail process %s" % p.pid)
+                                  return
+                              p.wait()
+                          return
+                      time.sleep(1)
+                      continue
+                  exitCode = p.wait()
+                  break
               except OSError, e:
-                if e.errno == errno.EINTR:
-                    continue
-                else:
-                    raise
+                  if e.errno == errno.EINTR:
+                      continue
+                  else:
+                      raise
           if exitCode != 0:
               self.warning("Failed to send error notification mail to %s (Exit code %s)"
                            % (customer.errMail, str(exitCode)))
