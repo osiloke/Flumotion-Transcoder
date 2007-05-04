@@ -217,9 +217,16 @@ class Transcoder(log.Loggable):
               command = ""
               if "GST_DEBUG" in proto.env:
                   command += "GST_DEBUG=%s " % proto.env["GST_DEBUG"]
+              if "FLU_DEBUG" in proto.env:
+                  command += "FLU_DEBUG=%s " % proto.env["FLU_DEBUG"]
               for arg in proto.argv:
                   command += arg.replace(' ', '\\ ') + " "
-              p.tochild.write("    Command: %s\n" % command)
+              p.tochild.write("    Original Command: %s\n" % command)
+              p.tochild.write("    Diagnose Command: GST_DEBUG=2 %s/flumotion-transcoder-job -d 4 -C %s %s %s %s\n"
+                              % (os.path.dirname(sys.argv[0]),
+                                 customer.name, self.config.confFile,
+                                 errorpath.replace(' ', '\\ '),
+                                 " ".join(customer.profiles.keys())))
               p.tochild.write('\n')
               p.tochild.write("  Source File Information:\n")
               p.tochild.write("  ------------------------\n")
