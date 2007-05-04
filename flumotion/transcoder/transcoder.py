@@ -48,7 +48,7 @@ class JobProcessProtocol(worker.ProcessProtocol):
 
     def processEnded(self, status):
         trans = self.loggable
-        trans.jobFinished(self.pid, self.customer, self.relpath, self.output,
+        trans.jobFinished(self, self.customer, self.relpath, self.output,
                           status.value.exitCode==0)
         # chain up
         worker.ProcessProtocol.processEnded(self, status)
@@ -124,18 +124,20 @@ class Transcoder(log.Loggable):
         env['FLU_DEBUG'] = log._FLU_DEBUG
         if self.config.gstDebug:
             env['GST_DEBUG'] = self.config.gstDebug
+        p.argv = argv
+        p.env = env
         process = reactor.spawnProcess(p, argv[0], env=env,
                                        args=argv, childFDs=childFDs)
         p.setPid(process.pid)
         self.processing[(customer, relpath)] = p
 
-    def jobFinished(self, pid, customer, relpath, output, success):
+    def jobFinished(self, proto, customer, relpath, output, success):
         self.info('Job %s/%s finished %s', customer.name, relpath,
                   success and 'successfully' or 'with failure')
         self.debug('Job stdout: %r', output)
         try:
             if not success:
-                self._sendErrorMail(pid, customer, relpath)
+                self._sendErrorMail(proto, customer, relpath)
                 self._moveInputToErrors(customer, relpath)
         finally:
             self.processing.pop((customer, relpath))
@@ -183,12 +185,13 @@ class Transcoder(log.Loggable):
         else:
             out.write("%s\n" % hexdump)
 
-    def _sendErrorMail(self, pid, customer, relpath):
+    def _sendErrorMail(self, proto, customer, relpath):
       if customer.errMail:
           if not os.path.exists(SENDMAIL):
               self.warning("Cannot send error notification mail, sendmail not found at %s"
                            % SENDMAIL)
               return
+          pid = proto.pid
           p = popen2.Popen4("%s -t" % SENDMAIL)
           try:
               p.tochild.write("To: %s\n" % customer.errMail)
@@ -202,19 +205,21 @@ class Transcoder(log.Loggable):
               p.tochild.write("  Customer Name: %s\n" % customer.name)
               p.tochild.write("  --------------\n")
               p.tochild.write('\n')
-              p.tochild.write("  Incoming File: '%s'\n" % incomingpath)
+              p.tochild.write("  Original File: '%s'\n" % incomingpath)
               p.tochild.write("  --------------\n")
               p.tochild.write('\n')
-              p.tochild.write("  Error File: '%s'\n" % errorpath)
+              p.tochild.write("  Moved File: '%s'\n" % errorpath)
               p.tochild.write("  -----------\n")
               p.tochild.write('\n')
-              p.tochild.write("  Job PID: %s\n" % str(pid))
-              p.tochild.write("  Job Command: 'GST_DEBUG=%s %s/flumotion-transcoder-job -d 4 -C %s %s %s %s'\n" 
-                              % (self.config.gstDebug or "1",
-                                 os.path.dirname(sys.argv[0]),
-                                 customer.name, self.config.confFile,
-                                 errorpath.replace(' ', '\\ '),
-                                 " ".join(customer.profiles.keys())))
+              p.tochild.write("  Job Information:\n")
+              p.tochild.write("  ----------------\n")
+              p.tochild.write("    PID: %s\n" % str(pid))
+              command = ""
+              if "GST_DEBUG" in proto.env:
+                  command += "GST_DEBUG=%s " % proto.env["GST_DEBUG"]
+              for arg in proto.argv:
+                  command += arg.replace(' ', '\\ ') + " "
+              p.tochild.write("    Command: %s\n" % command)
               p.tochild.write('\n')
               p.tochild.write("  Source File Information:\n")
               p.tochild.write("  ------------------------\n")
