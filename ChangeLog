@@ -1,269 +1,322 @@
-2007-05-04  Sebastien Merle  <sebastien@fluendo.com>
+2007-05-07  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/transcoder.py: 
-	Added a small hexdump of the file header to the error report.
-	Added the command to start the job and the PID of the failed job.
-	Now filter the 20 lines of log with the job PID.
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/component/transcoder/transcoder.py: 
+	* flumotion/component/transcoder/binmaker.py:
+	Applied corrections made for the old transcoder.
+	Did some cleanup.	
 
-2007-05-04  Sebastien Merle  <sebastien@fluendo.com>
+2007-04-04  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/transcoder.py: 
-	Made the mailing function a LOT more robust.
+	* Corrected the componenet UI to show in groud control.
+	* Implemented low level loadComponent in proxies.
 
-2007-05-03  Sebastien Merle  <sebastien@fluendo.com>
+2007-03-28  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/trans.py: 
-	Better handling of media files that contains more than one video stream.
-	It now keep the first one and log a warning for the others.
-	* flumotion/transcoder/transcoder.py: 
-	More information is included in the error notification mail.
-	File size, file type, discoverer result and the last 20 lines of log.
+	* flumotion/transcoder/properties.py:
+	Corrected a bug that made multi level property lists to fail.
+	* flumotion/transcoder/admin/adminconfig.py: 
+	* flumotion/transcoder/admin/admin.py: 
+	* flumotion/transcoder/admin/contexts/admincontext.py: 
+	Made the context determine the datasource to use.
+	* flumotion/transcoder/admin/datasource/filesource.py: 
+	* flumotion/transcoder/admin/datasource/dataprops.py: 
+	Added a basic read only file data source that read data from an INI file.
 
-2007-05-02  Sebastien Merle  <sebastien@fluendo.com>
+2007-03-27  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/transcoder.py: 
-	* flumotion/transcoder/config.py: 
-	Added a config option gstdebug to set the GST_DEBUG environment variable
-	for the transcoder jobs. By default it does nothing you have to 
-	specify the option like gstdebug=2 in the global section.
+	* Added to each proxies a context that abstract configuration.
 
-2007-05-02  Sebastien Merle  <sebastien@fluendo.com>
+2007-03-27  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/trans.py: 
-	Corrected a bug when an unexpected pad is detected. 
-	It now shutdown the pipeline in the main thread.
-	* flumotion/transcoder/job.py: 
-	Changed the discovering of the targets to be serialized to consume 
-	less memory, be more scallable and to be able to use large max_interleave.
-
-2007-04-26  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/trans.py: 
-	Better handling of inconsistent discoverer info.
-	Better error handling of video with large frame interleave.
-	Added more logging of caps information.
-
-2007-04-16  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/job.py: 
-	Better quoting handling of post-process command line.
-
-2007-04-12  Sebastien Merle  <sebastien@fluendo.com>
-
-	* bin/flumotion-thumbnailer.sh: 
-	Change the script parameter to use getopts, to handle 
-	more complicated options and to easy the upgrades.
-	Added the possibility to pass converter parameters.
-	Added the possibility to specify output format.
-
-2007-03-14  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/config.py: 
-	* flumotion/transcoder/job.py: 
-	* flumotion/transcoder/trans.py: 
-	Added a global configuration option maxinterleave
-	to specify the frame interleave to use with the discoverer.
-	The default value is 1.0 second.
-
-2007-01-31  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/trans.py: 
-	* flumotion/transcoder/job.py: 
-	Test if the patch #603 has been applied with introspection.
-
-2007-01-31  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/job.py: 
-	* flumotion/transcoder/config.py: 
-	Changed the default value of appendext to false.
-
-2007-01-30  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/trans.py: 
-	* flumotion/transcoder/job.py: 
-	Changed the name of the extra parameter added by #603 patch.
-
-2007-01-30  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/trans.py: 
-	* flumotion/transcoder/job.py: 
-	If the gst-python version > 0.10.7.0, assume the 
-	Discoverer patch from #603 has been applied and
-	set the maximum scan time to 10 seconds.
-
-2007-01-22  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/transcoder.py: 
-	Properly handle EINTR.
-
-2007-01-22  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/job.py: 
-	Standardized the template variable names:
-	xxxFile: relative filename.
-	xxxPath: absolute file path.
-
-2007-01-18  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/watcher.py: 
-	* flumotion/transcoder/transcoder.py: 
-	Now the files that failed and are moved to the error directory
-	can be moved back to incoming and transcoded again without 
-	having to restart the transcoder.
-	* flumotion/transcoder/config.py: 
-	Now keep the extention of the input file to prevent name clash
-	in case of diffrent types of input files with a same name,
-	can be deactivated setting the property appendext to false in
-	the profiles configuration sections.
-	Added pptimeout, gettimeout and transtimeout properties 
-	to the customer section to configure the post-process, 
-	get request and transcoding timeout.
-	* flumotion/transcoder/trans.py: 
-	Better exception handling for gstreamer errors.
-	The timeout can now be specified to the constructor.
-	* flumotion/transcoder/job.py: 
-	Now quote the filenames before inserting it in the URLs.
-	Added a timeout for post-processes.
-	Made files to be moved to outgoing only if ALL profiles are successfull.
-	Added a getrequest option in each profiles, the customer's one is
-	called only one time if all profiles are transcoded well, and
-	the profile getrequest is called for each profiles with more
-	information related to the output file (like duration...).
-	Made the errgetreq to be called only one time and for any kind of error.
-	Better overrall exception catching to prevent zombie jobs.
-	* bin/flumotion-thumbnailer.sh:
-	Added a parameter to be able to get the source video from incomming.
-
-2007-01-08  Sebastien Merle  <sebastien@fluendo.com>
-
-	* bin/flumotion-thumbnailer.sh:
-	Add a script to make a JPG thumbnail of a video.
-	It uses totem-video-thumbnailer and ImageMagick convert.
-	It test for output and loop if no thumbnail has been
-	generated because totem-video-thumbnailer may timeout
-	under heavy load.
+	* flumotion/transcoder/admin/proxies/atmosphereproxy.py: 
+	* flumotion/transcoder/admin/proxies/flowproxy.py: 
+	* flumotion/transcoder/admin/proxies/fluproxy.py: 
+	* flumotion/transcoder/admin/proxies/managerproxy.py: 
+	* flumotion/transcoder/admin/proxies/monitorproxy.py: 
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py: 
+	* flumotion/transcoder/admin/proxies/workerproxy.py: 
+	* flumotion/transcoder/admin/proxies/componentproxy.py: 
+	Made all proxies to have a reference to there manager proxy.
+	Now the componenet proxies retrieve the reference 
+	to the proxy of the worker they are running.
 	
-2007-01-05  Thomas Vander Stichele  <thomas at apestaart dot org>
 
-	* configure.ac:
-	  back to TRUNK
+2007-03-26  Sebastien Merle  <sebastien@fluendo.com>
 
-2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/transcoder.py: 
-	Changed os.popen for popen2.Popen4 to corect exit code retrieval
+	* flumotion/transcoder/admin/proxies/transcoderset.py: 
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py: 
+	* flumotion/transcoder/admin/proxies/monitorset.py: 
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	Added Proxies and Sets for the transcoder componenets.
+	* flumotion/transcoder/enums.py: 
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/component/transcoder/filetranscoder.py: 
+	* flumotion/component/transcoder/filemonitor.py: 
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py: 
+	Changed more strang-as-enum to flumotion.common.enum
+	* Some random refactoring...
 	
-	* flumotion/transcoder/job.py:
-	Now handle nicely the filenames with spaces in the post-process command.
 
-2007-01-05  Sebastien Merle  <sebastien@fluendo.com>
+2007-03-23  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/config.py: 
-	* flumotion/transcoder/job.py:
-	Changed post-process parameter format from ${XX_XX} to %(xxxXxx)s
-	for consistency with GET request.
-	To automatically generate thumbnails you should now use:
-	postprocess = totem-video-thumbnailer %(file)s %(outputRoot)s/%(relFile)s.png
+	* flumotion/transcoder/admin/admin.py: 
+	* flumotion/transcoder/admin/proxies/componentset.py: 
+	* flumotion/transcoder/admin/proxies/componentproxy.py: 
+	Really added the Flumotion Component Proxy and a component set.
+
+
+2007-03-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/properties.py:
+	Now properly raise AttributeError from __getattr__.
+	* Added the flumotion element proxying framework.
+	* Did some folder structure refactoring.
+	* Broke old common.py in errors.py, enums.py and log.py
+
+2007-03-13  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/context.py: 
+	Added a random number to the temporary files
+	to let two task with the same input file
+	to run at the same time.
+	Add the PID to the report name.
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/transcoder/jobconfig.py: 
+	* flumotion/transcoder/jobreport.py: 
+	Added time reporting.
+	Change report-file to report-template 
+	to add a custom part to the filename.
+	* flumotion/transcoder/properties.py: 
+	Added a datetime property.
+	* flumotion/component/transcoder/filetranscoder.py: 
+	Added an acknowledge step, this way zombie component
+	will not move input files preventing other transcoding
+	tasks for the same input file to work properly.
+	The transcoding task will now move input file 
+	only after acknowledgment.
+
+2007-03-12  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/jobconfig.py: 
+	* flumotion/transcoder/jobreport.py: 
+	* flumotion/transcoder/properties.py: 
+	* flumotion/transcoder/common.py: 
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/component/transcoder/targets.py: 
+	* flumotion/component/transcoder/filetranscoder.py: 
+	* flumotion/component/transcoder/videosize.py: 
+	* flumotion/component/transcoder/context.py: 
+	* flumotion/component/transcoder/binmaker.py: 
+	Changed all string-as-enum to flumotion.common.enum
+
+2007-03-09  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/targetstore.py: 
+	* flumotion/transcoder/admin/profilestore.py: 
+	* flumotion/transcoder/admin/customerstore.py: 
+	* flumotion/transcoder/admin/adminstore.py: 
+	* flumotion/transcoder/admin/basestore.py: 
+	Removed some unused imports
+
+2007-03-09  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Made the TranscoderError keeps information about
+	what exception or failure cause it to be raised.
+	Added custom getExceptionMessage and getFailureMessage
+	that return more information if a TranscoderError is involved.
+	Change all modules to use these new functions.
+	* Created a data source interface to retrieve transcoder data
+	asynchronously, and implemented a dummy data source with
+	static data.
+	* Created Store classes that are able to load there data from
+	a specified data source and initialise asynchronously.
+	These classes handle event broadcasting about customers, profiles targets
+	events like addition deletion and so on.
+
+2007-03-01  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/jobconfig.py: 
+	* flumotion/transcoder/jobreport.py: 
+	* flumotion/transcoder/properties.py:
+	The root property bags should now  inherite from RootPropertyBag,
+	and the root bag parent is itself.
+	Added a ChildDict property.
+	Corrected some setup bugs to be able to directly assign a bag.
+
+2007-03-01  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Moved LoggerProxy ans TranscoderError to flumotion/transcoder/common
+	* Changed the component name to file-monitor and file-transcoder
+	and changed the class names for consistency.
+
+2007-02-28  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Deleted old transcoder files, and changed the new one 
+	from flumotion/cluster/transcoder to flumotion/transcoder.
+	Started the transcoder admin in flumotion/transcoder/admin
+	(better that flumotion/cluster/transcoder/admin...)
+	* Some minor changes and cleaning to the properties classes.
+
+2007-02-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/jobcomp.py: 
+	* flumotion/cluster/transcoder/jobreport.py: 
+	* flumotion/cluster/transcoder/jobconfig.py: 
+	* flumotion/cluster/transcoder/inifile.py: 
+	Change the  loading and saving of config/report to
+	be extern from the properies description.
+	This way The file format is independent from the 
+	property objects.
+
+2007-02-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/reporter.py: 
+	Corrected a vicious typo in CPUUsageMixin.
+	Removed some unused object field initialization.
 	
-	* flumotion/transcoder/config.py: 
-	Added a configuration option for error GET request: errgetreq
-	Added a configuration option for error notification mail: errmail
+2007-02-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/job.py: 
+	Added the proper call to handle the CPU usage measurments.
+	* flumotion/component/transcoder/reporter.py: 
+	Added a class Mixin to handle usage measurments.
+	Added some measurment (job, preprocess, transcoding) to Reporter,
+	and some (postprocess, analyse) to TargetReporter.
+	* flumotion/cluster/transcoder/jobreport.py: 
+	Added a custom property to show CPU usage.
+	Added some CPU usage properties to JobReport and TargetReport.
+	* flumotion/cluster/transcoder/properties.py: 
+	Let Fraction accept long values.
+
+2007-02-21  Sebastien Merle  <sebastien@fluendo.com>
+	* flumotion/component/transcoder/job.py: 
+	Uncommented the input file moving.
+	* doc/design.odt: 
+	Added a short draft of design document.
 	
-	* flumotion/transcoder/job.py:
-	Made a refactoring of the profile processing.
-	Fix #552 and definitely fix #554
-	Added a GET request on error: Fix #551
+2007-02-21  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/transcoder.py: 
-	Send a mail when a transcoding fail: Fix #518		
+	* flumotion/cluster/transcoder/pipelinecrawler.py: 
+	Better handling of gstreamer internal changes when
+	crawling the pipline using non-standard method.
 
-2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
+2007-02-20  Sebastien Merle  <sebastien@fluendo.com>
 
-	* Makefile.am:
-	* configure.ac:
-	* src/Makefile.am:
-	* src/mmf-crc.c:
-	* flumotion-transcoder.spec.in:
-	  Add the mmf-crc postprocessing binary to fix mmf files.
+	* flumotion/component/transcoder/reporter.py: 
+	* flumotion/component/transcoder/context.py: 
+	* flumotion/component/transcoder/jobcomp.py: 
+	* flumotion/component/transcoder/job.py: 
+	Refactored to make the transcoding job a lot more independent
+	of the specified configuration and report. 
+	Now all is encapsulated in a Context class that handle
+	all the job specifics. A Reporter class has been added
+	that help the filling of the report.
+	This way the Job can use whatsoever kind of config 
+	and report object.
+	* flumotion/component/transcoder/common.py: 
+	Added A logger proxy class that delegate all logging
+	calls to a specified logger, and can add some custom 
+	arguments to the call.
+	* flumotion/cluster/transcoder/pipelinecrawler.py: 
+	Filters the None elements when crawling.
+	* flumotion/cluster/transcoder/jobreport.py: 
+	Moved all methods to the Reporter class.
+	* flumotion/cluster/transcoder/jobconfig.py: 
+	Moved all methods to the Context class.
 
-2007-01-04  Thomas Vander Stichele  <thomas at apestaart dot org>
+2007-02-16  Sebastien Merle  <sebastien@fluendo.com>
+	* flumotion/component/transcoder/job_admin_gtk.py: 
+	Cleanup stateSetitem method.
 
-	* flumotion/transcoder/trans.py:
-	  Also work when audiorate is not set and audiochannels is.
+2007-02-16  Sebastien Merle  <sebastien@fluendo.com>
 
-2007-01-04  Sebastien Merle  <sebastien@fluendo.com>
+	* flumotion/component/transcoder/jobcomp.py: 
+	Relay the transcoding job events to the UI with the uiState.
+	* flumotion/component/transcoder/job.py: 
+	The transcoding job now fire events.
+	At creation, an event sink object can be specified 
+	to receive the events.
+	* flumotion/component/transcoder/job_admin_gtk.py: 
+	Added a UI to the transcoding job.
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/cluster/transcoder/jobreport.py: 
+	Changed status to state and added a global status property.
 
-	* flumotion/transcoder/job.py: 
-	Do GET request and post-process even if linkDir is not set.
-	Fix #554	
 
-2007-01-03  Sebastien Merle  <sebastien@fluendo.com>
+2007-02-13  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion-transcoder.spec.in: 
-	Make sure that trunk packages are treates as having a later
-	version that release packages.
-	Better fix needed ? See fsp revision 4705
+	* flumotion/component/transcoder/transcoder.py: 
+	Now call the pipeline callback when the state change to PLAY.
+	Pass the transcoder targets to the pipeline callback.
+	Corrected the progression handling to take the smallest position
+	of the pipeline sinks.
+	* flumotion/component/transcoder/thumbsink.py: 
+	Changed the sink to async, added a name parameter.
+	* flumotion/component/transcoder/targets.py: 
+	Added a tag parameter to better name the gst elements.
+	Store the encoding bins to be able to generate a report.
+	* flumotion/component/transcoder/binmaker.py: 
+	Added queue elements at the beginning of the encoding bins.
+	* flumotion/cluster/transcoder/pipelinecrawler.py: 
+	Added a generic pipeline crawler class.
+	Can be used to parse a pipeline the SAX way.
+	* flumotion/cluster/transcoder/jobreport.py: 
+	Add pipeline information report for the source and the targets.
+	Separate the audio and video tags for discover report.
+	* flumotion/cluster/transcoder/properties.py: 
+	Added a value dictionary property.
+	* flumotion/component/transcoder/jobcomp.py: 
+	* flumotion/component/transcoder/job.py: 
+	More separation between component and transcoding job.
 
-2006-12-29  Sebastien Merle  <sebastien@fluendo.com>
+2007-02-07  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/config.py: 
-	* flumotion/transcoder/job.py: 
-	Added some variables to be substituted in the post-process command line:
-	${REL_FILE} ${INPUT_ROOT} ${OUTPUT_ROOT} 
-	${ERROR_ROOT} ${LINK_ROOT} ${WORK_ROOT}
-	For example, to automatically generate thumbnails, add:
-	postprocess = totem-video-thumbnailer ${FILE} ${OUTPUT_ROOT}/${REL_FILE}.png
+	* flumotion/component/transcoder/transcoder.py:
+	Added progression notification.
+	More exception handling within gstreamer called methods.
+	* flumotion/component/transcoder/targets.py: 
+	Changed the thumnailing prob methods and
+	added a keyframe unit.
+	* flumotion/component/transcoder/thumbsink.py: 
+	Changed the base class from gst.Element to gst.BaseSink.
+	* flumotion/component/transcoder/job.py: 
+	Added basic progression logging.
+	Test for config and report existance.
+	* flumotion/cluster/transcoder/properties.py: 
+	Changed the list item naming to support very large list.
+	* flumotion/cluster/transcoder/jobconfig.py: 
+	Added keyframe unit for thumbnailing targets.
 
-2006-12-19  Sebastien Merle  <sebastien@fluendo.com>
+2007-02-07  Sebastien Merle  <sebastien@fluendo.com>
+	Added the project files. Was previously commited in fsp by error.
 
-	* flumotion/transcoder/job.py: 
-	* flumotion/transcoder/config.py: 
-	Added an option to execute a post-processing command on the 
-	output files. The config option is named 'postprocess' and 
-	is None by default so no post-processing. The option value should
-	be a command line with a ${FILE} parameter that will be substituted
-	by the absolute path of a transcoded file before being moved 
-	to the outgoing directory.
-	Ex: postprocess = md5sum -b ${FILE}
-	Fixes #517
+2007-02-06  Sebastien Merle  <sebastien@fluendo.com>
+	* flumotion/component/transcoder/binmaker.py: 
+	Added an optional parameter to the bin maker functions
+	to be able to make bins without rate elementes.
 
-2006-12-18  Thomas Vander Stichele  <thomas at apestaart dot org>
+2007-02-06  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/transcoder/job.py:
-	  also warn when the discoverer fails to think a file is media
+	* flumotion/component/transcoder/binmaker.py: 
+	Reverted the video boxing filling color to black.
+	* flumotion/component/transcoder/thumbsink.py: 
+	* flumotion/component/transcoder/targets.py: 
+	Added thumbnailing target with a custom sink.
 
-2006-12-15  Thomas Vander Stichele  <thomas at apestaart dot org>
+2007-02-05  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion-transcoder.spec.in:
-	  require flumotion
-
-2006-11-30  Michael Smith  <msmith@fluendo.com>
-
-	* flumotion/transcoder/trans.py:
-	  Increase max queue size in time, disable buffers.
-	  We retain max size in bytes, to avoid Infinite Memory Usage.
-
-2006-11-29  Thomas Vander Stichele  <thomas at apestaart dot org>
-
-	* flumotion/transcoder/trans.py:
-	  add debugging for when a pad gets added so that I can see why
-	  I have five pads on one file
-
-2006-11-28  Michael Smith  <msmith@fluendo.com>
-
-	* flumotion/transcoder/transcoder.py:
-	  Log full command line (modulo quoting issues) at debug level.
-
-2006-11-27  Michael Smith  <msmith@fluendo.com>
-
-	* flumotion/transcoder/job.py:
-	  Fix up deferred usage so we don't get tracebacks/fatal failures if
-	  the get request fails the first time.
-
-2006-11-22  Michael Smith  <msmith@fluendo.com>
-
-	* flumotion/transcoder/trans.py:
-	  Use larger queues, to avoid queue lockups on coarsely muxed files.
+	* flumotion/component/transcoder/common.py: 
+	* flumotion/component/transcoder/job.py: 
+	* flumotion/component/transcoder/jobcomp.py: 
+	Separated the transcoding job from the flumotion component.
+	* All files:
+	Change the headers to have correct license.
+	* flumotion/cluster/transcoder/jobconfig.py: 
+	Added some thumbnail configuration properties.
+	
+2007-02-02  Sebastien Merle  <sebastien@fluendo.com>
+	First commit of the new transcoder version.
 
 2006-11-15  Andy Wingo  <wingo@pobox.com>
 
@@ -271,16 +324,6 @@
 	instead of exit, so as to work correctly from deferred callbacks
 	and other quoi.
 	(Job.finish): Thanks distributed pychecker!
-
-2006-11-13  Michael Smith  <msmith@fluendo.com>
-
-	* conf/flumotion-transcoder.ini:
-	  Use mp3parse in flv example config.
-
-	* flumotion/transcoder/trans.py:
-	  Implement gst_parse_bin_from_description() in python.
-	  Use it for creating audio, video encoders, so we can have a bin
-	  rather than a single element.
 
 2006-11-09  Andy Wingo  <wingo@pobox.com>
 

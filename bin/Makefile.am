@@ -1,4 +1,3 @@
-sbin_SCRIPTS = flumotion-transcoder flumotion-transcoder-job
-bin_SCRIPTS = flumotion-thumbnailer.sh
+sbin_SCRIPTS = flumotion-transcoder-admin
 
-EXTRA_DIST = $(sbin_SCRIPTS) $(bin_SCRIPTS)
+EXTRA_DIST = $(sbin_SCRIPTS)

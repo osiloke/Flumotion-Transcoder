@@ -1,0 +1,556 @@
+Transcoder v2 Requirements and Specification
+-------------------------------------
+
+=== REQUIREMENTS ===
+
+* Transcode the files put on a specific directory to a set of target format.
+* Generate thumbnails of a source video.
+* Have the option to make the outgoing folder of the different targets to be 
+   in separated subdirectories.
+* Add a specified extension to the outgoing file.
+* Distribute transcoding of the profiles on available workers.
+* Prioritize the transcoding by customer/profile
+* Have the option to execute some external post-process
+* Have the option to execute some external pre-process
+* Have the option to change process priority of the transcoding jobs.
+* Have a global and by customer/profile notification on error and success 
+   by GET request and mail.
+* Have a GET request for each targets with target-specific information (??)
+* Only move the target's files if all the targets are successful
+* Have a transcoding progress notification.
+* Have the files that fail to transcode moved to an error directory.
+* Have the files that successfully transcode moved to a success directory.
+* Have an easy way to restart a transcoding job with the exact
+   configuration had.
+* Have an exhaustive report of the transcoding job.
+* If the incomming directory contains a link to a file of the same 
+  transcoding profile in incomming or done directory, 
+  the transcoder will create links in the outgoing
+  directory to the transcoded version of the linked file.
+  If the link point to an external file or a file from a diffrent
+  transcoding profile, the link will be ignored.
+
+
+=== SPECIFICATIONS ===
+
+CONFIGURATION
+
+The configuration could be changed by direct file modification
+(may need a restart of the transcoder cluster admin) or via 
+GET request on the cluster admin.
+
+* Workers Options
+   - Root directories for shared file-system and temporary file-system:
+      For the examples, the root directories will be:
+        Shared: /home/file
+        Temporary:  /var/tmp
+        Maximum number of transcoding jobs.
+* Global Options:
+   - File-monitor scanning interval
+   - Transcoding timeout
+   - Mail address to use for error notifications
+   - Global GET request to perform on errors:
+       The request can use template variables.
+   - Global GET request to perform on successes
+       The request can use template variables.
+   - Global GET request timeout
+   - Global GET request retry count
+   - Global GET request retry sleep
+   - Global post-process timeout
+   - Global pre-process timeout
+   - Global transcoding timeout
+* Customers Options
+   - Name
+   - Relative directory:
+       If not specified, the customer's name will be used.
+   - Default base directories:
+      If not specified the base directories are deduced from the 
+      relative directory and worker's root directory. 
+      For the examples, the relative directory will 
+      be 'fluendo', that make the effective directories to be:
+         Incoming: /home/file/fluendo/files/incoming/...
+         Outgoing: /home/file/fluendo/files/outgoing/...
+         Failed: /home/file/fluendo/files/failed/...
+         Done: /home/file/fluendo/files/done/...
+         Links: /home/file/fluendo/files/links/...
+         Working: /var/tmp/fluendo/working/...
+         Configurations: /home/file/fluendo/configs/...
+         Failed Reports: /home/file/fluendo/reports/failed/...
+         Done Reports: /home/file/fluendo/reports/done/...
+      If the customer name have directory separators, like 'rtve/l2n' 
+      the effective directories will be:
+         Incoming: /home/file/rtve/l2n/files/incoming/...
+         Outgoing: /home/file/rtve/l2n/files/outgoing/...
+         Working: /var/tmp/rtve/l2n/working/...
+        ...
+      Each directory can be overridden separately and can use the template variables.
+   - Use post-processing
+   - Use pre-processing
+   - Generate link files
+   - Default transcoding priority
+   - Default process priority
+   - Default pre-process command line:
+       The command can use template variables.
+   - Default post-process command line:
+       The command can use template variables.
+   - Default URL prefix for link generation
+       The request can use template variables:
+   - Default GET request to perform on errors:
+       The request can use template variables.
+   - Default GET request to perform on successes
+       The request can use template variables.
+   - Default GET request to perform for each targets
+       The request can use template variables.
+   - Default mail address to use for customer error notification
+   - The following option could be overridden for the current customer:
+         GET request timeout
+         GET request retry count
+         GET request retry sleep
+         Post-process timeout
+         Pre-process timeout 
+         Transcoding timeout  
+* Profiles Options
+   - Label
+   - Relative directory:
+      If not specified, the profile's label will be used.
+   - Profile base directories:
+      If not specified, the directories are deduced from the 
+      customer's default base directories and the profile's relative directory.
+      For the examples, 'ogg/theora-vorbis' will be used as relative directory,
+      making the effective directories for the profile to be:
+         Incoming: /home/file/fluendo/files/incoming/ogg/theora-vorbis/...
+         Outgoing: /home/file/fluendo/files/outgoing/ogg/theora-vorbis/...
+         Failed: /home/file/fluendo/files/failed/ogg/theora-vorbis/...
+         Done: /home/file/fluendo/files/done/ogg/theora-vorbis/...
+         Links: /home/file/fluendo/files/links/ogg/theora-vorbis/...
+         Working: /var/tmp/fluendo/working/ogg/theora-vorbis/...
+         Configurations: /home/file/fluendo/configs/ogg/theora-vorbis/...
+         Failed Reports: /home/file/fluendo/reports/failed/ogg/theora-vorbis/...
+         Done Reports: /home/file/fluendo/reports/done/ogg/theora-vorbis/...
+      Each directory can be overridden separately and can use the same
+      template variable as for the customer's default base directories.
+   - The following option could be overridden for the current profile:
+         GET request timeout
+         GET request retry count
+         GET request retry sleep
+         Post-process timeout
+         Pre-process timeout   
+         Transcoding timeout
+         Use post-processing
+         Use pre-processing
+         Generate link file
+         Transcoding priority
+         Process priority
+         Pre-process command line
+         Post-process command line
+         URL prefix for link generation
+         GET request to perform on errors
+         GET request to perform on successes
+         GET request to perform for each targets
+         Mail address to use for customer error notification
+* Targets Options
+   - Label
+   - Relative directory:
+       If not specified the output files will be in the same 
+       relative folder as the input file (no sub-directory).
+       DO NOT USE THE LABEL IF NOT SPECIFIED
+   - Output extension:
+       The extension to be added to the input filename.
+   - Target files:
+       The file path are deduced from the profile base directories, 
+       the relative directory, the input file path and the output extension.
+       For the examples, 'high' will be used as relative directory,
+       '.ogg' will be used as output extension and 'subdir/video.avi' as input path
+       making the effective directories for the target to be:
+         Incoming: /home/file/fluendo/files/incoming/ogg/theora-vorbis/subdir/video.avi
+         Outgoing: /home/file/fluendo/files/outgoing/ogg/theora-vorbis/subdir/high/video.avi.ogg
+         Failed: /home/file/fluendo/files/failed/ogg/theora-vorbis/subdir/video.avi
+         Done: /home/file/fluendo/files/done/ogg/theora-vorbis/subdir/video.avi
+         Links: /home/file/fluendo/files/links/ogg/theora-vorbis/subdir/high/video.avi.ogg.link
+         Working: /var/tmp/fluendo/working/ogg/theora-vorbis/subdir/high/video.avi.ogg.tmp
+         Configurations: /home/file/fluendo/configs/ogg/theora-vorbis/subdir/video.avi.ini
+         Failed Reports: /home/file/fluendo/reports/failed/ogg/theora-vorbis/subdir/video.avi.rep
+         Done Reports: /home/file/fluendo/reports/done/ogg/theora-vorbis/subdir/video.avi.rep
+   - The following option could be overridden for the current profile:
+         Use post-processing
+         Generate link file
+         Post-process command line
+         URL prefix for link generation
+         GET request to perform (for this target)
+   - Target type:
+       Each types of target have a diffrent set of configuration.
+       Target can be of the following types:
+         Audio
+         Video
+         Audio/Video
+         Thumbnails
+   - Target Configuration
+       For 'Audio' and 'Audio/Video' targets:
+         muxer
+         audio-encoder
+         audio-rate
+         audio-channels
+       For 'Video' and 'Audio/Video' targets:
+         muxer
+         video-encoder
+         video-width
+         video-height
+         video-maxwidth
+         video-maxheight
+         video-par
+         video-framerate
+       For 'Thumbnails' targets:
+         file-postfix    : 
+              The thumbnail filename postfix before the extension, 
+              can contain %(index)d, %(frame)d, %(timestamp)s.
+              Ex: '-%(index)02d-%(timestamp)s' => 'ogg/theora-vorbis/subdir/high/video.avi-02-02:30:41.jpg'
+         interval-value
+         interval-unit   : seconds, minuts, frames, percents
+         max-count
+         output-format   : JPG, PNG
+         smart-thumbs
+
+
+TEMPLATE VARIABLES
+
+Some options can contain template variables that will
+be substituted:
+    The failed GET requests (E)
+    The done GET requests (S)
+    The URL prefixes (U)
+    The pre-process command lines (R)
+    The post-process command lines (O)
+    The custom directories (C)
+
+| Option    | Variables                | Example
+---------------------------------------------------------------------
+   E S U R O %(inputFile)s             : video.avi
+     S U   O %(outputFile)s            : high/video.avi.ogg
+     S U   O %(workFile)s              : high/video.avi.ogg.tmp
+     S U   O %(linkFile)s              : high/video.avi.ogg.link
+   E S U R O %(reportFile)s            : video.avi.rep
+   E S U     %(configFile)s            : video.avi.ini
+
+   E S U     %(relInputPath)s          : ogg/theora-vorbis/video.avi
+   E S U     %(relConfigPath)s         : ogg/theora-vorbis/video.avi.ini
+   E S U     %(relReportPath)s         : ogg/theora-vorbis/video.avi.rep
+     S U     %(relOutputPath)s         : ogg/theora-vorbis/high/video.avi.ogg
+     S U     %(relLinkPath)s           : ogg/theora-vorbis/high/video.avi.ogg.link
+     S U     %(relWorkPath)s           : ogg/theora-vorbis/high/video.avi.ogg.tmp
+
+   E S U R O %(inputDir)s              : /home/file/fluendo/files/incoming/ogg/theora-vorbis
+   E S U R O %(outputDir)s             : /home/file/fluendo/files/outgoing/theora-vorbis
+   E S U R O %(workDir)s               : /var/tmp/fluendo/working/theora-vorbis
+   E S U     %(configDir)s             : /var/tmp/fluendo/configs/theora-vorbis
+   E S U     %(failedReportsDir)s      : /var/tmp/fluendo/reports/failed/theora-vorbis
+   E S U     %(doneReportsDir)s        : /var/tmp/fluendo/reports/done/theora-vorbis
+
+   E S U     %(inputRoot)s             : /home/file/fluendo/files/incoming
+   E S U     %(outputRoot)s            : /home/file/fluendo/files/outgoing
+   E S U     %(workRoot)s              : /var/tmp/fluendo/working
+   E S U     %(configRoot)s            : /var/tmp/fluendo/configs
+   E S U     %(failedReportsRoot)s     : /var/tmp/fluendo/reports/failed
+   E S U     %(doneReportsRoot)s       : /var/tmp/fluendo/reports/done
+
+   E S U R O %(inputPath)s             : /home/file/fluendo/files/incoming/ogg/theora-vorbis/video.avi
+   E S U     %(failedPath)s            : /home/file/fluendo/files/failed/ogg/theora-vorbis/video.avi
+   E S U     %(donePath)s              : /home/file/fluendo/files/done/ogg/theora-vorbis/video.avi
+     S U   O %(outputPath)s            : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high/video.avi.ogg
+     S U   O %(linkPath)s              : /home/file/fluendo/files/links/ogg/theora-vorbis/high/video.avi.ogg.link
+     S U   O %(outputWorkPath)s        : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.tmp
+     S U   O %(linkWorkPath)s          : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.link.tmp
+   E S U R O %(configPath)s            : /home/file/fluendo/configs/ogg/theora-vorbis/video.avi.ini
+   E S U     %(reportPath)s            : /home/file/fluendo/reports/done/ogg/theora-vorbis/video.avi.rep
+
+   E S U R O %(custName)s              : Fluendo
+   E S U R O %(profLabel)s             : OGG/theora-vorbis
+     S U   O %(targetLabel)s           : High Quality OGG
+     S U   O %(targetType)s            : Audio/Video
+     S U   O %(targetMime)s            : application/ogg
+     S U   O %(targetLength)s          : 436543251285
+     S U   O %(targetDuration)f        : 152.33335
+     S U   O %(targetHours)s           : 2
+     S U   O %(targetMinutes)s         : 20
+     S U   O %(targetSeconds)s         : 30
+     S U   O %(targetHaveVideo)d       : 1
+     S U   O %(targetHaveAudioo)d      : 1
+     S U   O %(targetVideoWidth)s      : 320
+     S U   O %(targetVideoHeight)s     : 240
+   E S U R O %(sourceMime)s            : application/ogg
+   E S U R O %(sourceLength)s          : 15432468
+   E S U R O %(sourceDuration)f        : 123.54
+   E S U R O %(sourceHours)s           : 2
+   E S U R O %(sourceMinutes)s         : 20
+   E S U R O %(sourceSeconds)s         : 30
+   E S U R O %(sourceHaveVideo)d       : 1
+   E S U R O %(sourceHaveAudioo)d      : 1
+   E S U R O %(sourceVideoWidth)s      : 640
+   E S U R O %(sourceVideoHeight)s     : 480
+   E         %(errorMessage)s          : Failed to apply post-process
+   E         %(failedTargets)s         : [ogg, mp4]
+   E     R   %(targets)s               : [ogg, mp4, 3gp]
+
+ C           %(workerShared)s          : /home/file
+ C           %(workerTemp)s            : /var/tmp
+ C           %(custRelDir)s            : fluendo
+ C           %(custRootDir)s           : /home/file/fluendo
+ C           %(custFilesDir)s          : /home/file/fluendo/files
+ C           %(custInputDir)s          : /home/file/fluendo/files/incoming
+ C           %(custOutputDir)s         : /home/file/fluendo/files/outgoing
+ C           %(custFailedDir)s         : /home/file/fluendo/files/failed
+ C           %(custDoneDir)s           : /home/file/fluendo/files/done
+ C           %(custLinksDir)s          : /home/file/fluendo/files/links
+ C           %(custWorkingDir)s        : /var/tmp/fluendo/working
+ C           %(custConfigsDir)s        : /home/file/fluendo/configs
+ C           %(custReportsDir)s        : /home/file/fluendo/reports
+ C           %(custFailedReportdDir)s  : /home/file/fluendo/reports/failed
+ C           %(custDoneReportsDir)s    : /home/file/fluendo/reports/done
+ C           %(profRelDir)s            : ogg/theora-vorbis
+ C           %(profInputDir)s          : /home/file/fluendo/files/incoming/ogg/theora-vorbis
+ C           %(profOutputDir)s         : /home/file/fluendo/files/outgoing/ogg/theora-vorbis
+ C           %(profFailedDir)s         : /home/file/fluendo/files/failed/ogg/theora-vorbis
+ C           %(profDoneDir)s           : /home/file/fluendo/files/done/ogg/theora-vorbis
+ C           %(profLinksDir)s          : /home/file/fluendo/files/links/ogg/theora-vorbis
+ C           %(profWorkingDir)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
+ C           %(profConfigsDir)s        : /home/file/fluendo/configs/ogg/theora-vorbis
+ C           %(profFailedReportsDir)s  : /home/file/fluendo/reports/failed/ogg/theora-vorbis
+ C           %(profDoneReportsDir)s    : /home/file/fluendo/reports/done/ogg/theora-vorbis
+ C           %(targetRelDir)s          : high
+ C           %(targetOutputDir)s       : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
+ C           %(targetLinksDir)s        : /home/file/fluendo/files/links/ogg/theora-vorbis/high
+ C           %(targetWorkingDir)s      : /var/tmp/fluendo/working/ogg/theora-vorbis/high
+
+
+DESCRIPTION
+
+The system will be separated in tree parts:
+  - The Transcoding Cluster Admin (TCA)
+  - The Monitoring component (MC)
+  - The Transcoding Job Component (TJC)
+
+Transcoding Process Description:
+  - TCA start one or multiple instances of MC
+  - MC components check for file-system changes and notify the TCA
+  - TCA writes a transcoding configuration file in the file-system
+  - TCA starts a TJC to do the transcoding (with the config as parameter)
+  - TJC periodically notify the TCA of transcoding progress.
+
+ If the transcoding job fail.
+  - TJC write a transcoding report on the file-system
+  - TJC goes SAD.
+  - TCA read the transcoding report
+  - TCA move the input file to the "failed" directory
+  - TCA save a selected set of the report in the database
+  - TCA send the error notifications (GET requests, Mails...)
+  - TCA keep the component for further investigation. 
+     A maximum number of SAD component could be implemented
+     to not accumulate too much component
+
+ If the transcoding job succeed.
+  - TJC moved all generated files to the outgoing directory
+  - TJC write a transcoding report on the file-system
+  - TJC notify the TCA of the success.
+  - TCA read the transcoding report
+  - TCA move the input file to the "done" directory
+  - TCA save a selected set of the report in the database
+  - TCA send the success notifications for each targets
+  - TCA stop and remove the TJC
+
+
+DIRECTORY STRUCTURE
+
+[Worker Shared Root]
++-fluendo/
+  +-files/
+  | +-incoming/
+  | | +-ogg-flv/
+  | | | +-subfolder/
+  | | |     new1.avi
+  | | |   new2.avi
+  | | +-ogg-3gp/
+  | |     new4.avi
+  | +-outgoing/
+  | | +-ogg-flv/
+  | | | +-subfolder/
+  | | |     video3.avi.ogg
+  | | |     video3.avi.flv
+  | | |     video3.avi.jpg
+  | | |   video1.avi.ogg
+  | | |   video1.avi.jpg
+  | | |   video1.avi.flv
+  | | |   video2.avi.ogg
+  | | |   video2.avi.flv
+  | | +-ogg-3gp/
+  | |   +-high/
+  | |   |   video4.avi.ogg
+  | |   |   video4.avi.3gp
+  | |   +-low/
+  | |       video4.avi.ogg
+  | |       video4.avi.3gp
+  | +-links/
+  | | +-ogg-flv/
+  | | | +-subfolder/
+  | | |     video3.avi.ogg.link
+  | | |   video1.avi.ogg.link
+  | | |   video2.avi.ogg.link
+  | | +-ogg-3gp/
+  | |   +-high/
+  | |   |   video4.avi.ogg.link
+  | |   +-low/
+  | |       video4.avi.ogg.link
+  | +-done/
+  | | +-ogg-flv/
+  | | | +-subfolder/
+  | | |     video3.avi
+  | | |   video1.avi
+  | | |   video2.avi
+  | | +-ogg-3gp/
+  | |     video4.avi
+  | +-failed/
+  |   +-ogg-flv/
+  |   | +-subfolder/
+  |   |     bad3.avi
+  |   |   bad1.avi
+  |   +-ogg-3gp/
+  |       bad2.avi
+  +-configs/
+  | +-ogg-flv/
+  | | +-subfolder/
+  | |     bad3.avi
+  | |   video3.avi
+  | |   bad1.avi
+  | |   video1.avi
+  | |   video2.avi
+  | +-ogg-3gp/
+  |     bad2.avi
+  |     video4.avi
+  +-reports/
+    +-done/
+    | +-ogg-flv/
+    | | +-subfolder/
+    | |     video3.avi.rep
+    | |   video1.avi.rep
+    | |   video2.avi.rep
+    | +-ogg-3gp/
+    |     video4.avi.rep
+    +-failed/
+      +-ogg-flv/
+      | +-subfolder/
+      |     bad3.avi.rep
+      |   bad1.avi.rep
+      +-ogg-3gp/
+          bad2.avi.rep
+
+[Worker Temporary Root]
++-fluendo/
+  +-working/
+    +-ogg-flv/
+    | +-subfolder/
+    |     new1.avi.jpg
+    |     new1.avi.ogg.tmp
+    |     new1.avi.ogg.link.tmp
+    |     new1.avi.flv.tmp
+    |   new2.avi.jpg
+    |   new2.avi.ogg.tmp
+    |   new2.avi.ogg.link.tmp
+    |   new2.avi.flv.tmp
+    +-ogg-3gp/
+      +-high/
+      |   new4.avi.ogg.tmp
+      |   new4.avi.ogg.link.tmp
+      |   new4.avi.3gp.tmp
+      +-low/
+          new4.avi.ogg.tmp
+          new4.avi.ogg.link.tmp
+          new4.avi.3gp.tmp
+        new4.avi.jpg
+
+
+TRANSCODING JOB CONNFIGURATION FILE
+
+[global]
+transcoding-timeout = 4
+post-process-timeout = 60
+pre-process-timeout = 60
+
+[customer]
+name = Fluendo
+
+[profile]
+label = ogg/theora-vorbis
+input-dir = /tmp/transcoder-test/fluendo/files/incoming/ogg/theora-vorbis
+output-dir = /tmp/transcoder-test/fluendo/files/outgoing/ogg/theora-vorbis
+link-dir = /tmp/transcoder-test/fluendo/files/links/ogg/theora-vorbis
+working-dir = /tmp/transcoder-test/fluendo/working/ogg/theora-vorbis
+failed-dir = /tmp/transcoder-test/fluendo/files/failed/ogg/theora-vorbis
+failed-reports-dir = /tmp/transcoder-test/fluendo/reports/failed/ogg/theora-vorbis
+done-dir = /tmp/transcoder-test/fluendo/files/done/ogg/theora-vorbis
+done-reports-dir = /tmp/transcoder-test/fluendo/reports/done/ogg/theora-vorbis
+pre-process = totem-video-thumbnailer %(inputPath)s %(outputDir)s/%(relInputPath)s.png
+
+[source]
+input-file = subdir/gstreamer.avi
+report-file = subdir/gstreamer.avi.rep
+
+[target:1]
+label = normal
+type = Audio/Video
+post-process = md5sum %(workPath)s
+output-file = ogg/theora-vorbis/subdir/gstreamer.avi.ogg
+
+[target:1:config]
+video-encoder = theoraenc quick=0 bitrate=500
+video-framerate = 25/1
+video-width = 320
+audio-encoder = vorbisenc bitrate=68000
+audio-rate=44100
+muxer = oggmux
+video-max-width=
+video-max-height=
+
+[target:2]
+label = low
+type = Audio/Video
+#post-process = md5sum %(workPath)s
+output-file = ogg/theora-vorbis/subdir/subdir/low/gstreamer.avi.ogg
+link-file = ogg/theora-vorbis/subdir/subdir/low/gstreamer.avi.ogg.link
+link-url-prefix = http://localhost:8180/fluendo/vod/outgoing
+
+[target:2:config]
+video-encoder = theoraenc quality=32
+video-framerate = 25/2
+video-par = 1/1
+video-width = 160
+audio-encoder = vorbisenc bitrate=32000
+audio-rate=22050
+audio-channels = 2
+muxer = oggmux
+
+[target:3]
+label = high
+type = Audio/Video
+post-process = md5sum %(workPath)s
+output-file = ogg/theora-vorbis/subdir/subdir/high/gstreamer.avi.ogg
+link-file = ogg/theora-vorbis/subdir/subdir/high/gstreamer.avi.ogg.link
+link-url-prefix = http://localhost:8180/fluendo/vod/outgoing
+
+[target:3:config]
+video-encoder = theoraenc quick=0 bitrate=700
+video-framerate = 25/1
+video-width = 320
+audio-encoder = vorbisenc bitrate=64000
+audio-rate=44100
+muxer = oggmux
+
+[target:4]
+label = thumbnails
+type = Thumbnails
+post-process =
+output-file = ogg/theora-vorbis/subdir/subdir/high/gstreamer.avi.%(index)02d.jpg
+
+[target:4:config]
+interval-value = 1
+interval-unit = seconds
+max-count = 3
+output-format = jpg
+smart-thumbs = false

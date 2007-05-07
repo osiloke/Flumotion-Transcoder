@@ -1,7 +1,5 @@
-# -*- Mode: Python -*-
-# vi:si:et:sw=4:sts=4:ts=4
-#
 # Flumotion - a streaming media server
+# vi:si:et:sw=4:sts=4:ts=4
 # Copyright (C) 2004,2005,2006,2007 Fluendo, S.L. (www.fluendo.com).
 # All rights reserved.
 
@@ -11,3 +9,17 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
 # Headers in this file shall remain intact.
+
+from flumotion.twisted.compat import implements
+from flumotion.common.log import Loggable
+from flumotion.transcoder.admin.datasource import datasource
+
+class SQLDataSource(Loggable):
+    
+    implements(datasource.IDataSource)
+    
+    def __ini__(self, uri):
+        self._uri = uri
+        
+    
+    

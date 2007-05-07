@@ -2,7 +2,7 @@
 
 Name:           @PACKAGE@
 Version:        @VERSION@
-Release:        3_@RELEASE@
+Release:        @RELEASE@
 Summary:        Flumotion Transcoder
 
 Group:          Applications/Internet
@@ -21,7 +21,6 @@ BuildRequires:	%{gstreamer}-devel >= @GST_010_REQ@
 BuildRequires:	%{gstreamer}-python
 BuildRequires:	flumotion
 BuildRequires:	pygtk2-devel
-BuildRequires:  glib2-devel
 
 %description
 Flumotion Transcoder.
@@ -82,8 +81,6 @@ fi
 %doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
 %{_sbindir}/flumotion-transcoder
 %{_sbindir}/flumotion-transcoder-job
-%{_bindir}/mmf-crc
-%{_bindir}/flumotion-thumbnailer.sh
 
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
@@ -95,12 +92,6 @@ fi
 %dir %attr(750,flumotion,root) /srv/flumotion/transcoder
 
 %changelog
-* Thu Jan 22 2007 Sebastien Merle  <sebastien@fluendo.com>
-- add flumotion-thumbnailer.sh script
-
-* Thu Jan 04 2007 Thomas Vander Stichele <thomas at apestaart dot org>
-- add mmf-crc binary
-
 * Fri Dec 15 2006 Thomas Vander Stichele <thomas at apestaart dot org>
 - require flumotion
 

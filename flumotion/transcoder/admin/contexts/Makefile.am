@@ -1,0 +1,11 @@
+include $(top_srcdir)/common/python.mk
+
+pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/contexts
+
+python_PYTHON = __init__.py admincontext.py managercontext.py workercontext.py
+python_DATA =
+
+clean-local:
+	rm -rf *.pyc *.pyo
+
+EXTRA_DIST = $(python_DATA)

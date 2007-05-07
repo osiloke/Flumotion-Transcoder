@@ -1,0 +1,65 @@
+<registry>
+  <components>
+    <component type="file-transcoder" base="flumotion/component/transcoder">
+      <source location="flumotion.component.transcoder.filetranscoder"/>
+    
+      <entries>
+        <entry type="component" location="filetranscoder.py" function="FileTranscoder"/>
+        <entry type="admin/gtk" location="filetranscoder_admin_gtk.py" function="GUIClass" />
+      </entries>
+
+      <properties>
+      	<property name="admin-id" type="string" required="no" multiple="no"/>
+        <property name="config" type="string" required="no" multiple="no"/>
+        <property name="report" type="string" required="no" multiple="no"/>
+        <property name="nice-level" type="int" required="no" multiple="no"/>        
+      </properties>
+
+    </component>
+  </components>
+  <bundles>
+
+    <bundle project="transcoder" name="file-transcoder-admin-gtk">
+      <dependencies>
+        <dependency name="component" />
+        <dependency name="transcoder-base" />
+        <dependency name="base-admin-gtk" />        
+      </dependencies>
+      <directories>
+        <directory name="flumotion/component/transcoder">
+          <filename location="filetranscoder_admin_gtk.py" />
+          <filename location="filetranscoder.glade" />          
+        </directory>
+      </directories>
+    </bundle>
+
+    <bundle project="transcoder" name="file-transcoder">
+      <dependencies>
+        <dependency name="component" />
+        <dependency name="transcoder-base" />
+      </dependencies>
+      <directories>
+        <directory name="flumotion/transcoder">
+          <filename location="process.py" />
+          <filename location="properties.py" />
+          <filename location="inifile.py" />
+          <filename location="jobconfig.py" />
+          <filename location="jobreport.py" />
+          <filename location="pipelinecrawler.py" />          
+        </directory>
+        <directory name="flumotion/component/transcoder">
+          <filename location="reporter.py" />
+          <filename location="context.py" />
+          <filename location="job.py" />
+          <filename location="filetranscoder.py" />
+          <filename location="transcoder.py" />
+          <filename location="targets.py" />
+          <filename location="gstutils.py" />
+          <filename location="videosize.py" />
+          <filename location="binmaker.py" />
+        </directory>
+      </directories>
+    </bundle>
+
+  </bundles>
+</registry> 
