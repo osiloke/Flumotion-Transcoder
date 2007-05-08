@@ -56,20 +56,6 @@ class WorkerProxy(fluproxy.FlumotionProxy):
         assert self._workerState, "Worker has already been discarded"
         self._workerState = None
 
-    def _onActivated(self):
-        atmosphere = self._manager.getAtmosphere()
-        d = atmosphere._loadComponent('file-transcoder', 
-                                      'transcoder',
-                                      #'transcoder-%s' % self.getName(), 
-                                      self.getName(),
-                                      config="/home/sebastien/workspace/flumotion/transcoder/v0r2/conf/transcoder-job.ini")
-        def ok(result):
-            print "#"*20, "OK", result.__class__.__name__, result
-        
-        def failed(failure):
-            print "#"*20, "Failed:", log.getFailureMessage(failure)
-            
-        d.addCallbacks(ok, failed)
 
     ## Protected Methods ##
     

@@ -12,6 +12,7 @@
 
 from flumotion.admin import multi
 from flumotion.twisted.compat import Interface
+#from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
 #To register Jellyable classes
 from flumotion.common import planet
@@ -55,6 +56,12 @@ class ManagerSet(fluproxy.RootFlumotionProxy):
 
     def _doPrepareInit(self, chain):
         ctx = self._context.getManagerContext()
+#        info = ConnectionInfo(ctx.getHost(),
+#                               ctx.getPort(),
+#                               not ctx.getUseSSL(),
+#                               ctx.getAuthenticator())
+#        self._multi.addManager(info,
+#                               tenacious=True)
         self._multi.addManager(ctx.getHost(),
                                ctx.getPort(),
                                not ctx.getUseSSL(),

@@ -17,6 +17,8 @@ from flumotion.twisted.compat import implements
 
 from flumotion.transcoder import log
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.admin.jobprops import JobProperties
+from flumotion.transcoder.admin.monitorprops import MonitorProperties
 from flumotion.transcoder.admin.contexts.admincontext import AdminContext
 from flumotion.transcoder.admin.proxies import managerset
 from flumotion.transcoder.admin.proxies import workerset
@@ -140,6 +142,14 @@ class TranscoderAdmin(Loggable):
         self.info("Worker '%s' Added to Set", worker.getName())
         worker.addListener(self)
         worker.syncListener(self)
+        props = MonitorProperties(["/home/file/fluendo/files/incoming",
+                                   "/home/file/big/client/files/incoming"], 2)
+        d = self._monitors.startMonitor("monitor-on-%s" % worker.getName(), worker, props)
+        def ok(monitor):
+            print "#"*20, "monitor:", monitor, "successfuly added"
+        def puah(failure):
+            print "!"*20, "monitor add failed:", log.getFailureMessage(failure)
+        d.addCallbacks(ok, puah)
     
     def onWorkerRemovedFromSet(self, workerset, worker):
         self.info("Worker '%s' Removed from Set", worker.getName())

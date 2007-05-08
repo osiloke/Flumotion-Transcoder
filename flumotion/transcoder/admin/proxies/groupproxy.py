@@ -2,7 +2,6 @@
 # vi:si:et:sw=4:sts=4:ts=4
 # Copyright (C) 2004,2005,2006,2007 Fluendo, S.L. (www.fluendo.com).
 # All rights reserved.
-
 # Licensees having purchased or holding a valid Flumotion Advanced
 # Streaming Server license may use this file in accordance with the
 # Flumotion Advanced Streaming Server Commercial License Agreement.
@@ -14,9 +13,11 @@ from twisted.internet import defer
 
 from flumotion.common import common
 
+from flumotion.transcoder.admin.errors import OperationTimedOut
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import componentproxy
 
+LOAD_COMPONENT_TIMEOUT = 30.0
 
 class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
@@ -110,7 +111,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     ## Protected/Friend Methods
     
     def _loadComponent(self, componentType, componentName, 
-                       workerName, **properties):
+                       workerName, properties):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
         resDef = defer.Deferred()
@@ -122,6 +123,9 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
                              self.__componentLoadingFailed,
                              callbackArgs=(identifier, initDef, resDef,), 
                              errbackArgs=(identifier, initDef, resDef,))
+        callDef.setTimeout(LOAD_COMPONENT_TIMEOUT,
+                           self.__componentLoadTimeout,
+                           identifier)
         return resDef
 
 
@@ -159,4 +163,9 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def __componentLoadingFailed(self, failure, identifier, initDef, resultDef):
         self._waitLoaded.pop(identifier, None)
         resultDef.errback(failure)
+        
+    def __componentLoadTimeout(self, resultDef, identifier):
+        err = OperationTimedOut("Timeout waiting component '%s' to be loaded" 
+                                % identifier)
+        resultDef.errback(err)
         

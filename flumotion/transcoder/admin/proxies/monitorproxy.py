@@ -77,17 +77,15 @@ class MonitorProxy(componentproxy.ComponentProxy):
     
     ## UI State Handlers Methods ##
     
-    def _onMonitorSetFile(self, file, statenum):
-        state = MonitorFileStateEnum.get(statenum)
+    def _onMonitorSetFile(self, file, state):
         if file in self._alreadyAdded:
             self._fireEvent((file, state), "MonitorFileStateChanged")
         else:
             self._alreadyAdded[file] = None
             self._fireEvent((os.path.join(*file), state), "MonitorFileAdded")
             
-    def _onMonitorDelFile(self, file, statenum):
+    def _onMonitorDelFile(self, file, state):
         assert file in self._alreadyAdded
-        state = MonitorFileStateEnum.get(statenum)
         self._fireEvent((os.path.join(*file), state), "MonitorFileRemoved")
 
 

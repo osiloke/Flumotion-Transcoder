@@ -10,10 +10,14 @@
 
 # Headers in this file shall remain intact.
 
+from twisted.internet import defer
+
 from flumotion.twisted.compat import Interface
 
+from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin.proxies import componentset
 from flumotion.transcoder.admin.proxies import monitorproxy
+from flumotion.transcoder.admin.proxies import managerproxy
 
 
 class IMonitorSetListener(Interface):
@@ -24,13 +28,24 @@ class IMonitorSetListener(Interface):
         pass
 
     
-class MonitorSet(componentset.BaseComponentSet):
+class MonitorSet(componentset.ComponentSetHelper):
     
     def __init__(self, mgrset):
-        componentset.BaseComponentSet.__init__(self, mgrset,
-                                               IMonitorSetListener)
-        self._components = {} # Identifier => MonitorProxy
+        componentset.ComponentSetHelper.__init__(self, mgrset,
+                                                 IMonitorSetListener)
         
+    ## Public Method ##
+    
+    def startMonitor(self, name, worker, props):
+        manager = worker.getParent()
+        assert isinstance(manager, managerproxy.ManagerProxy)
+        atmosphere = manager.getAtmosphere()
+        d = atmosphere._loadComponent('file-monitor', 
+                                      name, worker.getName(),
+                                      props.getComponentProperties())
+        d.addCallback(self.__onMonitorLoaded)
+        return d
+
         
     ## Overriden Methods ##
     
@@ -41,14 +56,19 @@ class MonitorSet(componentset.BaseComponentSet):
         return isinstance(component, monitorproxy.MonitorProxy)
 
     def _doAddComponent(self, component):
-        identifier = component.getIdentifier()
-        assert not (identifier in self._components)
-        self._components[identifier] = component
+        componentset.ComponentSetHelper._doAddComponent(self, component)
         self._fireEvent(component, "MonitorAddedToSet")
     
     def _doRemoveComponent(self, component):
-        identifier = component.getIdentifier()
-        assert identifier in self._components
-        assert self._components[identifier] == component
-        del self._components[identifier]
+        componentset.ComponentSetHelper._doRemoveComponent(self, component)
         self._fireEvent(component, "MonitorRemovedFromSet")
+
+    
+    ## Private Methods ##
+    
+    def __onMonitorLoaded(self, monitor):
+        """
+        Ensure the set contain the component before continuing.
+        """
+        return self.waitComponent(monitor.getIdentifier())
+    
