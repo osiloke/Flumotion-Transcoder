@@ -15,7 +15,7 @@ import os
 import gst
 from flumotion.common import common
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.enums import IntervalUnitEnum
+from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.component.transcoder.binmaker import makeEncodeBin
 from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
@@ -223,8 +223,8 @@ class ThumbnailsTarget(TranscodingTarget):
             %(minutes)d => minutes from start
             %(seconds)d => seconds from start
         config should contains the attributes:
-            intervalValue
-            intervalUnit (seconds, frames or percent)
+            periodValue
+            periodUnit (seconds, frames or percent)
             maxCount
             outputFormat Enum(jpg, png)
             smartThumbs
@@ -243,15 +243,15 @@ class ThumbnailsTarget(TranscodingTarget):
             self._raiseError("Source media doesn't have video stream")
 
     def _updatePipeline(self, pipeline, discoverer, tees):
-        setupMethods = {IntervalUnitEnum.seconds: self._setupThumbnailBySeconds,
-                        IntervalUnitEnum.frames: self._setupThumbnailByFrames,
-                        IntervalUnitEnum.keyframes: self._setupThumbnailByKeyFrames,
-                        IntervalUnitEnum.percent: self._setupThumbnailByPercent}
-        probMethods = {IntervalUnitEnum.seconds: self._thumbnail_prob_by_seconds,
-                       IntervalUnitEnum.frames: self._thumbnail_prob_by_frames,
-                       IntervalUnitEnum.keyframes: self._thumbnail_prob_by_keyframes,
-                       IntervalUnitEnum.percent: self._thumbnail_prob_by_percent}
-        unit = self._config.intervalUnit
+        setupMethods = {PeriodUnitEnum.seconds: self._setupThumbnailBySeconds,
+                        PeriodUnitEnum.frames: self._setupThumbnailByFrames,
+                        PeriodUnitEnum.keyframes: self._setupThumbnailByKeyFrames,
+                        PeriodUnitEnum.percent: self._setupThumbnailByPercent}
+        probMethods = {PeriopdUnitEnum.seconds: self._thumbnail_prob_by_seconds,
+                       PeriodUnitEnum.frames: self._thumbnail_prob_by_frames,
+                       PeriodUnitEnum.keyframes: self._thumbnail_prob_by_keyframes,
+                       PeriodUnitEnum.percent: self._thumbnail_prob_by_percent}
+        unit = self._config.periodUnit
         self._setupThumbnail = setupMethods[unit]
         self._buffer_prob_callback = probMethods[unit]
 
@@ -274,14 +274,14 @@ class ThumbnailsTarget(TranscodingTarget):
         self._frame = 0
         self._count = 0
         self._max = self._config.maxCount
-        self._nextFrame = self._config.intervalValue
+        self._nextFrame = self._config.periodValue
     
     def _thumbnail_prob_by_frames(self, pad, buffer):
         self._frame += 1
         if (not self._max) or (self._count < self._max):
             if self._frame >= self._nextFrame:
                 self._count += 1
-                self._nextFrame += self._config.intervalValue
+                self._nextFrame += self._config.periodValue
                 return True
         return False
 
@@ -289,7 +289,7 @@ class ThumbnailsTarget(TranscodingTarget):
         self._keyframe = 0
         self._count = 0
         self._max = self._config.maxCount
-        self._nextKeyFrame = self._config.intervalValue
+        self._nextKeyFrame = self._config.periodValue
     
     def _thumbnail_prob_by_keyframes(self, pad, buffer):
         if not buffer.flag_is_set(gst.BUFFER_FLAG_DELTA_UNIT):
@@ -297,7 +297,7 @@ class ThumbnailsTarget(TranscodingTarget):
             if (not self._max) or (self._count < self._max):
                 if self._keyframe >= self._nextKeyFrame:
                     self._count += 1
-                    self._nextKeyFrame += self._config.intervalValue
+                    self._nextKeyFrame += self._config.periodValue
                     return True
         return False
 
@@ -305,14 +305,14 @@ class ThumbnailsTarget(TranscodingTarget):
         self._count = 0
         self._length = discoverer.videolength
         self._max = self._config.maxCount
-        percent = self._config.intervalValue
+        percent = self._config.periodValue
         self._nextTimestamp = (self._length * percent) / 100
     
     def _thumbnail_prob_by_percent(self, pad, buffer):
         if (not self._max) or (self._count < self._max):
             if buffer.timestamp >= self._nextTimestamp:
                 self._count += 1
-                percent = self._config.intervalValue                
+                percent = self._config.periodValue                
                 self._nextTimestamp = (((self._count + 1) 
                                         * self._length
                                         * percent) / 100)
@@ -321,13 +321,13 @@ class ThumbnailsTarget(TranscodingTarget):
     
     def _setupThumbnailBySeconds(self, discoverer):
         self._count = 0
-        self._nextTimestamp = self._config.intervalValue * gst.SECOND
+        self._nextTimestamp = self._config.periodValue * gst.SECOND
     
     def _thumbnail_prob_by_seconds(self, pad, buffer):
         if self._count < self._config.maxCount:
             if buffer.timestamp >= self._nextTimestamp:
                 self._count += 1
-                self._nextTimestamp += self._config.intervalValue * gst.SECOND
+                self._nextTimestamp += self._config.periodValue * gst.SECOND
                 return True
         return False
     

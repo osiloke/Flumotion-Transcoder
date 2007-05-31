@@ -48,13 +48,15 @@ class FileMonitor(component.BaseComponent):
         
     def do_setup(self):
         props = self.config["properties"]
-        self.uiState.set('monitored-directories', props["directory"])
+        directories = props.get("directory", [])
+        self.uiState.set('monitored-directories', directories)
         return component.BaseComponent.do_setup(self)
 
     def do_start(self, *args, **kwargs):
         props = self.config["properties"]
         period = props["scan-period"]
-        for d in props["directory"]:
+        directories = props.get("directory", [])
+        for d in directories:
             watcher = DirectoryWatcher(d, timeout=period)
             watcher.connect('file-added', self._file_added, d)
             watcher.connect('file-completed', self._file_completed, d)
@@ -79,17 +81,17 @@ class FileMonitor(component.BaseComponent):
     ## Signal Handler Methods ##
 
     def _file_added(self, watcher, file, base):
-        self.debug("File added : '%s'" % os.path.join(base, file))
+        self.debug("File added : '%s'", os.path.join(base, file))
         self.uiState.setitem('pending-files', (base, file), 
                              MonitorFileStateEnum.downloading)
     
     def _file_completed(self, watcher, file, base):
-        self.debug("File completed '%s'" % os.path.join(base, file))
+        self.debug("File completed '%s'", os.path.join(base, file))
         self.uiState.setitem('pending-files', (base, file), 
                              MonitorFileStateEnum.pending)
     
     def _file_removed(self, watcher, file, base):
-        self.debug("File removed '%s'" % os.path.join(base, file))
+        self.debug("File removed '%s'", os.path.join(base, file))
         self.uiState.delitem('pending-files', (base, file))
         
     

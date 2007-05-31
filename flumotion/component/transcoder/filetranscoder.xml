@@ -9,7 +9,7 @@
       </entries>
 
       <properties>
-      	<property name="admin-id" type="string" required="no" multiple="no"/>
+        <property name="admin-id" type="string" required="no" multiple="no"/>
         <property name="config" type="string" required="no" multiple="no"/>
         <property name="report" type="string" required="no" multiple="no"/>
         <property name="nice-level" type="int" required="no" multiple="no"/>        

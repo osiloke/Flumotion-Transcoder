@@ -10,25 +10,75 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import implementsInterface
+from twisted.internet import defer
+
 from flumotion.transcoder import log
 from flumotion.transcoder.admin import adminelement
+from flumotion.transcoder.admin.waiters import CounterWaiter
 from flumotion.transcoder.admin.datasource import datasource
+
+
+def _buildOverridableGetter(getterName, propertyName):
+    def getter(self):
+        value = getattr(self._data, propertyName, None)
+        if value != None: return value
+        return getattr(self._parent, getterName)()
+    return getter
+
+def _buildDefaultGetter(propertyName, staticValue):
+    def getter(self):
+        value = getattr(self._data, propertyName, None)
+        if value != None: return value
+        return staticValue
+    return getter
+
+def _buildSimpleGetter(propertyName):
+    def getter(self):
+        return getattr(self._data, propertyName, None)
+    return getter
+
+
+class MetaStore(type):
+    
+    def __init__(cls, name, bases, dct):
+        super(MetaStore, cls).__init__(name, bases, dct)
+        props = getattr(cls, "__simple_properties__", [])
+        for propertyName in props:
+            getterName = "get" + propertyName[0].upper() + propertyName[1:]
+            if not hasattr(cls, getterName) :
+                getter = _buildSimpleGetter(propertyName)
+                setattr(cls, getterName, getter)
+        props = getattr(cls, "__overridable_properties__", [])
+        for propertyName in props:
+            getterName = "get" + propertyName[0].upper() + propertyName[1:]
+            if not hasattr(cls, getterName) :
+                getter = _buildOverridableGetter(getterName, propertyName)
+                setattr(cls, getterName, getter)
+        props = getattr(cls, "__default_properties__", {})
+        for propertyName, staticValue in props.iteritems():
+            getterName = "get" + propertyName[0].upper() + propertyName[1:]
+            if not hasattr(cls, getterName) :
+                getter = _buildDefaultGetter(propertyName, staticValue)
+                setattr(cls, getterName, getter)
 
 
 class BaseStore(adminelement.AdminElement):
     
-    def __init__(self, logger, parent, dataSource, listenerInterface):
-        assert implementsInterface(dataSource, datasource.IDataSource)
+    __metaclass__ = MetaStore
+    
+    def __init__(self, logger, parent, dataSource, data, listenerInterface):
+        assert datasource.IDataSource.providedBy(dataSource)
         adminelement.AdminElement.__init__(self, logger, parent, 
                                            listenerInterface)
+        self._data = data
         self._dataSource = dataSource
+        self._waitSynchronized = CounterWaiter(0, 0, self)
 
 
     ## Public Methods ##
 
-    def getLabel(self):
-        return ""
+    def waitSynchronized(self, timeout=None):
+        return self._waitSynchronized.wait(timeout)
 
 
     ## Overriden Methods ##

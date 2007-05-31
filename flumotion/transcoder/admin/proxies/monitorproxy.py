@@ -12,8 +12,11 @@
 
 import os
 
+from zope.interface import implements
+
 from flumotion.transcoder.admin.proxies import componentproxy
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.admin.monitorprops import MonitorProperties
 
 
 class IMonitorListener(componentproxy.IComponentListener):
@@ -27,7 +30,31 @@ class IMonitorListener(componentproxy.IComponentListener):
         pass
 
 
+class MonitorListener(componentproxy.ComponentListener):
+    
+    implements(IMonitorListener)
+    
+    def onMonitorFileAdded(self, monitor, file, state):
+        pass
+    
+    def onMonitorFileRemoved(self, monitor, file, state):
+        pass
+    
+    def onMonitorFileStateChanged(self, monitor, file, state):
+        pass
+
+
 class MonitorProxy(componentproxy.ComponentProxy):
+    
+    properties_factory = MonitorProperties
+    
+    @classmethod
+    def loadTo(cls, worker, name, label, properties):
+        manager = worker.getParent()
+        atmosphere = manager.getAtmosphere()
+        return atmosphere._loadComponent('file-monitor', 
+                                         name,  label, worker, 
+                                         properties)
     
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):
@@ -36,7 +63,7 @@ class MonitorProxy(componentproxy.ComponentProxy):
                                                componentContext, 
                                                componentState, domain,
                                                IMonitorListener)
-        self._alreadyAdded = {} # file => None
+        self._alreadyAdded = {} # {file: None}
         
     ## Public Methods ##
     
@@ -87,7 +114,6 @@ class MonitorProxy(componentproxy.ComponentProxy):
     def _onMonitorDelFile(self, file, state):
         assert file in self._alreadyAdded
         self._fireEvent((os.path.join(*file), state), "MonitorFileRemoved")
-
 
 
 componentproxy.registerProxy("file-monitor", MonitorProxy)

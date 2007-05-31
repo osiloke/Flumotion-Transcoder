@@ -9,11 +9,12 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from flumotion.common import common
 
-from flumotion.transcoder.admin.errors import OperationTimedOut
+from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.admin.waiters import CounterWaiter
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import componentproxy
 
@@ -31,8 +32,10 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
                                 manager, listenerInterface)
         self._context = context
         self._state = state
-        self._components = {} # identifier => component
-        self._waitLoaded = {} # identifier => Deferred
+        self._components = {} # {identifier: ComponentProxy}
+        self._waitCompLoaded = {} # {identifier: Deferred}
+        target = len(state.get("components", []))
+        self._waitSynchronized = CounterWaiter(target, 0, self)
         
         
     ## Public Methods ##
@@ -40,6 +43,12 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def getName(self):
         assert self._state, "Element has been removed"
         return self._state.get('name')
+
+    def waitSynchronized(self, timeout=None):
+        """
+        Wait for all state components to be initilized,
+        """
+        return self._waitSynchronized.wait(timeout)
 
     
     ## Virtual Methods ##
@@ -50,6 +59,8 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def _onStateRemove(self, key, value):
         pass
 
+    def _onComponentsLoaded(self):
+        pass
     
     ## Overriden Methods ##
     
@@ -76,24 +87,36 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         self._discardProxies("_components")
         self._atmosphereState = None
 
+    def _onElementInitFailed(self, element, failure):
+        self._waitSynchronized.inc()
+    
+    def _onElementRemoved(self, element):
+        self._waitSynchronized.dec()
+        
+    def _onElementNotFound(self, identifier):
+        # The element was not found during deletion
+        # probably because it previously fail to initialize
+        self._waitSynchronized.dec()
+
     def _onElementActivated(self, element):
+        self._waitSynchronized.inc()
         identifier = element.getIdentifier()
-        d = self._waitLoaded.pop(identifier, None)
+        d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.callback(element)
         
     def _onElementAborted(self, element, failure):
         identifier = element.getIdentifier()
-        d = self._waitLoaded.pop(identifier, None)
+        d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.errback(failure)
-
-
+            
     ## State Listeners ##
                
     def _stateAppend(self, state, key, value):
         if key == 'components':
             assert value != None
+            self._waitSynchronized.setTarget(len(state.get(key)))
             self.log("Component state %s added to ", value.get('name'))
             if self.isActive():
                 self.__componentStateAdded(value)
@@ -102,6 +125,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def _stateRemove(self, state, key, value):
         if key == 'components':
             assert value != None
+            self._waitSynchronized.setTarget(len(state.get(key)))
             self.log("Component state %s removed", value.get('name'))
             if self.isActive():
                 self.__componentStateRemoved(value)
@@ -110,15 +134,16 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     ## Protected/Friend Methods
     
-    def _loadComponent(self, componentType, componentName, 
-                       workerName, properties):
+    def _loadComponent(self, componentType, componentName,
+                       componentLabel, worker, properties):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
+        props = properties.getComponentProperties(worker.getContext())
         resDef = defer.Deferred()
         initDef = defer.Deferred()
-        self._waitLoaded[identifier] = initDef
-        callDef = self._manager._callRemote('loadComponent', componentType, 
-                                            compId, properties, workerName)
+        self._waitCompLoaded[identifier] = initDef
+        callDef = self._manager._callRemote('loadComponent', componentType,
+                                            compId, props, worker.getName())
         callDef.addCallbacks(self.__componentLoaded, 
                              self.__componentLoadingFailed,
                              callbackArgs=(identifier, initDef, resDef,), 
@@ -152,20 +177,19 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def __componentStateRemoved(self, componentState):
         name = componentState.get('name')
         componentContext = self._context.getComponentContext(name)
-        self._removeProxyState("_components", self.__getComponentUniqueId, 
-                               self._componentRemovedEvent, self._manager,
-                               componentContext, componentState, 
-                               self._componentDomain)
+        i = self._removeProxyState("_components", self.__getComponentUniqueId,
+                                   self._componentRemovedEvent, self._manager,
+                                   componentContext, componentState, 
+                                   self._componentDomain)
 
-    def __componentLoaded(self, componenetState, identifier, initDef, resultDef):
+    def __componentLoaded(self, componentState, identifier, initDef, resultDef):
         initDef.chainDeferred(resultDef)
     
     def __componentLoadingFailed(self, failure, identifier, initDef, resultDef):
-        self._waitLoaded.pop(identifier, None)
+        self._waitCompLoaded.pop(identifier, None)
         resultDef.errback(failure)
         
     def __componentLoadTimeout(self, resultDef, identifier):
-        err = OperationTimedOut("Timeout waiting component '%s' to be loaded" 
-                                % identifier)
+        err = OperationTimedOutError("Timeout waiting component '%s' "
+                                     "to be loaded" % identifier)
         resultDef.errback(err)
-        

@@ -85,8 +85,8 @@ class PeriodicalWatcher(Watcher):
         self.log("watching...")
         newfiles = self._listFiles()
         oldfiles = self._files
-        self.log("Comparing new files (%d) to old files (%d)" % (
-            len(newfiles), len(oldfiles)))
+        self.log("Comparing new files (%d) to old files (%d)",
+                 len(newfiles), len(oldfiles))
         for f in [x for x in oldfiles.iterkeys() if not x in newfiles]:
             self.emit('file-removed', f)
             del oldfiles[f]

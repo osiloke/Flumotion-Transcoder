@@ -10,15 +10,27 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import defer
-from flumotion.twisted.compat import Interface, implements
 
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import managerset
 from flumotion.transcoder.admin.proxies import managerproxy
+from flumotion.transcoder.admin.proxies import workerproxy
 
 
 class IWorkerSetListener(Interface):
+    def onWorkerAddedToSet(self, workerset, worker):
+        pass
+    
+    def onWorkerRemovedFromSet(self, workerset, worker):
+        pass
+
+
+class WorkerSetListener(object):
+    
+    implements(IWorkerSetListener)
+    
     def onWorkerAddedToSet(self, workerset, worker):
         pass
     
@@ -35,11 +47,26 @@ class WorkerSet(fluproxy.RootFlumotionProxy):
         assert isinstance(mgrset, managerset.ManagerSet)
         fluproxy.RootFlumotionProxy.__init__(self, mgrset, IWorkerSetListener)
         self._managers = mgrset
-        self._workers = {} # identifier => Worker
+        self._workers = {} # {identifier: Worker}
         self._managers.addListener(self)
         
         
     ## Public Methods ##
+
+    def iterWorkers(self):
+        return self._workers.itervalues()
+    
+    def __iter__(self):
+        return self._workers.__iter__()
+    
+    def __getitem__(self, identifier):
+        return self._workers.get(identifier, None)
+    
+    def __contains__(self, value):
+        identifier = value
+        if isinstance(value, workerproxy.WorkerProxy):
+            identifier = value.getIdentifier()
+        return identifier in self._workers
     
     
     ## Overriden Methods ##

@@ -26,7 +26,7 @@ TargetTypeEnum = enum.EnumClass('TargetTypeEnum',
                                  'Audio/Video', 
                                  'Thumbnails'))
 
-IntervalUnitEnum = enum.EnumClass('IntervalUnitEnum',
+PeriodUnitEnum = enum.EnumClass('PeriodUnitEnum',
                                   ('seconds', 
                                    'frames', 
                                    'keyframes', 

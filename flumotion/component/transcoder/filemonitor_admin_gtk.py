@@ -70,13 +70,13 @@ class FileMonitorAdminGtkNode(BaseAdminGtkNode):
     
     def _addDirectory(self, dir):
         if self.directories.has_key(dir):
-            self.warning("Directory '%s' already added" % dir)
+            self.warning("Directory '%s' already added", dir)
             return
         self.directories[dir] = [{}, self.model.append(None, (dir, ""))]
 
     def _removeDirectory(self, dir):
         if not self.directories.has_key(dir):
-            self.warning("Cannot remove unknown directory '%s'" % dir)
+            self.warning("Cannot remove unknown directory '%s'", dir)
             return
         del self.model[self.directories[dir][1]]
         del self.directories[dir]

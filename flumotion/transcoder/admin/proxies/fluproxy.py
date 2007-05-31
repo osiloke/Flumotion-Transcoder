@@ -13,6 +13,7 @@
 from flumotion.transcoder import log
 from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
+from flumotion.transcoder.admin import  utils
 from flumotion.transcoder.admin import adminelement
 
 
@@ -27,45 +28,70 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     ## Public Methods ##
 
     def getIdentifier(self):
+        """
+        The identifier is unique in a manager context.
+        """
         return self._identifier
 
     def getName(self):
+        """
+        The name is unique in a component group context (flow and atmosphere)
+        """
         return self._identifier
+    
+    def getLabel(self):
+        """
+        The label is a description without uniquness constraints.
+        By default the label is the name.
+        """
+        return self.getName()
     
     
     ## Virtual Methods ##
     def _onElementInitialized(self, element):
-        pass
+        """
+        Called when an element succeed its initialization,
+        and has been added to the group.
+        """
     
     def _onElementInitFailed(self, element, failure):
-        pass
+        """
+        Called when an element fail to initialize.
+        The element will not be added to the group.
+        """
     
     def _onElementActivated(self, element):
-        pass
+        """
+        Called when an element has been activated.
+        """
     
     def _onElementAborted(self, element, failure):
-        pass
+        """
+        Called when an element has been aborted.
+        """
     
+    def _onElementRemoved(self, element):
+        """
+        Called when an element has beed removed from the group.
+        """
+    
+    def _onElementNotFound(self, identifier):
+        """
+        Called when an elment couldn't be removed from the group
+        because it wasn't found. Probably because it fail to initialize.
+        """
 
     ## Overriden Methods ##
     
     def _doPrepareInit(self, chain):
         #FIXME: Remove this, its only for testing
-        from twisted.internet import reactor, defer
-        def async(result):
-            d = defer.Deferred()
-            reactor.callLater(0.2, d.callback, result)
-            return d
-        chain.addCallback(async)
+        import random
+        chain.addCallback(utils.delayedSuccess, random.random())
         
     def _doPrepareActivation(self, chain):
         #FIXME: Remove this, its only for testing
-        from twisted.internet import reactor, defer
-        def async(result):
-            d = defer.Deferred()
-            reactor.callLater(0.2, d.callback, result)
-            return d
-        chain.addCallback(async)
+        import random
+        chain.addCallback(utils.delayedSuccess, random.random())
 
 
     ## Protected Methods ##
@@ -110,6 +136,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
                        self.__dictElementInitFailed,
                        callbackArgs=(addEvent, pendingDict, finalDict),
                        errbackArgs=(element, pendingDict))
+        return identifier
         
     def _removeProxyState(self, attr, idfunc, removeEvent, *args, **kwargs):
         """
@@ -131,10 +158,15 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             #Element is beeing initialized
             pendingDict[identifier].setObsolete()
         else:
-            element = finalDict.pop(identifier)
-            assert isinstance(element, BaseFlumotionProxy)
-            element._removed()
-            self._fireEvent(element, removeEvent)
+            if identifier in finalDict:
+                element = finalDict.pop(identifier)
+                assert isinstance(element, BaseFlumotionProxy)
+                element._removed()
+                self._fireEvent(element, removeEvent)
+                self._onElementRemoved(element)
+            else:
+                self._onElementNotFound(identifier)
+        return identifier
 
     def _setProxyState(self, factory, attr, idfunc, 
                        unsetEvent, setEvent, *args, **kwargs):
@@ -166,6 +198,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
                            self.__elementInitFailed,
                            callbackArgs=(setEvent, attr, pendingAttr),
                            errbackArgs=(element, pendingAttr))
+        return identifier
 
     def _removeProxies(self, attr, removeEvent):
         """
@@ -208,14 +241,14 @@ class BaseFlumotionProxy(adminelement.AdminElement):
 
     def __dictElementInitialized(self, element, addEvent, pendingDict, finalDict):
         identifier = element.getIdentifier()
-        name = "%s '%s'" % (element.__class__.__name__, element.getName())
+        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.debug("%s initialized", name)
         # Remove the pending reference if it's for the same element
         if pendingDict[identifier] == element:
             del pendingDict[identifier]
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
-            self.debug(msg)
+            self.debug("%s", msg)
             error = HandledTranscoderError(msg)
             element._abort(HandledTranscoderFailure(error))
             element._discard()
@@ -234,11 +267,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     
     def __dictElementInitFailed(self, failure, element, pendingDict):
         identifier = element.getIdentifier()
-        name = "%s '%s'" % (element.__class__.__name__, element.getName())
+        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.warning("%s failed to initialize; dropping it: %s", 
                      name, log.getFailureMessage(failure))
-        self.debug("Traceback of %s failure:\n%s" 
-                   % (name, log.getFailureTraceback(failure)))
+        self.debug("Traceback of %s failure:\n%s",
+                   name, log.getFailureTraceback(failure))
         # Remove the pending reference if it's for the same element
         if pendingDict[identifier] == element:
             del pendingDict[identifier]
@@ -250,14 +283,14 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     
     def __elementInitialized(self, element, setEvent, attr, pendingAttr):
         pending = getattr(self, pendingAttr, None)
-        name = "%s '%s'" % (element.__class__.__name__, element.getName())
+        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.debug("%s initialized", name)
         # Remove the pending reference if it's for the same element
         if pending == element:
             setattr(self, pendingAttr, None)
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
-            self.debug(msg)
+            self.debug("%s", msg)
             error = HandledTranscoderError(msg)
             element._abort(HandledTranscoderFailure(error))
             element._discard()
@@ -276,11 +309,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     
     def __elementInitFailed(self, failure, element, pendingAttr):
         pending = getattr(self, pendingAttr, None)
-        name = "%s '%s'" % (element.__class__.__name__, element.getName())
+        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.warning("%s failed to initialize; dropping it: %s", 
                      name, log.getFailureMessage(failure))
-        self.debug("Traceback of %s failure:\n%s" 
-                   % (name, log.getFailureTraceback(failure)))
+        self.debug("Traceback of %s failure:\n%s",
+                   name, log.getFailureTraceback(failure))
         # Remove the pending reference if it's for the same element
         if pending == element:
             setattr(self, pendingAttr, None)
@@ -316,5 +349,7 @@ class FlumotionProxy(BaseFlumotionProxy):
                                     listenerInterface)
         self._manager = manager
         
+    def getManager(self):
+        return self._manager
     
     

@@ -10,7 +10,7 @@
 
       <properties>
         <property name="admin-id" type="string" required="no" multiple="no"/>
-        <property name="directory" type="string" required="yes" multiple="yes"/>
+        <property name="directory" type="string" required="no" multiple="yes"/>
         <property name="scan-period" type="int" required="yes" multiple="no"/>        
       </properties>
 

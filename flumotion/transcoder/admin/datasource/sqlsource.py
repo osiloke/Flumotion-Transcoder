@@ -10,8 +10,10 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import implements
+from zope.interface import implements
+
 from flumotion.common.log import Loggable
+
 from flumotion.transcoder.admin.datasource import datasource
 
 class SQLDataSource(Loggable):

@@ -11,8 +11,10 @@
 # Headers in this file shall remain intact.
 
 
-from flumotion.twisted.compat import Interface
+from zope.interface import Interface
+
 from flumotion.transcoder.errors import TranscoderError
+
 
 class DataSourceError(TranscoderError):
     def __init__(self, *args, **kwargs):
@@ -83,8 +85,8 @@ class IDataSource(Interface):
             linkFileTemplate (str)
             configFileTemplate (str)
             reportFileTemplate (str)
-            monitorInterval (int) : 
-                Gives the default interval used to monitor the filesystem.
+            monitoringPeriod (int) : 
+                Gives the default period used to monitor the filesystem.
             transcodingTimeout (int) :
                 Gives the default timeout of the transcoding jobs.
             postprocessTimeout (int) :
@@ -109,7 +111,7 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           label (str) : The customer name used by the transcoder.
+           name (str) : The customer name used by the transcoder.
            subdir (str) can be None : The sub-directory where the transcoder
                root is. If not specified, it will be deduced from the customer name.
          Overriding fields:
@@ -138,6 +140,7 @@ class IDataSource(Interface):
            preprocesstimeout (int) can be None
            postprocessTimeout (int) can be None
            transcodingTimeout (int) can be None
+           monitoringPeriod (int) can be None
         """
         
     def retrieveCustomerInfo(self, customerData):
@@ -157,7 +160,7 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           label (str)
+           name (str)
            subdir (str)  can be None
          Overriding fields:
            inputDir (str) can be None
@@ -185,6 +188,7 @@ class IDataSource(Interface):
            preprocesstimeout (int) can be None
            postprocessTimeout (int) can be None
            transcodingTimeout (int) can be None
+           monitoringPeriod (int) can be None
         """
         
     def retrieveNotifications(self, withGlobal, customerData, 
@@ -227,7 +231,7 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           label (str)
+           name (str)
            extension (str)
            subdir (str) can be None
          Overriding fields:
@@ -266,8 +270,8 @@ class IDataSource(Interface):
         For a Thumbnails targets, it has the following fields:
             thumbsWidth (int)
             thumbsHeight (int)
-            intervalValue (int)
-            intervalUnit (IntervalUnitEnum)
+            periodValue (int)
+            periodUnit (PeriodUnitEnum)
             maxCount (int)
             format (ThumbOutputTypeEnum)
         """

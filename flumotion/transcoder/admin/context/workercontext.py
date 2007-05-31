@@ -12,7 +12,16 @@
 
 class WorkerContext(object):
     
-    def __init__(self, workerConfig, workerDefault):
+    def __init__(self, label, workerConfig, workerDefault):
+        self._label = label
         self._config = workerConfig
         self._default = workerDefault
     
+    def getLabel(self):
+        return self._label
+    
+    def getRoots(self):
+        d = dict(self._default.roots)
+        if self._config:
+            d.update(self._config.roots)
+        return d

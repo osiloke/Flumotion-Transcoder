@@ -10,11 +10,24 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.transcoder.admin.proxies import componentproxy
 from flumotion.transcoder.enums import TranscoderStatusEnum
 
 
 class ITranscoderListener(componentproxy.IComponentListener):
+    def onTranscoderProgress(self, transcoder, percent):
+        pass
+    
+    def onTranscoderStatusChanged(self, transcoder, status):
+        pass
+
+
+class TranscoderListener(object):
+    
+    implements(ITranscoderListener)
+    
     def onTranscoderProgress(self, transcoder, percent):
         pass
     

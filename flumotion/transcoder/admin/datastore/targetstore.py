@@ -10,9 +10,9 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import defer
 
-from flumotion.twisted.compat import Interface
 from flumotion.transcoder import log
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore import configstore
@@ -22,40 +22,59 @@ class ITargetStoreListener(Interface):
     pass
 
 
+class TargetStoreListener(object):    
+    
+    implements(ITargetStoreListener)
+
+
 class TargetStore(BaseStore):
 
+    # MetaStore metaclass will create getters/setters for these properties
+    __overridable_properties__ = ["outputFileTemplate",
+                                  "linkFileTemplate",
+                                  "linkTemplate",
+                                  "linkURLPrefix",
+                                  "enablePostprocessing",
+                                  "enableLinkFiles",
+                                  "postprocessCommand"
+                                  "postprocessTimeout"]
+
+    __simple_properties__ = ["name",
+                             "subdir",
+                             "extension"]
+
+
     def __init__(self, logger, parent, dataSource, targetData):
-        BaseStore.__init__(self, logger, parent, dataSource,
+        BaseStore.__init__(self, logger, parent, dataSource, targetData,
                            ITargetStoreListener)
-        self._targetData = targetData
         self._config = None
         
 
     ## Public Methods ##
-        
+
     def getLabel(self):
-        return self._targetData.label
+        return self.getName()
     
     def getConfig(self):
         return self._config
-    
-    
+
+
     ## Overridden Methods ##
     
     def _doPrepareInit(self, chain):
         chain.addCallback(self.__retrieveConfig)
 
     def _onActivated(self):
-        self.debug("Target '%s' activated" % self.getLabel())
+        self.debug("Target '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
-        self.debug("Target '%s' aborted" % self.getLabel())
+        self.debug("Target '%s' aborted", self.getLabel())
 
 
     ## Private Methods ##
         
     def __retrieveConfig(self, result):
-        d = self._dataSource.retrieveTargetConfig(self._targetData)
+        d = self._dataSource.retrieveTargetConfig(self._data)
         d.addCallbacks(self.__configReceived, 
                        self.__retrievalFailed,
                        callbackArgs=(result,))

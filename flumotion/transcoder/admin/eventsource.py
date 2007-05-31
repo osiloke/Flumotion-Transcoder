@@ -11,9 +11,9 @@
 # Headers in this file shall remain intact.
 
 import weakref
-from flumotion.twisted.compat import implementsInterface
-from flumotion.twisted.compat import isInterface
+
 from flumotion.transcoder import log
+
 
 class EventSource(object):
     """
@@ -24,10 +24,8 @@ class EventSource(object):
         self._listeners = {}
         if isinstance(interfaces, list) or isinstance(interfaces, tuple):
             for interface in interfaces:
-                assert isInterface(interface)
                 self._listeners[interface] = weakref.WeakKeyDictionary()
         else:
-            assert isInterface(interfaces)
             self._listeners[interfaces] = weakref.WeakKeyDictionary()
 
 
@@ -36,18 +34,17 @@ class EventSource(object):
     def addListener(self, listener, *args, **kwargs):
         interfaces = []
         for interface, listeners in self._listeners.items():
-            if not implementsInterface(listener, interface):
+            if not interface.providedBy(listener):
                 continue
             assert not (listener in listeners)
             interfaces.append(interface)
             self._listeners[interface][listener] = (args, kwargs)        
         assert len(interfaces) > 0
-        #self._doSyncListener(listener)
         
     def removeListener(self, listener):
         interfaces = []
         for interface, listeners in self._listeners.items():
-            if not implementsInterface(listener, interface):
+            if not interface.providedBy(listener):
                 continue
             assert listener in listeners
             interfaces.append(interface)
@@ -56,11 +53,12 @@ class EventSource(object):
 
     def syncListener(self, listener):
         """
-        Send all events to the listener like if it was connected from start.
+        Send all events to the listener 
+        like if it was connected from the begining.
         """
         interfaces = []
         for interface, listeners in self._listeners.items():
-            if not implementsInterface(listener, interface):
+            if not interface.providedBy(listener):
                 continue            
             assert listener in listeners
             interfaces.append(interface)
@@ -91,10 +89,9 @@ class EventSource(object):
             if not interface:
                 assert len(self._listeners) == 1
                 interface = self._listeners.keys()[0]
-            assert isInterface(interface)
             assert interface in self._listeners
             method = "on%s" % event
-            assert method in interface.names(), "%s not found" % event
+            assert interface.get(method), "%s not found" % event
             assert listener in self._listeners[interface]
             args, kwargs = self._listeners[interface][listener]
             if isinstance(payload, tuple):
@@ -104,8 +101,8 @@ class EventSource(object):
         except Exception, e:
             self.warning("Error triggering event %s: %s"
                          % (event, log.getExceptionMessage(e)))
-            self.debug("Traceback of event %s error:\n%s" 
-                       % (event, log.getExceptionTraceback(e)))
+            self.debug("Traceback of event %s error:\n%s",
+                       event, log.getExceptionTraceback(e))
     
     def _fireEvent(self, payload, event, interface=None):
         """
@@ -118,7 +115,6 @@ class EventSource(object):
             if not interface:
                 assert len(self._listeners) == 1
                 interface = self._listeners.keys()[0]
-            assert isInterface(interface)
             assert interface in self._listeners
             method = "on%s" % event
             assert interface.get(method), "%s not found in %s" % (method, interface)
@@ -130,5 +126,22 @@ class EventSource(object):
         except Exception, e:
             self.warning("Error triggering event %s: %s"
                          % (event, log.getExceptionMessage(e)))
-            self.debug("Traceback of event %s error:\n%s" 
-                       % (event, log.getExceptionTraceback(e)))
+            self.debug("Traceback of event %s error:\n%s",
+                       event, log.getExceptionTraceback(e))
+            
+    def _fireEventWithoutPayload(self, event, interface=None):
+        try:
+            if not interface:
+                assert len(self._listeners) == 1
+                interface = self._listeners.keys()[0]
+            assert interface in self._listeners
+            method = "on%s" % event
+            assert interface.get(method), "%s not found in %s" % (method, interface)
+            for listener, (args, kwargs) in self._listeners[interface].items():
+                getattr(listener, method)(self, *args, **kwargs)
+        except Exception, e:
+            self.warning("Error triggering event %s: %s"
+                         % (event, log.getExceptionMessage(e)))
+            self.debug("Traceback of event %s error:\n%s",
+                       event, log.getExceptionTraceback(e))
+

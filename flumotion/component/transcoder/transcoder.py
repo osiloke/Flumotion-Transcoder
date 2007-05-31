@@ -235,7 +235,7 @@ class MultiTranscoder(object):
             elif message.type == gst.MESSAGE_EOS:
                 self._done()
             else:
-                self.log('Unhandled GStreamer message %r' % message)
+                self.log('Unhandled GStreamer message %r', message)
         except TranscoderError, e:
             self._failed(e)
         except:
@@ -278,7 +278,7 @@ class MultiTranscoder(object):
         return pipeline
 
     def _decoder_pad_added(self, dbin, pad, tees):
-        self.log('Decoder pad %r added, caps %s' % (pad, str(pad.get_caps())))
+        self.log("Decoder pad %r added, caps %s", pad, str(pad.get_caps()))
         try:
             if str(pad.get_caps()).startswith('audio/x-raw'):
                 if not ('audiosink' in tees):

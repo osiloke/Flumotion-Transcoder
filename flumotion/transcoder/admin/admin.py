@@ -10,68 +10,69 @@
 
 # Headers in this file shall remain intact.
 
-
+from zope.interface import implements
 from twisted.internet import reactor, defer
+
 from flumotion.common.log import Loggable
-from flumotion.twisted.compat import implements
 
 from flumotion.transcoder import log
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.admin.jobprops import JobProperties
+from flumotion.transcoder.admin import constants, utils
 from flumotion.transcoder.admin.monitorprops import MonitorProperties
-from flumotion.transcoder.admin.contexts.admincontext import AdminContext
-from flumotion.transcoder.admin.proxies import managerset
-from flumotion.transcoder.admin.proxies import workerset
-#from flumotion.transcoder.admin.proxies import componentset
-from flumotion.transcoder.admin.proxies import transcoderset
-from flumotion.transcoder.admin.proxies import managerproxy
-from flumotion.transcoder.admin.proxies import monitorset
-from flumotion.transcoder.admin.proxies import monitorproxy
-from flumotion.transcoder.admin.proxies import workerproxy
-from flumotion.transcoder.admin.proxies import atmosphereproxy
-from flumotion.transcoder.admin.proxies import flowproxy
-from flumotion.transcoder.admin.proxies import componentproxy
-from flumotion.transcoder.admin.proxies import transcoderproxy
-from flumotion.transcoder.admin.datastore import adminstore, customerstore
-from flumotion.transcoder.admin.datastore import profilestore, targetstore
+from flumotion.transcoder.admin.context.admincontext import AdminContext
+from flumotion.transcoder.admin.context.transcontext import TranscodingContext
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet
+from flumotion.transcoder.admin.proxies.workerset import WorkerSet
+from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
+from flumotion.transcoder.admin.proxies.monitorset import MonitorSet, MonitorSetListener
+from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
+from flumotion.transcoder.admin.datastore.adminstore import AdminStore, AdminStoreListener
+from flumotion.transcoder.admin.datastore.customerstore import CustomerStore, CustomerStoreListener
+from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, ProfileStoreListener
+from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
+from flumotion.transcoder.admin.monitoringtask import MonitoringTask
 
+## Just for debug ##
+from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
+from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereProxy, AtmosphereListener
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy, ComponentListener
+from flumotion.transcoder.admin.proxies.managerset import ManagerSetListener
+from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
 
-class TranscoderAdmin(Loggable):
+class TranscoderAdmin(Loggable,
+                      MonitorSetListener,
+                      MonitorListener,
+                      AdminStoreListener,
+                      CustomerStoreListener,
+                      ProfileStoreListener,
+                      ## Just for debug ##
+                      TargetStoreListener,
+                      ComponentSetListener,
+                      AtmosphereListener,
+                      ComponentListener,
+                      ManagerSetListener,
+                      ManagerListener):
     
     logCategory = 'trans-admin'
     
-    implements(monitorproxy.IMonitorListener,
-               monitorset.IMonitorSetListener,
-               transcoderproxy.ITranscoderListener,
-               transcoderset.ITranscoderSetListener,
-               componentproxy.IComponentListener,
-               #componentset.IComponentSetListener,
-               flowproxy.IFlowListener,
-               workerset.IWorkerSetListener,
-               workerproxy.IWorkerListener,
-               managerset.IManagerSetListener,
-               managerproxy.IManagerListener,
-               adminstore.IAdminStoreListener,
-               customerstore.ICustomerStoreListener,
-               profilestore.IProfileStoreListener,
-               targetstore.ITargetStoreListener)
-    
     def __init__(self, config):
-        self._context = AdminContext(config)
-        self._datasource = self._context.getDataSource()
-        self._store = adminstore.AdminStore(self._datasource)
-        self._managers = managerset.ManagerSet(self._context)
-        self._workers = workerset.WorkerSet(self._managers)
-        #self._components = componentset.ComponentSet(self._managers)
-        self._transcoders = transcoderset.TranscoderSet(self._managers)
-        self._monitors = monitorset.MonitorSet(self._managers)
-        self._store.addListener(self)
+        self._adminCtx = AdminContext(config)
+        self._datasource = self._adminCtx.getDataSource()
+        self._store = AdminStore(self._datasource)
+        self._transCtx = TranscodingContext(self._store)
+        self._managers = ManagerSet(self._adminCtx)
+        self._workers = WorkerSet(self._managers)
+        self._transcoders = TranscoderSet(self._managers)
+        self._monitors = MonitorSet(self._managers, self._workers)
+        
+        ## Just for debug ##
+        self._components = ComponentSet(self._managers)
+        self._components.addListener(self)
         self._managers.addListener(self)
-        self._workers.addListener(self)
-        #self._components.addListener(self)
-        self._transcoders.addListener(self)
+        
+        self._store.addListener(self)
         self._monitors.addListener(self)
-    
+
     
     ## Public Methods ##
     
@@ -82,230 +83,112 @@ class TranscoderAdmin(Loggable):
         d.addCallback(lambda r: self._store.initialize())
         d.addCallback(lambda r: self._managers.initialize())
         d.addCallback(lambda r: self._workers.initialize())
-        #d.addCallback(lambda r: self._components.initialize())
         d.addCallback(lambda r: self._transcoders.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
-        d.addErrback(self.__initializationFailed)
-        #Ensure that the result of the callback added to the
-        #deferred return by this method to be self
-        d.addCallback(lambda r, p: p, self)
+        d.addCallback(lambda r: self._components.initialize())
+        d.addCallbacks(self.__asyncInitialized, 
+                       self.__asyncInitializationFailed)
         #fire the initialization
         d.callback(defer._nothing)
         return d
 
 
-    ### managerset.IManagerSetListener Implementation ###
-
+    ## Just for debug ##
+    def onComponentAddedToSet(self, componentset, component):
+        self.info("Component %s Added To Set", component.getLabel())
+        
+    def onComponentRemovedFromSet(self, componentset, component):
+        self.info("Component %s Removed From Set", component.getLabel())
+        
     def onManagerAddedToSet(self, managerset, manager):
-        self.info("Manager '%s' Added to Set", manager.getName())
+        self.info("Manager %s Added To Set", manager.getLabel())
         manager.addListener(self)
         manager.syncListener(self)
-    
+        
     def onManagerRemovedFromSet(self, managerset, manager):
-        self.info("Manager '%s' Removed from Set", manager.getName())
+        self.info("Manager %s Removed From Set", manager.getLabel())
         manager.removeListener(self)
-
-    
-    ### managerproxy.IManagerListener Implementation ###
-    
-    def onWorkerAdded(self, manager, worker):
-        self.info("Worker '%s' Added to Manager '%s'", 
-                  worker.getName(), manager.getName())
-    
-    def onWorkerRemoved(self, manager, worker):
-        self.info("Worker '%s' Removed from Manager '%s'", 
-                  worker.getName(), manager.getName())
-
+        
     def onAtmosphereSet(self, manager, atmosphere):
-        self.info("Atmosphere of Manager '%s' Set to '%s'", 
-                  manager.getName(), atmosphere.getName())
-    
+        self.info("Atmosphere %s Added", atmosphere.getLabel())
+        atmosphere.addListener(self)
+        atmosphere.syncListener(self)
+        
     def onAtmosphereUnset(self, manager, atmosphere):
-        self.info("Atmosphere '%s' of Manager '%s' Unset", 
-                  atmosphere.getName(), manager.getName())        
-    
-    def onFlowAdded(self, manager, flow):
-        self.info("Flow '%s' Added to Manager '%s'", 
-                  flow.getName(), manager.getName())
-        flow.addListener(self)
-        flow.syncListener(self)
-    
-    def onFlowRemoved(self, manager, flow):
-        self.info("Flow '%s' Removed from Manager '%s'", 
-                  flow.getName(), manager.getName())
-        flow.removeListener(self)
-
-    
-    ### workerset.IWorkerSetListener Implementation ###
-    
-    def onWorkerAddedToSet(self, workerset, worker):
-        self.info("Worker '%s' Added to Set", worker.getName())
-        worker.addListener(self)
-        worker.syncListener(self)
-        props = MonitorProperties(["/home/file/fluendo/files/incoming",
-                                   "/home/file/big/client/files/incoming"], 2)
-        d = self._monitors.startMonitor("monitor-on-%s" % worker.getName(), worker, props)
-        def ok(monitor):
-            print "#"*20, "monitor:", monitor, "successfuly added"
-        def puah(failure):
-            print "!"*20, "monitor add failed:", log.getFailureMessage(failure)
-        d.addCallbacks(ok, puah)
-    
-    def onWorkerRemovedFromSet(self, workerset, worker):
-        self.info("Worker '%s' Removed from Set", worker.getName())
-        worker.removeListener(self)
-    
-
-    ### workerproxy.IWorkerListener Implementation ###
-    
-    
-    ### flowproxy.IFlowListener Implementation ###
-    
-    def onFlowComponentAdded(self, flow, component):
-        self.info("Component '%s' Added to flow '%s'", 
-                  component.getName(), flow.getName())
-    
-    def onFlowComponentRemoved(self, flow, component):
-        self.info("Component '%s' Removed from flow '%s'", 
-                  component.getName(), flow.getName())
+        self.info("Atmosphere %s Removed", atmosphere.getLabel())
+        atmosphere.removeListener(self)
         
-        
-    ### atmosphereproxy.IAtmosphereListener Implementation ###
-    
     def onAtmosphereComponentAdded(self, atmosphere, component):
-        self.info("Component '%s' Added to atmosphere '%s'", 
-                  component.getName(), atmosphere.getName())
-    
-    def onAtmospherComponentRemoved(self, atmosphere, component):
-        self.info("Component '%s' Removed from atmosphere '%s'", 
-                  component.getName(), atmosphere.getName())
-
-
-    ### componentset.IComponentSetListener Implementation ###
-    
-    def onComponentAddedToSet(self, componentset, component):
-        if not isinstance(component, transcoderproxy.TranscoderProxy):
-            self.info("Component '%s' Added to Set", component.getName())
-            component.addListener(self)
-            component.syncListener(self)
-    
-    def onComponentRemovedFromSet(self, componentset, component):
-        if not isinstance(component, transcoderproxy.TranscoderProxy):
-            self.info("Component '%s' Removed from Set", component.getName())
-            component.removeListener(self)
+        self.info("Atmosphere Component %s Added", component.getLabel())
         
-        
-    ### componentproxy.IComponentListener Implemenetation ###
-    
-    def onComponenetMoodChanged(self, component, mood):
-        self.info("Component '%s' Mood Changed to %s", 
-                  component.getName(), mood.name)
-        
-    def onComponentRunning(self, component, worker):
-        self.info("Component '%s' Running on worker '%s'", 
-                  component.getName(), worker.getName())
-    
-    def onComponentLost(self, component, worker):
-        self.info("Component '%s' Lost from worker '%s'", 
-                  component.getName(), worker.getName())
-    
+    def onAtmosphereComponentRemoved(self, atmosphere, component):
+        self.info("Atmosphere Component %s Removed", component.getLabel())
 
 
-    ### transcoderset.ITranscoderSetListener Implemenetation ###
-    
-    def onTranscoderAddedToSet(self, transcoderset, transcoder):
-        self.info("Transcoder '%s' Added to Set", transcoder.getName())
-        transcoder.addListener(self)
-        transcoder.syncListener(self)
-    
-    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
-        self.info("Transcoder '%s' Removed from Set", transcoder.getName())
-        transcoder.removeListener(self)
-
-
-    ### transcoderproxy.ITranscoderListener Implemenetation ###
-    
-    def onTranscoderProgress(self, transcoder, percent):
-        self.info("Transcoder '%s' Progression: %d %%", 
-                  transcoder.getName(), percent)
-    
-    def onTranscoderStatusChanged(self, transcoder, status):
-        self.info("Transcoder '%s' Status changed to %s", 
-                  transcoder.getName(), status.name)
-
-
-    ### monitorset.IMonitorSetListener Implemenetation ###
+    ## IMonitorSetListener Overriden Methods ##
     
     def onMonitorAddedToSet(self, monitorset, monitor):
-        self.info("monitor '%s' Added to Set", monitor.getName())
-        monitor.addListener(self)
-        monitor.syncListener(self)
-    
+        self.info("Monitor %s Added", monitor.getLabel())
+        
     def onMonitorRemovedFromSet(self, monitorset, monitor):
-        self.info("monitor '%s' Removed from Set", monitor.getName())
-        monitor.removeListener(self)
+        self.info("Monitor %s Removed", monitor.getLabel())
 
-    
-    ### monitorproxy.IMonitorListener Implemenetation ###
-    
-    def onMonitorFileAdded(self, monitor, file, state):
-        self.info("Monitor '%s' File Added: '%s' (%s)", 
-                  monitor.getName(), file, state.name)
-    
-    def onMonitorFileRemoved(self, monitor, file, state):
-        self.info("Monitor '%s' File Removed: '%s'", 
-                  monitor.getName(), file)
-    
-    def onMonitorFileStateChanged(self, monitor, file, state):
-        self.info("Monitor '%s' File Changed to '%s': '%s'", 
-                  monitor.getName(), state.name, file)
 
-    
-    ### adminstore.IAdminStoreListener Implementation ###
+    ## IAdminStoreListener Overriden Methods ##
     
     def onCustomerAdded(self, admin, customer):
         self.info("Customer '%s' Added", customer.getLabel())
         customer.addListener(self)
-        #customer.syncListener(self)
+        customer.syncListener(self)
+        task = self.__getMonitoringTaskForCustomer(customer)
+        self._monitors.addMonitoring(id(customer), task)
         
     def onCustomerRemoved(self, admin, customer):
         self.info("Customer '%s' Removed", customer.getLabel())
-        customer.removeListener(self)                
+        customer.removeListener(self)
+        
+        
+    ## ICustomerStoreListener Overriden Methods ##
     
-    
-    ### adminstore.ICustomerStoreListener Implementation ###
-    
-    def onProfileAdded(self, admin, profile):
+    def onProfileAdded(self, customer, profile):
         self.info("Profile '%s' Added", profile.getLabel())
         profile.addListener(self)
-        #profile.syncListener(self)
+        profile.syncListener(self)
         
-    def onProfileRemoved(self, admin, profile):
+    def onProfileRemoved(self, customer, profile):
         self.info("Profile '%s' Removed", profile.getLabel())
         profile.removeListener(self)
         
     
-    ### adminstore.IProfileStoreListener Implementation ###
+    ## IProfileStoreListener Overriden Methods ##
     
-    def onTargetAdded(self, admin, target):
+    def onTargetAdded(self, profile, target):
         self.info("Target '%s' Added", target.getLabel())
-        target.addListener(self)
-        #target.syncListener(self)
         
-    def onTargetRemoved(self, admin, target):
+    def onTargetRemoved(self, profile, target):
         self.info("Target '%s' Removed", target.getLabel())
-        target.removeListener(self)
-    
-    
-    ### adminstore.ITargetStoreListener Implementation ###
-        
+
     
     ## Private Methods ##
     
-    def __initializationFailed(self, failure):
+    def __asyncInitialized(self, result):
+        d = self._store.waitSynchronized(constants.SYNCHRONIZE_TIMEOUT)
+        d.addBoth(utils.dropResult, self._monitors.startMonitoring)
+        return self
+    
+    def __asyncInitializationFailed(self, failure):
         reactor.stop()
         self.error("Transcoder Admin initialization failed: %s",
                    log.getFailureMessage(failure))
 
+    def __getMonitoringTaskForCustomer(self, customer):
+        custCtx = self._transCtx.getCustomerContext(customer)
+        folders = []
+        for p in custCtx.iterUnboundProfileContexts():
+            folders.append(p.getInputBase())
+        period = customer.getMonitoringPeriod()
+        props = MonitorProperties(customer.getName(), folders, period)
+        return MonitoringTask(customer.getLabel(), props)
+        
 
         

@@ -9,19 +9,22 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 # Headers in this file shall remain intact.
 
+import random
+
+from zope.interface import implements
 from twisted.internet import reactor, defer
 from twisted.python import failure
 
-from flumotion.twisted.compat import implements
 from flumotion.common.log import Loggable
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.enums import IntervalUnitEnum
+from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
+from flumotion.transcoder.admin import utils
 from flumotion.transcoder.admin.datasource import datasource
 
 
-DEFAULTS_DATA = {'monitorInterval': 2,
+DEFAULTS_DATA = {'monitoringPeriod': 2,
                  'transcodingTimeout': 4,
                  'postprocessTimeout': 60,
                  'preprocessTimeout': 60,
@@ -35,7 +38,7 @@ DEFAULTS_DATA = {'monitorInterval': 2,
                  'GETRequestRetryCount': 3,
                  'GETRequestRetrySleep': 60}
 
-CUSTOMER_DATA = {'label': "Fluendo",
+CUSTOMER_DATA = {'name': "Fluendo",
                  'subdir': None,
                  'inputDir': None,
                  'outputDir': None,
@@ -61,6 +64,7 @@ CUSTOMER_DATA = {'label': "Fluendo",
                  'postprocessCommand': None,
                  'preprocesstimeout': None,
                  'postprocessTimeout': None,
+                 'monitoringPeriod': None,
                  'transcodingTimeout': None}
 
 CUSTOMER_INFO = {'name': None,
@@ -69,7 +73,7 @@ CUSTOMER_INFO = {'name': None,
                  'phone': None,
                  'email': None}
 
-PROFILE_DATA = {'label': None,
+PROFILE_DATA = {'name': None,
                 'subdir': None,
                 'inputDir': None,
                 'outputDir': None,
@@ -95,9 +99,10 @@ PROFILE_DATA = {'label': None,
                 'postprocessCommand': None,
                 'preprocesstimeout': None,
                 'postprocessTimeout': None,
+                'monitoringPeriod': None,
                 'transcodingTimeout': None}
 
-TARGET_DATA = {'label': None,
+TARGET_DATA = {'name': None,
                'extension': None,
                'subdir': None,
                'outputFileTemplate': None,
@@ -143,8 +148,8 @@ AUDIOVIDEO_CONFIG = {'type': TargetTypeEnum.audiovideo,
 THUMBNAILS_CONFIG = {'type': TargetTypeEnum.thumbnails,
                      'thumbsWidth': None,
                      'thumbsHeight': None,
-                     'intervalValue': None,
-                     'intervalUnit': None,
+                     'periodValue': None,
+                     'periodUnit': None,
                      'maxCount': None,
                      'format': None}
 
@@ -153,17 +158,14 @@ REPORT_DATA = {}
 TARGET_REPORT_DATA = {}
 
 
-def fail(failure):
-    return defer.fail(failure)
-    d = defer.Deferred()
-    reactor.callLater(0.2, d.errback, failure)
-    return d
+def asyncFailure(failure):
+    # Simulate asynchronous datasource
+    return utils.delayedFailure(failure, random.random())
 
-def succeed(result):
-    #return defer.succeed(result)
-    d = defer.Deferred()
-    reactor.callLater(0.2, d.callback, result)
-    return d
+
+def asyncSuccess(result):
+    # Simulate asynchronous datasource
+    return utils.delayedSuccess(result, random.random())
 
 
 class DummyData(object):
@@ -240,60 +242,60 @@ class DummyDataSource(Loggable):
         self.defaults = DummyData(True, (), DEFAULTS_DATA)
         
         cust1data = DummyData(True, (1,0), CUSTOMER_DATA,
-                              label="Fluendo")
+                              name="Fluendo")
         cust1info = DummyData(False, (1,1), CUSTOMER_INFO,
                               name="Fluendo S.A.",
                               contact="Thomas")
         cust1prof1 = DummyData(True, (1,2,1,0), PROFILE_DATA,
-                               label="OGG/Theora-Vorbis")
+                               name="OGG/Theora-Vorbis")
         cust1prof1targ1data = DummyData(True, (1,2,1,1,1,0), TARGET_DATA,
-                                        label="low",
+                                        name="low",
                                         extension="ogg")
         cust1prof1targ1conf = DummyData(True, (1,2,1,1,1,1), AUDIOVIDEO_CONFIG,
                                         muxer="oggmux",
                                         videoEncoder="theoraenc bitrate=128",
                                         audioEncoder="vorbisenc bitrate=64000")
         cust1prof1targ2data = DummyData(True, (1,2,1,1,2,0), TARGET_DATA,
-                                        label="high",
+                                        name="high",
                                         extension="ogg")
         cust1prof1targ2conf = DummyData(True, (1,2,1,1,2,1), AUDIOVIDEO_CONFIG,
                                         muxer="oggmux",
                                         videoEncoder="theoraenc bitrate=500",
                                         audioEncoder="vorbisenc bitrate=128000")
         cust1prof1targ3data = DummyData(True, (1,2,1,1,3,0), TARGET_DATA,
-                                        label="thumbs",
+                                        name="thumbs",
                                         extension="jpg")
         cust1prof1targ3conf = DummyData(True, (1,2,1,1,3,1), THUMBNAILS_CONFIG,
-                                        intervalValue=10,
-                                        intervalUnit=IntervalUnitEnum.percent,
+                                        periodValue=10,
+                                        periodUnit=PeriodUnitEnum.percent,
                                         maxCount=0)
         cust1prof2 = DummyData(True, (1,2,2,0), PROFILE_DATA,
-                               label="Flash Video",
+                               name="Flash Video",
                                subdir= "flv")
         cust1prof2targ1data = DummyData(True, (1,2,2,1,1,0), TARGET_DATA,
-                                        label="video",
+                                        name="video",
                                         extension="flv")
         cust1prof2targ1conf = DummyData(True, (1,2,2,1,1,1), AUDIOVIDEO_CONFIG,
                                         muxer="fluflvmux",
                                         videoEncoder="fenc_flv bitrate=128000",
                                         audioEncoder="lame ! mp3parse")
         cust1prof2targ2data = DummyData(True, (1,2,2,1,2,0), TARGET_DATA,
-                                        label="thumbs",
+                                        name="thumbs",
                                         extension="png")
         cust1prof2targ2conf = DummyData(True, (1,2,2,1,2,1), THUMBNAILS_CONFIG,
-                                        intervalValue=1,
-                                        intervalUnit=IntervalUnitEnum.seconds,
+                                        periodValue=1,
+                                        periodUnit=PeriodUnitEnum.seconds,
                                         maxCount=5)
         
         cust2data = DummyData(True, (2,0), CUSTOMER_DATA,
-                              label="Big Client",
+                              name="Big Client",
                               subdir="big/client")
         cust2info = DummyData(False, (2,1), CUSTOMER_INFO,
                               name="The Big Company")
         cust2prof1 = DummyData(True, (2,1,1,0), PROFILE_DATA,
-                               label="Test")
+                               name="Test")
         cust2prof1targ1data = DummyData(True, (2,1,1,1,1,0), TARGET_DATA,
-                                        label="normal",
+                                        name="normal",
                                         extension="ogg")
         cust2prof1targ1conf = DummyData(True, (2,1,1,1,1,1), AUDIOVIDEO_CONFIG,
                                         muxer="oggmux",
@@ -363,31 +365,31 @@ class DummyDataSource(Loggable):
     
     def initialize(self):
         self.log("Initializing the Dummy Data Source")
-        return succeed(self)
+        return asyncSuccess(self)
     
     def waitReady(self):
-        return succeed(self)
+        return asyncSuccess(self)
     
     def retrieveDefaults(self):
         try:
-            return succeed(self.defaults._clone())
+            return asyncSuccess(self.defaults._clone())
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Defaults retrieval error",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         
     def retrieveCustomers(self):
         try:
             res = [v[0]._clone() for v in self.customers.values() if v[0] != None]
-            return succeed(res)
+            return asyncSuccess(res)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Customers retrieval error",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         
     def retrieveCustomerInfo(self, customerData):
         try:
@@ -395,13 +397,13 @@ class DummyDataSource(Loggable):
             key = customerData._getKey()
             cust = self._getCustomer(key)
             res = cust[1] and cust[1]._clone()
-            return succeed(res)
+            return asyncSuccess(res)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Customer Info retrieval error",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         
     def retrieveProfiles(self, customerData):
         try:
@@ -409,17 +411,17 @@ class DummyDataSource(Loggable):
             key = customerData._getKey()
             cust = self._getCustomer(key)
             res = [p[0]._clone() for p in cust[-1].values() if p[0] != None]
-            return succeed(res)
+            return asyncSuccess(res)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Profiles retrieval error",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         
     def retrieveNotifications(self, withGlobal, customerData, 
                               profileData, targetData):
-        return succeed([])
+        return asyncSuccess([])
     
     def retrieveTargets(self, profileData):
         try:
@@ -427,13 +429,13 @@ class DummyDataSource(Loggable):
             key = profileData._getKey()
             prof = self._getProfile(key)
             res = [t[0]._clone() for t in prof[1].values() if t[0] != None]
-            return succeed(res)
+            return asyncSuccess(res)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Target retrieval error",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
        
     def retrieveTargetConfig(self, targetData):
         try:
@@ -441,13 +443,13 @@ class DummyDataSource(Loggable):
             key = targetData._getKey()
             target = self._getTarget(key)
             res = target[1] and target[1]._clone()
-            return succeed(res)
+            return asyncSuccess(res)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.RetrievalError("Target config retrieval fail",
                                           cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
     
     def newCustomer(self, cusomerId):
         res = DummyData(True, (self._nextid,0), CUSTOMER_DATA)
@@ -561,12 +563,12 @@ class DummyDataSource(Loggable):
                                      "Target already exists")
                     targ[key[5]] = o
                     continue
-            return succeed(count)
+            return asyncSuccess(count)
         except datasource.DataSourceError, e:
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
         except Exception, e:
             e = datasource.StoringError(cause=e) 
-            return fail(failure.Failure(e))
+            return asyncFailure(failure.Failure(e))
             
     def delete(self, *data):
         raise NotImplementedError()

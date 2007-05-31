@@ -10,19 +10,44 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import Interface
+from zope.interface import Interface, implements
 
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import workerproxy
 from flumotion.transcoder.admin.proxies import flowproxy
 from flumotion.transcoder.admin.proxies import atmosphereproxy
 
+
 def instantiate(logger, parent, identifier, admin, 
                 managerContext, state, *args, **kwargs):
     return ManagerProxy(logger, parent, identifier, admin,
                         managerContext, state, *args, **kwargs)
 
+
 class IManagerListener(Interface):
+    def onWorkerAdded(self, manager, worker):
+        pass
+    
+    def onWorkerRemoved(self, manager, worker):
+        pass
+    
+    def onAtmosphereSet(self, manager, atmosphere):
+        pass
+    
+    def onAtmosphereUnset(self, manager, atmosphere):
+        pass
+    
+    def onFlowAdded(self, manager, flow):
+        pass
+    
+    def onFlowRemoved(self, manager, flow):
+        pass
+
+
+class ManagerListener(object):
+    
+    implements(IManagerListener)
+    
     def onWorkerAdded(self, manager, worker):
         pass
     
@@ -51,9 +76,9 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._context = managerContext
         self._admin = admin
         self._planetState = planetState
-        self._workers = {} # identifier => Worker
-        self._atmosphere = None # Atmosphere
-        self._flows = {} # identifier => Flow
+        self._workers = {} # {identifier: Worker}
+        self._atmosphere = None
+        self._flows = {} # {identifier: Flow}
     
     
     ## Public Methods ##
@@ -65,7 +90,9 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     def getAtmosphere(self):
         return self._atmosphere
 
-
+    def getContext(self):
+        return self._context
+    
     ## Overriden Public Methods ##
     
     def getWorkerByName(self, name):

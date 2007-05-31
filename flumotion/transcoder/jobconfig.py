@@ -14,7 +14,7 @@
 
 from flumotion.transcoder import properties
 from flumotion.transcoder.enums import VideoScaleMethodEnum
-from flumotion.transcoder.enums import IntervalUnitEnum
+from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import TargetTypeEnum
 
@@ -74,12 +74,12 @@ class AudioVideoConfig(AudioConfig, VideoConfig):
     pass
 
 class ThumbnailsConfig(properties.PropertyBag):
-    intervalValue = properties.Integer('interval-value', None, True, True)
+    periodValue = properties.Integer('period-value', None, True, True)
     thumbsWidth = properties.Integer('thumbs-width', 128, False, True)
     thumbsHeight = properties.Integer('thumbs-height', 128, False, True)
-    intervalUnit = properties.Enum('interval-unit', 
-                                   IntervalUnitEnum, 
-                                   IntervalUnitEnum.seconds)
+    periodUnit = properties.Enum('period-unit', 
+                                   PeriodUnitEnum, 
+                                   PeriodUnitEnum.seconds)
     maxCount = properties.Integer('max-count', 1, False, True)
     outputFormat = properties.Enum('output-format',
                                    ThumbOutputTypeEnum,

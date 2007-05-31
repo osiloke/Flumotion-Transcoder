@@ -9,14 +9,27 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 # Headers in this file shall remain intact.
 
-from twisted.internet import reactor, defer
+import random
+
+from zope.interface import implements
 from twisted.python import failure
 
-from flumotion.twisted.compat import implements
 from flumotion.common.log import Loggable
+
 from flumotion.transcoder import inifile
+from flumotion.transcoder.admin import utils
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
+
+
+def asyncFailure(failure):
+    # Simulate asynchronous datasource
+    return utils.delayedFailure(failure, random.random())
+
+
+def asyncSuccess(result):
+    # Simulate asynchronous datasource
+    return utils.delayedSuccess(result, random.random())
 
 
 class DataWrapper(object):
@@ -59,48 +72,48 @@ class FileDataSource(Loggable):
     def initialize(self):
         try:
             self._loader.loadFromFile(self._data, self._filePath)
-            return defer.succeed(self)
+            return asyncSuccess(self)
         except Exception, e:
             msg = "Failed to initialize file data-source"
             ex = datasource.InitializationError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
 
     def waitReady(self):
-        return defer.succeed(self)
+        return asyncSuccess(self)
 
     def retrieveDefaults(self):
         try:
             result = DataWrapper(self._data, ['customers'])
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve default data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
         
     def retrieveCustomers(self):
         try:
             result = [DataWrapper(c, ['info', 'profiles']) 
                       for c in self._data.customers
                       if c != None]
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve customers data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(failure)
+            return asyncFailure(f)
         
     def retrieveCustomerInfo(self, customerData):
         try:
             assert isinstance(customerData, DataWrapper)
             result = DataWrapper(customerData._getData().info)
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve customer info data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
         
     def retrieveProfiles(self, customerData):
         try:
@@ -108,12 +121,12 @@ class FileDataSource(Loggable):
             result = [DataWrapper(p, ['targets']) 
                       for p in customerData._getData().profiles
                       if p != None]
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve profiles data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
         
     def retrieveNotifications(self, withGlobal, customerData, 
                               profileData, targetData):
@@ -125,23 +138,23 @@ class FileDataSource(Loggable):
             result = [DataWrapper(t, ['config', 'type']) 
                       for t in profileData._getData().targets
                       if t != None]
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve targets data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
        
     def retrieveTargetConfig(self, targetData):
         try:
             assert isinstance(targetData, DataWrapper)
             result = DataWrapper(targetData._getData().config, [], ['type'])
-            return defer.succeed(result)
+            return asyncSuccess(result)
         except Exception, e:
             msg = "Failed to retrieve target config data"
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
-            return defer.fail(f)
+            return asyncFailure(f)
 
     def newCustomer(self, cusomerId):
         raise NotImplementedError()

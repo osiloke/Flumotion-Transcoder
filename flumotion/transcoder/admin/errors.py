@@ -14,5 +14,29 @@
 
 from flumotion.transcoder.errors import TranscoderError
 
-class OperationTimedOut(TranscoderError):
+
+class StoreError(TranscoderError):
     pass
+
+
+class OperationTimedOutError(TranscoderError):
+    """
+    An asynchronous operation timed out.
+    """
+
+class ComponentRejectedError(TranscoderError):
+    """
+    A component set rejected the component.
+    Doesn't mean the component doesn't exist.
+    """
+
+class OrphanComponentError(TranscoderError):
+    """
+    An operation couldn't be done because the
+    component is orphan (its worker is not running).
+    """
+    
+class WaiterError(TranscoderError):
+    """
+    A wait operation couldn't be completed.
+    """

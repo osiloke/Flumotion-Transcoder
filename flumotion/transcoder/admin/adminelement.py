@@ -11,15 +11,15 @@
 # Headers in this file shall remain intact.
 
 from twisted.internet import defer
+from twisted.python.failure import Failure
 
-from flumotion.twisted.compat import implementsInterface
 from flumotion.transcoder import log
 from flumotion.transcoder.log import LoggerProxy
-from flumotion.transcoder.eventsource import EventSource
+from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
 
 
-class AdminElement(EventSource, LoggerProxy):
+class AdminElement(eventsource.EventSource, LoggerProxy):
     """
     Manage element activation and initialization.
     Ensure that the activation deferreds are called 
@@ -35,7 +35,7 @@ class AdminElement(EventSource, LoggerProxy):
     
     def __init__(self, logger, parent, interfaces):
         assert (parent == None) or isinstance(parent, AdminElement)
-        EventSource.__init__(self, interfaces)
+        eventsource.EventSource.__init__(self, interfaces)
         LoggerProxy.__init__(self, logger)
         self._waitForActivation = []
         self._waitingChilds = []
@@ -48,6 +48,9 @@ class AdminElement(EventSource, LoggerProxy):
 
 
     ## Public Methods ##
+    
+    def getLabel(self):
+        raise NotImplementedError()
     
     def getParent(self):
         return self._parent
@@ -204,6 +207,8 @@ class AdminElement(EventSource, LoggerProxy):
         """
         assert not self._triggered
         self._triggered = True
+        if not isinstance(failure, Failure):
+            failure = Failure(failure)
         self.log("Start %s abortion for %s",
                  self.__class__.__name__,
                  log.getFailureMessage(failure))
@@ -258,8 +263,8 @@ class AdminElement(EventSource, LoggerProxy):
         """
         self.warning("Unexpected Failure: %s",
                      log.getFailureMessage(failure))
-        self.debug("Traceback of unexpected failure:\n%s" 
-                   % log.getFailureTraceback(failure))
+        self.debug("Traceback of unexpected failure:\n%s",
+                   log.getFailureTraceback(failure))
         #Resolve the failure.
         return
 
@@ -294,12 +299,12 @@ class AdminElement(EventSource, LoggerProxy):
         self._waitingChilds = None
         self._failure= None
         self.log("%s successfully activated", self.__class__.__name__)
+        self._active = True
         for d in activations:
             d.callback(self)
         self._onActivated()
         for d in childs:
             d.callback(self)
-        self._active = True
                 
     def __parentAborted(self, failure):
         activations = self._waitForActivation

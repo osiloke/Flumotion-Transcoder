@@ -10,7 +10,8 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import Interface
+from zope.interface import Interface, implements
+
 from flumotion.transcoder import log
 from flumotion.transcoder.admin.proxies import fluproxy
 
@@ -25,15 +26,50 @@ class IWorkerListener(Interface):
     pass
 
 
+class WorkerListener(object):
+    
+    implements(IWorkerListener)
+
+
+class IWorkerDefinition(Interface):
+    
+    def getName(self):
+        pass
+    
+    def getContext(self):
+        pass
+
+
+class WorkerDefinition(object):
+    """
+    Used to represent non-running workers.
+    """
+    
+    implements(IWorkerDefinition)
+    
+    def __init__(self, workerName, workerContext):
+        self._context = workerContext
+        self._name = workerName
+        
+    def getName(self):
+        return self._name
+    
+    def getContext(self):
+        return self._context
+
+
 class WorkerProxy(fluproxy.FlumotionProxy):
+    
+    implements(IWorkerDefinition)
     
     def __init__(self, logger, parent, identifier, manager, 
                  workerContext, workerState):
         fluproxy.FlumotionProxy.__init__(self, logger, parent, 
                                          identifier, manager,
                                          IWorkerListener)
-        self._context = workerContext
+        
         self._workerState = workerState
+        self._context = workerContext
         
         
     ## Public Methods ##
@@ -45,6 +81,9 @@ class WorkerProxy(fluproxy.FlumotionProxy):
     def getHost(self):
         assert self._workerState, "Worker has been removed"
         return self._workerState.get('host')
+
+    def getContext(self):
+        return self._context
 
     
     ## Overriden Methods ##

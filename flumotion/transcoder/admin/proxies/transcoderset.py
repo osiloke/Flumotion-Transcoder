@@ -10,8 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
-from flumotion.twisted.compat import Interface
 
 from flumotion.transcoder.admin.proxies import componentset
 from flumotion.transcoder.admin.proxies import transcoderproxy
@@ -24,13 +24,24 @@ class ITranscoderSetListener(Interface):
     def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
         pass
 
+
+class TranscoderSetListener(object):
+    
+    implements(ITranscoderSetListener)
+    
+    def onTranscoderAddedToSet(self, transcoderset, transcoder):
+        pass
+    
+    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
+        pass
+
     
 class TranscoderSet(componentset.BaseComponentSet):
     
     def __init__(self, mgrset):
         componentset.BaseComponentSet.__init__(self, mgrset,
                                                ITranscoderSetListener)
-        self._components = {} # Identifier => TranscoderProxy
+        self._components = {} # {identifier: TranscoderProxy}
         
     ## Public Methods ##
     
@@ -44,18 +55,13 @@ class TranscoderSet(componentset.BaseComponentSet):
     def _doSyncListener(self, listener):
         self._syncProxies("_components", listener, "TranscoderAddedToSet")
 
-    def _doFilterComponent(self, component):
+    def _doAcceptComponent(self, component):
         return isinstance(component, transcoderproxy.TranscoderProxy)
 
     def _doAddComponent(self, component):
-        identifier = component.getIdentifier()
-        assert not (identifier in self._components)
-        self._components[identifier] = component
+        componentset.BaseComponentSet._doAddComponent(self, component)
         self._fireEvent(component, "TranscoderAddedToSet")
     
     def _doRemoveComponent(self, component):
-        identifier = component.getIdentifier()
-        assert identifier in self._components
-        assert self._components[identifier] == component
-        del self._components[identifier]
+        componentset.BaseComponentSet._doRemoveComponent(self, component)
         self._fireEvent(component, "TranscoderRemovedFromSet")

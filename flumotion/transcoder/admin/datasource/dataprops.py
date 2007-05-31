@@ -11,7 +11,7 @@
 
 from flumotion.transcoder import properties
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.enums import IntervalUnitEnum
+from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.admin.datasource import datasource
@@ -50,12 +50,12 @@ class AudioVideoData(AudioData, VideoData):
 class ThumbnailsData(properties.PropertyBag):
 
     type = TargetTypeEnum.thumbnails
-    intervalValue = properties.Integer('interval-value', None, True, True)
+    periodValue = properties.Integer('period-value', None, True, True)
     thumbsWidth = properties.Integer('thumbs-width', 128, False, True)
     thumbsHeight = properties.Integer('thumbs-height', 128, False, True)
-    intervalUnit = properties.Enum('interval-unit', 
-                                   IntervalUnitEnum, 
-                                   IntervalUnitEnum.seconds)
+    periodUnit = properties.Enum('period-unit', 
+                                   PeriodUnitEnum, 
+                                   PeriodUnitEnum.seconds)
     maxCount = properties.Integer('max-count', 1, False, True)
     outputFormat = properties.Enum('output-format',
                                    ThumbOutputTypeEnum,
@@ -65,7 +65,7 @@ class ThumbnailsData(properties.PropertyBag):
 class TargetData(properties.PropertyBag):
     
     type = properties.Enum('type', TargetTypeEnum, None, True)
-    label = properties.String('label', None, True)
+    name = properties.String('name', None, True)
     extension = properties.String('extension', None)
     subdir = properties.String('subdir', None)
     outputFileTemplate = properties.String('output-file-template', None)
@@ -85,7 +85,7 @@ class TargetData(properties.PropertyBag):
 
 class ProfileData(properties.PropertyBag):
 
-    label = properties.String('label', None, True)
+    name = properties.String('name', None, True)
     subdir = properties.String('subdir', None)
     inputDir = properties.String('input-dir', None)
     outputDir = properties.String('output-dir', None)
@@ -112,6 +112,7 @@ class ProfileData(properties.PropertyBag):
     preprocesstimeout = properties.Integer('pre-process-timeout', None, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
     targets = properties.ChildList('targets', TargetData)
 
 
@@ -126,7 +127,7 @@ class CustomerInfoData(properties.PropertyBag):
 
 class CustomerData(properties.PropertyBag):
     
-    label = properties.String('label', None, True)
+    name = properties.String('name', None, True)
     subdir = properties.String('subdir', None)
     inputDir = properties.String('input-dir', None)
     outputDir = properties.String('output-dir', None)
@@ -151,14 +152,15 @@ class CustomerData(properties.PropertyBag):
     preprocessCommand = properties.String('pre-process-command', None)
     postprocessCommand = properties.String('post-process-command', None)
     preprocesstimeout = properties.Integer('pre-process-timeout', None, False, True)
-    postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
+    postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)    
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
     info = properties.Child('info', CustomerInfoData)
     profiles = properties.ChildList('profiles', ProfileData)
 
 
 class AdminData(properties. RootPropertyBag):
-    monitorInterval = properties.Integer('monitor-interval', 2, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', 4, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', 60, False, True)
     preprocessTimeout = properties.Integer('pre-process-timeout', 60, False, True)

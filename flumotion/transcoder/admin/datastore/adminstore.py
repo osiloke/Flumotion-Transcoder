@@ -10,11 +10,13 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
-from flumotion.twisted.compat import Interface
 from flumotion.transcoder import log
 from flumotion.common.log import Loggable
+from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
 
@@ -34,26 +36,80 @@ class IAdminStoreListener(Interface):
         """
 
 
+class AdminStoreListener(object):
+    
+    implements(IAdminStoreListener)
+    
+    def onCustomerAdded(self, admin, customer):
+        """
+        Call when a customer has been added and fully initialized.        
+        """
+    def onCustomerRemoved(self, admin, customer):
+        """
+        Call when a customer is about to be removed.
+        """
+
+
 class AdminStore(BaseStore):
+    
+    # MetaStore metaclass will create getters/setters for these properties
+    __default_properties__ = {"outputFileTemplate": 
+                                  constants.DEFAULT_OUTPUT_FILE_TEMPLATE,
+                              "linkFileTemplate": 
+                                  constants.DEFAULT_LINK_FILE_TEMPLATE,
+                              "configFileTemplate": 
+                                  constants.DEFAULT_CONFIG_FILE_TEMPLATE,
+                              "reportFileTemplate": 
+                                  constants.DEFAULT_REPORT_FILE_TEMPLATE,
+                              "monitoringPeriod": 
+                                  constants.DEFAULT_MONITORING_PERIOD,
+                              "transcodingTimeout": 
+                                  constants.DEFAULT_TRANSCODING_TIMEOUT,
+                              "postprocessTimeout": 
+                                  constants.DEFAULT_POSTPROCESS_TIMEOUT,
+                              "preprocessTimeout": 
+                                  constants.DEFAULT_PREPROCESS_TIMEOUT,
+                              "mailSubjectTemplate": 
+                                  constants.DEFAULT_MAIL_SUBJECT_TEMPLATE,
+                              "mailBodyTemplate": 
+                                  constants.DEFAULT_MAIL_BODY_TEMPLATE,
+                              "GETRequestTimeout": 
+                                  constants.DEFAULT_GETREQUEST_TIMEOUT,
+                              "GETRequestRetryCount": 
+                                  constants.DEFAULT_GETREQUEST_RETRY_COUNT,
+                              "GETRequestRetrySleep": 
+                                  constants.DEFAULT_GETREQUEST_RETRY_SLEEP}
+    
     
     def __init__(self, dataSource):
         ## Root element, no parent
-        BaseStore.__init__(self, StoreLogger(), None, dataSource, 
+        BaseStore.__init__(self, StoreLogger(), None, dataSource, None,
                            IAdminStoreListener) 
-        self._defaultsData = None
-        self._customers = []
+        self._customers = {}
 
         
     ## Public Methods ##
     
-    def customers(self):
-        return list(self._customers)
+    def getLabel(self):
+        return "Admin Store"
+    
+    def getCustomers(self):
+        return self._customers.values()
+    
+    def __getitem__(self, customerName):
+        return self._customers[customerName]
+    
+    def __iter__(self):
+        return iter(self._customers)
+    
+    def iterCustomers(self):
+        self._customers.itervalues()
     
     
     ## Overridden Methods ##
         
     def _doSyncListener(self, listener):
-        for customer in self._customers:
+        for customer in self._customers.itervalues():
             if customer.isActive():
                 self._fireEventTo(listener, customer, "CustomerAdded")
         
@@ -75,7 +131,7 @@ class AdminStore(BaseStore):
         return d
         
     def __defaultsReceived(self, defaultsData, oldResult):
-        self._defaultsData = defaultsData
+        self._data = defaultsData
         return oldResult
     
     def __retrieveCustomers(self, result):
@@ -87,6 +143,7 @@ class AdminStore(BaseStore):
     
     def __customersReceived(self, customersData, oldResult):
         deferreds = []
+        self._waitSynchronized.setTarget(len(customersData))
         for customerData in customersData:
             customer = CustomerStore(self, self, self._dataSource, 
                                      customerData)
@@ -108,11 +165,20 @@ class AdminStore(BaseStore):
     def __customerInitialized(self, customer):
         self.debug("Customer '%s' initialized; adding it to the admin store",
                    customer.getLabel())
-        self._customers.append(customer)
+        if (customer.getName() in self._customers):
+            msg = ("Admin store already have a customer '%s', "
+                  "dropping the new one" % customer.getName())
+            self.warning("%s", msg)
+            error = StoreError(msg)
+            customer._abort(error)
+            self._waitSynchronized.inc()
+            return defer._nothing
+        self._customers[customer.getName()] = customer
         #Send event when the customer has been activated
         self._fireEventWhenActive(customer, "CustomerAdded")
         #Activate the new customer store
-        customer._activate()        
+        customer._activate()
+        self._waitSynchronized.inc()
         #Keep the callback chain result
         return customer
     
@@ -120,9 +186,10 @@ class AdminStore(BaseStore):
         #FIXME: Better Error Handling ?
         self.warning("Customer '%s' failed to initialize; dropping it: %s", 
                      customer.getLabel(), log.getFailureMessage(failure))
-        self.debug("Traceback of customer '%s' failure:\n%s" 
-                   % (customer.getLabel(), log.getFailureTraceback(failure)))
+        self.debug("Traceback of customer '%s' failure:\n%s",
+                   customer.getLabel(), log.getFailureTraceback(failure))
         customer._abort(failure)
+        self._waitSynchronized.inc()
         #Don't propagate failures, will be dropped anyway
         return
     

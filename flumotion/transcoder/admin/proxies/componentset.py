@@ -10,33 +10,49 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
-from flumotion.twisted.compat import Interface, implements
 
-from flumotion.transcoder.admin.errors import OperationTimedOut
-from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.proxies import managerset
-from flumotion.transcoder.admin.proxies import managerproxy
-from flumotion.transcoder.admin.proxies import flowproxy
-from flumotion.transcoder.admin.proxies import atmosphereproxy
+from flumotion.transcoder import log
+from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.admin.errors import ComponentRejectedError
+from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
+from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
+from flumotion.transcoder.admin.proxies.flowproxy import FlowListener
+from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereListener
 
-ADD_DEFAULT_TIMEOUT = 30.0
 
-class BaseComponentSet(fluproxy.RootFlumotionProxy):
-    
-    implements(managerset.IManagerSetListener,
-               managerproxy.IManagerListener,
-               flowproxy.IFlowListener,
-               atmosphereproxy.IAtmosphereListener)
+class ComponentSetSkeleton(RootFlumotionProxy,
+                           ManagerSetListener,
+                           ManagerListener,
+                           FlowListener,
+                           AtmosphereListener):
     
     def __init__(self, mgrset, listenerInterface):
-        assert isinstance(mgrset, managerset.ManagerSet)
-        fluproxy.RootFlumotionProxy.__init__(self, mgrset, listenerInterface)
+        assert isinstance(mgrset, ManagerSet)
+        RootFlumotionProxy.__init__(self, mgrset, listenerInterface)
         self._managers = mgrset
         self._managers.addListener(self)
+        self._rejecteds = {} # {Identifier: ComponentProxy}
+        self._compWaiters = {} # {Identifier: {Deferred: IDelayedCall}}
         
         
     ## Public Methods ##
+
+    def isComponentRejected(self, component):
+        """
+        Return True if a component has been rejected,
+        and still exists.
+        """
+        return component.getIdentifier() in self._rejecteds
+    
+    def isIdentifierRejected(self, identifier):
+        """
+        Return True if a component with specified identifier
+        has been rejected and still exists.
+        """
+        return identifier in self._rejecteds
 
     def waitComponent(self, identifier, timeout=None):
         """
@@ -44,10 +60,52 @@ class BaseComponentSet(fluproxy.RootFlumotionProxy):
         If it's already contained by the set, the returned
         deferred will be called rightaway.
         """
-        raise NotImplementedError()
-    
+        result = defer.Deferred()
+        if self.hasIdentifier(identifier):
+            result.callback(self[identifier])
+        elif self.isIdentifierRejected(identifier):
+            result.errback(ComponentRejectedError("Component rejected"))
+        else:
+            to = None
+            if timeout:
+                to = reactor.callLater(timeout, 
+                                       self.__waitComponentTimeout, 
+                                       identifier, result)
+            self._compWaiters.setdefault(identifier, {})[result] = to
+        return result
 
-    ### managerset.IManagerSetListener Implementation ###
+
+    ## Abstract Public Methodes ##
+    
+    def hasComponent(self, component):
+        """
+        Return True if the component has been accepted,
+        and added to the set.
+        """
+        raise NotImplementedError()
+
+    def hasIdentifier(self, identifier):
+        """
+        Return True if a component with specified identifier
+        has been accepted and added to the set.
+        """
+        raise NotImplementedError()
+
+    def __getitem__(self, identifier):
+        """
+        Return the component with specified identifier,
+        accepted by the set or None.
+        """
+        raise NotImplementedError()
+
+    def __iter__(self):
+        """
+        Return an iterator over the acctepted components.
+        """
+        raise NotImplementedError()
+
+
+    ## managerset.IManagerSetListener Implementation ##
 
     def onManagerAddedToSet(self, mgrset, manager):
         manager.addListener(self)
@@ -57,14 +115,8 @@ class BaseComponentSet(fluproxy.RootFlumotionProxy):
         manager.removeListener(self)
 
 
-    ### managerproxy.IManagerListener Implementation ###
+    ## managerproxy.IManagerListener Implementation ##
     
-    def onWorkerAdded(self, manager, worker):
-        pass
-    
-    def onWorkerRemoved(self, manager, worker):
-        pass
-
     def onAtmosphereSet(self, manager, atmosphere):
         atmosphere.addListener(self)
         atmosphere.syncListener(self)
@@ -83,78 +135,129 @@ class BaseComponentSet(fluproxy.RootFlumotionProxy):
     ### flowproxy.IFlowListener Implementation ###
 
     def onFlowComponentAdded(self, flow, component):
-        if self._doFilterComponent(component):
-            self._doAddComponent(component)
-        
+        self.__addComponent(component)
     
     def onFlowComponentRemoved(self, flow, component):
-        if self._doFilterComponent(component):
-            self._doRemoveComponent(component)
+        self.__removeComponent(component)
     
     
     ### atmosphereproxy.IAtmosphereListener Implementation ###
     
     def onAtmosphereComponentAdded(self, atmosphere, component):
-        if self._doFilterComponent(component):
-            self._doAddComponent(component)
+        self.__addComponent(component)
     
     def onAtmosphereComponentRemoved(self, atmosphere, component):
-        if self._doFilterComponent(component):
-            self._doRemoveComponent(component)
+        self.__removeComponent(component)
 
 
     ## Protected Virtual Methods ##
     
-    def _doFilterComponent(self, component):
+    def _doAcceptComponent(self, component):
+        """
+        Called to check if a component should be added to the set.
+        Should return True to add the component or False to reject it.
+        Can return a Deferred.
+        """
         return True
     
     def _doAddComponent(self, component):
-        pass
+        """
+        Add the component to the set.
+        The component has been accepted.
+        """
+    
+    def _doRejectComponent(self, component):
+        """
+        The component has been rejected.
+        """
     
     def _doRemoveComponent(self, component):
-        pass
+        """
+        Remove a component.
+        Only called for the accepted components.
+        """
     
     
-class ComponentSetHelper(BaseComponentSet):
+    ## Private Methods ##
+    
+    def __addComponent(self, component):
+        d = defer.Deferred()
+        d.addCallback(self._doAcceptComponent)
+        d.addCallback(self.__postAcceptAddition, component)
+        d.addErrback(self.__asyncFailure, component, 
+                     "Failure during component addition")
+        d.callback(component)
+        
+    def __postAcceptAddition(self, accepted, component):
+        identifier = component.getIdentifier()
+        if accepted:
+            self._doAddComponent(component)
+            if identifier in self._compWaiters:
+                for d, to in self._compWaiters[identifier].items():
+                    if to:
+                        to.cancel()
+                    d.callback(component)
+                del self._compWaiters[identifier]
+        else:
+            self._doRejectComponent(component)
+            if identifier in self._compWaiters:
+                for d, to in self._compWaiters[identifier].items():
+                    if to:
+                        to.cancel()
+                    d.errback(ComponentRejectedError("Component rejected"))
+                del self._compWaiters[identifier]
+
+    def __asyncFailure(self, failure, component, message):
+        self.warning("%s: %s", message, log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+        
+    def __removeComponent(self, component):
+        if self.hasComponent(component):
+            self._doRemoveComponent(component)
+            
+    def __waitComponentTimeout(self, identifier, d):
+        to = self._compWaiters[identifier].pop(d)
+        err = OperationTimedOutError("Timeout waiting for component '%s'" 
+                                     % identifier)
+        d.errback(err)
+            
+    
+    
+class BaseComponentSet(ComponentSetSkeleton):
     
     def __init__(self, mgrset, listenerInterface):
-        BaseComponentSet.__init__(self, mgrset, listenerInterface)
-        self._components = {} # Identifier => ComponentProxy
-        self._pendingAdd = {} # Identifier => {Deferred => timeout}
+        ComponentSetSkeleton.__init__(self, mgrset, listenerInterface)
+        self._components = {} # {Identifier: ComponentProxy}
 
 
     ## Overriden Public Methods ##
     
-    def waitComponent(self, identifier, timeout=None):
-        result = defer.Deferred()
-        if identifier in self._components:
-            result.callback(self._components[identifier])
-        else:
-            to = None
-            if timeout:
-                to = reactor.callLater(timeout, 
-                                       self.__waitComponentTimeout, 
-                                       identifier, result)
-            pending = self._pendingAdd.get(identifier, None)
-            if not pending:
-                pending = dict()
-                self._pendingAdd[identifier] = pending
-            pending[result] = to
-        return result
-            
+    def hasComponent(self, component):
+        return component.getIdentifier() in self._components
+    
+    def hasIdentifier(self, identifier):
+        return identifier in self._components
+    
+    def __getitem__(self, identifier):
+        return self._components.get(identifier, None)
+
+    def __iter__(self):
+        return self._components.itervalues()
+
     
     ## Overriden Protected Methods ##
     
     def _doAddComponent(self, component):
         identifier = component.getIdentifier()
         assert not (identifier in self._components)
-        self._components[identifier] = component
-        if identifier in self._pendingAdd:
-            for d, to in self._pendingAdd[identifier].items():
-                if to:
-                    to.cancel()
-                d.callback(component)
-            del self._pendingAdd[identifier]
+        assert not (identifier in self._rejecteds)
+        self._components[identifier] = component        
+
+    def _doRejectComponent(self, component):
+        identifier = component.getIdentifier()
+        assert not (identifier in self._components)
+        assert not (identifier in self._rejecteds)
+        self._rejecteds[identifier] = component
 
     def _doRemoveComponent(self, component):
         identifier = component.getIdentifier()
@@ -162,14 +265,6 @@ class ComponentSetHelper(BaseComponentSet):
         assert self._components[identifier] == component
         del self._components[identifier]
 
-    
-    ## Private Methods ##
-    
-    def __waitComponentTimeout(self, identifier, d):
-        to = self._pendingAdd.pop(d)
-        err = OperationTimedOut("Timeout waiting for component '%s' "
-                                "to be added to set" % identifier)
-        d.errback(err)
     
 
 class IComponentSetListener(Interface):
@@ -179,11 +274,22 @@ class IComponentSetListener(Interface):
     def onComponentRemovedFromSet(self, componentset, component):
         pass
 
+
+class ComponentSetListener(object):
     
-class ComponentSet(ComponentSetHelper):
+    implements(IComponentSetListener)
+    
+    def onComponentAddedToSet(self, componentset, component):
+        pass
+    
+    def onComponentRemovedFromSet(self, componentset, component):
+        pass
+
+    
+class ComponentSet(BaseComponentSet):
     
     def __init__(self, mgrset):
-        ComponentSetHelper.__init__(self, mgrset, IComponentSetListener)
+        BaseComponentSet.__init__(self, mgrset, IComponentSetListener)
         
         
     ## Overriden Methods ##
@@ -192,9 +298,10 @@ class ComponentSet(ComponentSetHelper):
         self._syncProxies("_components", listener, "ComponentAddedToSet")
 
     def _doAddComponent(self, component):
-        ComponentSetHelper._doAddComponent(self, component)
+        BaseComponentSet._doAddComponent(self, component)
         self._fireEvent(component, "ComponentAddedToSet")
     
     def _doRemoveComponent(self, component):
-        ComponentSetHelper._doRemoveComponent(self, component)
+        
+        BaseComponentSet._doRemoveComponent(self, component)
         self._fireEvent(component, "ComponentRemovedFromSet")

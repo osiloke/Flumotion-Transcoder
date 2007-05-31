@@ -10,13 +10,14 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin.contexts.managercontext import ManagerContext
+from flumotion.transcoder.admin.context.managercontext import ManagerContext
 from flumotion.transcoder.admin.datasource import filesource
 
 class AdminContext(object):
     
     def __init__(self, adminConfig):
         self._config = adminConfig
+        self._vars = None
 
     def getDataSource(self):
         return filesource.FileDataSource(self._config.datasource.file)

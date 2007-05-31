@@ -13,9 +13,8 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import properties
+from flumotion.transcoder.admin import constants
 
-TRANSCODER_NAME_TEMPLATE = "transcoder-%{customerLabel}-%{profileLabel}"
-MONITOR_NAME_TEMPLATE = "monitor-%{customerLabel}"
 
 class ManagerConfig(properties.PropertyBag):
     host = properties.String('host', None, True)
@@ -27,9 +26,7 @@ class ManagerConfig(properties.PropertyBag):
 
 
 class WorkerConfig(properties.PropertyBag):
-    tempDir = properties.String('temp-directory', 
-                                "/var/tmp/flumotion-transcoder")
-    shares = properties.Dict(properties.String('shares'))
+    roots = properties.Dict(properties.String('roots'))
     maxJobs = properties.Integer('max-jobs', 1, False, True)
 
 
@@ -43,8 +40,8 @@ class AdminConfig(properties.RootPropertyBag):
     manager = properties.Child("manager", ManagerConfig)
     workerDefaults = properties.Child('worker-defaults', WorkerConfig)
     workers = properties.ChildDict('workers', WorkerConfig)
-    transcoderNameTemplate = properties.String("transcoder-name-template",
-                                               TRANSCODER_NAME_TEMPLATE)
-    monitorNameTemplate = properties.String("monitor-name-template",
-                                            MONITOR_NAME_TEMPLATE)
+    transcoderLabelTemplate = properties.String("transcoder-label-template",
+                                                constants.TRANSCODER_LABEL_TEMPLATE)
+    monitorLabelTemplate = properties.String("monitor-label-template",
+                                             constants.MONITOR_LABEL_TEMPLATE)
     

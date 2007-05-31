@@ -12,7 +12,7 @@
 
 from flumotion.twisted import pb
 
-from flumotion.transcoder.admin.contexts.workercontext import WorkerContext
+from flumotion.transcoder.admin.context.workercontext import WorkerContext
 
 
 class ManagerContext(object):
@@ -21,7 +21,7 @@ class ManagerContext(object):
         self._config = config
 
     def getHost(self):
-        return self._config.manager.host
+        return str(self._config.manager.host)
     
     def getPort(self):
         return self._config.manager.port
@@ -33,8 +33,9 @@ class ManagerContext(object):
         return pb.Authenticator(username=self._config.manager.username,
                                 password=self._config.manager.password)
 
-    def getWorkerContext(self, name):
-        return WorkerContext(self._config.workers.get(name, None),
+    def getWorkerContext(self, workername):
+        return WorkerContext(workername, 
+                             self._config.workers.get(workername, None),
                              self._config.workerDefaults)
 
     #There is no flow context

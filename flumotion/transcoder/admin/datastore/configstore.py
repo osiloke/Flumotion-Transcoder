@@ -28,6 +28,18 @@ class AudioConfig(BaseConfig):
     """
     def __init__(self, data):
         super(AudioConfig, self).__init__(data)
+    
+    def getMuxer(self):
+        return self._data.muxer
+    
+    def getAudioEncoder(self):
+        return self._data.audioEncoder
+    
+    def getAudioRate(self):
+        return self._data.audioRate
+    
+    def getAudioChannels(self):
+        return self._data.audioChannels
 
 
 class VideoConfig(BaseConfig):
@@ -44,6 +56,33 @@ class VideoConfig(BaseConfig):
     def __init__(self, data):
         super(VideoConfig, self).__init__(data)
 
+    def getMuxer(self):
+        return self._data.muxer
+    
+    def getVideoEncoder(self):
+        return self._data.videoEncoder
+    
+    def getVideoWidth(self):
+        return self._data.videoWidth
+    
+    def getVideoHeight(self):
+        return self._data.videoHeight
+    
+    def getVideoMaxWidth(self):
+        return self._data.videoMaxWidth
+    
+    def getVideoMaxHeight(self):
+        return self._data.videoMaxHeight
+    
+    def getVideoPAR(self):
+        return self._data.videoPAR
+    
+    def getVideoFramerate(self):
+        return self._data.videoFramerate
+    
+    def getScaleMethod(self):
+        return self._data.scaleMethod
+
 
 class AudioVideoConfig(AudioConfig, VideoConfig):
     
@@ -53,13 +92,31 @@ class AudioVideoConfig(AudioConfig, VideoConfig):
 
 class ThumbnailsConfig(BaseConfig):
     """
-    intervalValue (int)
-    intervalUnit (str) in ['seconds', 'frames', 'keyframes', 'percent']
+    periodValue (int)
+    periodUnit (str) in ['seconds', 'frames', 'keyframes', 'percent']
     maxCount (int)
     format (str) in ['png', 'jpg']
     """    
     def __init__(self, data):
         super(ThumbnailsConfig, self).__init__(data)
+
+    def getThumbsWidth(self):
+        return self._data.thumbsWidth
+    
+    def getThumbsHeight(self):
+        return self._data.thumbsHeight
+    
+    def getPeriodValue(self):
+        return self._data.periodValue
+    
+    def getPeriodUnit(self):
+        return self._data.periodUnit
+    
+    def getMaxCount(self):
+        return self._data.maxCount
+    
+    def getFormat(self):
+        return self._data.format
 
 
 _classLookup = {TargetTypeEnum.audio: AudioConfig,

@@ -10,10 +10,11 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import Interface
+from zope.interface import Interface, implements
 
 from flumotion.transcoder.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.proxies import groupproxy
+
 
 def instantiate(logger, parent, identifier, manager, 
                 flowContext, state, *args, **kwargs):
@@ -27,7 +28,17 @@ class IFlowListener(Interface):
     
     def onFlowComponentRemoved(self, flow, component):
         pass
+
+
+class FlowListener(object):
     
+    implements(IFlowListener)
+    
+    def onFlowComponentAdded(self, flow, component):
+        pass
+    
+    def onFlowComponentRemoved(self, flow, component):
+        pass
 
 
 class FlowProxy(groupproxy.ComponentGroupProxy):

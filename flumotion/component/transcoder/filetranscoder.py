@@ -205,8 +205,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             return
         tb = StringIO()
         traceback.print_exc(file=tb)
-        self.debug("Traceback with filenames cleaned up:\n%s" 
-                   % log.cleanTraceback(tb.getvalue()))
+        self.debug("Traceback with filenames cleaned up:\n%s", 
+                   log.cleanTraceback(tb.getvalue()))
     
     def _fireStatusChanged(self, status):
         self.uiState.setitem('job-data', "status", status)

@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.twisted.compat import Interface
+from zope.interface import Interface, implements
 
 from flumotion.transcoder.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.proxies import groupproxy
@@ -23,12 +23,23 @@ def instantiate(logger, parent, identifier, manager,
 
 
 class IAtmosphereListener(Interface):
+
     def onAtmosphereComponentAdded(self, atmosphere, component):
         pass
     
     def onAtmosphereComponentRemoved(self, atmosphere, component):
         pass
 
+
+class AtmosphereListener(object):
+    
+    implements(IAtmosphereListener)
+    
+    def onAtmosphereComponentAdded(self, atmosphere, component):
+        pass
+    
+    def onAtmosphereComponentRemoved(self, atmosphere, component):
+        pass
 
 
 class AtmosphereProxy(groupproxy.ComponentGroupProxy):
@@ -44,3 +55,4 @@ class AtmosphereProxy(groupproxy.ComponentGroupProxy):
                                                 atmosphereContext,
                                                 atmosphereState,
                                                 IAtmosphereListener)
+

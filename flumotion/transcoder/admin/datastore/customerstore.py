@@ -10,10 +10,12 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
 from twisted.internet import defer
 
-from flumotion.twisted.compat import Interface
 from flumotion.transcoder import log
+from flumotion.transcoder.admin import utils
+from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
 
@@ -29,29 +31,80 @@ class ICustomerStoreListener(Interface):
         """
 
 
+class CustomerStoreListener(object):    
+    
+    implements(ICustomerStoreListener)
+    
+    def onProfileAdded(self, customer, profile):
+        pass
+    
+    def onProfileRemoved(self, customer, profile):
+        pass
+
+
 class CustomerStore(BaseStore):
 
+    # MetaStore metaclass will create getters/setters for these properties
+    __overridable_properties__ = ["outputFileTemplate",
+                                  "linkFileTemplate",
+                                  "configFileTemplate",
+                                  "reportFileTemplate",
+                                  "linkTemplate",
+                                  "linkURLPrefix",
+                                  "enablePostprocessing",
+                                  "enablePreprocessing",
+                                  "enableLinkFiles",
+                                  "transcodingPriority",
+                                  "processPriority",
+                                  "preprocessCommand",
+                                  "postprocessCommand",
+                                  "preprocesstimeout",
+                                  "postprocessTimeout",
+                                  "transcodingTimeout",
+                                  "monitoringPeriod"]
+    
+    __simple_properties__ = ["name",
+                             "subdir",
+                             "inputDir",
+                             "outputDir",
+                             "failedDir",
+                             "doneDir",
+                             "linkDir",
+                             "workDir",
+                             "configDir",
+                             "failedRepDir",
+                             "doneRepDir"]
+
+
     def __init__(self, logger, parent, dataSource, customerData):
-        BaseStore.__init__(self, logger, parent,  dataSource, 
+        BaseStore.__init__(self, logger, parent,  dataSource, customerData,
                            ICustomerStoreListener)
-        self._customerData = customerData
         self._customerInfo = None
-        self._profiles = []        
+        self._profiles = {}
         
         
     ## Public Methods ##
     
-    def profiles(self):
-        return list(self._profiles)
-    
     def getLabel(self):
-        return self._customerData.label
-
+        return self.getName()
     
+    def getProfiles(self):
+        return self._profiles.values()
+    
+    def __getitem__(self, profileName):
+        return self._profiles[profileName]
+    
+    def __iter__(self):
+        return iter(self._profiles)
+    
+    def iterProfiles(self):
+        return self._profiles.itervalues()
+    
+
     ## Overridden Methods ##
     
     def _doSyncListener(self, listener):
-        for profile in self._profiles:
+        for profile in self._profiles.itervalues():
             if profile.isActive():
                 self._fireEventTo(listener, profile, "ProfileAdded")
         
@@ -63,10 +116,10 @@ class CustomerStore(BaseStore):
         chain.addCallback(self.__retrieveProfiles)        
         
     def _onActivated(self):
-        self.debug("Customer '%s' activated" % self.getLabel())
+        self.debug("Customer '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
-        self.debug("Customer '%s' aborted" % self.getLabel())
+        self.debug("Customer '%s' aborted", self.getLabel())
         
         
     ## Private Methods ##
@@ -83,7 +136,7 @@ class CustomerStore(BaseStore):
         return oldResult
   
     def __retrieveProfiles(self, result):
-        d = self._dataSource.retrieveProfiles(self._customerData)
+        d = self._dataSource.retrieveProfiles(self._data)
         d.addCallbacks(self.__profilesReceived, 
                        self.__retrievalFailed,
                        callbackArgs=(result,))
@@ -91,6 +144,7 @@ class CustomerStore(BaseStore):
     
     def __profilesReceived(self, profilesData, oldResult):
         deferreds = []
+        self._waitSynchronized.setTarget(len(profilesData))
         for profileData in profilesData:
             profile = ProfileStore(self, self, self._dataSource, 
                                    profileData)
@@ -112,11 +166,21 @@ class CustomerStore(BaseStore):
     def __profileInitialized(self, profile):
         self.debug("Profile '%s' initialized; adding it to customer '%s' store",
                    profile.getLabel(), self.getLabel())
-        self._profiles.append(profile)
+        if (profile.getName() in self._profiles):
+            msg = ("Customer '%s' already have a profile '%s', "
+                   "dropping the new one" 
+                   % (self.getParent().getName(), profile.getName()))
+            self.warning(msg)
+            error = StoreError(msg)
+            profile._abort(error)
+            self._waitSynchronized.inc()
+            return defer._nothing
+        self._profiles[profile.getName()] = profile
         #Send event when the profile has been activated
         self._fireEventWhenActive(profile, "ProfileAdded")
         #Activate the new profile store
         profile._activate()
+        self._waitSynchronized.inc()
         #Keep the callback chain result
         return profile
     
@@ -125,9 +189,10 @@ class CustomerStore(BaseStore):
         self.warning("Profile '%s' of customer %s failed to initialize; "
                      + "dropping it: %s", profile.getLabel(),
                      self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Traceback of profile '%s' failure:\n%s" 
-                   % (profile.getLabel(), log.getFailureTraceback(failure)))
+        self.debug("Traceback of profile '%s' failure:\n%s",
+                   profile.getLabel(), log.getFailureTraceback(failure))
         profile._abort(failure)
+        self._waitSynchronized.inc()
         #Don't propagate failures, will be dropped anyway
         return
         

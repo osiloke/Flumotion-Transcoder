@@ -14,14 +14,14 @@
 
 from flumotion.transcoder.errors import TranscoderError
 
-class JobProperties(object):
+class TranscoderProperties(object):
     
     def __init__(self, config, niceLevel=None):
         assert config != None
         self._config = config
         self._niceLevel = niceLevel
         
-    def getComponentProperties(self):
+    def getPropertySet(self, workerContext):
         props = {}
         props["config"] = self._config
         if self._niceLevel:

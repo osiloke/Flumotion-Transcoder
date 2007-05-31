@@ -10,14 +10,14 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.admin import multi
-from flumotion.twisted.compat import Interface
-#from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
+from zope.interface import Interface, implements
 
+from flumotion.admin import multi
 #To register Jellyable classes
 from flumotion.common import planet
-
 from flumotion.common.log import Loggable
+from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
+
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import managerproxy
 
@@ -27,6 +27,17 @@ class FlumotionProxiesLogger(Loggable):
 
 
 class IManagerSetListener(Interface):
+    def onManagerAddedToSet(self, managerset, manager):
+        pass
+    
+    def onManagerRemovedFromSet(self, managerset, manager):
+        pass
+
+
+class ManagerSetListener(object):
+    
+    implements(IManagerSetListener)
+    
     def onManagerAddedToSet(self, managerset, manager):
         pass
     
@@ -56,17 +67,11 @@ class ManagerSet(fluproxy.RootFlumotionProxy):
 
     def _doPrepareInit(self, chain):
         ctx = self._context.getManagerContext()
-#        info = ConnectionInfo(ctx.getHost(),
-#                               ctx.getPort(),
-#                               not ctx.getUseSSL(),
-#                               ctx.getAuthenticator())
-#        self._multi.addManager(info,
-#                               tenacious=True)
-        self._multi.addManager(ctx.getHost(),
-                               ctx.getPort(),
-                               not ctx.getUseSSL(),
-                               ctx.getAuthenticator(),
-                               tenacious=True)
+        info = ConnectionInfo(ctx.getHost(),
+                              ctx.getPort(),
+                              ctx.getUseSSL(),
+                              ctx.getAuthenticator())
+        self._multi.addManager(info, tenacious=True)
 
     ## MultiAdmin Event Handlers ##
     
