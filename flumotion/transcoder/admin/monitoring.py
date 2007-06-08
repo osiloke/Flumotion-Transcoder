@@ -24,8 +24,12 @@ from flumotion.transcoder.admin.taskmanager import TaskManager
 from flumotion.transcoder.admin.taskbalancer import TaskBalancer
 from flumotion.transcoder.admin.proxies.workerset import WorkerSetListener
 from flumotion.transcoder.admin.proxies.monitorset import MonitorSetListener
+from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
-class Monitoring(TaskManager, WorkerSetListener, MonitorSetListener):
+#FIXME: Better handling of listener subclassing
+
+class Monitoring(TaskManager, WorkerSetListener, 
+                 MonitorSetListener, MonitorListener):
     
     logCategory = 'trans-monitoring'
     
@@ -89,11 +93,13 @@ class Monitoring(TaskManager, WorkerSetListener, MonitorSetListener):
     
     def onMonitorAddedToSet(self, monitorset, monitor):
         self.log("Monitor '%s' added to monitoring", monitor.getLabel())
-        self.addComponent(monitor)
+        d = self.addComponent(monitor)
+        d.addErrback(self.__ebAddComponentFailed, monitor.getName())
     
     def onMonitorRemovedFromSet(self, monitorset, monitor):
         self.log("Monitor '%s' removed from monitoring", monitor.getLabel())
-        self.removeComponent(monitor)
+        d = self.removeComponent(monitor)
+        d.addErrback(self.__ebRemoveComponentFailed, monitor.getName())
 
 
     ## Private Methods ##
@@ -111,4 +117,12 @@ class Monitoring(TaskManager, WorkerSetListener, MonitorSetListener):
             self._balancer.addTask(task, worker)
         self._balancer.balance()
 
-
+    def __ebAddComponentFailed(self, failure, name):
+        self.warning("Failed to add monitor '%s' to task '%s': %s", 
+                     name, self.getLabel(), log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+    
+    def __ebRemoveComponentFailed(self, failure, name):
+        self.warning("Failed to remove monitor '%s' from task '%s': %s",
+                     name, self.getLabel(), log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
