@@ -132,7 +132,7 @@ class DirectoryWatcher(PeriodicalWatcher):
                     size = os.path.getsize(file)
                 except OSError:
                     continue
-                results[file[len(base) + 1:]] = size 
+                results[file[len(base):]] = size 
         result = {}
         base = self.path
         os.path.walk(base, step, result)

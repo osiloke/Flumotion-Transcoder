@@ -14,37 +14,41 @@ import os
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.proxies import componentproxy
+from flumotion.transcoder.admin.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
-from flumotion.transcoder.admin.monitorprops import MonitorProperties
+from flumotion.transcoder.admin.monprops import MonitorProperties
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
+from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
+from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 
 
-class IMonitorListener(componentproxy.IComponentListener):
-    def onMonitorFileAdded(self, monitor, file, state):
+class IMonitorListener(IComponentListener):
+    def onMonitorFileAdded(self, monitor, virtDir, file, state):
         pass
     
-    def onMonitorFileRemoved(self, monitor, file, state):
+    def onMonitorFileRemoved(self, monitor, virtDir, file, state):
         pass
     
-    def onMonitorFileStateChanged(self, monitor, file, state):
+    def onMonitorFileChanged(self, monitor, virtDir, file, state):
         pass
 
 
-class MonitorListener(componentproxy.ComponentListener):
+class MonitorListener(ComponentListener):
     
     implements(IMonitorListener)
     
-    def onMonitorFileAdded(self, monitor, file, state):
+    def onMonitorFileAdded(self, monitor, virtDir, file, state):
         pass
     
-    def onMonitorFileRemoved(self, monitor, file, state):
+    def onMonitorFileRemoved(self, monitor, virtDir, file, state):
         pass
     
-    def onMonitorFileStateChanged(self, monitor, file, state):
+    def onMonitorFileChanged(self, monitor, virtDir, file, state):
         pass
 
 
-class MonitorProxy(componentproxy.ComponentProxy):
+class MonitorProxy(ComponentProxy):
     
     properties_factory = MonitorProperties
     
@@ -58,15 +62,21 @@ class MonitorProxy(componentproxy.ComponentProxy):
     
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):
-        componentproxy.ComponentProxy.__init__(self, logger, parent,  
-                                               identifier, manager,
-                                               componentContext, 
-                                               componentState, domain,
-                                               IMonitorListener)
+        ComponentProxy.__init__(self, logger, parent,  
+                                identifier, manager,
+                                componentContext, 
+                                componentState, domain,
+                                IMonitorListener)
         self._alreadyAdded = {} # {file: None}
+
         
     ## Public Methods ##
     
+    def waitFiles(self, timeout=None):
+        d = self._waitUIState(timeout)
+        d.addCallback(self.__cbRetrieveFiles)
+        return d
+            
     
     ## Overriden Methods ##
     
@@ -98,22 +108,50 @@ class MonitorProxy(componentproxy.ComponentProxy):
             self._onMonitorDelFile(subkey, value)
 
     def _onUnsetUIState(self, uiState):
-        componentproxy.ComponentProxy._onUnsetUIState(self, uiState)
+        ComponentProxy._onUnsetUIState(self, uiState)
         self._alreadyAdded.clear()
 
     
     ## UI State Handlers Methods ##
     
     def _onMonitorSetFile(self, file, state):
+        folder, rel = file
+        args = (self.__local2virtual(folder), rel, state)
         if file in self._alreadyAdded:
-            self._fireEvent((file, state), "MonitorFileStateChanged")
+            self._fireEvent(args, "MonitorFileChanged")
         else:
             self._alreadyAdded[file] = None
-            self._fireEvent((os.path.join(*file), state), "MonitorFileAdded")
+            self._fireEvent(args, "MonitorFileAdded")
             
     def _onMonitorDelFile(self, file, state):
+        folder, rel = file
+        args = (self.__local2virtual(folder), rel, state)
         assert file in self._alreadyAdded
-        self._fireEvent((os.path.join(*file), state), "MonitorFileRemoved")
+        self._fireEvent(args, "MonitorFileRemoved")
 
 
-componentproxy.registerProxy("file-monitor", MonitorProxy)
+    ## Overriden Methods ##
+
+    
+    ## Private Methods ##
+    
+    def __local2virtual(self, path):
+        worker = self.getWorker()
+        assert worker != None
+        context = worker.getContext()
+        roots = context.getRoots()
+        return VirtualPath.fromPath(path, roots)
+
+    def __cbRetrieveFiles(self, ui):
+        files = []
+        worker = self.getWorker()
+        assert ui != None
+        assert worker != None
+        context = worker.getContext()
+        roots = context.getRoots()
+        for (p, f), s in ui.get("pending-files", {}).iteritems():
+            files.append((VirtualPath.fromPath(p, roots), f, s))
+        return files
+    
+
+registerProxy("file-monitor", MonitorProxy)

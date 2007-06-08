@@ -11,7 +11,10 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
+from twisted.internet import defer
 
+from flumotion.transcoder import utils
+from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import workerproxy
 from flumotion.transcoder.admin.proxies import flowproxy
@@ -77,8 +80,9 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._admin = admin
         self._planetState = planetState
         self._workers = {} # {identifier: Worker}
-        self._atmosphere = None
+        self._atmosphere = AssignWaiters(None)
         self._flows = {} # {identifier: Flow}
+        self.__updateIdleTarget()
     
     
     ## Public Methods ##
@@ -88,7 +92,16 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         return self._planetState.get('name')
 
     def getAtmosphere(self):
-        return self._atmosphere
+        return self._atmosphere.getValue()
+    
+    def waitAtmosphere(self, timeout=None):
+        return self._atmosphere.wait(timeout)
+
+    def getFlows(self):
+        return self._flows.values()
+    
+    def getWorkers(self):
+        return self._workers.values()
 
     def getContext(self):
         return self._context
@@ -101,6 +114,14 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
 
 
     ## Overriden Methods ##
+    
+    def _doGetChildElements(self):
+        childs = self.getWorkers()
+        childs.extend(self.getFlows())
+        atmosphere = self.getAtmosphere()
+        if atmosphere:
+            childs.append(atmosphere)
+        return childs
     
     def _doSyncListener(self, listener):
         assert self._planetState, "Manager has been removed"
@@ -198,6 +219,14 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
 
     ## Private Methods ##
     
+    def __updateIdleTarget(self):
+        state = self._planetState
+        count = 1  # The atmosphere
+        count += len(state.get("flows", []))
+        whs = self._admin.getWorkerHeavenState()
+        count += len(whs.get("workers", []))
+        self._setIdleTarget(count)
+    
     def __getWorkerUniqueId(self, manager, workerContext, workerState):
         if workerState == None:
             return None
@@ -226,6 +255,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
                             self.__getWorkerUniqueId,
                            "WorkerAdded", self, 
                            workerContext, workerState)
+        self.__updateIdleTarget()
     
     def __workerStateRemoved(self, workerState):
         name = workerState.get('name')
@@ -248,9 +278,11 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._addProxyState(flowproxy, "_flows",
                             self.__getFlowUniqueId,
                            "FlowAdded", self, flowContext, flowState)
+        self.__updateIdleTarget()
     
     def __flowStateRemoved(self, flowState):
         name = flowState.get('name')
         flowContext = self._context.getFlowContext(name)
         self._removeProxyState("_flows", self.__getFlowUniqueId,
                               "FlowRemoved", self, flowContext, flowState)
+        #FIXME: handle properly aborted flow

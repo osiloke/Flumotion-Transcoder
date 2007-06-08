@@ -10,12 +10,17 @@
 
 # Headers in this file shall remain intact.
 
+from twisted.internet import defer, reactor
+
 from flumotion.transcoder import log
+from flumotion.transcoder import utils
 from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
-from flumotion.transcoder.admin import  utils
 from flumotion.transcoder.admin import adminelement
+from flumotion.transcoder.admin.waiters import IWaiters
+from flumotion.transcoder.admin.errors import OperationTimedOutError
 
+#TODO: Rewrite this... It's a mess
 
 class BaseFlumotionProxy(adminelement.AdminElement):
     
@@ -23,6 +28,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         adminelement.AdminElement.__init__(self, logger, parent, 
                                            listenerInterface)
         self._identifier = identifier
+        self._pendingElements = {} # {attr: {identifier: BaseFlumotionProxy}}
 
 
     ## Public Methods ##
@@ -46,8 +52,9 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         """
         return self.getName()
     
-    
+
     ## Virtual Methods ##
+    
     def _onElementInitialized(self, element):
         """
         Called when an element succeed its initialization,
@@ -100,7 +107,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         """
         Utility method to synchronize a listener. 
         """
-        value = getattr(self, attr, None)
+        value = self.__getAttrValue(attr)
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
@@ -120,22 +127,17 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         event broadcasting and obsolescence.                 
         """
         identifier = idfunc(*args, **kwargs)
-        finalDict = getattr(self, attr)
+        finalDict = self.__getAttrValue(attr)
         assert isinstance(finalDict, dict)
-        pendingName = attr + "Pending"
-        if not hasattr(self, pendingName):
-            setattr(self, pendingName, dict())
-        pendingDict = getattr(self, pendingName)
-        assert isinstance(pendingDict, dict)
         assert not (identifier in finalDict)
         element = factory.instantiate(self, self, identifier, *args, **kwargs)
-        assert isinstance(element, BaseFlumotionProxy)        
-        pendingDict[identifier] = element
+        assert isinstance(element, BaseFlumotionProxy)
+        self.__addPending(attr, identifier, element)
         d = element.initialize()
-        d.addCallbacks(self.__dictElementInitialized,
-                       self.__dictElementInitFailed,
-                       callbackArgs=(addEvent, pendingDict, finalDict),
-                       errbackArgs=(element, pendingDict))
+        d.addCallbacks(self.__cbDictElementInitialized,
+                       self.__ebDictElementInitFailed,
+                       callbackArgs=(addEvent, attr),
+                       errbackArgs=(element, attr))
         return identifier
         
     def _removeProxyState(self, attr, idfunc, removeEvent, *args, **kwargs):
@@ -145,21 +147,19 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         event broadcasting and obsolescence.
         """
         identifier = idfunc(*args, **kwargs)
-        finalDict = getattr(self, attr)
-        assert isinstance(finalDict, dict)
-        pendingName = attr + "Pending"
-        if not hasattr(self, pendingName):
-            setattr(self, pendingName, dict())
-        pendingDict = getattr(self, pendingName)
-        assert isinstance(pendingDict, dict)
-        assert ((identifier in finalDict) or (identifier in pendingDict))
-        if identifier in pendingDict:
-            assert isinstance(pendingDict[identifier], FlumotionProxy)
+        values = self.__getAttrValue(attr)
+        assert isinstance(values, dict)
+        assert (identifier in values)
+        pending = self.__getPending(attr, identifier)
+        if pending:
+            assert isinstance(pending, BaseFlumotionProxy)
             #Element is beeing initialized
-            pendingDict[identifier].setObsolete()
+            pending.setObsolete()
         else:
-            if identifier in finalDict:
-                element = finalDict.pop(identifier)
+            if identifier in values:
+                element = values.pop(identifier)
+                # Do not assume the retrieved dict is a reference
+                self.__setAttrValue(attr, values)
                 assert isinstance(element, BaseFlumotionProxy)
                 element._removed()
                 self._fireEvent(element, removeEvent)
@@ -176,14 +176,13 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         event broadcasting and obsolescence.
         """
         identifier = idfunc(*args, **kwargs)
-        pendingAttr = attr + "Pending"
-        current = getattr(self, attr, None)
-        pending = getattr(self, pendingAttr, None)
+        current = self.__getAttrValue(attr)
         if current:
             assert isinstance(current, BaseFlumotionProxy)
-            setattr(self, "attr", None)
+            self.__setAttrValue(attr, None)
             current._removed()
             self._fireEvent(current, unsetEvent)
+        pending = self.__getPending(attr, identifier)
         if pending:
             assert isinstance(pending, BaseFlumotionProxy)
             #The element is beeing initialized
@@ -192,12 +191,12 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             element = factory.instantiate(self, self, identifier, 
                                           *args, **kwargs)
             assert isinstance(element, BaseFlumotionProxy)
-            setattr(self, pendingAttr, element)
+            self.__addPending(attr, identifier, element)
             d = element.initialize()
-            d.addCallbacks(self.__elementInitialized,
-                           self.__elementInitFailed,
-                           callbackArgs=(setEvent, attr, pendingAttr),
-                           errbackArgs=(element, pendingAttr))
+            d.addCallbacks(self.__cbElementInitialized,
+                           self.__ebElementInitFailed,
+                           callbackArgs=(setEvent, attr),
+                           errbackArgs=(element, attr))            
         return identifier
 
     def _removeProxies(self, attr, removeEvent):
@@ -205,7 +204,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         Utility method to remove proxies.
         The parameteres are attribute names of proxy or dict of proxy.
         """
-        value = getattr(self, attr, None)
+        value = self.__getAttrValue(attr)
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
@@ -223,29 +222,63 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         The parameteres are attribute names of proxy or dict of proxy.
         """
         for attr in args:
-            pendingAttr = attr + "Pending"
-            value = getattr(self, attr, None)
+            self.__discardPendings(attr)
+            value = self.__getAttrValue(attr)
             if not value: continue
             if isinstance(value, dict):
-                pending = getattr(self, pendingAttr, None)
-                if pending:
-                    assert isinstance(pending, dict)
-                    pending.clear()
                 value.clear()
+                # Do not assume the retrieved dict is a reference
+                self.__setAttrValue(attr, value)
             else:
-                setattr(self, pendingAttr, None)
-                setattr(self, attr, None)
+                self.__setAttrValue(attr, None)
         
 
     ## Private Methods ##
+    
+    def __getAttrValue(self, attr, default=None):
+        """
+        Handle IWaiters instances.
+        """
+        value = getattr(self, attr, default)
+        if IWaiters.providedBy(value):
+            return value.getValue()
+        return value
+    
+    def __setAttrValue(self, attr, value):
+        """
+        Handle IWaiters instances.
+        """
+        current = getattr(self, attr, None)
+        if IWaiters.providedBy(current):
+            current.setValue(value)
+        else:
+            setattr(self, attr, value)
 
-    def __dictElementInitialized(self, element, addEvent, pendingDict, finalDict):
+    def __addPending(self, attr, identifier, element):
+        self._pendingElements.setdefault(attr, {})[identifier] = element
+        
+    def __removePending(self, attr, identifier, element):
+        pe = self._pendingElements.get(attr, None)
+        if pe and (identifier in pe) and pe[identifier] == element:
+            del pe[identifier]
+            
+    def __getPending(self, attr, identifier):
+        pe = self._pendingElements.get(attr, None)
+        if pe and (identifier in pe):
+            return pe[identifier]
+        return None
+
+    def __discardPendings(self, attr):
+        if attr in self._pendingElements:
+            del self._pendingElements[attr]
+
+    def __cbDictElementInitialized(self, element, addEvent, attr):
         identifier = element.getIdentifier()
         name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.debug("%s initialized", name)
+        values = self.__getAttrValue(attr)
         # Remove the pending reference if it's for the same element
-        if pendingDict[identifier] == element:
-            del pendingDict[identifier]
+        self.__removePending(attr, identifier, element)
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
@@ -253,19 +286,22 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             element._abort(HandledTranscoderFailure(error))
             element._discard()
         else:
-            finalDict[identifier] = element
+            values[identifier] = element
+            # Do not assume the retrieved dict is a reference
+            self.__setAttrValue(attr, values)
             self._onElementInitialized(element)
             #Send event when the element has been activated
             d = element.waitActive()
-            d.addCallbacks(self.__elementActivated, self.__elementAborted,
-                           callbackArgs=(addEvent,), 
-                           errbackArgs=(element, addEvent))
+            d.addCallbacks(self.__cbElementActivated, 
+                           self.__ebElementAborted,
+                           callbackArgs=(addEvent, attr), 
+                           errbackArgs=(element, addEvent, attr))
             #Activate the new element
-            element._activate()        
+            element._activate()
             #Keep the callback chain result
             return element
     
-    def __dictElementInitFailed(self, failure, element, pendingDict):
+    def __ebDictElementInitFailed(self, failure, element, attr):
         identifier = element.getIdentifier()
         name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.warning("%s failed to initialize; dropping it: %s", 
@@ -273,21 +309,19 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         self.debug("Traceback of %s failure:\n%s",
                    name, log.getFailureTraceback(failure))
         # Remove the pending reference if it's for the same element
-        if pendingDict[identifier] == element:
-            del pendingDict[identifier]
+        self.__removePending(attr, identifier, element)
         self._onElementInitFailed(element, failure)
         element._abort(failure)
         element._discard()
         #Don't propagate failures, will be dropped anyway
         return
     
-    def __elementInitialized(self, element, setEvent, attr, pendingAttr):
-        pending = getattr(self, pendingAttr, None)
+    def __cbElementInitialized(self, element, setEvent, attr):
+        identifier = element.getIdentifier()
         name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.debug("%s initialized", name)
         # Remove the pending reference if it's for the same element
-        if pending == element:
-            setattr(self, pendingAttr, None)
+        self.__removePending(attr, identifier, element)
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
@@ -295,39 +329,39 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             element._abort(HandledTranscoderFailure(error))
             element._discard()
         else:
-            setattr(self, attr, element)
+            self.__setAttrValue(attr, element)
             self._onElementInitialized(element)
             #Send event when the element has been activated
             d = element.waitActive()
-            d.addCallbacks(self.__elementActivated, self.__elementAborted,
-                           callbackArgs=(setEvent,), 
-                           errbackArgs=(element, setEvent))
+            d.addCallbacks(self.__cbElementActivated,
+                           self.__ebElementAborted,
+                           callbackArgs=(setEvent, attr), 
+                           errbackArgs=(element, setEvent, attr))
             #Activate the new element
-            element._activate()        
+            element._activate()
             #Keep the callback chain result
             return element
     
-    def __elementInitFailed(self, failure, element, pendingAttr):
-        pending = getattr(self, pendingAttr, None)
+    def __ebElementInitFailed(self, failure, element, attr):
+        identifier = element.getIdentifier()
         name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
         self.warning("%s failed to initialize; dropping it: %s", 
                      name, log.getFailureMessage(failure))
         self.debug("Traceback of %s failure:\n%s",
                    name, log.getFailureTraceback(failure))
         # Remove the pending reference if it's for the same element
-        if pending == element:
-            setattr(self, pendingAttr, None)
+        self.__removePending(attr, identifier, element)
         self._onElementInitFailed(element, failure)
         element._abort(failure)
         element._discard()
         #Don't propagate failures, will be dropped anyway
         return
 
-    def __elementActivated(self, element, event):
+    def __cbElementActivated(self, element, event, attr):
         self._fireEvent(element, event)
         self._onElementActivated(element)
         
-    def __elementAborted(self, failure, element, event):
+    def __ebElementAborted(self, failure, element, event, attr):
         self.log("Event %s aborted", event)
         self._onElementAborted(element, failure)
 

@@ -14,7 +14,7 @@ from zope.interface import Interface, implements
 from twisted.internet import defer
 
 from flumotion.transcoder import log
-from flumotion.transcoder.admin import utils
+from flumotion.transcoder import utils
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
@@ -102,6 +102,9 @@ class CustomerStore(BaseStore):
     
 
     ## Overridden Methods ##
+
+    def _doGetChildElements(self):
+        return self.getProfiles()
     
     def _doSyncListener(self, listener):
         for profile in self._profiles.itervalues():
@@ -111,9 +114,9 @@ class CustomerStore(BaseStore):
     def _doPrepareInit(self, chain):
         #Ensure that the customer info are received
         #before profiles initialization
-        chain.addCallback(self.__retrieveInfo)
+        chain.addCallback(self.__cbRetrieveInfo)
         #Retrieve and initialize the profiles
-        chain.addCallback(self.__retrieveProfiles)        
+        chain.addCallback(self.__cbRetrieveProfiles)        
         
     def _onActivated(self):
         self.debug("Customer '%s' activated", self.getLabel())
@@ -124,33 +127,33 @@ class CustomerStore(BaseStore):
         
     ## Private Methods ##
     
-    def __retrieveInfo(self, result):
+    def __cbRetrieveInfo(self, result):
         d = self._dataSource.retrieveDefaults()
-        d.addCallbacks(self.__infoReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbInfoReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
         
-    def __infoReceived(self, customerInfo, oldResult):
+    def __cbInfoReceived(self, customerInfo, oldResult):
         self._customerInfo = customerInfo
         return oldResult
   
-    def __retrieveProfiles(self, result):
+    def __cbRetrieveProfiles(self, result):
         d = self._dataSource.retrieveProfiles(self._data)
-        d.addCallbacks(self.__profilesReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbProfilesReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
     
-    def __profilesReceived(self, profilesData, oldResult):
+    def __cbProfilesReceived(self, profilesData, oldResult):
         deferreds = []
-        self._waitSynchronized.setTarget(len(profilesData))
+        self._setIdleTarget(len(profilesData))
         for profileData in profilesData:
             profile = ProfileStore(self, self, self._dataSource, 
                                    profileData)
             d = profile.initialize()
-            d.addCallbacks(self.__profileInitialized, 
-                           self.__profileInitFailed,
+            d.addCallbacks(self.__cbProfileInitialized, 
+                           self.__ebProfileInitFailed,
                            errbackArgs=(profile,))
             #Ensure no failure slips through
             d.addErrback(self._unexpectedError)
@@ -163,7 +166,7 @@ class CustomerStore(BaseStore):
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
-    def __profileInitialized(self, profile):
+    def __cbProfileInitialized(self, profile):
         self.debug("Profile '%s' initialized; adding it to customer '%s' store",
                    profile.getLabel(), self.getLabel())
         if (profile.getName() in self._profiles):
@@ -173,18 +176,16 @@ class CustomerStore(BaseStore):
             self.warning(msg)
             error = StoreError(msg)
             profile._abort(error)
-            self._waitSynchronized.inc()
             return defer._nothing
         self._profiles[profile.getName()] = profile
         #Send event when the profile has been activated
         self._fireEventWhenActive(profile, "ProfileAdded")
         #Activate the new profile store
         profile._activate()
-        self._waitSynchronized.inc()
         #Keep the callback chain result
         return profile
     
-    def __profileInitFailed(self, failure, profile):
+    def __ebProfileInitFailed(self, failure, profile):
         #FIXME: Better Error Handling ?
         self.warning("Profile '%s' of customer %s failed to initialize; "
                      + "dropping it: %s", profile.getLabel(),
@@ -192,11 +193,10 @@ class CustomerStore(BaseStore):
         self.debug("Traceback of profile '%s' failure:\n%s",
                    profile.getLabel(), log.getFailureTraceback(failure))
         profile._abort(failure)
-        self._waitSynchronized.inc()
         #Don't propagate failures, will be dropped anyway
         return
         
-    def __retrievalFailed(self, failure):
+    def __ebRetrievalFailed(self, failure):
         #FIXME: Better Error Handling ?
         self.warning("Data retrieval failed for customer %s: %s", 
                      self.getLabel(), log.getFailureMessage(failure))

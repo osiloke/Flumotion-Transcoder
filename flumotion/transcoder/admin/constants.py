@@ -17,26 +17,29 @@ COMPONENT_WAIT_TO_KILL = 30
 MONITORSET_TUNE_PERIOD = 10
 
 # Componenet label template
-TRANSCODER_LABEL_TEMPLATE = "transcoder-%{customerName}-%{profilename}"
-MONITOR_LABEL_TEMPLATE = "monitor-%{customerName}"
+TRANSCODER_LABEL_TEMPLATE = "transcoder-%(customerName)s-%(profileName)s"
+MONITOR_LABEL_TEMPLATE = "monitor-%(customerName)s"
 
 # Maximum time to wait for the admin to load 
 # and initialize all components stats
-SYNCHRONIZE_TIMEOUT = 30
+WAIT_IDLE_TIMEOUT = 30
 
 # Maximum time to wait for a component to go happy
-HAPPY_TIMEOUT = 30
+HAPPY_TIMEOUT = 60
 
 # Maximum time to wait for component properties
-MONITORSET_WAITPROPS_TIMEOUT = 30
+TASKER_WAITPROPS_TIMEOUT = 30
 
 # Maximum time for Monitoring to wait for monitor operations
 MONITORING_START_TIMEOUT = 30
+MONITORING_START_DELAY = 3
+MONITORING_UI_TIMEOUT = 10
 
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10
 FORCED_DELETION_MAX_RETRY = 3
 
+LOAD_COMPONENT_TIMEOUT = 30.0
 
 
 # AdminStore default values

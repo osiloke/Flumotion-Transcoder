@@ -14,6 +14,7 @@ from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
 from flumotion.transcoder import log
+from flumotion.transcoder import utils
 from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
@@ -39,6 +40,15 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         
         
     ## Public Methods ##
+    
+    def getManagerSet(self):
+        return self._managers
+    
+    def getComponents(self):
+        return []
+
+    def waitIdle(self, timeout=None):
+        return self.getManagerSet().waitIdle(timeout)
 
     def isComponentRejected(self, component):
         """
@@ -66,11 +76,9 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         elif self.isIdentifierRejected(identifier):
             result.errback(ComponentRejectedError("Component rejected"))
         else:
-            to = None
-            if timeout:
-                to = reactor.callLater(timeout, 
-                                       self.__waitComponentTimeout, 
-                                       identifier, result)
+            to = utils.createTimeout(timeout, 
+                                     self.__waitComponentTimeout, 
+                                     identifier, result)
             self._compWaiters.setdefault(identifier, {})[result] = to
         return result
 
@@ -152,6 +160,10 @@ class ComponentSetSkeleton(RootFlumotionProxy,
 
     ## Protected Virtual Methods ##
     
+    def _doAcceptState(self, state):
+        #FIXME: The semantic of this method is not well defined
+        return True
+    
     def _doAcceptComponent(self, component):
         """
         Called to check if a component should be added to the set.
@@ -176,38 +188,42 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         Remove a component.
         Only called for the accepted components.
         """
+
     
+    ## Overriden Protected Methods ##
+    
+    def _doGetChildElements(self):
+        return self.getComponents()
+
     
     ## Private Methods ##
     
     def __addComponent(self, component):
         d = defer.Deferred()
         d.addCallback(self._doAcceptComponent)
-        d.addCallback(self.__postAcceptAddition, component)
-        d.addErrback(self.__asyncFailure, component, 
+        d.addCallback(self.__cbPostAcceptAddition, component)
+        d.addErrback(self.__ebAcceptFailure, component, 
                      "Failure during component addition")
         d.callback(component)
         
-    def __postAcceptAddition(self, accepted, component):
+    def __cbPostAcceptAddition(self, accepted, component):
         identifier = component.getIdentifier()
         if accepted:
             self._doAddComponent(component)
             if identifier in self._compWaiters:
                 for d, to in self._compWaiters[identifier].items():
-                    if to:
-                        to.cancel()
+                    utils.cancelTimeout(to)
                     d.callback(component)
                 del self._compWaiters[identifier]
         else:
             self._doRejectComponent(component)
             if identifier in self._compWaiters:
                 for d, to in self._compWaiters[identifier].items():
-                    if to:
-                        to.cancel()
+                    utils.cancelTimeout(to)
                     d.errback(ComponentRejectedError("Component rejected"))
                 del self._compWaiters[identifier]
 
-    def __asyncFailure(self, failure, component, message):
+    def __ebAcceptFailure(self, failure, component, message):
         self.warning("%s: %s", message, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
@@ -229,8 +245,10 @@ class BaseComponentSet(ComponentSetSkeleton):
         ComponentSetSkeleton.__init__(self, mgrset, listenerInterface)
         self._components = {} # {Identifier: ComponentProxy}
 
-
     ## Overriden Public Methods ##
+
+    def getComponents(self):
+        return self._components.values()
     
     def hasComponent(self, component):
         return component.getIdentifier() in self._components

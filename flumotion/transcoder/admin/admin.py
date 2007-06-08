@@ -16,9 +16,9 @@ from twisted.internet import reactor, defer
 from flumotion.common.log import Loggable
 
 from flumotion.transcoder import log
+from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.admin import constants, utils
-from flumotion.transcoder.admin.monitorprops import MonitorProperties
+from flumotion.transcoder.admin import constants
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet
@@ -30,7 +30,8 @@ from flumotion.transcoder.admin.datastore.adminstore import AdminStore, AdminSto
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore, CustomerStoreListener
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, ProfileStoreListener
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
-from flumotion.transcoder.admin.monitoringtask import MonitoringTask
+from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
+from flumotion.transcoder.admin.monitoring import Monitoring
 
 ## Just for debug ##
 from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
@@ -45,6 +46,7 @@ class TranscoderAdmin(Loggable,
                       AdminStoreListener,
                       CustomerStoreListener,
                       ProfileStoreListener,
+                      MonitoringTaskListener,
                       ## Just for debug ##
                       TargetStoreListener,
                       ComponentSetListener,
@@ -59,17 +61,18 @@ class TranscoderAdmin(Loggable,
         self._adminCtx = AdminContext(config)
         self._datasource = self._adminCtx.getDataSource()
         self._store = AdminStore(self._datasource)
-        self._transCtx = TranscodingContext(self._store)
+        self._transCtx = TranscodingContext(self._adminCtx, self._store)
         self._managers = ManagerSet(self._adminCtx)
         self._workers = WorkerSet(self._managers)
         self._transcoders = TranscoderSet(self._managers)
-        self._monitors = MonitorSet(self._managers, self._workers)
+        self._monitors = MonitorSet(self._managers)
+        self._monitoring = Monitoring(self._workers, self._monitors)
         
         ## Just for debug ##
         self._components = ComponentSet(self._managers)
         self._components.addListener(self)
-        self._managers.addListener(self)
         
+        self._managers.addListener(self)
         self._store.addListener(self)
         self._monitors.addListener(self)
 
@@ -86,8 +89,9 @@ class TranscoderAdmin(Loggable,
         d.addCallback(lambda r: self._transcoders.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
         d.addCallback(lambda r: self._components.initialize())
-        d.addCallbacks(self.__asyncInitialized, 
-                       self.__asyncInitializationFailed)
+        d.addCallback(lambda r: self._monitoring.initialize())
+        d.addCallbacks(self.__cbAdminInitialized, 
+                       self.__ebAdminInitializationFailed)
         #fire the initialization
         d.callback(defer._nothing)
         return d
@@ -125,13 +129,37 @@ class TranscoderAdmin(Loggable,
         self.info("Atmosphere Component %s Removed", component.getLabel())
 
 
+    ## IManagerSetListener Overriden Methods ##
+    
+    def onDetached(self, managerset):
+        self._monitoring.pause()
+        
+    def onAttached(self, managerset):
+        self._monitoring.resume()
+
+
     ## IMonitorSetListener Overriden Methods ##
     
     def onMonitorAddedToSet(self, monitorset, monitor):
-        self.info("Monitor %s Added", monitor.getLabel())
+        self.info("Monitor %s Added To Set", monitor.getLabel())
         
     def onMonitorRemovedFromSet(self, monitorset, monitor):
-        self.info("Monitor %s Removed", monitor.getLabel())
+        self.info("Monitor %s Removed From Set", monitor.getLabel())
+
+
+    ## IMonitoringTaskListener Overriden Methods ## 
+    
+    def onMonitoringActivated(self, monitoringtask, monitor):
+        self.info("Monitoring %s activated", monitoringtask.getLabel())
+    
+    def onMonitoringDeactivated(self, monitoringtask, monitor):
+        self.info("Monitoring %s deactivated", monitoringtask.getLabel())
+
+    def onMonitoredFileAdded(self, task, profileCtx):
+        self.info("Monitoring %s: File %s added", task.getLabel(), profileCtx.getInputPath())
+    
+    def onMonitoredFileRemoved(self, task, profileCtx):
+        self.info("Monitoring %s: File %s removed", task.getLabel(), profileCtx.getInputPath())
 
 
     ## IAdminStoreListener Overriden Methods ##
@@ -140,8 +168,10 @@ class TranscoderAdmin(Loggable,
         self.info("Customer '%s' Added", customer.getLabel())
         customer.addListener(self)
         customer.syncListener(self)
-        task = self.__getMonitoringTaskForCustomer(customer)
-        self._monitors.addMonitoring(id(customer), task)
+        custCtx = self._transCtx.getCustomerContext(customer)
+        task = MonitoringTask(self._monitoring, custCtx)
+        task.addListener(self)
+        self._monitoring.addTask(customer.getName(), task)
         
     def onCustomerRemoved(self, admin, customer):
         self.info("Customer '%s' Removed", customer.getLabel())
@@ -171,24 +201,12 @@ class TranscoderAdmin(Loggable,
     
     ## Private Methods ##
     
-    def __asyncInitialized(self, result):
-        d = self._store.waitSynchronized(constants.SYNCHRONIZE_TIMEOUT)
-        d.addBoth(utils.dropResult, self._monitors.startMonitoring)
+    def __cbAdminInitialized(self, result):
+        d = self._store.waitIdle(constants.WAIT_IDLE_TIMEOUT)
+        d.addBoth(utils.dropResult, self._monitoring.start)
         return self
     
-    def __asyncInitializationFailed(self, failure):
+    def __ebAdminInitializationFailed(self, failure):
         reactor.stop()
         self.error("Transcoder Admin initialization failed: %s",
                    log.getFailureMessage(failure))
-
-    def __getMonitoringTaskForCustomer(self, customer):
-        custCtx = self._transCtx.getCustomerContext(customer)
-        folders = []
-        for p in custCtx.iterUnboundProfileContexts():
-            folders.append(p.getInputBase())
-        period = customer.getMonitoringPeriod()
-        props = MonitorProperties(customer.getName(), folders, period)
-        return MonitoringTask(customer.getLabel(), props)
-        
-
-        

@@ -18,12 +18,15 @@ from flumotion.common import planet
 from flumotion.common.log import Loggable
 from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
-from flumotion.transcoder.admin.proxies import fluproxy
+from flumotion.transcoder import utils
+from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.proxies import managerproxy
+from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
+
 
 
 class FlumotionProxiesLogger(Loggable):
-    logCategory = 'admin-proxies'
+    logCategory = 'trans-proxies'
 
 
 class IManagerSetListener(Interface):
@@ -32,7 +35,17 @@ class IManagerSetListener(Interface):
     
     def onManagerRemovedFromSet(self, managerset, manager):
         pass
+    
+    def onAttached(self, managerset):
+        pass
 
+    def onDetached(self, managerset):
+        """
+        Called when there is no more conection to manager,
+        before removing any other component.
+        """
+        pass
+    
 
 class ManagerSetListener(object):
     
@@ -43,24 +56,42 @@ class ManagerSetListener(object):
     
     def onManagerRemovedFromSet(self, managerset, manager):
         pass
+    
+    def onAttached(self, managerset):
+        pass
+
+    def onDetached(self, managerset):
+        pass
 
 
-class ManagerSet(fluproxy.RootFlumotionProxy):
+class ManagerSet(RootFlumotionProxy):
     
     def __init__(self, adminContext):
-        fluproxy.RootFlumotionProxy.__init__(self, FlumotionProxiesLogger(), 
-                                             IManagerSetListener)
+        RootFlumotionProxy.__init__(self, FlumotionProxiesLogger(), 
+                                    IManagerSetListener)
         self._context = adminContext
         self._multi = multi.MultiAdminModel()
         self._multi.addListener(self)
-        self._managers = {} # identifier => Manager
+        self._managers = AssignWaiters({})
+        self._setIdleTarget(1)
         
         
     ## Public Methods ##
     
+    def getManagers(self):
+        return self._managers.getValue().values()
+    
+    def iterManagers(self):
+        return self._managers.getValue().itervalues()
+    
+    def waitManagers(self, timeout=None):
+        return self._managers.wait(timeout)
 
-
+    
     ## Overriden Methods ##
+    
+    def _doGetChildElements(self):
+        return self.getManagers()
     
     def _doSyncListener(self, listener):
         self._syncProxies("_managers", listener, "ManagerAddedToSet")
@@ -73,12 +104,16 @@ class ManagerSet(fluproxy.RootFlumotionProxy):
                               ctx.getAuthenticator())
         self._multi.addManager(info, tenacious=True)
 
+
     ## MultiAdmin Event Handlers ##
     
     def model_addPlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s added", planet.get('name'))
         managerContext = self._context.getManagerContext()
+        managers = self._managers.getValue()
+        if len(managers) == 0:
+            self._fireEventWithoutPayload("Attached")
         self._addProxyState(managerproxy, "_managers", 
                             self.__getManagerUniqueId,
                             "ManagerAddedToSet", 
@@ -88,6 +123,11 @@ class ManagerSet(fluproxy.RootFlumotionProxy):
         assert planet != None
         self.log("Manager state %s removed", planet.get('name'))
         managerContext = self._context.getManagerContext()
+        managers = self._managers.getValue()
+        if len(managers) == 1:
+            ident = self.__getManagerUniqueId(admin, managerContext, planet)
+            if ident in managers:
+                self._fireEventWithoutPayload("Detached")
         self._removeProxyState("_managers", self.__getManagerUniqueId,
                                "ManagerRemovedFromSet", 
                                admin, managerContext, planet)
@@ -99,4 +139,3 @@ class ManagerSet(fluproxy.RootFlumotionProxy):
         if admin == None:
             return None
         return admin.managerId
-    

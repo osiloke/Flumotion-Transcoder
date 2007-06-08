@@ -101,6 +101,9 @@ class ProfileStore(BaseStore):
 
     ## Overridden Methods ##
     
+    def _doGetChildElements(self):
+        return self.getTargets()    
+    
     def _doSyncListener(self, listener):
         for target in self._targets.itervalues():
             if target.isActive():
@@ -108,7 +111,7 @@ class ProfileStore(BaseStore):
             
     def _doPrepareInit(self, chain):
         #Retrieve and initialize the targets
-        chain.addCallback(self.__retrieveTargets)
+        chain.addCallback(self.__cbRetrieveTargets)
 
     def _onActivated(self):
         self.debug("Profile '%s' activated", self.getLabel())
@@ -119,22 +122,22 @@ class ProfileStore(BaseStore):
         
     ## Private Methods ##
         
-    def __retrieveTargets(self, result):
+    def __cbRetrieveTargets(self, result):
         d = self._dataSource.retrieveTargets(self._data)
-        d.addCallbacks(self.__targetsReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbTargetsReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
     
-    def __targetsReceived(self, targetsData, oldResult):
+    def __cbTargetsReceived(self, targetsData, oldResult):
         deferreds = []
-        self._waitSynchronized.setTarget(len(targetsData))
+        self._setIdleTarget(len(targetsData))
         for profileData in targetsData:
             target = TargetStore(self, self, self._dataSource, 
                                  profileData)
             d = target.initialize()
-            d.addCallbacks(self.__targetInitialized, 
-                           self.__targetInitFailed,
+            d.addCallbacks(self.__cbTargetInitialized, 
+                           self.__ebTargetInitFailed,
                            errbackArgs=(target,))
             #Ensure no failure slips through
             d.addErrback(self._unexpectedError)
@@ -147,7 +150,7 @@ class ProfileStore(BaseStore):
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
-    def __targetInitialized(self, target):
+    def __cbTargetInitialized(self, target):
         self.debug("Target '%s' initialized; adding it to profile '%s' store",
                    target.getLabel(), self.getLabel())
         if (target.getName() in self._targets):
@@ -157,18 +160,16 @@ class ProfileStore(BaseStore):
             self.warning(msg)
             error = StoreError(msg)
             target._abort(error)
-            self._waitSynchronized.inc()
             return defer._nothing
         self._targets[target.getName()] = target
         #Send event when the target has been activated
         self._fireEventWhenActive(target, "TargetAdded")
         #Activate the new target store
         target._activate()
-        self._waitSynchronized.inc()
         #Keep the callback chain result
         return target
     
-    def __targetInitFailed(self, failure, target):
+    def __ebTargetInitFailed(self, failure, target):
         #FIXME: Better Error Handling ?
         self.warning("target '%s' of profile '%s' failed to initialize; "
                      + "dropping it: %s", target.getLabel(),
@@ -176,20 +177,12 @@ class ProfileStore(BaseStore):
         self.debug("Traceback of target '%s' failure:\n%s",
                    target.getLabel(), log.getFailureTraceback(failure))
         target._abort(failure)
-        self._waitSynchronized.inc()
         #Don't propagate failures, will be dropped anyway
         return
         
-    def __retrievalFailed(self, failure):
+    def __ebRetrievalFailed(self, failure):
         #FIXME: Better Error Handling ?
         self.warning("Data retrieval failed for target %s: %s", 
                      self.getLabel(), log.getFailureMessage(failure))
         #Propagate failures
         return failure
-
-    def __unexpectedError(self, failure, target):
-        """
-        Prevents the lost of failure messages.
-        """
-        self.warning("Unexpected Error: %s",
-                     log.getFailureMessage(failure))    

@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin import utils
+from flumotion.transcoder import utils
 
 
 class Variables(object):

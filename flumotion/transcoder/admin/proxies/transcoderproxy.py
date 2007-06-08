@@ -48,8 +48,9 @@ class TranscoderProxy(componentproxy.ComponentProxy):
     ## Public Methods ##
     
     def getTranscoderProgress(self):
-        assert self._uiState, "No UI State"
-        jobData = self._uiState.get("job-data", None)
+        ui = self._getUIState()
+        assert ui, "No UI State"
+        jobData = ui.get("job-data", None)
         if jobData:
             return jobData.get('progress', 0.0)
         return 0.0

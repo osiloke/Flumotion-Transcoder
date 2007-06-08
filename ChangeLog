@@ -1,3 +1,8 @@
+2007-06-08  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Refactoring for generic idle state detection,
+	  and source cleanup.
+
 2007-05-31  Sebastien Merle  <sebastien@fluendo.com>
 
 	* First version with monitoring distribution.

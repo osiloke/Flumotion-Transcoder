@@ -25,6 +25,8 @@ from flumotion.common import worker, messages
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-transcoder')
 
+from flumotion.transcoder import utils
+
 KILL_TIMEOUT = 10
 
 
@@ -70,8 +72,7 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         process = reactor.spawnProcess(self, argv[0], env=env, path=path,
                                        args=argv, childFDs=childFDs)
         self.setPid(process.pid)
-        if timeout:
-            self.timeout = reactor.callLater(timeout, self._timeout, "timeout")
+        self.timeout = utils.createTimeout(timeout, self._timeout, "timeout")
         return self.terminated
 
     def abort(self):
@@ -81,7 +82,7 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         if self._aborted:
             return self._aborted
         self._aborted = defer.Deferred()
-        self.timeout = reactor.callLater(0, self._timeout, "abort")
+        self.timeout = utils.createTimeout(0, self._timeout, "abort")
         return self._aborted
 
     def _timeout(self, what):
@@ -92,7 +93,8 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         self.logger.warning("%s (%d) %s, sending a SIGTERM"
                             % (self.processType, self.pid, what))
         os.kill(self.pid, signal.SIGTERM)
-        self.timeout = reactor.callLater(KILL_TIMEOUT, self._killTimeout, what)
+        self.timeout = utils.createTimeout(KILL_TIMEOUT, 
+                                           self._killTimeout, what)
         
     def _killTimeout(self, what):
         if not self.pid:
@@ -102,7 +104,8 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         self.logger.warning("%s (%d) %s timeout (again?), sending a SIGKILL"
                             % (self.processType, self.pid, what))
         os.kill(self.pid, signal.SIGKILL)
-        self.timeout = reactor.callLater(KILL_TIMEOUT, self._killTimeout, what)
+        self.timeout = utils.createTimeout(KILL_TIMEOUT, 
+                                           self._killTimeout, what)
     
     def outReceived(self, data):
         self.output += data
@@ -121,8 +124,7 @@ class Process(worker.ProcessProtocol, flog.Loggable):
             self.logger.debug(message.debug)
 
     def processEnded(self, status):
-        if self.timeout:
-            self.timeout.cancel()
+        utils.cancelTimeout(self.timeout)
         if self.output:
             self.info(self.output)
         self.output = None

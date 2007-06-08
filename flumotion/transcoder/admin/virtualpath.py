@@ -12,7 +12,8 @@
 
 import re
 
-from flumotion.transcoder.admin import constants, utils
+from flumotion.transcoder import utils
+from flumotion.transcoder.admin import constants
 
 
 _rootPattern = re.compile("(\w*):(.*)")
@@ -35,14 +36,20 @@ class VirtualPath(object):
         return None
     
     def __init__(self, path, rootName=None):
-        root2 = None
-        m = _rootPattern.match(path)
-        if m:
-            root2, path = m.groups()
-        #FIXME: Maybe better to raise an exception
-        assert (not rootName) or (not root2) or (rootName == root2)
-        self._path = path
-        self._root = rootName or root2 or constants.DEFAULT_root
+        if isinstance(path, str):
+            root2 = None
+            m = _rootPattern.match(path)
+            if m:
+                root2, path = m.groups()
+            #FIXME: Maybe better to raise an exception
+            assert (not rootName) or (not root2) or (rootName == root2)
+            self._path = path
+            self._root = rootName or root2 or constants.DEFAULT_root
+        elif isinstance(path, VirtualPath):
+            self._path = path._path
+            self._root = path._root
+        else:
+            raise TypeError()
 
     def getPath(self):
         return self._path
@@ -76,6 +83,12 @@ class VirtualPath(object):
     def __ne__(self, virtPath):
         return not self.__eq__(virtPath)
     
+    def __add__(self, path):
+        if not isinstance(path, str):
+            raise TypeError("cannot concatenate '%s' to VirtualPath"
+                            % path.__class__.__name__)
+        return VirtualPath(self).append(path)
+        
     def join(self, virtPath):
         #FIXME: Maybe better to raise an exception
         assert virtPath._root == self._root
@@ -88,3 +101,4 @@ class VirtualPath(object):
         path = utils.joinPath(self._path, utils.joinPath(*goodparts))
         return VirtualPath(path, self._root)
 
+    

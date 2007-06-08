@@ -14,12 +14,8 @@ import math
 
 from zope.interface import Interface
 
+from flumotion.transcoder.admin.admintask import IAdminTask
 
-class ITask(Interface):
-
-    def setTaskWorker(self, worker):
-        pass
-    
 
 class TaskBalancer(object):
     """
@@ -47,21 +43,17 @@ class TaskBalancer(object):
         del self._workers[worker]
     
     def addTask(self, task, worker=None):
+        assert IAdminTask.providedBy(task)
         assert (worker == None) or (worker in self._workers)
         self._total += 1
-        if not self._workers:
+        if worker:
+            self._workers[worker].append(task)
+            task.suggestWorker(worker)
+        else:
             self._orphanes.append(task)
-            task.setTaskWorker(None)
-            return
-        if worker == None:
-            workers = self._workers.keys()
-            workers.sort(key=lambda w: len(self._workers[w]))
-            worker = workers[0]
-        self._workers[worker].append(task)
-        
-        task.setTaskWorker(worker)
     
     def removeTask(self, task):
+        assert IAdminTask.providedBy(task)
         if task in self._orphanes:
             self._orphanes.remove(task)
             self._total -= 1
@@ -72,27 +64,26 @@ class TaskBalancer(object):
                 self._total -= 1
                 return
 
-    def balanceTasks(self):
-        if not self._workers:
-            return
-        max = int(math.ceil(float(self._total) / len(self._workers)))
-        workers = self._workers.keys()
-        workers.sort(key=lambda w: -len(self._workers[w]))
-        for worker in workers:
-            tasks = self._workers[worker]
-            l = len(tasks)
-            if l > max:
-                self._orphanes.extend(tasks[max:])
-                del tasks[max:]
-            elif l < max:
-                i = -(max - l)
-                migrated = self._orphanes[i:]
-                del self._orphanes[i:]
-                tasks.extend(migrated)
-                for j in migrated:
-                    j.setTaskWorker(worker)
+    def balance(self):
+        if self._workers:
+            max = int(math.ceil(float(self._total) / len(self._workers)))
+            workers = self._workers.keys()
+            workers.sort(key=lambda w: -len(self._workers[w]))
+            for worker in workers:
+                tasks = self._workers[worker]
+                l = len(tasks)
+                if l > max:
+                    self._orphanes.extend(tasks[max:])
+                    del tasks[max:]
+                elif l < max:
+                    i = -(max - l)
+                    migrated = self._orphanes[i:]
+                    del self._orphanes[i:]
+                    tasks.extend(migrated)
+                    for j in migrated:
+                        j.suggestWorker(worker)
         if len(self._orphanes) > 0:
             assert len(self._workers) == 0
             for j in self._orphanes:
-                j.setTaskWorker(None)
+                j.suggestWorker(None)
 

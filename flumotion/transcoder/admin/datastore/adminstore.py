@@ -108,6 +108,9 @@ class AdminStore(BaseStore):
     
     ## Overridden Methods ##
         
+    def _doGetChildElements(self):
+        return self.getCustomers()
+        
     def _doSyncListener(self, listener):
         for customer in self._customers.itervalues():
             if customer.isActive():
@@ -116,40 +119,40 @@ class AdminStore(BaseStore):
     def _doPrepareInit(self, chain):
         #Ensure that the defaults are received
         #before customers initialization
-        chain.addCallback(self.__retrieveDefaults)
+        chain.addCallback(self.__cbRetrieveDefaults)
         #Retrieve and initialize the customers
-        chain.addCallback(self.__retrieveCustomers)
+        chain.addCallback(self.__cbRetrieveCustomers)
         
         
     ## Private Methods ##
     
-    def __retrieveDefaults(self, result):
+    def __cbRetrieveDefaults(self, result):
         d = self._dataSource.retrieveDefaults()
-        d.addCallbacks(self.__defaultsReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbDefaultsReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
         
-    def __defaultsReceived(self, defaultsData, oldResult):
+    def __cbDefaultsReceived(self, defaultsData, oldResult):
         self._data = defaultsData
         return oldResult
     
-    def __retrieveCustomers(self, result):
+    def __cbRetrieveCustomers(self, result):
         d = self._dataSource.retrieveCustomers()
-        d.addCallbacks(self.__customersReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbCustomersReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
     
-    def __customersReceived(self, customersData, oldResult):
+    def __cbCustomersReceived(self, customersData, oldResult):
         deferreds = []
-        self._waitSynchronized.setTarget(len(customersData))
+        self._setIdleTarget(len(customersData))
         for customerData in customersData:
             customer = CustomerStore(self, self, self._dataSource, 
                                      customerData)
             d = customer.initialize()
-            d.addCallbacks(self.__customerInitialized, 
-                           self.__customerInitFailed,
+            d.addCallbacks(self.__cbCustomerInitialized, 
+                           self.__ebCustomerInitFailed,
                            errbackArgs=(customer,))
             #Ensure no failure slips through
             d.addErrback(self._unexpectedError)
@@ -162,7 +165,7 @@ class AdminStore(BaseStore):
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
-    def __customerInitialized(self, customer):
+    def __cbCustomerInitialized(self, customer):
         self.debug("Customer '%s' initialized; adding it to the admin store",
                    customer.getLabel())
         if (customer.getName() in self._customers):
@@ -171,29 +174,26 @@ class AdminStore(BaseStore):
             self.warning("%s", msg)
             error = StoreError(msg)
             customer._abort(error)
-            self._waitSynchronized.inc()
             return defer._nothing
         self._customers[customer.getName()] = customer
         #Send event when the customer has been activated
         self._fireEventWhenActive(customer, "CustomerAdded")
         #Activate the new customer store
         customer._activate()
-        self._waitSynchronized.inc()
         #Keep the callback chain result
         return customer
     
-    def __customerInitFailed(self, failure, customer):
+    def __ebCustomerInitFailed(self, failure, customer):
         #FIXME: Better Error Handling ?
         self.warning("Customer '%s' failed to initialize; dropping it: %s", 
                      customer.getLabel(), log.getFailureMessage(failure))
         self.debug("Traceback of customer '%s' failure:\n%s",
                    customer.getLabel(), log.getFailureTraceback(failure))
         customer._abort(failure)
-        self._waitSynchronized.inc()
         #Don't propagate failures, will be dropped anyway
         return
     
-    def __retrievalFailed(self, failure):
+    def __ebRetrievalFailed(self, failure):
         #FIXME: Better Error Handling ?
         self.warning("Data retrieval failed for the admin store: %s", 
                      log.getFailureMessage(failure))

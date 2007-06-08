@@ -20,7 +20,7 @@
 # Headers in this file shall remain intact.
 
 from twisted.trial import unittest
-from flumotion.transcoder.admin import utils
+from flumotion.transcoder import utils
 
 
 class TestUtils(unittest.TestCase):

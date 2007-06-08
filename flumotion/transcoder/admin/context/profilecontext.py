@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin import utils
+from flumotion.transcoder import utils
 from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.substitution import Variables
 from flumotion.transcoder.admin.virtualpath import VirtualPath
@@ -110,6 +110,7 @@ class UnboundProfileContext(object):
         self.store = profileStore
         self._vars = Variables(customerContext._vars)
         self._vars.addVar("sourceSubdir", self.getSubdir())
+        self._vars.addVar("profileName", self.store.getName())
 
     def getSubdir(self):
         subdir = self.store.getSubdir()
@@ -217,7 +218,9 @@ class ProfileContext(UnboundProfileContext):
         path = utils.ensureRelPath(path)
         return utils.cleanupPath(path)
     
-    
+    def getTranscoderLabel(self):
+        tmpl = self.customer.transcoding.admin.config.transcoderLabelTemplate
+        return self._vars.substitute(tmpl)
 
     
     

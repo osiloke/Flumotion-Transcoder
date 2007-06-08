@@ -13,11 +13,10 @@
 from zope.interface import Interface, implements
 from twisted.internet import defer
 
-from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.proxies import managerset
-from flumotion.transcoder.admin.proxies import managerproxy
-from flumotion.transcoder.admin.proxies import workerproxy
-
+from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
+from flumotion.transcoder.admin.proxies.workerproxy import WorkerProxy
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
+from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
 
 class IWorkerSetListener(Interface):
     def onWorkerAddedToSet(self, workerset, worker):
@@ -38,14 +37,12 @@ class WorkerSetListener(object):
         pass
 
 
-class WorkerSet(fluproxy.RootFlumotionProxy):
-    
-    implements(managerset.IManagerSetListener,
-               managerproxy.IManagerListener)
+class WorkerSet(RootFlumotionProxy,
+                ManagerSetListener, ManagerListener):
     
     def __init__(self, mgrset):
-        assert isinstance(mgrset, managerset.ManagerSet)
-        fluproxy.RootFlumotionProxy.__init__(self, mgrset, IWorkerSetListener)
+        assert isinstance(mgrset, ManagerSet)
+        RootFlumotionProxy.__init__(self, mgrset, IWorkerSetListener)
         self._managers = mgrset
         self._workers = {} # {identifier: Worker}
         self._managers.addListener(self)
@@ -64,7 +61,7 @@ class WorkerSet(fluproxy.RootFlumotionProxy):
     
     def __contains__(self, value):
         identifier = value
-        if isinstance(value, workerproxy.WorkerProxy):
+        if isinstance(value, WorkerProxy):
             identifier = value.getIdentifier()
         return identifier in self._workers
     

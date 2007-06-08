@@ -5,7 +5,7 @@ pythondir = $(libdir)/flumotion/python/flumotion/transcoder
 python_PYTHON = __init__.py inifile.py properties.py \
                 jobconfig.py jobreport.py \
                 process.py pipelinecrawler.py \
-                log.py errors.py enums.py
+                log.py errors.py enums.py utils.py
 python_DATA =
 
 clean-local:

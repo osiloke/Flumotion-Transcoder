@@ -10,13 +10,17 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 
 from flumotion.transcoder import log
+from flumotion.transcoder import utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
+from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.admin.waiters import PassiveWaiters
+from flumotion.transcoder.admin.waiters import CounterWaiters
 
 
 class AdminElement(eventsource.EventSource, LoggerProxy):
@@ -26,25 +30,30 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     after the element and its parents have been activated.
     The generic waiting defered are separated from childs
     to respect callback orders: The deferreds got by calling waitActive()
-    are garentee to be triggered before the child's ones.
+    are garenteed to be triggered before the child's ones.
     An element is activated after beeing published by its parent.
     The concept is: The element are created, initialized and then
     if all whent well they are added to the parent list and activated,
-    or if something when wrong, they are aborted.    
+    or if something when wrong, they are aborted.
+    This class trac an activation counter to know if it's in a stable state
+    (No pending initialization/activation). The child class are in charge
+    of setting the idle target value and be sure to activate 
+    or abort all elements.
     """
     
     def __init__(self, logger, parent, interfaces):
         assert (parent == None) or isinstance(parent, AdminElement)
         eventsource.EventSource.__init__(self, interfaces)
         LoggerProxy.__init__(self, logger)
-        self._waitForActivation = []
-        self._waitingChilds = []
+        self._activeWaiters = PassiveWaiters()
+        self._activeChildWaiters = PassiveWaiters()
         self._triggered = False
         self._active = False
         self._failure = None
         self._parent = parent
         self._obsolete = False
         self._beingRemoved = False
+        self._idleWaiters = CounterWaiters(0, 0, self)
 
 
     ## Public Methods ##
@@ -54,6 +63,22 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     
     def getParent(self):
         return self._parent
+    
+    def isIdle(self):
+        return not self._idleWaiters.isWaiting()
+    
+    def waitIdle(self, timeout=None):
+        """
+        Wait for all pending elements to be activated or aborted,
+        and then all child elements to become idle too.
+        """
+        
+        if self.isIdle():
+            d = defer.succeed(self)
+        else:
+            d = self._idleWaiters.wait(timeout)
+        d.addCallback(self.__cbWaitChildIdle, timeout)
+        return d
 
     def initialize(self):
         self.log("Initializing %s", self.__class__.__name__)
@@ -61,8 +86,8 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             self._activate()
         chain = defer.Deferred()
         self._doPrepareInit(chain)
-        chain.addCallbacks(self.__initializationSucceed, 
-                           self.__initializationFailed)
+        chain.addCallbacks(self.__cbInitializationSucceed, 
+                           self.__ebInitializationFailed)
         chain.callback(self)
         return chain
     
@@ -79,7 +104,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     def isActive(self):
         return self._active
     
-    def waitActive(self):
+    def waitActive(self, timeout=None):
         """
         Gives a deferred that will be called when the element
         has been activated (added)
@@ -88,9 +113,8 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             return defer.succeed(self)
         if self._failure:
             return defer.fail(self._failure)        
-        d = defer.Deferred()
-        self._waitForActivation.append(d)
-        return d
+        assert self._activeWaiters != None
+        return self._activeWaiters.wait(timeout)
 
     
     ## Virtual Methods ##
@@ -151,8 +175,29 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Override to cleanup element.
         """
     
+    def _doGetChildElements(self):
+        """
+        Used to retrieve sub elements when waiting for idle state.
+        """
+        return []
+    
     
     ## Protected/Friend Method ##
+    
+    def _setIdleTarget(self, value):
+        self._idleWaiters.setTarget(value)
+    
+    def _inIdlTarget(self):
+        self._idleWaiters.incTarget()
+        
+    def _decIdlTarget(self):
+        self._idleWaiters.decTarget()
+    
+    def _childElementActivated(self):
+        self._idleWaiters.inc()
+
+    def _childElementAborted(self):
+        self._idleWaiters.decTarget()
     
     def _isBeingRemoved(self):
         """
@@ -198,8 +243,8 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         else:
             chain = defer.succeed(None)
         self._doPrepareActivation(chain)
-        chain.addCallbacks(self.__parentActivated,
-                           self.__parentAborted)
+        chain.addCallbacks(self.__cbParentActivated,
+                           self.__ebParentAborted)
                 
     def _abort(self, failure):
         """
@@ -213,7 +258,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
                  self.__class__.__name__,
                  log.getFailureMessage(failure))
         #Don't wait for parent when aborting
-        self.__parentAborted(failure)
+        self.__ebParentAborted(failure)
 
 
     def _fireEventWhenActive(self, payload, event, interface=None):
@@ -223,7 +268,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         assert isinstance(payload, AdminElement)
         d = payload.waitActive()
         d.addCallbacks(self._fireEvent, 
-                       self.__eventAborted,
+                       self.__ebEventAborted,
                        callbackArgs=(event, interface),
                        errbackArgs=(event,))
         d.addErrback(self._unexpectedError)
@@ -235,12 +280,12 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         assert isinstance(payload, AdminElement)
         d = payload.waitActive()
         d.addCallbacks(self._fireEventTo, 
-                       self.__eventAborted,
+                       self.__ebEventAborted,
                        callbackArgs=(listener, event, interface),
                        errbackArgs=(event,))
         d.addErrback(self._unexpectedError)
 
-    def _childWaitActive(self):
+    def _childWaitActive(self, timeout=None):
         """
         Diffrent than waitActive to ensure calling order.
         First the deffered added with waitActive and then
@@ -251,9 +296,8 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             return defer.succeed(self)
         if self._failure:
             return defer.fail(self._failure)        
-        d = defer.Deferred()
-        self._waitingChilds.append(d)
-        return d
+        assert self._activeChildWaiters != None
+        return self._activeChildWaiters.wait(timeout)
     
     def _unexpectedError(self, failure):
         """
@@ -271,14 +315,22 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
 
     ## Private Methods ##
     
-    def __initializationSucceed(self, result):
+    def __cbWaitChildIdle(self, element, timeout):
+        childs = self._doGetChildElements()
+        if not childs: return element
+        defs = [c.waitIdle(timeout) for c in childs]
+        d = defer.DeferredList(defs, fireOnOneErrback=1, consumeErrors=1)
+        d.addCallback(utils.overrideResult, self)
+        return d
+    
+    def __cbInitializationSucceed(self, result):
         self.log("%s successfully initialized", 
                  self.__class__.__name__)
         self._onInitDone()
         #The initialisation chain return the initialized object on success
         return self
     
-    def __initializationFailed(self, failure):
+    def __ebInitializationFailed(self, failure):
         #FIXME: Better Error Handling
         self.log("%s initialization failed: %s",
                  self.__class__.__name__,
@@ -287,37 +339,37 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         #Propagate failures
         return failure
     
-    def __eventAborted(self, failure, event):
+    def __ebEventAborted(self, failure, event):
         self.log("Event %s aborted", event)
         return
 
-    def __parentActivated(self, parent):
+    def __cbParentActivated(self, parent):
         self._doFinishActivation()
-        activations = self._waitForActivation
-        childs = self._waitingChilds
-        self._waitForActivation = None
-        self._waitingChilds = None
+        waiters = self._activeWaiters
+        childWaiters = self._activeChildWaiters
+        self._activeWaiters = None
+        self._activeChildWaiters = None
         self._failure= None
         self.log("%s successfully activated", self.__class__.__name__)
         self._active = True
-        for d in activations:
-            d.callback(self)
+        waiters.fireCallbacks(self)
         self._onActivated()
-        for d in childs:
-            d.callback(self)
+        childWaiters.fireCallbacks(self)
+        if self._parent:
+            self._parent._childElementActivated()
                 
-    def __parentAborted(self, failure):
-        activations = self._waitForActivation
-        childs = self._waitingChilds
-        self._waitForActivation = None
-        self._waitingChilds = None
+    def __ebParentAborted(self, failure):
+        waiters = self._activeWaiters
+        childWaiters = self._activeChildWaiters
+        self._activeWaiters = None
+        self._activeChildWaiters = None
         self._failure = failure
         self._active = False
         self.log("%s activation failed: %s",
                  self.__class__.__name__,
                  log.getFailureMessage(failure))
-        for d in activations:
-            d.errback(failure)
+        waiters.fireErrbacks(failure)
         self._onAborted(failure)
-        for c in childs:
-            d.errback(failure)
+        childWaiters.fireErrbacks(failure)
+        if self._parent:
+            self._parent._childElementAborted()

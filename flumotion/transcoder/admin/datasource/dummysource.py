@@ -16,11 +16,12 @@ from twisted.internet import reactor, defer
 from twisted.python import failure
 
 from flumotion.common.log import Loggable
+
+from flumotion.transcoder import utils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
-from flumotion.transcoder.admin import utils
 from flumotion.transcoder.admin.datasource import datasource
 
 

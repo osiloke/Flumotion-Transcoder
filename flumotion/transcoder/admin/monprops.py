@@ -37,6 +37,14 @@ class MonitorProperties(ComponentPropertiesMixin):
         directories = [VirtualPath.fromPath(p, roots) for p in absPathList]
         return cls(name, directories, scanPeriod)
     
+    @classmethod
+    def createFromContext(cls, customerCtx):
+        folders = []
+        for p in customerCtx.iterUnboundProfileContexts():
+            folders.append(p.getInputBase())
+        period = customerCtx.store.getMonitoringPeriod()
+        return cls(customerCtx.store.getName(), folders, period)
+    
     def __init__(self, name, virtDirs, scanPeriod=None):
         assert isinstance(virtDirs, list) or isinstance(virtDirs, tuple)
         self._name = name

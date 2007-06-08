@@ -10,7 +10,8 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin import utils, constants
+from flumotion.transcoder import utils
+from flumotion.transcoder.admin import constants
 from flumotion.transcoder.admin.substitution import Variables
 from flumotion.transcoder.admin.virtualpath import VirtualPath
 from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
@@ -61,6 +62,7 @@ class CustomerContext(object):
         self.transcoding = transcodingContext
         self.store = customerStore
         self._vars = Variables(transcodingContext._vars)
+        self._vars.addVar("customerName", self.store.getName())
 
     def getUnboundProfileContextByName(self, profileName):
         return UnboundProfileContext(self.store[profileName], self)
@@ -153,4 +155,7 @@ class CustomerContext(object):
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             constants.DEFAULT_DONEREP_DIR)
 
+    def getMonitorLabel(self):
+        template = self.transcoding.admin.config.monitorLabelTemplate
+        return self._vars.substitute(template)
     

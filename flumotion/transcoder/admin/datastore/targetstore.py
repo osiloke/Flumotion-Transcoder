@@ -62,7 +62,7 @@ class TargetStore(BaseStore):
     ## Overridden Methods ##
     
     def _doPrepareInit(self, chain):
-        chain.addCallback(self.__retrieveConfig)
+        chain.addCallback(self.__cbRetrieveConfig)
 
     def _onActivated(self):
         self.debug("Target '%s' activated", self.getLabel())
@@ -73,18 +73,18 @@ class TargetStore(BaseStore):
 
     ## Private Methods ##
         
-    def __retrieveConfig(self, result):
+    def __cbRetrieveConfig(self, result):
         d = self._dataSource.retrieveTargetConfig(self._data)
-        d.addCallbacks(self.__configReceived, 
-                       self.__retrievalFailed,
+        d.addCallbacks(self.__cbConfigReceived, 
+                       self.__ebRetrievalFailed,
                        callbackArgs=(result,))
         return d
 
-    def __configReceived(self, configData, oldResult):
+    def __cbConfigReceived(self, configData, oldResult):
         self._config = configstore.TargetConfig(configData)
         return oldResult
 
-    def __retrievalFailed(self, failure):
+    def __ebRetrievalFailed(self, failure):
         #FIXME: Better Error Handling ?
         self.warning("Data retrieval failed for target %s: %s", 
                      self.getLabel(), log.getFailureMessage(failure))

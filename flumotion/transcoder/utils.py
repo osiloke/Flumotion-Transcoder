@@ -180,6 +180,15 @@ def joinPath(*parts):
 
 ## Deferred Utility Functions ##
 
+def createTimeout(timeout, callback, *args, **kwargs):
+    if timeout == None:
+        return None
+    return reactor.callLater(timeout, callback, *args, **kwargs)
+
+def cancelTimeout(timeout):
+    if timeout and timeout.active():
+        timeout.cancel()
+
 def delayedSuccess(result, delay):
     """
     Return a deferred wich callback will be called after a specified

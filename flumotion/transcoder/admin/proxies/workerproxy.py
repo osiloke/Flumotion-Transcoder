@@ -56,7 +56,7 @@ class WorkerDefinition(object):
     
     def getContext(self):
         return self._context
-
+    
 
 class WorkerProxy(fluproxy.FlumotionProxy):
     

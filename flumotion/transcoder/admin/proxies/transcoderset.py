@@ -11,17 +11,18 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor, defer
 
-from flumotion.transcoder.admin.proxies import componentset
-from flumotion.transcoder.admin.proxies import transcoderproxy
+from flumotion.transcoder import utils
+from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
+from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
 
 
 class ITranscoderSetListener(Interface):
-    def onTranscoderAddedToSet(self, transcoderset, transcoder):
+    def onTranscoderAddedToSet(self, monitorset, monitor):
         pass
     
-    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
+    def onTranscoderRemovedFromSet(self, monitorset, monitor):
         pass
 
 
@@ -29,39 +30,43 @@ class TranscoderSetListener(object):
     
     implements(ITranscoderSetListener)
     
-    def onTranscoderAddedToSet(self, transcoderset, transcoder):
+    def onTranscoderAddedToSet(self, monitorset, monitor):
         pass
     
-    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
+    def onTranscoderRemovedFromSet(self, monitorset, monitor):
         pass
 
-    
-class TranscoderSet(componentset.BaseComponentSet):
+
+class TranscoderSet(BaseComponentSet):
     
     def __init__(self, mgrset):
-        componentset.BaseComponentSet.__init__(self, mgrset,
-                                               ITranscoderSetListener)
-        self._components = {} # {identifier: TranscoderProxy}
+        BaseComponentSet.__init__(self, mgrset,
+                                  ITranscoderSetListener)
         
-    ## Public Methods ##
+    ## Public Method ##
     
-    def startupTranscoder(self, config, niceLevel=None):
-        d = defer.Deferred()
-        
-        return d
-        
+
+
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
         self._syncProxies("_components", listener, "TranscoderAddedToSet")
 
     def _doAcceptComponent(self, component):
-        return isinstance(component, transcoderproxy.TranscoderProxy)
+        if not isinstance(component, TranscoderProxy):
+            return False
+        return True
 
     def _doAddComponent(self, component):
-        componentset.BaseComponentSet._doAddComponent(self, component)
+        BaseComponentSet._doAddComponent(self, component)
+        self.debug("Transcoder component '%s' added to set",
+                   component.getLabel())
         self._fireEvent(component, "TranscoderAddedToSet")
-    
+        
     def _doRemoveComponent(self, component):
-        componentset.BaseComponentSet._doRemoveComponent(self, component)
+        BaseComponentSet._doRemoveComponent(self, component)
+        self.debug("Transcoder component '%s' removed from set",
+                   component.getLabel())
         self._fireEvent(component, "TranscoderRemovedFromSet")
+
+    

@@ -16,11 +16,11 @@ from flumotion.transcoder.admin.datasource import filesource
 class AdminContext(object):
     
     def __init__(self, adminConfig):
-        self._config = adminConfig
+        self.config = adminConfig
         self._vars = None
 
     def getDataSource(self):
-        return filesource.FileDataSource(self._config.datasource.file)
+        return filesource.FileDataSource(self.config.datasource.file)
         
     def getManagerContext(self):
-        return ManagerContext(self._config)
+        return ManagerContext(self.config)

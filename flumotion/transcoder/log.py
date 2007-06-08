@@ -76,8 +76,14 @@ def cleanTraceback(tb):
 class LoggerProxy(object):
 
     def __init__(self, logger, **kwargs):
-        self.logger = logger
+        self.setLogger(logger, **kwargs)
+    
+    def setLogger(self, logger, **kwargs):
+        self._logger = logger
         self._kwargs = kwargs
+        # If no logger is specified, use the global logger
+        if logger == None:
+            self._logger = flog
     
     def getLogPrefix(self, kwargs):
         return None
@@ -91,33 +97,33 @@ class LoggerProxy(object):
     
     def __setattr__(self, attr, value):
         if attr in ("logName", "name"):
-            setattr(self.logger, attr, value)
+            setattr(self._logger, attr, value)
         else:
             self.__dict__[attr] = value
             
     def __getattr__(self, attr):
         if attr in ("logName", "name"):
-            return getattr(self.logger, attr)
+            return getattr(self._logger, attr)
         if not (attr in self.__dict__):
             raise AttributeError, attr
         return self.__dict__[attr]
     
     def log(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
-        self.logger.log(*args, **kwargs)
+        self._logger.log(*args, **kwargs)
 
     def debug(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
-        self.logger.debug(*args, **kwargs)
+        self._logger.debug(*args, **kwargs)
 
     def info(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
-        self.logger.info(*args, **kwargs)
+        self._logger.info(*args, **kwargs)
 
     def warning(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
-        self.logger.warning(*args, **kwargs)
+        self._logger.warning(*args, **kwargs)
 
     def error(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
-        self.logger.error(*args, **kwargs)
+        self._logger.error(*args, **kwargs)

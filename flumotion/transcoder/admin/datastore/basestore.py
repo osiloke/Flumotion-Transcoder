@@ -14,7 +14,7 @@ from twisted.internet import defer
 
 from flumotion.transcoder import log
 from flumotion.transcoder.admin import adminelement
-from flumotion.transcoder.admin.waiters import CounterWaiter
+from flumotion.transcoder.admin.waiters import CounterWaiters
 from flumotion.transcoder.admin.datasource import datasource
 
 
@@ -72,13 +72,9 @@ class BaseStore(adminelement.AdminElement):
                                            listenerInterface)
         self._data = data
         self._dataSource = dataSource
-        self._waitSynchronized = CounterWaiter(0, 0, self)
 
 
     ## Public Methods ##
-
-    def waitSynchronized(self, timeout=None):
-        return self._waitSynchronized.wait(timeout)
 
 
     ## Overriden Methods ##
@@ -90,7 +86,7 @@ class BaseStore(adminelement.AdminElement):
             d.addCallback(lambda r, v: v, result)
             return d
         chain.addCallback(waitDatasource)
-        chain.addErrback(self.__dataSourceError)
+        chain.addErrback(self.__ebDataSourceError)
 
     def _doPrepareActivation(self, chain):
         #FIXME: Remove this, its only for testing
@@ -104,7 +100,7 @@ class BaseStore(adminelement.AdminElement):
 
     ## Private Methods ##
 
-    def __dataSourceError(self, failure):
+    def __ebDataSourceError(self, failure):
         #FIXME: Error Handling
         self.warning("Store data source error: %s",
                      log.getFailureMessage(failure))

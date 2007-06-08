@@ -17,7 +17,7 @@ from twisted.python import failure
 from flumotion.common.log import Loggable
 
 from flumotion.transcoder import inifile
-from flumotion.transcoder.admin import utils
+from flumotion.transcoder import utils
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 
@@ -60,7 +60,7 @@ class DataWrapper(object):
 
 class FileDataSource(Loggable):
     
-    logCategory = 'data-source'
+    logCategory = 'trans-source'
     
     implements(datasource.IDataSource)
     

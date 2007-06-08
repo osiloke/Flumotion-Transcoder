@@ -16,7 +16,8 @@ from flumotion.transcoder.admin.context.customercontext import CustomerContext
     
 class TranscodingContext(object):
     
-    def __init__(self, adminStore):
+    def __init__(self, adminContext, adminStore):
+        self.admin = adminContext
         self.store = adminStore
         self._vars = None
 
