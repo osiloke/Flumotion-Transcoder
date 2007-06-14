@@ -32,10 +32,10 @@ from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListene
 #      happy timeout may be triggered. For now, just using a large timeout.
 
 class ITranscodingTaskListener(Interface):
-    def onTranscodingStart(self, task, transcoder):
+    def onTranscoderStart(self, task, transcoder):
         pass
     
-    def onTranscodingLost(self, task, transcoder):
+    def onTranscoderLost(self, task, transcoder):
         pass
     
     def onTranscodingFailed(self, task, transcoder):
@@ -49,10 +49,10 @@ class TranscodingTaskListener(object):
     
     implements(ITranscodingTaskListener)
 
-    def onTranscodingStart(self, task, transcoder):
+    def onTranscoderStart(self, task, transcoder):
         pass
     
-    def onTranscodingLost(self, task, transcoder):
+    def onTranscoderLost(self, task, transcoder):
         pass
     
     def onTranscodingFailed(self, task, transcoder):
@@ -169,9 +169,12 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def suggestWorker(self, worker):
         self.log("Worker '%s' suggested to transcoding task '%s'", 
                  worker and worker.getLabel(), self.getLabel())
-        if (worker != self._worker) or (not self._transcoder):
+        # Change task's worker for None or if there is no active transcoder
+        if ((worker != self._worker) 
+            and (not self._worker or not self._transcoder)):
             self._worker = worker
             self.__startTranscoder()
+        return self._worker
 
 
     ## IComponentListener Overrided Methods ##
@@ -203,40 +206,11 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
 
     ## ITranscoderListener Overrided Methods ##
     
-    def onTranscoderFileRemoved(self, transcoder, virtDir, file, state):
-        if (transcoder != self._transcoder): return
-        if (state == TranscoderFileStateEnum.downloading): return
-        profile = self.__file2profile(virtDir, file)
-        if not profile:
-            self.warning("File '%s' removed but no corresponding profile "
-                         "found for customer '%s'", virtDir + file,
-                         self._customerCtx.store.getName())
-            return
-        self._fireEvent(profile, "TranscoderedFileRemoved")
-    
-    def onTranscoderFileChanged(self, transcoder, virtDir, file, state):
-        if (transcoder != self._transcoder): return
-        if (state != TranscoderFileStateEnum.pending): return
-        profile = self.__file2profile(virtDir, file)
-        if not profile:
-            self.warning("File '%s' added but no corresponding profile "
-                         "found for customer '%s'", virtDir + file,
-                         self._customerCtx.store.getName())
-            return
-        self._fireEvent(profile, "TranscoderedFileAdded")
-
 
     ## Overrided 
         
 
     ## Private Methods ##
-    
-    def __file2profile(self, virtDir, file):
-        virtPath = virtDir + file
-        for p in self._customerCtx.iterProfileContexts(file):
-            if p.getInputPath() == virtPath:
-                return p
-        return None
     
     def __startup(self):
         for m in self._transcoders:
@@ -247,7 +221,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         if self._transcoder:
             self.log("Transcoder %s releved by transcoding task %s",
                      self._transcoder.getName(), self.getLabel())
-            self._fireEvent(self._transcoder, "TranscodingDeactivated")
+            self._fireEvent(self._transcoder, "TranscodingLost")
             self._transcoder = None
             
     def __electTranscoder(self, transcoder):
@@ -257,34 +231,18 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self._transcoder = transcoder
         self.log("Transcoder %s elected by transcoding task %s",
                  self._transcoder.getName(), self.getLabel())
-        self._fireEvent(self._transcoder, "TranscodingActivated")
-        # Synchronize all transcodered files
-        d = transcoder.waitFiles(adminconsts.MONITORING_UI_TIMEOUT)
-        d.addCallbacks(self.__cbForwardFileEvents,
-                       self.__ebGetFilesTimeout,
-                       callbackArgs=(transcoder,), errbackArgs=(transcoder,))
+        self._fireEvent(self._transcoder, "TranscodingStart")
         # Stop all transcoder other than the selected one
         for m in self._transcoders:
             if m != self._transcoder:
                 self.__stopTranscoder(m)
 
-    def  __cbForwardFileEvents(self, files, transcoder):
-        if transcoder != self._transcoder: return
-        for d, f, s in files:
-            self.onTranscoderFileChanged(transcoder, d, f, s)
-            
-    def __ebGetFilesTimeout(self, failure, transcoder):
-        if transcoder != self._transcoder: return
-        self.warning("Failed to retrieve actual file list of transcoder %s: %s",
-                     transcoder.getLabel(), log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
-            
     def __delayedStartTranscoder(self):
         if self._delayed:
             return
         self.log("Scheduling transcoder start for task '%s'",
                  self.getLabel())
-        self._delayed = reactor.callLater(adminconsts.MONITORING_START_DELAY,
+        self._delayed = reactor.callLater(adminconsts.TRANSCODER_START_DELAY,
                                           self.__startTranscoder)
 
     def __startTranscoder(self):
@@ -316,8 +274,8 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                    self._label, transcoderName, workerName)
         self._pendingName = transcoderName
         d = TranscoderProxy.loadTo(self._worker, transcoderName, 
-                                self._label, self._properties)
-        d.setTimeout(adminconsts.MONITORING_START_TIMEOUT)
+                                   self._label, self._properties,
+                                   adminconsts.TRANSCODER_LOAD_TIMEOUT)
         args = (transcoderName, workerName)
         d.addCallbacks(self.__cbTranscoderStartSucceed,
                        self.__ebTranscoderStartFailed,
@@ -348,7 +306,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.__delayedStartTranscoder()
             return
         # If not, wait for the transcoder to go happy
-        d = result.waitHappy(adminconsts.HAPPY_TIMEOUT)
+        d = result.waitHappy(adminconsts.TRANSCODER_HAPPY_TIMEOUT)
         args = (result, workerName)
         d.addCallbacks(self.__cbTranscoderGoesHappy, 
                        self.__ebTranscoderNotHappy,

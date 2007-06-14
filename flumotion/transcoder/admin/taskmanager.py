@@ -239,7 +239,6 @@ class TaskManager(Loggable, EventSource, ComponentListener):
                    "configuration." % component.getLabel())
             self.warning("%s", msg)
             self.__apartTasklessComponent(component)
-            raise ComponentRejectedError(msg)
         self._pending -= 1
         self._tryStarting()
         return component

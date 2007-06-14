@@ -173,6 +173,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if (worker != self._worker) or (not self._monitor):
             self._worker = worker
             self.__startMonitor()
+        return self._worker
 
 
     ## IComponentListener Overrided Methods ##
@@ -260,7 +261,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                  self._monitor.getName(), self.getLabel())
         self._fireEvent(self._monitor, "MonitoringActivated")
         # Synchronize all monitored files
-        d = monitor.waitFiles(adminconsts.MONITORING_UI_TIMEOUT)
+        d = monitor.waitFiles(adminconsts.MONITOR_UI_TIMEOUT)
         d.addCallbacks(self.__cbForwardFileEvents,
                        self.__ebGetFilesTimeout,
                        callbackArgs=(monitor,), errbackArgs=(monitor,))
@@ -285,7 +286,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             return
         self.log("Scheduling monitor start for task '%s'",
                  self.getLabel())
-        self._delayed = reactor.callLater(adminconsts.MONITORING_START_DELAY,
+        self._delayed = reactor.callLater(adminconsts.MONITOR_START_DELAY,
                                           self.__startMonitor)
 
     def __startMonitor(self):
@@ -318,7 +319,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self._pendingName = monitorName
         d = MonitorProxy.loadTo(self._worker, monitorName, 
                                 self._label, self._properties,
-                                adminconsts.MONITORING_LOAD_TIMEOUT)
+                                adminconsts.MONITOR_LOAD_TIMEOUT)
         args = (monitorName, workerName)
         d.addCallbacks(self.__cbMonitorStartSucceed,
                        self.__ebMonitorStartFailed,
@@ -349,7 +350,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             self.__delayedStartMonitor()
             return
         # If not, wait for the monitor to go happy
-        d = result.waitHappy(adminconsts.HAPPY_TIMEOUT)
+        d = result.waitHappy(adminconsts.MONITOR_HAPPY_TIMEOUT)
         args = (result, workerName)
         d.addCallbacks(self.__cbMonitorGoesHappy, 
                        self.__ebMonitorNotHappy,

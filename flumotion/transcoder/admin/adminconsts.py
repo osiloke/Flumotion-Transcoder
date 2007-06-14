@@ -24,16 +24,22 @@ MONITOR_LABEL_TEMPLATE = "monitor-%(customerName)s"
 # and initialize all components stats
 WAIT_IDLE_TIMEOUT = 30
 
-# Maximum time to wait for a component to go happy
-HAPPY_TIMEOUT = 60
-
 # Maximum time to wait for component properties
 TASKER_WAITPROPS_TIMEOUT = 30
 
 # Maximum time for Monitoring to wait for monitor operations
-MONITORING_LOAD_TIMEOUT = 30
-MONITORING_START_DELAY = 3
-MONITORING_UI_TIMEOUT = 10
+MONITOR_LOAD_TIMEOUT = 30
+MONITOR_START_DELAY = 3
+# Maximum time to wait for a monitor to go happy
+MONITOR_HAPPY_TIMEOUT = 60
+# Used to retrieve monitored files from UI State
+MONITOR_UI_TIMEOUT = 10
+
+# Maximum time for Monitoring to wait for transcoder operations
+TRANSCODER_LOAD_TIMEOUT = 30
+TRANSCODER_START_DELAY = 3
+# Maximum time to wait for a monitor to go happy
+TRANSCODER_HAPPY_TIMEOUT = 60
 
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10
