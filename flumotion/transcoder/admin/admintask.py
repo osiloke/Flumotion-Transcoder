@@ -30,7 +30,7 @@ class IAdminTask(Interface):
     def getActiveComponent(self):
         pass
     
-    def start(self):
+    def start(self, paused=False):
         pass
     
     def pause(self):

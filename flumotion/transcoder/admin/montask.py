@@ -73,6 +73,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self._customerCtx = customerCtx
         self._worker = None # WorkerProxy
         self._started = False
+        self._paused = False
         self._pendingName = None
         self._active = True
         self._delayed = None # IDelayedCall
@@ -123,12 +124,15 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if monitor == self._monitor:
             self.__relieveMonitor()
     
-    def start(self, components=None):
+    def start(self, paused=False):
         if self._started: return
         self.log("Starting monitoring task '%s'", self.getLabel())
         self._started = True
-        self._paused = False
-        self.__startup()
+        if paused:
+            self.pause()
+        else:
+            self._paused = False
+            self.__startup()
     
     def pause(self):
         if self._started and (not self._paused):
@@ -195,6 +199,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if mood == moods.sleeping:
             d = component.forceDelete()
             d.addErrback(self.__ebMonitorDeleteFailed, component)
+            return
+        # Don't stop/delete sad component
+        if mood == moods.sad:
             return
         # If no monitor is selected, don't stop any happy monitor
         if (not self._monitor) and (mood == moods.happy):

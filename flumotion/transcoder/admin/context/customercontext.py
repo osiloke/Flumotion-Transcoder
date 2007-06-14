@@ -65,6 +65,14 @@ class CustomerContext(object):
         self._vars = Variables(transcodingContext._vars)
         self._vars.addVar("customerName", self.store.getName())
 
+    def getIdentifier(self):
+        """
+        Gives an identifier that should uniquely identify a customer.
+        It should not change event if customer configuration changed.
+        """
+        # For now return only the customer name
+        return self.store.getName()
+
     def getUnboundProfileContextByName(self, profileName):
         return UnboundProfileContext(self.store[profileName], self)
     

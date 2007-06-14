@@ -17,23 +17,23 @@ class ManagerContext(object):
     
     def __init__(self, adminCtx, managerConfig):
         self.admin = adminCtx
-        self._config = managerConfig
+        self.config = managerConfig
         # Simulate for the FlowContext, AtmosphereContext and ComponentContext
         self.manager = self
         self.group = self
 
     def getHost(self):
-        return str(self._config.host)
+        return str(self.config.host)
     
     def getPort(self):
-        return self._config.port
+        return self.config.port
     
     def getUseSSL(self):
-        return self._config.useSSL
+        return self.config.useSSL
     
     def getAuthenticator(self):
-        return pb.Authenticator(username=self._config.username,
-                                password=self._config.password)
+        return pb.Authenticator(username=self.config.username,
+                                password=self.config.password)
 
     #There is no flow context
     def getFlowContext(self, name):

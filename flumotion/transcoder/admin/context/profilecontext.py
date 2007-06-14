@@ -115,6 +115,14 @@ class UnboundProfileContext(object):
         self._vars.addVar("sourceSubdir", self.getSubdir())
         self._vars.addVar("profileName", self.store.getName())
 
+    def getIdentifier(self):
+        """
+        Gives an identifier that should uniquely identify a profile.
+        It should not change event if profile configuration changed.
+        """
+        # For now return only the customer and profile name
+        return "%s/%s" % (self.customer.getIdentifier(), self.store.getName())
+
     def getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
@@ -184,7 +192,16 @@ class ProfileContext(UnboundProfileContext):
 
     def __init__(self, profileStore, customerContext, inputAbstractPath):
         UnboundProfileContext.__init__(self, profileStore, customerContext)
-        self._vars.addFileVars(inputAbstractPath, "source")
+        self._vars.addFileVars(inputAbstractPath, "source")        
+
+    def getIdentifier(self):
+        """
+        Gives an identifier that should uniquely identify a profile.
+        It should not change event if profile configuration changed.
+        """
+        # For now return only the customer and profile name
+        return "%s:%s" % (UnboundProfileContext.getIdentifier(self),
+                          self._vars["sourcePath"])
 
     def getTargetContextByName(self, targetName):
         return TargetContext(self.store[targetName], self)

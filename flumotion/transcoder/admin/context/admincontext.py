@@ -19,21 +19,21 @@ from flumotion.transcoder.admin.context.workercontext import WorkerContext
 class AdminContext(object):
     
     def __init__(self, clusterConfig):
-        self._config = clusterConfig
+        self.config = clusterConfig
         self._vars = None
 
     def getDataSource(self):
-        file = self._config.admin.datasource.file
+        file = self.config.admin.datasource.file
         return filesource.FileDataSource(file)
         
     def getLocal(self):
-        return Local("admin", self._config.admin.roots)
+        return Local("admin", self.config.admin.roots)
         
     def getManagerContext(self):
-        return ManagerContext(self, self._config.manager)
+        return ManagerContext(self, self.config.manager)
     
     def getWorkerContext(self, workername):
         return WorkerContext(self, workername, 
-                             self._config.workers.get(workername, None),
-                             self._config.workerDefaults)
+                             self.config.workers.get(workername, None),
+                             self.config.workerDefaults)
     

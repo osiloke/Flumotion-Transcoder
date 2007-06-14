@@ -18,7 +18,7 @@ class WorkerContext(object):
     def __init__(self, adminCtx, label, workerConfig, workerDefault):
         self.admin = adminCtx
         self._label = label
-        self._config = workerConfig
+        self.config = workerConfig
         self._default = workerDefault
     
     def getLabel(self):
@@ -26,11 +26,11 @@ class WorkerContext(object):
     
     def getLocal(self):
         roots = dict(self._default.roots)
-        if self._config:
-            roots.update(self._config.roots)
+        if self.config:
+            roots.update(self.config.roots)
         return Local(self._label, roots)
 
     def getMaxTask(self):
-        if self._config and (self._config.maxTask != None):
-            return self._config.maxTask
+        if self.config and (self.config.maxTask != None):
+            return self.config.maxTask
         return self._default.maxTask

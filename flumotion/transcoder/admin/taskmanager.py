@@ -60,8 +60,10 @@ class TaskManager(Loggable, EventSource, ComponentListener):
             if m.getProperties() == props:
                 # Not my responsability anymore
                 self.__releaseTasklessComponent(m)
-                task.addMonitor(m)
+                task.addComponent(m)
         self._onTaskAdded(task)
+        if self._started:
+            task.start(self._paused)
     
     def removeTask(self, identifier):
         assert identifier in self._identifiers

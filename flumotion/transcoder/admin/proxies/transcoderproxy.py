@@ -12,12 +12,15 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.proxies import componentproxy
+from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
+from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.admin.transprops import TranscoderProperties
 
 
-class ITranscoderListener(componentproxy.IComponentListener):
+class ITranscoderListener(IComponentListener):
     def onTranscoderProgress(self, transcoder, percent):
         pass
     
@@ -25,7 +28,7 @@ class ITranscoderListener(componentproxy.IComponentListener):
         pass
 
 
-class TranscoderListener(object):
+class TranscoderListener(ComponentListener):
     
     implements(ITranscoderListener)
     
@@ -36,7 +39,7 @@ class TranscoderListener(object):
         pass
 
 
-class TranscoderProxy(componentproxy.ComponentProxy):
+class TranscoderProxy(ComponentProxy):
 
     properties_factory = TranscoderProperties
     
@@ -51,11 +54,11 @@ class TranscoderProxy(componentproxy.ComponentProxy):
     
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):
-        componentproxy.ComponentProxy.__init__(self, logger, parent, 
-                                               identifier, manager,
-                                               componentContext, 
-                                               componentState, domain,
-                                               ITranscoderListener)
+        ComponentProxy.__init__(self, logger, parent, 
+                                identifier, manager,
+                                componentContext, 
+                                componentState, domain,
+                                ITranscoderListener)
         
     ## Public Methods ##
     
@@ -124,4 +127,4 @@ class TranscoderProxy(componentproxy.ComponentProxy):
         self._fireEvent(status, "TranscoderStatusChanged")
 
 
-componentproxy.registerProxy("file-transcoder", TranscoderProxy)
+registerProxy("file-transcoder", TranscoderProxy)

@@ -160,11 +160,16 @@ class TranscoderAdmin(Loggable,
     def onMonitoringDeactivated(self, monitoringtask, monitor):
         self.info("Monitoring %s deactivated", monitoringtask.getLabel())
 
-    def onMonitoredFileAdded(self, task, profileCtx):
-        self.info("Monitoring %s: File %s added", task.getLabel(), profileCtx.getInputPath())
+    def onMonitoredFileAdded(self, monitoringtask, profileCtx):
+        self.info("Monitoring %s: File %s added", monitoringtask.getLabel(), 
+                  profileCtx.getInputPath())
+        task = TranscodingTask(self._transcoding, profileCtx)
+        self._transcoding.addTask(profileCtx.getIdentifier(), task)
+
     
-    def onMonitoredFileRemoved(self, task, profileCtx):
-        self.info("Monitoring %s: File %s removed", task.getLabel(), profileCtx.getInputPath())
+    def onMonitoredFileRemoved(self, monitoringtask, profileCtx):
+        self.info("Monitoring %s: File %s removed", monitoringtask.getLabel(), 
+                  profileCtx.getInputPath())
 
 
     ## IAdminStoreListener Overriden Methods ##
@@ -173,10 +178,10 @@ class TranscoderAdmin(Loggable,
         self.info("Customer '%s' Added", customer.getLabel())
         customer.addListener(self)
         customer.syncListener(self)
-        #custCtx = self._transCtx.getCustomerContext(customer)
-        #task = MonitoringTask(self._monitoring, custCtx)
-        #task.addListener(self)
-        #self._monitoring.addTask(customer.getName(), task)
+        custCtx = self._transCtx.getCustomerContext(customer)
+        task = MonitoringTask(self._monitoring, custCtx)
+        task.addListener(self)
+        self._monitoring.addTask(customer.getName(), task)
         
     def onCustomerRemoved(self, admin, customer):
         self.info("Customer '%s' Removed", customer.getLabel())

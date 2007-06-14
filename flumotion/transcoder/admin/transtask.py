@@ -72,6 +72,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self._profileCtx = profileCtx
         self._worker = None # WorkerProxy
         self._started = False
+        self._paused = False
         self._pendingName = None
         self._active = True
         self._delayed = None # IDelayedCall
@@ -122,12 +123,16 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         if transcoder == self._transcoder:
             self.__relieveTranscoder()
     
-    def start(self, components=None):
+    def start(self, paused=False):
+        print "%"*40
         if self._started: return
         self.log("Starting transcoding task '%s'", self.getLabel())
         self._started = True
-        self._paused = False
-        self.__startup()
+        if paused:
+            self.pause()
+        else:
+            self._paused = False
+            self.__startup()
     
     def pause(self):
         if self._started and (not self._paused):
@@ -197,6 +202,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             d = component.forceDelete()
             d.addErrback(self.__ebTranscoderDeleteFailed, component)
             return
+        # Don't stop/delete sad component
+        if mood == moods.sad:
+            return
         # If no transcoder is selected, don't stop any happy transcoder
         if (not self._transcoder) and (mood == moods.happy):
             return
@@ -221,7 +229,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         if self._transcoder:
             self.log("Transcoder %s releved by transcoding task %s",
                      self._transcoder.getName(), self.getLabel())
-            self._fireEvent(self._transcoder, "TranscodingLost")
+            self._fireEvent(self._transcoder, "TranscoderLost")
             self._transcoder = None
             
     def __electTranscoder(self, transcoder):
@@ -231,7 +239,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self._transcoder = transcoder
         self.log("Transcoder %s elected by transcoding task %s",
                  self._transcoder.getName(), self.getLabel())
-        self._fireEvent(self._transcoder, "TranscodingStart")
+        self._fireEvent(self._transcoder, "TranscoderStart")
         # Stop all transcoder other than the selected one
         for m in self._transcoders:
             if m != self._transcoder:
@@ -246,6 +254,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                                           self.__startTranscoder)
 
     def __startTranscoder(self):
+        print "#"*40, "__startTranscoder", self.isActive()
         if not self.isActive(): return
         if self._delayed:
             if self._delayed.active():
@@ -268,6 +277,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                 and (m.getMood() == moods.happy)):
                 self.__electTranscoder(m)
                 return
+        print "#"*40, "__startTranscoder", "Ok"
         transcoderName = utils.genUniqueIdentifier()
         workerName = self._worker.getName()
         self.debug("Starting %s transcoder %s on %s",
