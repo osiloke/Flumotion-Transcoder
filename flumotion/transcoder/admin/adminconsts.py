@@ -31,7 +31,7 @@ HAPPY_TIMEOUT = 60
 TASKER_WAITPROPS_TIMEOUT = 30
 
 # Maximum time for Monitoring to wait for monitor operations
-MONITORING_START_TIMEOUT = 30
+MONITORING_LOAD_TIMEOUT = 30
 MONITORING_START_DELAY = 3
 MONITORING_UI_TIMEOUT = 10
 
@@ -43,10 +43,11 @@ LOAD_COMPONENT_TIMEOUT = 30.0
 
 
 # AdminStore default values
-DEFAULT_OUTPUT_FILE_TEMPLATE = "%(targetPath)s%(sourceFile)s%(targetExtension)s"
+DEFAULT_OUTPUT_MEDIA_TEMPLATE = "%(targetPath)s%(sourceFile)s%(targetExtension)s"
+DEFAULT_OUTPUT_THUMB_TEMPLATE = "%(targetPath)s%(sourceFile)s.%%(index)03d%(targetExtension)s"
 DEFAULT_LINK_FILE_TEMPLATE = "%(targetPath)s%(sourceFile)s.link"
 DEFAULT_CONFIG_FILE_TEMPLATE = "%(sourcePath)s.ini"
-DEFAULT_REPORT_FILE_TEMPLATE = "%(sourcePath)s.rep"
+DEFAULT_REPORT_FILE_TEMPLATE = "%(sourcePath)s.%%(id)s.rep"
 DEFAULT_MONITORING_PERIOD = 5
 DEFAULT_TRANSCODING_TIMEOUT = 60
 DEFAULT_POSTPROCESS_TIMEOUT = 60
@@ -56,10 +57,6 @@ DEFAULT_MAIL_BODY_TEMPLATE = "Default Mail Body"
 DEFAULT_GETREQUEST_TIMEOUT = 30
 DEFAULT_GETREQUEST_RETRY_COUNT = 3
 DEFAULT_GETREQUEST_RETRY_SLEEP = 60
-
-# Default roots
-DEFAULT_ROOT = "default"
-TEMP_ROOT = "temp"
 
 # Default customer directories
 DEFAULT_INPUT_DIR = "/%s/files/incoming"

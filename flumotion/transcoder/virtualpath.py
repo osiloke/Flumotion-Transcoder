@@ -13,7 +13,8 @@
 import re
 
 from flumotion.transcoder import utils
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder import constants
+from flumotion.transcoder.errors import VirtualPathError
 
 
 _rootPattern = re.compile("(\w*):(.*)")
@@ -21,19 +22,23 @@ _rootPattern = re.compile("(\w*):(.*)")
 class VirtualPath(object):
     
     @classmethod
-    def fromPath(cls, path, *roots):
+    def transpose(cls, path, fromLocal, toLocal):
+        vp = cls.virtualize(path, fromLocal)
+        return vp.localize(toLocal)
+    
+    @classmethod
+    def virtualize(cls, path, local):
         """
-        From a path and root definitions,
-        it creates a VirtualPath instance.
+        From a path and local, it creates a VirtualPath instance.
         """
         path = utils.cleanupPath(path)
-        for definition in roots:
-            for name, value in definition.iteritems():
-                value = utils.cleanupPath(value)
-                if path.startswith(value):
-                    path = utils.ensureAbsPath(path[len(value):])
-                    return VirtualPath(path, name)
-        return None
+        for name, value in local.iterVirtualRoots():
+            value = utils.cleanupPath(value)
+            if path.startswith(value):
+                path = utils.ensureAbsPath(path[len(value):])
+                return VirtualPath(path, name)
+        raise VirtualPathError("Cannot virtualize local path '%s', "
+                               "no compatible virtual root found" % path)
     
     def __init__(self, path, rootName=None):
         if isinstance(path, str):
@@ -41,10 +46,11 @@ class VirtualPath(object):
             m = _rootPattern.match(path)
             if m:
                 root2, path = m.groups()
-            #FIXME: Maybe better to raise an exception
-            assert (not rootName) or (not root2) or (rootName == root2)
+            if rootName and root2 and (rootName != root2):
+                raise VirtualPathError("Virtual root conflict: '%s' '%s'"
+                                       % (rootName, root2))
             self._path = path
-            self._root = rootName or root2 or constants.DEFAULT_root
+            self._root = rootName or root2 or constants.DEFAULT_ROOT
         elif isinstance(path, VirtualPath):
             self._path = path._path
             self._root = path._root
@@ -54,20 +60,20 @@ class VirtualPath(object):
     def getPath(self):
         return self._path
     
-    def getRootName(self):
+    def getRoot(self):
         return self._root
     
-    def toPath(self, *roots):
+    def localize(self, local):
         """
-        The parameters are dicts of {"rootName": "rootPath"}.
+        The parameters are a local with virtual roots.
         Return a path constructed with the first value in the
-        specified dicts that match the root name and the path.
-        If root value is found, return None.
+        specified local's roots that match the root name and the path.
         """
-        for definition in roots:
-            if self._root in definition:
-                return utils.joinPath(definition[self._root], self._path)
-        return None
+        roots = local.getVirtualRoots()
+        if self._root in roots:
+            return utils.joinPath(roots[self._root], self._path)
+        raise VirtualPathError("Cannot localize virtual path '%s', "
+                               " virtual root not found for this local" % self)
     
     def __str__(self):
         return "%s:%s" % (self._root, self._path)

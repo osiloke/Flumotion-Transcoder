@@ -15,7 +15,8 @@ from twisted.internet import reactor, defer
 
 from flumotion.transcoder import log
 from flumotion.common.log import Loggable
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
@@ -53,32 +54,36 @@ class AdminStoreListener(object):
 class AdminStore(BaseStore):
     
     # MetaStore metaclass will create getters/setters for these properties
-    __default_properties__ = {"outputFileTemplate": 
-                                  constants.DEFAULT_OUTPUT_FILE_TEMPLATE,
+    __default_properties__ = {"outputMediaTemplate": 
+                                  adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE,
+                              "outputThumbTemplate": 
+                                  adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE,
                               "linkFileTemplate": 
-                                  constants.DEFAULT_LINK_FILE_TEMPLATE,
+                                  adminconsts.DEFAULT_LINK_FILE_TEMPLATE,
                               "configFileTemplate": 
-                                  constants.DEFAULT_CONFIG_FILE_TEMPLATE,
+                                  adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE,
                               "reportFileTemplate": 
-                                  constants.DEFAULT_REPORT_FILE_TEMPLATE,
+                                  adminconsts.DEFAULT_REPORT_FILE_TEMPLATE,
+                              "linkTemplate":
+                                  constants.LINK_TEMPLATE,
                               "monitoringPeriod": 
-                                  constants.DEFAULT_MONITORING_PERIOD,
+                                  adminconsts.DEFAULT_MONITORING_PERIOD,
                               "transcodingTimeout": 
-                                  constants.DEFAULT_TRANSCODING_TIMEOUT,
+                                  adminconsts.DEFAULT_TRANSCODING_TIMEOUT,
                               "postprocessTimeout": 
-                                  constants.DEFAULT_POSTPROCESS_TIMEOUT,
+                                  adminconsts.DEFAULT_POSTPROCESS_TIMEOUT,
                               "preprocessTimeout": 
-                                  constants.DEFAULT_PREPROCESS_TIMEOUT,
+                                  adminconsts.DEFAULT_PREPROCESS_TIMEOUT,
                               "mailSubjectTemplate": 
-                                  constants.DEFAULT_MAIL_SUBJECT_TEMPLATE,
+                                  adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE,
                               "mailBodyTemplate": 
-                                  constants.DEFAULT_MAIL_BODY_TEMPLATE,
+                                  adminconsts.DEFAULT_MAIL_BODY_TEMPLATE,
                               "GETRequestTimeout": 
-                                  constants.DEFAULT_GETREQUEST_TIMEOUT,
+                                  adminconsts.DEFAULT_GETREQUEST_TIMEOUT,
                               "GETRequestRetryCount": 
-                                  constants.DEFAULT_GETREQUEST_RETRY_COUNT,
+                                  adminconsts.DEFAULT_GETREQUEST_RETRY_COUNT,
                               "GETRequestRetrySleep": 
-                                  constants.DEFAULT_GETREQUEST_RETRY_SLEEP}
+                                  adminconsts.DEFAULT_GETREQUEST_RETRY_SLEEP}
     
     
     def __init__(self, dataSource):

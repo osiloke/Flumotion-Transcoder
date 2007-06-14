@@ -46,7 +46,6 @@ class TranscoderSet(BaseComponentSet):
     ## Public Method ##
     
 
-
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):

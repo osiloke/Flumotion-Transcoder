@@ -13,10 +13,10 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import properties
-from flumotion.transcoder import jobconfig
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.enums import TranscoderStatusEnum
+
 
 class UsageProperty(properties.ValueProperty):
     
@@ -74,7 +74,7 @@ class DiscoverReport(properties.PropertyBag):
 
 class SourceReport(properties.PropertyBag):
 
-    filePath = properties.String('file-path')
+    filePath = properties.VirtualPath('file-path')
     analyse = properties.Child('analyse', DiscoverReport)
     pipeline = properties.Dict(properties.String("pipeline"))    
 
@@ -82,23 +82,35 @@ class SourceReport(properties.PropertyBag):
 class TargetReport(TaskReport):
 
     state = properties.Enum('state', TargetStateEnum, TargetStateEnum.pending)
-    workFiles = properties.List(properties.String('files-work'))
-    outputFiles = properties.List(properties.String('files-output'))
+    workFiles = properties.List(properties.VirtualPath('files-work'))
+    outputFiles = properties.List(properties.VirtualPath('files-output'))
     analyse = properties.Child('analyse', DiscoverReport)
     pipeline = properties.Dict(properties.String("pipeline"))
     cpuUsagePostprocess = UsageProperty('cpu-usage-postprocess')
     cpuUsageAnalyse = UsageProperty('cpu-usage-analyse')
+
+
+class LocalReport(properties.PropertyBag):
+    
+    roots = properties.Dict(properties.String('roots'))
+    name = properties.String('name')
+    
+    def loadFromLocal(self, local):
+        self.name = local.getName()
+        for name, value in local.iterVirtualRoots():
+            self.roots[name] = value
                             
 
-class JobReport(properties.RootPropertyBag, TaskReport):
+class TranscodingReport(properties.RootPropertyBag, TaskReport):
 
     state = properties.Enum('state', JobStateEnum, JobStateEnum.pending)
     startTime = properties.DateTime('time-start')
     doneTime = properties.DateTime('time-done')
     ackTime = properties.DateTime('time-ack')
     terminateTime = properties.DateTime('time-terminate')
-    configPath = properties.String('config-file', None, True)
+    configPath = properties.VirtualPath('config-path', None, True)
     niceLevel = properties.Integer('nice-level')
+    local = properties.Child('local', LocalReport)
     source = properties.Child('source', SourceReport)
     targets = properties.ChildList('targets', TargetReport)
     cpuUsageTotal = UsageProperty('cpu-usage-total')

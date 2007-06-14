@@ -81,7 +81,8 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a "container" object 
         with the following fields:
-            outputFileTemplate (str)
+            outputMediaTemplate (str)
+            outputThumbTemplate (str)
             linkFileTemplate (str)
             configFileTemplate (str)
             reportFileTemplate (str)
@@ -124,7 +125,8 @@ class IDataSource(Interface):
            configDir (str) can be None
            failedRepDir (str) can be None
            doneRepDir (str) can be None
-           outputFileTemplate (str)
+           outputMediaTemplate (str)
+           outputThumbTemplate (str)
            linkFileTemplate (str)
            configFileTemplate (str)
            reportFileTemplate (str)
@@ -172,7 +174,8 @@ class IDataSource(Interface):
            configDir (str) can be None
            failedRepDir (str) can be None
            doneRepDir (str) can be None
-           outputFileTemplate (str) can be None
+           outputMediaTemplate (str) can be None
+           outputThumbTemplate (str) can be None
            linkFileTemplate (str) can be None
            configFileTemplate (str) can be None
            reportFileTemplate (str) can be None
@@ -266,7 +269,7 @@ class IDataSource(Interface):
             videoMaxHeight (int)
             videoPAR (int[2])
             videoFramerate (int[2])
-            scaleMethod (VideoScaleMethodEnum)
+            videoScaleMethod (VideoScaleMethodEnum)
         For a Thumbnails targets, it has the following fields:
             thumbsWidth (int)
             thumbsHeight (int)

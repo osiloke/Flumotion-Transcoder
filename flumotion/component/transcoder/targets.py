@@ -194,7 +194,7 @@ class ThumbnailsTarget(TranscodingTarget):
             self.videoHeight = config.thumbsHeight
             self.videoMaxWidth = None
             self.videoMaxHeight = None
-            self.videoPreferredMethod = "upscale"
+            self.videoScaleMethod = "upscale"
             self.videoFramerate = None
             self.videoPAR = (1, 1)            
             format = config.outputFormat
@@ -247,7 +247,7 @@ class ThumbnailsTarget(TranscodingTarget):
                         PeriodUnitEnum.frames: self._setupThumbnailByFrames,
                         PeriodUnitEnum.keyframes: self._setupThumbnailByKeyFrames,
                         PeriodUnitEnum.percent: self._setupThumbnailByPercent}
-        probMethods = {PeriopdUnitEnum.seconds: self._thumbnail_prob_by_seconds,
+        probMethods = {PeriodUnitEnum.seconds: self._thumbnail_prob_by_seconds,
                        PeriodUnitEnum.frames: self._thumbnail_prob_by_frames,
                        PeriodUnitEnum.keyframes: self._thumbnail_prob_by_keyframes,
                        PeriodUnitEnum.percent: self._thumbnail_prob_by_percent}

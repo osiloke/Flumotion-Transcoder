@@ -14,6 +14,7 @@ from zope.interface import implements
 
 from flumotion.transcoder.admin.proxies import componentproxy
 from flumotion.transcoder.enums import TranscoderStatusEnum
+from flumotion.transcoder.admin.transprops import TranscoderProperties
 
 
 class ITranscoderListener(componentproxy.IComponentListener):
@@ -36,6 +37,17 @@ class TranscoderListener(object):
 
 
 class TranscoderProxy(componentproxy.ComponentProxy):
+
+    properties_factory = TranscoderProperties
+    
+    @classmethod
+    def loadTo(cls, worker, name, label, properties, timeout=None):
+        manager = worker.getParent()
+        atmosphere = manager.getAtmosphere()
+        return atmosphere._loadComponent('file-transcoder', 
+                                         name,  label, worker, 
+                                         properties, timeout)
+    
     
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):

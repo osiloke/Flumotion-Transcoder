@@ -12,18 +12,13 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import properties
+import datetime
+
+from flumotion.transcoder import properties, constants
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import TargetTypeEnum
-
-
-LINK_TEMPLATE = ('<iframe src="%(outputURL)s" '
-                 'width="%(c-width)s" '
-                 'height="%(c-height)s" '
-                 'frameborder="0" scrolling="no" '
-                 'marginwidth="0" marginheight="0" />\n')
 
 
 class CustomerConfig(properties.PropertyBag):
@@ -32,15 +27,15 @@ class CustomerConfig(properties.PropertyBag):
 
 class ProfileConfig(properties.PropertyBag):
     label = properties.String('label', None, True)
-    inputDir = properties.String('input-dir', None, True)
-    outputDir = properties.String('output-dir', None, True)
-    linkDir = properties.String('link-dir', None)
-    workDir = properties.String('work-dir', None, True)
-    failedDir = properties.String('failed-dir', None, True)
-    failedReportsDir = properties.String('failed-reports-dir', None, True)
-    doneDir = properties.String('done-dir', None, True)
-    doneReportsDir = properties.String('done-reports-dir', None, True)
-    linkTemplate = properties.String('link-template', LINK_TEMPLATE)
+    inputDir = properties.VirtualPath('input-dir', None, True)
+    outputDir = properties.VirtualPath('output-dir', None, True)
+    linkDir = properties.VirtualPath('link-dir', None)
+    workDir = properties.VirtualPath('work-dir', None, True)
+    failedDir = properties.VirtualPath('failed-dir', None, True)
+    failedReportsDir = properties.VirtualPath('failed-reports-dir', None, True)
+    doneDir = properties.VirtualPath('done-dir', None, True)
+    doneReportsDir = properties.VirtualPath('done-reports-dir', None, True)
+    linkTemplate = properties.String('link-template', constants.LINK_TEMPLATE)
 
 
 class SourceConfig(properties.PropertyBag):
@@ -64,9 +59,9 @@ class VideoConfig(properties.PropertyBag):
     videoHeight = properties.Integer('video-height', None, False, True)
     videoMaxWidth = properties.Integer('video-maxwidth', None, False, True)
     videoMaxHeight = properties.Integer('video-maxheight', None, False, True)
-    videoPreferredMethod = properties.Enum('preferred-method', 
-                                           VideoScaleMethodEnum,
-                                           VideoScaleMethodEnum.height)
+    videoScaleMethod = properties.Enum('video-scale-method', 
+                                       VideoScaleMethodEnum,
+                                       VideoScaleMethodEnum.height)
     muxer = properties.String('muxer', None, True)
     
     
@@ -100,8 +95,8 @@ class TargetConfig(properties.PropertyBag):
                                       TargetTypeEnum.thumbnails: ThumbnailsConfig})
     
 
-class JobConfig(properties.RootPropertyBag):
-    creationTime = properties.DateTime('time-creation')
+class TranscodingConfig(properties.RootPropertyBag):
+    creationTime = properties.DateTime('creation-time')
     transcodingTimeout = properties.Integer('transcoding-timeout', 4)
     postProcessTimeout = properties.Integer('post-process-timeout', 60)
     preProcessTimeout = properties.Integer('pre-process-timeout', 60)
@@ -110,3 +105,6 @@ class JobConfig(properties.RootPropertyBag):
     source = properties.Child('source', SourceConfig)
     targets = properties.ChildList('targets', TargetConfig)
 
+    def touch(self):
+        self.creationTime = datetime.datetime.now()
+        

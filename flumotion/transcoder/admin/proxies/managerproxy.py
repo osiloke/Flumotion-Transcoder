@@ -250,7 +250,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
 
     def __workerStateAdded(self, workerState):
         name = workerState.get('name')
-        workerContext = self._context.getWorkerContext(name)
+        workerContext = self._context.admin.getWorkerContext(name)
         self._addProxyState(workerproxy, "_workers",
                             self.__getWorkerUniqueId,
                            "WorkerAdded", self, 
@@ -259,7 +259,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     
     def __workerStateRemoved(self, workerState):
         name = workerState.get('name')
-        workerContext = self._context.getWorkerContext(name)
+        workerContext = self._context.admin.getWorkerContext(name)
         self._removeProxyState("_workers", self.__getWorkerUniqueId,
                               "WorkerRemoved", self, 
                               workerContext, workerState)

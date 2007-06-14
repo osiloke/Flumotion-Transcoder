@@ -18,7 +18,7 @@ from flumotion.common.log import Loggable
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet
@@ -32,13 +32,17 @@ from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, Prof
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
 from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.monitoring import Monitoring
+from flumotion.transcoder.admin.transtask import TranscodingTask, TranscodingTaskListener
+from flumotion.transcoder.admin.transcoding import Transcoding
 
 ## Just for debug ##
-from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
-from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereProxy, AtmosphereListener
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy, ComponentListener
-from flumotion.transcoder.admin.proxies.managerset import ManagerSetListener
-from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
+from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
+from flumotion.transcoder.admin.transprops import TranscoderProperties
+#from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
+#from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereProxy, AtmosphereListener
+#from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy, ComponentListener
+#from flumotion.transcoder.admin.proxies.managerset import ManagerSetListener
+#from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
 
 class TranscoderAdmin(Loggable,
                       MonitorSetListener,
@@ -48,12 +52,13 @@ class TranscoderAdmin(Loggable,
                       ProfileStoreListener,
                       MonitoringTaskListener,
                       ## Just for debug ##
-                      TargetStoreListener,
-                      ComponentSetListener,
-                      AtmosphereListener,
-                      ComponentListener,
-                      ManagerSetListener,
-                      ManagerListener):
+                      #TargetStoreListener,
+                      #ComponentSetListener,
+                      #AtmosphereListener,
+                      #ComponentListener,
+                      #ManagerSetListener,
+                      #ManagerListener
+                      ):
     
     logCategory = 'trans-admin'
     
@@ -67,12 +72,13 @@ class TranscoderAdmin(Loggable,
         self._transcoders = TranscoderSet(self._managers)
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
+        self._transcoding = Transcoding(self._workers, self._transcoders)
         
         ## Just for debug ##
-        self._components = ComponentSet(self._managers)
-        self._components.addListener(self)
+        #self._components = ComponentSet(self._managers)
+        #self._components.addListener(self)
+        #self._managers.addListener(self)
         
-        self._managers.addListener(self)
         self._store.addListener(self)
         self._monitors.addListener(self)
 
@@ -86,9 +92,8 @@ class TranscoderAdmin(Loggable,
         d.addCallback(lambda r: self._store.initialize())
         d.addCallback(lambda r: self._managers.initialize())
         d.addCallback(lambda r: self._workers.initialize())
-        d.addCallback(lambda r: self._transcoders.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
-        d.addCallback(lambda r: self._components.initialize())
+        d.addCallback(lambda r: self._transcoders.initialize())
         d.addCallback(lambda r: self._monitoring.initialize())
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
@@ -98,35 +103,35 @@ class TranscoderAdmin(Loggable,
 
 
     ## Just for debug ##
-    def onComponentAddedToSet(self, componentset, component):
-        self.info("Component %s Added To Set", component.getLabel())
-        
-    def onComponentRemovedFromSet(self, componentset, component):
-        self.info("Component %s Removed From Set", component.getLabel())
-        
-    def onManagerAddedToSet(self, managerset, manager):
-        self.info("Manager %s Added To Set", manager.getLabel())
-        manager.addListener(self)
-        manager.syncListener(self)
-        
-    def onManagerRemovedFromSet(self, managerset, manager):
-        self.info("Manager %s Removed From Set", manager.getLabel())
-        manager.removeListener(self)
-        
-    def onAtmosphereSet(self, manager, atmosphere):
-        self.info("Atmosphere %s Added", atmosphere.getLabel())
-        atmosphere.addListener(self)
-        atmosphere.syncListener(self)
-        
-    def onAtmosphereUnset(self, manager, atmosphere):
-        self.info("Atmosphere %s Removed", atmosphere.getLabel())
-        atmosphere.removeListener(self)
-        
-    def onAtmosphereComponentAdded(self, atmosphere, component):
-        self.info("Atmosphere Component %s Added", component.getLabel())
-        
-    def onAtmosphereComponentRemoved(self, atmosphere, component):
-        self.info("Atmosphere Component %s Removed", component.getLabel())
+#    def onComponentAddedToSet(self, componentset, component):
+#        self.info("Component %s Added To Set", component.getLabel())
+#        
+#    def onComponentRemovedFromSet(self, componentset, component):
+#        self.info("Component %s Removed From Set", component.getLabel())
+#        
+#    def onManagerAddedToSet(self, managerset, manager):
+#        self.info("Manager %s Added To Set", manager.getLabel())
+#        manager.addListener(self)
+#        manager.syncListener(self)
+#        
+#    def onManagerRemovedFromSet(self, managerset, manager):
+#        self.info("Manager %s Removed From Set", manager.getLabel())
+#        manager.removeListener(self)
+#        
+#    def onAtmosphereSet(self, manager, atmosphere):
+#        self.info("Atmosphere %s Added", atmosphere.getLabel())
+#        atmosphere.addListener(self)
+#        atmosphere.syncListener(self)
+#        
+#    def onAtmosphereUnset(self, manager, atmosphere):
+#        self.info("Atmosphere %s Removed", atmosphere.getLabel())
+#        atmosphere.removeListener(self)
+#        
+#    def onAtmosphereComponentAdded(self, atmosphere, component):
+#        self.info("Atmosphere Component %s Added", component.getLabel())
+#        
+#    def onAtmosphereComponentRemoved(self, atmosphere, component):
+#        self.info("Atmosphere Component %s Removed", component.getLabel())
 
 
     ## IManagerSetListener Overriden Methods ##
@@ -168,10 +173,10 @@ class TranscoderAdmin(Loggable,
         self.info("Customer '%s' Added", customer.getLabel())
         customer.addListener(self)
         customer.syncListener(self)
-        custCtx = self._transCtx.getCustomerContext(customer)
-        task = MonitoringTask(self._monitoring, custCtx)
-        task.addListener(self)
-        self._monitoring.addTask(customer.getName(), task)
+        #custCtx = self._transCtx.getCustomerContext(customer)
+        #task = MonitoringTask(self._monitoring, custCtx)
+        #task.addListener(self)
+        #self._monitoring.addTask(customer.getName(), task)
         
     def onCustomerRemoved(self, admin, customer):
         self.info("Customer '%s' Removed", customer.getLabel())
@@ -201,9 +206,17 @@ class TranscoderAdmin(Loggable,
     
     ## Private Methods ##
     
+    def __startup(self):
+        self._transcoding.start()
+        self._monitoring.start()
+        
     def __cbAdminInitialized(self, result):
-        d = self._store.waitIdle(constants.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.dropResult, self._monitoring.start)
+        # First wait for the store to become idle
+        d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        # And then for the managers/workers/components
+        d.addBoth(utils.dropResult, self._managers.waitIdle, 
+                  adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(utils.dropResult, self.__startup)
         return self
     
     def __ebAdminInitializationFailed(self, failure):

@@ -25,7 +25,7 @@ class IComponentProperties(Interface):
     def getDigest(self):
         pass
 
-    def getComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerContext):
         pass
     
 
@@ -47,7 +47,7 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     implements(IComponentProperties)
     
     @classmethod
-    def createFromWorkerDict(cls, workerContext, props):
+    def createFromComponentDict(cls, workerContext, props):
         return GenericComponentProperties(props)
     
     def __init__(self, props):
@@ -60,5 +60,5 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
     
-    def getComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerContext):
         return copy.deepcopy(self._properties)

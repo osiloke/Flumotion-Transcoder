@@ -22,7 +22,9 @@ def _buildOverridableGetter(getterName, propertyName):
     def getter(self):
         value = getattr(self._data, propertyName, None)
         if value != None: return value
-        return getattr(self._parent, getterName)()
+        if hasattr(self._parent, getterName):
+            return getattr(self._parent, getterName)()
+        return None
     return getter
 
 def _buildDefaultGetter(propertyName, staticValue):

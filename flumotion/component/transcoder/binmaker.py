@@ -196,7 +196,7 @@ def _getOutputVideoSize(config, discoverer, inputSize):
                                           config.videoPAR,
                                           config.videoMaxWidth,
                                           config.videoMaxHeight,
-                                          config.videoPreferredMethod)
+                                          config.videoScaleMethod)
     return ow, oh, gst.Fraction(*opar)
 
 def _getOutputVideoBox(config, discoverer, outputSize):

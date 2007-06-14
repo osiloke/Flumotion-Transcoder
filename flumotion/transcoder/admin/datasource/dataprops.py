@@ -37,9 +37,9 @@ class VideoData(properties.PropertyBag):
     videoMaxHeight = properties.Integer('video-max-height', None, False, True)
     videoPAR = properties.Fraction('video-par', None, False, True)
     videoFramerate = properties.Fraction('video-framerate', None, False, True)
-    scaleMethod = properties.Enum('preferred-method', 
-                                   VideoScaleMethodEnum,
-                                   VideoScaleMethodEnum.height)
+    videoScaleMethod = properties.Enum('video-scale-method', 
+                                       VideoScaleMethodEnum,
+                                       VideoScaleMethodEnum.height)
     
     
 class AudioVideoData(AudioData, VideoData):
@@ -57,9 +57,9 @@ class ThumbnailsData(properties.PropertyBag):
                                    PeriodUnitEnum, 
                                    PeriodUnitEnum.seconds)
     maxCount = properties.Integer('max-count', 1, False, True)
-    outputFormat = properties.Enum('output-format',
-                                   ThumbOutputTypeEnum,
-                                   ThumbOutputTypeEnum.jpg)
+    format = properties.Enum('output-format',
+                             ThumbOutputTypeEnum,
+                             ThumbOutputTypeEnum.jpg)
     
 
 class TargetData(properties.PropertyBag):
@@ -96,7 +96,8 @@ class ProfileData(properties.PropertyBag):
     configDir = properties.String('config-dir', None)
     failedRepDir = properties.String('failed-report-dir', None)
     doneRepDir = properties.String('done-report-dir', None)
-    outputFileTemplate = properties.String('output-file-template', None)
+    outputMediaTemplate = properties.String('output-media-template', None)
+    outputThumbTemplate = properties.String('output-thumb-template', None)
     linkFileTemplate = properties.String('link-file-template', None)
     configFileTemplate = properties.String('config-file-template', None)
     reportFileTemplate = properties.String('report-file-template', None)
@@ -112,7 +113,7 @@ class ProfileData(properties.PropertyBag):
     preprocesstimeout = properties.Integer('pre-process-timeout', None, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
-    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
     targets = properties.ChildList('targets', TargetData)
 
 
@@ -138,7 +139,8 @@ class CustomerData(properties.PropertyBag):
     configDir = properties.String('config-dir', None)
     failedRepDir = properties.String('failed-report-dir', None)
     doneRepDir = properties.String('done-report-dir', None)
-    outputFileTemplate = properties.String('output-file-template', None)
+    outputMediaTemplate = properties.String('output-media-template', None)
+    outputThumbTemplate = properties.String('output-thumb-template', None)
     linkFileTemplate = properties.String('link-file-template', None)
     configFileTemplate = properties.String('config-file-template', None)
     reportFileTemplate = properties.String('report-file-template', None)
@@ -154,23 +156,24 @@ class CustomerData(properties.PropertyBag):
     preprocesstimeout = properties.Integer('pre-process-timeout', None, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)    
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
-    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
     info = properties.Child('info', CustomerInfoData)
     profiles = properties.ChildList('profiles', ProfileData)
 
 
 class AdminData(properties. RootPropertyBag):
-    monitoringPeriod = properties.Integer('monitoring-period', 2, False, True)
-    transcodingTimeout = properties.Integer('transcoding-timeout', 4, False, True)
-    postprocessTimeout = properties.Integer('post-process-timeout', 60, False, True)
-    preprocessTimeout = properties.Integer('pre-process-timeout', 60, False, True)
-    outputFileTemplate = properties.String('output-file-template', "%(inputFileBase)s.%(outputFileExt)")
-    linkFileTemplate = properties.String('link-file-template', "%(inputFile)s.link")
-    configFileTemplate = properties.String('config-file-template', "%(inputFile)s.ini")
-    reportFileTemplate = properties.String('report-file-template', "%(inputFile)s.rep")
-    mailSubjectTemplate = properties.String('mail-subject-template', "Transcoding Error")
-    mailBodyTemplate = properties.String('mail-body-template', "Errorrrrr")
-    GETRequestTimeout = properties.Integer('get-request-timeout', 60, False, True)
-    GETRequestRetryCount = properties.Integer('get-request-retry-count', 3, False, True)
-    GETRequestRetrySleep = properties.Integer('get-request-retry-sleep', 60, False, True)
+    monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
+    postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
+    preprocessTimeout = properties.Integer('pre-process-timeout', None, False, True)
+    outputMediaTemplate = properties.String('output-media-template', None)
+    outputThumbTemplate = properties.String('output-thumb-template', None)
+    linkFileTemplate = properties.String('link-file-template', None)
+    configFileTemplate = properties.String('config-file-template', None)
+    reportFileTemplate = properties.String('report-file-template', None)
+    mailSubjectTemplate = properties.String('mail-subject-template', None)
+    mailBodyTemplate = properties.String('mail-body-template', None)
+    GETRequestTimeout = properties.Integer('get-request-timeout', None, False, True)
+    GETRequestRetryCount = properties.Integer('get-request-retry-count', None, False, True)
+    GETRequestRetrySleep = properties.Integer('get-request-retry-sleep', None, False, True)
     customers = properties.ChildList('customers', CustomerData)

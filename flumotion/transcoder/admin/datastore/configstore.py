@@ -17,6 +17,9 @@ class BaseConfig(object):
     
     def __init__(self, data):
         self._data = data        
+        
+    def getType(self):
+        return self._data.type
 
 
 class AudioConfig(BaseConfig):
@@ -80,8 +83,8 @@ class VideoConfig(BaseConfig):
     def getVideoFramerate(self):
         return self._data.videoFramerate
     
-    def getScaleMethod(self):
-        return self._data.scaleMethod
+    def getVideoScaleMethod(self):
+        return self._data.videoScaleMethod
 
 
 class AudioVideoConfig(AudioConfig, VideoConfig):

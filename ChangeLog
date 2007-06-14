@@ -1,3 +1,8 @@
+2007-06-14  Sebastien Merle  <sebastien@fluendo.com>
+
+	* The admin can now start transcoder components with 
+	proper configuration generation, and path virtualization.
+
 2007-06-08  Sebastien Merle  <sebastien@fluendo.com>
 
 	* Refactoring for generic idle state detection,

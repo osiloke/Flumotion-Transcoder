@@ -126,9 +126,9 @@ class TranscoderJob(log.LoggerProxy):
         sourceCtx = self._context.getSourceContext()
         return sourceCtx.getFailedReportPath()
         
-    def setup(self, config, report, 
+    def setup(self, local, config, report, 
               altInputDir=None, moveInputFile=True, niceLevel=None):
-        context = Context(self, config, report)
+        context = Context(self, local, config, report)
         self._context = context
         if altInputDir != None:
             context.setAltInputDir(altInputDir)        
@@ -742,8 +742,7 @@ class TranscoderJob(log.LoggerProxy):
         context.debug("Moving output files")
         self._setJobState(JobStateEnum.output_file_moving)
         for targetCtx in context.getTargetContexts():
-            for src, dest in zip(targetCtx.reporter.report.workFiles,
-                                 targetCtx.reporter.report.outputFiles):
+            for src, dest in targetCtx.reporter.getFiles():
                 context.log("Moving '%s' to '%s'", src, dest)
                 ensureDir(os.path.dirname(dest), "transcoding done")
                 shutil.move(src, dest)

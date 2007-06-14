@@ -37,8 +37,8 @@ class ProcessError(Exception):
 class Process(worker.ProcessProtocol, flog.Loggable):
     
     def __init__(self, type, command, logger=None):
-        self.logger = logger or self
-        worker.ProcessProtocol.__init__(self, self.logger, type,
+        self._logger = logger or self
+        worker.ProcessProtocol.__init__(self, self._logger, type,
                                         type, socket.gethostname())
         self.logName = re.split('(?<!\\\\) ', command)[0]
         self.logCategory = type
@@ -62,11 +62,10 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         argv = re.split('(?<!\\\\) ', command)
         for i, a in enumerate(argv):
             argv[i] = a.replace('\ ', ' ')
-        self.logger.debug('%s command: %s', self.processType,
+        self._logger.debug('%s command: %s', self.processType,
                           '"' + '" "'.join(argv) + '"')
         childFDs = {0: 0, 1: 'r', 2: 2}
         envVars = dict(os.environ)
-        envVars['FLU_DEBUG'] = flog._FLU_DEBUG
         if env:
             envVars.update(env)
         process = reactor.spawnProcess(self, argv[0], env=env, path=path,
@@ -76,7 +75,7 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         return self.terminated
 
     def abort(self):
-        self.logger.debug('Aborting %s', self.processType)
+        self._logger.debug('Aborting %s', self.processType)
         if not self.pid:
             return defer.succeed(self)
         if self._aborted:
@@ -87,10 +86,10 @@ class Process(worker.ProcessProtocol, flog.Loggable):
 
     def _timeout(self, what):
         if not self.pid:
-            self.logger.warning("%s %s, but no PID available" 
+            self._logger.warning("%s %s, but no PID available" 
                                 % (self.processType, what))
             return
-        self.logger.warning("%s (%d) %s, sending a SIGTERM"
+        self._logger.warning("%s (%d) %s, sending a SIGTERM"
                             % (self.processType, self.pid, what))
         os.kill(self.pid, signal.SIGTERM)
         self.timeout = utils.createTimeout(KILL_TIMEOUT, 
@@ -98,10 +97,10 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         
     def _killTimeout(self, what):
         if not self.pid:
-            self.logger.warning("%s %s timeout (again?), but no PID available" 
+            self._logger.warning("%s %s timeout (again?), but no PID available" 
                                 % (self.processType, what))
             return
-        self.logger.warning("%s (%d) %s timeout (again?), sending a SIGKILL"
+        self._logger.warning("%s (%d) %s timeout (again?), sending a SIGKILL"
                             % (self.processType, self.pid, what))
         os.kill(self.pid, signal.SIGKILL)
         self.timeout = utils.createTimeout(KILL_TIMEOUT, 
@@ -119,9 +118,9 @@ class Process(worker.ProcessProtocol, flog.Loggable):
         lines = translated.split('\n')
         for l in lines:
             if l and len(l) > 0:
-                self.logger.warning(l)
+                self._logger.warning(l)
         if message.debug:
-            self.logger.debug(message.debug)
+            self._logger.debug(message.debug)
 
     def processEnded(self, status):
         utils.cancelTimeout(self.timeout)

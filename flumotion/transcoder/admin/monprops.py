@@ -18,23 +18,23 @@ from zope.interface import implements
 
 from flumotion.common import log
 
-from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder.admin.errors import PropertiesError
 from flumotion.transcoder.admin.compprops import IComponentProperties
 from flumotion.transcoder.admin.compprops import ComponentPropertiesMixin
 from flumotion.transcoder.admin.utils import digestParameters
-from flumotion.transcoder.admin.virtualpath import VirtualPath
 
 class MonitorProperties(ComponentPropertiesMixin):
     
     implements(IComponentProperties)
     
     @classmethod
-    def createFromWorkerDict(cls, workerContext, props):
+    def createFromComponentDict(cls, workerContext, props):
         scanPeriod = props.get("scan-period", None)
         absPathList = props.get("directory", list())
         name = props.get("admin-id", "")
-        roots = workerContext.getRoots()
-        directories = [VirtualPath.fromPath(p, roots) for p in absPathList]
+        local = workerContext.getLocal()
+        directories = [VirtualPath.virtualize(p, local) for p in absPathList]
         return cls(name, directories, scanPeriod)
     
     @classmethod
@@ -59,16 +59,11 @@ class MonitorProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
         
-    def getComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerContext):
         props = []
-        roots = workerContext.getRoots()
+        local = workerContext.getLocal()
         for d in self._directories:
-            path = d.toPath(roots)
-            if not path:
-                log.warning("Failed to resolve path '%s' for worker '%s'",
-                            str(d), workerContext.getLabel())
-            else:
-                props.append(("directory", path))
+            props.append(("directory", d.localize(local)))
         if self._scanPeriod:
             props.append(("scan-period", self._scanPeriod))
         props.append(("admin-id", self._name))

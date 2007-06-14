@@ -21,141 +21,136 @@ from flumotion.transcoder import utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.taskmanager import TaskManager
-from flumotion.transcoder.admin.monbalancer import MonitorBalancer
+from flumotion.transcoder.admin.transbalancer import TranscoderBalancer
 from flumotion.transcoder.admin.proxies.workerset import WorkerSetListener
-from flumotion.transcoder.admin.proxies.monitorset import MonitorSetListener
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
+from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSetListener
+from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
 
-#FIXME: Better handling of listener subclassing,
-# Right now, Monitoring have to inherrit from MonitorListener,
-# even if TaskManager already inherrit from ComponentListener,
-# and it only use the ComponentListener handlers.
+#FIXME: Better handling of listener subclassing
 
-class IMonitoringListener(Interface):
-    def onMonitoringTaskAdded(self, takser, task):
+class ITranscodingListener(Interface):
+    def onTranscodingTaskAdded(self, takser, task):
         pass
     
-    def onMonitoringTaskRemoved(self, tasker, task):
+    def onTranscodingTaskRemoved(self, tasker, task):
         pass
 
     
-class MonitoringListener(object):
+class TranscodingListener(object):
     
-    implements(IMonitoringListener)
+    implements(ITranscodingListener)
 
-    def onMonitoringTaskAdded(self, takser, task):
+    def onTranscodingTaskAdded(self, takser, task):
         pass
     
-    def onMonitoringTaskRemoved(self, tasker, task):
+    def onTranscodingTaskRemoved(self, tasker, task):
         pass
 
 
-class Monitoring(TaskManager, WorkerSetListener, 
-                 MonitorSetListener, MonitorListener):
+class Transcoding(TaskManager, WorkerSetListener, 
+                 TranscoderSetListener, TranscoderListener):
     
-    logCategory = 'trans-monitoring'
+    logCategory = 'trans-transcoding'
     
-    def __init__(self, workerset, monitorset):
-        TaskManager.__init__(self, IMonitoringListener)
+    def __init__(self, workerset, transcoderset):
+        TaskManager.__init__(self, ITranscodingListener)
         self._workers = workerset
-        self._monitors = monitorset
-        self._balancer = MonitorBalancer()
+        self._transcoders = transcoderset
+        self._balancer = TranscoderBalancer()
         self._workers.addListener(self)
         self._workers.syncListener(self)
-        self._monitors.addListener(self)
-        self._monitors.syncListener(self)
+        self._transcoders.addListener(self)
+        self._transcoders.syncListener(self)
         
 
     ## Public Method ##
     
-    
+
     ## Overrided Virtual Methods ##
 
     def _doStart(self):
-        self.log("Ready to start monitoring, waiting to idle")
-        d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbMonitorSetGoesIdle)
+        self.log("Ready to start transcoding, waiting to idle")
+        d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(self.__cbTranscoderSetGoesIdle)
         return d
     
     def _doResume(self):
-        self.log("Ready to resume monitoring, waiting to idle")
-        d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbMonitorSetGoesIdle)
+        self.log("Ready to resume transcoding, waiting to idle")
+        d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(self.__cbTranscoderSetGoesIdle)
         return d
     
     def _doAbort(self):
-        self.log("Aborting monitoring")
+        self.log("Aborting transcoding")
         self._balancer.clearTasks()
 
     def _onTaskAdded(self, task):
         if self._started:
             self._balancer.addTask(task)
             self._balancer.balance()
-        self._fireEvent(task, "MonitoringTaskAdded")
     
     def _onTaskRemoved(self, task):
         if self._started:
             self._balancer.removeTask(task)
             self._balancer.balance()
-        self._fireEvent(task, "MonitoringTaskRemoved")
 
             
     ## IWorkerSetListener Overrided Methods ##
     
     def onWorkerAddedToSet(self, workerset, worker):
-        self.log("Worker '%s' added to monitoring", worker.getLabel())
+        self.log("Worker '%s' added to transcoding", worker.getLabel())
         self._balancer.addWorker(worker)
         self._balancer.balance()
     
     def onWorkerRemovedFromSet(self, workerset, worker):
-        self.log("Worker '%s' removed from monitoring", worker.getLabel())
+        self.log("Worker '%s' removed from transcoding", worker.getLabel())
         self._balancer.removeWorker(worker)
         self._balancer.balance()
 
 
-    ## IMonitorSetListener Overrided Methods ##
+    ## ITranscoderSetListener Overrided Methods ##
     
-    def onMonitorAddedToSet(self, monitorset, monitor):
-        self.log("Monitor '%s' added to monitoring", monitor.getLabel())
-        d = self.addComponent(monitor)
-        d.addErrback(self.__ebAddComponentFailed, monitor.getName())
+    def onTranscoderAddedToSet(self, transcoderset, transcoder):
+        self.log("Transcoder '%s' added to transcoding", transcoder.getLabel())
+        d = self.addComponent(transcoder)
+        d.addErrback(self.__ebAddComponentFailed, transcoder.getName())
     
-    def onMonitorRemovedFromSet(self, monitorset, monitor):
-        self.log("Monitor '%s' removed from monitoring", monitor.getLabel())
-        d = self.removeComponent(monitor)
-        d.addErrback(self.__ebRemoveComponentFailed, monitor.getName())
+    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
+        self.log("Transcoder '%s' removed from transcoding", transcoder.getLabel())
+        d = self.removeComponent(transcoder)
+        d.addErrback(self.__ebRemoveComponentFailed, transcoder.getName())
 
 
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
         for t in self._taks.itervalues():
-            self._fireEventTo(t, listener, "MonitoringTaskAdded")
+            self._fireEventTo(t, listener, "TranscodingTaskAdded")
 
 
     ## Private Methods ##
     
-    def __cbMonitorSetGoesIdle(self, result):
+    def __cbTranscoderSetGoesIdle(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.warning("Failure during waiting monitor set "
+            self.warning("Failure during waiting transcoder set "
                          "to become idle: %s",
                          log.getFailureMessage(result))
             self.debug("%s", log.getFailureTraceback(result))
-        self.log("Starting/Resuming monitoring")
+        self.log("Starting/Resuming transcoding")
         for task in self.iterTasks():
             worker = task.getActiveWorker()
             self._balancer.addTask(task, worker)
         self._balancer.balance()
 
     def __ebAddComponentFailed(self, failure, name):
-        self.warning("Failed to add monitor '%s' "
-                     "to monitoring manager: %s", 
+        self.warning("Failed to add transcoder '%s' "
+                     "to transcoding manager: %s", 
                      name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
     
     def __ebRemoveComponentFailed(self, failure, name):
-        self.warning("Failed to remove monitor '%s' "
-                     "from monitoring manager: %s",
+        self.warning("Failed to remove transcoder '%s' "
+                     "from transcoding manager: %s",
                      name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))

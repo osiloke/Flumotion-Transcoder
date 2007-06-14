@@ -18,6 +18,9 @@ import weakref
 import re
 import datetime
 
+from flumotion.transcoder import virtualpath
+
+
 class PropertyError(Exception):
 
     def __init__(self, msg, locator=None, descriptor=None, cause=None):
@@ -1050,3 +1053,18 @@ class DateTime(ValueProperty):
         return ("%04d/%02d/%02d %02d:%02d:%02d" 
                 % (value.year, value.month, value.day,
                    value.hour, value.minute, value.second))
+
+
+class VirtualPath(ValueProperty):
+    
+    def __init__(self, descriptor, default=None, required=False):
+        ValueProperty.__init__(self, descriptor, default, required)
+    
+    def checkValue(self, value):
+        return isinstance(value, virtualpath.VirtualPath)
+    
+    def str2val(self, strval):
+        return virtualpath.VirtualPath(strval)
+    
+    def val2str(self, value):
+        return str(value)

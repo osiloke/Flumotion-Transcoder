@@ -22,6 +22,7 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.datasource import datasource
 
 
@@ -29,12 +30,13 @@ DEFAULTS_DATA = {'monitoringPeriod': 2,
                  'transcodingTimeout': 4,
                  'postprocessTimeout': 60,
                  'preprocessTimeout': 60,
-                 'outputFileTemplate': "%(inputFileBase)s.%(outputFileExt)",
-                 'linkFileTemplate': "%(inputFile)s.link",
-                 'configFileTemplate': "%(inputFile)s.ini",
-                 'reportFileTemplate': "%(inputFile)s.rep",
-                 'mailSubjectTemplate': "Transcoding Error",
-                 'mailBodyTemplate': "Errorrrrr",
+                 'outputMediaTemplate': adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE,
+                 'outputThumbTemplate': adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE,
+                 'linkFileTemplate': adminconsts.DEFAULT_LINK_FILE_TEMPLATE,
+                 'configFileTemplate': adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE,
+                 'reportFileTemplate': adminconsts.DEFAULT_REPORT_FILE_TEMPLATE,
+                 'mailSubjectTemplate': adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE,
+                 'mailBodyTemplate': adminconsts.DEFAULT_MAIL_BODY_TEMPLATE,
                  'GETRequestTimeout': 60,
                  'GETRequestRetryCount': 3,
                  'GETRequestRetrySleep': 60}
@@ -50,7 +52,8 @@ CUSTOMER_DATA = {'name': "Fluendo",
                  'configDir': None,
                  'failedRepDir': None,
                  'doneRepDir': None,
-                 'outputFileTemplate': None,
+                 'outputMediaTemplate': None,
+                 'outputThumbTemplate': None,
                  'linkFileTemplate': None,
                  'configFileTemplate': None,
                  'reportFileTemplate': None,
@@ -85,7 +88,8 @@ PROFILE_DATA = {'name': None,
                 'configDir': None,
                 'failedRepDir': None,
                 'doneRepDir': None,
-                'outputFileTemplate': None,
+                'outputMediaTemplate': None,
+                'outputThumbTemplate': None,
                 'linkFileTemplate': None,
                 'configFileTemplate': None,
                 'reportFileTemplate': None,
@@ -130,7 +134,7 @@ VIDEO_CONFIG = {'type': TargetTypeEnum.video,
                 'videoMaxHeight': None,
                 'videoPAR': None,
                 'videoFramerate': None,
-                'scaleMethod': None}
+                'videoScaleMethod': None}
 
 AUDIOVIDEO_CONFIG = {'type': TargetTypeEnum.audiovideo,
                      'muxer': None,
@@ -144,7 +148,7 @@ AUDIOVIDEO_CONFIG = {'type': TargetTypeEnum.audiovideo,
                      'videoMaxHeight': None,
                      'videoPAR': None,
                      'videoFramerate': None,
-                     'scaleMethod': None}
+                     'videoScaleMethod': None}
 
 THUMBNAILS_CONFIG = {'type': TargetTypeEnum.thumbnails,
                      'thumbsWidth': None,

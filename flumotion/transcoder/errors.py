@@ -44,6 +44,12 @@ class TranscoderError(Exception):
             else:
                 self.causeDetails = "Unknown"
 
+
+class VirtualPathError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
 class HandledTranscoderError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)

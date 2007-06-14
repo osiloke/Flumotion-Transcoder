@@ -53,6 +53,9 @@ class WorkerSet(RootFlumotionProxy,
     def iterWorkers(self):
         return self._workers.itervalues()
     
+    def getWorkers(self):
+        return self._workers.values()
+    
     def __iter__(self):
         return self._workers.__iter__()
     

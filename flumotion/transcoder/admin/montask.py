@@ -20,7 +20,7 @@ from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.enums import MonitorFileStateEnum
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
 from flumotion.transcoder.admin.monprops import MonitorProperties
@@ -260,7 +260,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                  self._monitor.getName(), self.getLabel())
         self._fireEvent(self._monitor, "MonitoringActivated")
         # Synchronize all monitored files
-        d = monitor.waitFiles(constants.MONITORING_UI_TIMEOUT)
+        d = monitor.waitFiles(adminconsts.MONITORING_UI_TIMEOUT)
         d.addCallbacks(self.__cbForwardFileEvents,
                        self.__ebGetFilesTimeout,
                        callbackArgs=(monitor,), errbackArgs=(monitor,))
@@ -285,7 +285,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             return
         self.log("Scheduling monitor start for task '%s'",
                  self.getLabel())
-        self._delayed = reactor.callLater(constants.MONITORING_START_DELAY,
+        self._delayed = reactor.callLater(adminconsts.MONITORING_START_DELAY,
                                           self.__startMonitor)
 
     def __startMonitor(self):
@@ -317,8 +317,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                    self._label, monitorName, workerName)
         self._pendingName = monitorName
         d = MonitorProxy.loadTo(self._worker, monitorName, 
-                                self._label, self._properties)
-        d.setTimeout(constants.MONITORING_START_TIMEOUT)
+                                self._label, self._properties,
+                                adminconsts.MONITORING_LOAD_TIMEOUT)
         args = (monitorName, workerName)
         d.addCallbacks(self.__cbMonitorStartSucceed,
                        self.__ebMonitorStartFailed,
@@ -349,7 +349,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             self.__delayedStartMonitor()
             return
         # If not, wait for the monitor to go happy
-        d = result.waitHappy(constants.HAPPY_TIMEOUT)
+        d = result.waitHappy(adminconsts.HAPPY_TIMEOUT)
         args = (result, workerName)
         d.addCallbacks(self.__cbMonitorGoesHappy, 
                        self.__ebMonitorNotHappy,

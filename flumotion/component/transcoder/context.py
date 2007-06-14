@@ -47,7 +47,8 @@ class SourceContext(BaseContext):
     def __init__(self, context):
         tag = "(%s:%s) " % (context.config.customer.name, 
                             context.config.profile.label)
-        BaseContext.__init__(self, context.logger, tag)
+        BaseContext.__init__(self, context._logger, tag)
+        self.local = context.local
         self._profile = context.config.profile
         self.config = context.config.source    
         self.reporter = context.reporter.getSourceReporter()
@@ -61,27 +62,31 @@ class SourceContext(BaseContext):
         return self.config.inputFile
     
     def getReportFile(self):
-        return self.config.reportTemplate % self._random
+        return self.config.reportTemplate % {"id": self._random}
         
     def getFailedReportPath(self):
-        dir = self._profile.failedReportsDir
-        return os.path.join(dir, self.config.reportTemplate % self._random)
+        file = self.config.reportTemplate % {"id": self._random}
+        path = self._profile.failedReportsDir.append(file)
+        return path.localize(self.local)
 
     def getDoneReportPath(self):
-        dir = self._profile.doneReportsDir
-        return os.path.join(dir, self.config.reportTemplate % self._random)
+        file = self.config.reportTemplate % {"id": self._random}
+        path = self._profile.doneReportsDir.append(file)
+        return path.localize(self.local)
         
     def getInputPath(self):
-        dir = self._altInputDir or self._profile.inputDir
-        return os.path.join(dir, self.config.inputFile)
+        if self._altInputDir:
+            return os.path.join(self._altInputDir, self.config.inputFile)
+        path = self._profile.inputDir.append(self.config.inputFile)
+        return path.localize(self.local)
         
     def getDoneInputPath(self):
-        dir = self._profile.doneDir
-        return os.path.join(dir, self.config.inputFile)
+        path = self._profile.doneDir.append(self.config.inputFile)
+        return path.localize(self.local)
 
     def getFailedInputPath(self):
-        dir = self._profile.failedDir
-        return os.path.join(dir, self.config.inputFile)
+        path = self._profile.failedDir.append(self.config.inputFile)
+        return path.localize(self.local)
         
         
 class TargetContext(TaskContext):
@@ -96,7 +101,8 @@ class TargetContext(TaskContext):
                                context.config.profile.label,
                                context.config.targets[targetIndex].label)
         reporter = context.reporter.getTargetReporter(targetIndex)
-        TaskContext.__init__(self, context.logger, reporter, tag)
+        TaskContext.__init__(self, context._logger, reporter, tag)
+        self.local = context.local
         self._profile = context.config.profile
         self.config = context.config.targets[targetIndex]
         self.index = targetIndex
@@ -113,13 +119,12 @@ class TargetContext(TaskContext):
         return WORK_FILE_TEMPLATE % (self.config.outputFile, self._random)
     
     def getOutputWorkPath(self):
-        return os.path.join(self._profile.workDir,
-                            WORK_FILE_TEMPLATE % (self.config.outputFile , 
-                                                  self._random))
+        file = WORK_FILE_TEMPLATE % (self.config.outputFile , self._random)
+        return self._profile.workDir.append(file).localize(self.local)
         
     def getOutputPath(self):
-        return os.path.join(self._profile.outputDir, 
-                            self.config.outputFile)
+        path = self._profile.outputDir.append(self.config.outputFile)
+        return path.localize(self.local)
         
     def getLinkWorkFile(self):
         if self.config.linkFile:
@@ -130,15 +135,16 @@ class TargetContext(TaskContext):
         linkDir = self._profile.linkDir
         linkFile = self.config.linkFile
         if linkDir and linkFile:
-            return os.path.join(self._profile.workDir,
-                                WORK_FILE_TEMPLATE % (linkFile, self._random))
+            file = WORK_FILE_TEMPLATE % (linkFile, self._random)
+            path = self._profile.workDir.append(file)
+            return path.localize(self.local)
         return None
     
     def getLinkPath(self):
         linkDir = self._profile.linkDir
         linkFile = self.config.linkFile
         if linkDir and linkFile:
-            return os.path.join(linkDir, linkFile)
+            return linkDir.append(linkFile).localize(self.local)
         return None
     
     def _escapeForRegex(self, s):
@@ -147,7 +153,7 @@ class TargetContext(TaskContext):
         return s
     
     def _getFileFromWork(self, path):
-        workDir = self._profile.workDir
+        workDir = self._profile.workDir.localize(self.local)
         #May have more than one separator
         workDir = workDir.replace(os.sep, os.sep + "+")
         workDir = self._escapeForRegex(workDir)
@@ -163,13 +169,13 @@ class TargetContext(TaskContext):
     
     def getOutputFromWork(self, workPath):
         outputFile = self._getFileFromWork(workPath)
-        outputDir = self._profile.outputDir
-        return os.path.join(outputDir, outputFile)
+        path = self._profile.outputDir.append(outputFile)
+        return path.localize(self.local)
 
     def getLinkFromWork(self, workPath):
         linkFile = self._getFileFromWork(workPath)
-        linkDir = self._profile.linkDir
-        return os.path.join(linkDir, linkFile)
+        path = self._profile.linkDir.append(linkFile)
+        return path.localize(self.local)
 
     def getLinkURL(self, args):
         return "%s%s.m3u?%s" % (self.config.linkUrlPrefix,
@@ -187,11 +193,12 @@ class TargetContext(TaskContext):
 
 class Context(TaskContext):
     
-    def __init__(self, logger, config, report):        
+    def __init__(self, logger, local, config, report):
         tag = "(%s:%s) " % (config.customer.name, 
                                config.profile.label)
-        reporter = Reporter(report)
+        reporter = Reporter(local, report)
         TaskContext.__init__(self, logger, reporter, tag)
+        self.local = local
         self.config = config
         self._sourceCtx = SourceContext(self)
         self._altInputDir = None
@@ -218,10 +225,12 @@ class Context(TaskContext):
                 if config != None]
 
     def getInputDir(self):        
-        return self._altInputDir or self.config.profile.inputDir
+        if self._altInputDir:
+            return self._altInputDir
+        return self.config.profile.inputDir.localize(self.local)
     
     def getOutputDir(self):
-        return self.config.profile.outputDir
+        return self.config.profile.outputDir.localize(self.local)
     
     def getWorkDir(self):
-        return self.config.profile.workDir
+        return self.config.profile.workDir.localize(self.local)

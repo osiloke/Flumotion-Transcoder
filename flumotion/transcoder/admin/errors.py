@@ -16,27 +16,45 @@ from flumotion.transcoder.errors import TranscoderError
 
 
 class StoreError(TranscoderError):
-    pass
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class PropertiesError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
 
 
 class OperationTimedOutError(TranscoderError):
     """
     An asynchronous operation timed out.
     """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
 
 class ComponentRejectedError(TranscoderError):
     """
     A component set rejected the component.
     Doesn't mean the component doesn't exist.
     """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
 
 class OrphanComponentError(TranscoderError):
     """
     An operation couldn't be done because the
     component is orphan (its worker is not running).
     """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
     
 class WaiterError(TranscoderError):
     """
     A wait operation couldn't be completed.
     """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+

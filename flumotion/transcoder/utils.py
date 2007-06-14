@@ -19,8 +19,6 @@ import random
 
 from twisted.internet import defer, reactor
 
-from flumotion.transcoder.admin import constants
-
 
 class LazyEncapsulationIterator(object):
     

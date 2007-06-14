@@ -104,7 +104,7 @@ def main(args):
     options, configPath = parse_options(args)
     
     loader = inifile.IniFile()
-    config = adminconfig.AdminConfig()
+    config = adminconfig.ClusterConfig()
     try:
         loader.loadFromFile(config, configPath)
     except Exception, e:

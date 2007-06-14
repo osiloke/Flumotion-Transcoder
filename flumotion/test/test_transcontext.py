@@ -20,7 +20,7 @@
 # Headers in this file shall remain intact.
 
 from twisted.trial import unittest
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
 
 class Dummy(object):
@@ -48,9 +48,9 @@ class TestTranscoderContext(unittest.TestCase):
                        {"Subdir": targSubdir,
                         "Extension": targExt,
                         "OutputFileTemplate": 
-                            constants.DEFAULT_OUTPUT_FILE_TEMPLATE,
+                            adminconsts.DEFAULT_OUTPUT_FILE_TEMPLATE,
                         "LinkFileTemplate": 
-                             constants.DEFAULT_LINK_FILE_TEMPLATE})
+                             adminconsts.DEFAULT_LINK_FILE_TEMPLATE})
         profile = Dummy({targName: target},
                         {"Name": profName,
                          "Subdir": profSubdir,
@@ -64,9 +64,9 @@ class TestTranscoderContext(unittest.TestCase):
                          "FailedRepDir": None,
                          "DoneRepDir": None,
                          "ConfigFileTemplate": 
-                             constants.DEFAULT_CONFIG_FILE_TEMPLATE,
+                             adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE,
                          "ReportFileTemplate": 
-                             constants.DEFAULT_REPORT_FILE_TEMPLATE})
+                             adminconsts.DEFAULT_REPORT_FILE_TEMPLATE})
         customer = Dummy({profName: profile},
                          {"Name": custName,
                           "Subdir": custSubdir,

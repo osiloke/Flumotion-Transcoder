@@ -12,6 +12,7 @@
 
 from flumotion.transcoder import utils
 from flumotion.transcoder.admin.substitution import Variables
+from flumotion.transcoder.admin.datastore.configstore import ThumbnailsConfig
 
 def _buildRelPathGetter(storeGetterName):
     def getter(self):
@@ -89,17 +90,21 @@ class TargetContext(object):
                 dirGetter = _buildDirGetter(baseGetterName, relGetterName)
                 fileGetter = _buildFileGetter(relGetterName)
                 pathGetter = _buildPathGetter(dirGetterName, fileGetterName)
-                setattr(cls, relGetterName, relGetter)
-                setattr(cls, dirGetterName, dirGetter)
-                setattr(cls, fileGetterName, fileGetter)
-                setattr(cls, pathGetterName, pathGetter)
+                if not hasattr(cls, relGetterName):
+                    setattr(cls, relGetterName, relGetter)
+                if not hasattr(cls, dirGetterName):
+                    setattr(cls, dirGetterName, dirGetter)
+                if not hasattr(cls, fileGetterName):
+                    setattr(cls, fileGetterName, fileGetter)
+                if not hasattr(cls, pathGetterName):
+                    setattr(cls, pathGetterName, pathGetter)
                 
     
-    def __init__(self, profileContext, targetStore):
+    def __init__(self, targetStore, profileContext):
         self.profile = profileContext
         self.store = targetStore
         self._vars = Variables(self.profile._vars)
-        self._vars.addVar("targetExtension", self.store.getExtension())
+        self._vars.addVar("targetExtension", self.getExtension())
         subdir = self.store.getSubdir() or ""
         subdir = utils.str2path(subdir)
         subdir = utils.ensureRelDirPath(subdir)
@@ -110,3 +115,15 @@ class TargetContext(object):
         
     def getSubdir(self):
         return self._vars["targetSubdir"]
+    
+    def getExtension(self):
+        return '.' + self.store.getExtension()
+    
+    def getOutputRelPath(self):
+        if isinstance(self.store.getConfig(), ThumbnailsConfig):
+            template = self.store.getOutputThumbTemplate()
+        else:
+            template = self.store.getOutputMediaTemplate()
+        path = self._vars.substitute(template)
+        path = utils.ensureRelPath(path)
+        return utils.cleanupPath(path)

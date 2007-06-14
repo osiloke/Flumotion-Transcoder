@@ -25,9 +25,11 @@ from flumotion.component.transcoder import job
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder import properties, log, enums
-from flumotion.transcoder.jobconfig import JobConfig
-from flumotion.transcoder.jobreport import JobReport
+from flumotion.transcoder.transconfig import TranscodingConfig
+from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.inifile import IniFile
+from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder.local import Local
 
 
 from flumotion.common.messages import N_
@@ -62,6 +64,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self._report = None
         self._reportPath = None
         self._config = None
+        self._local = None
         self.uiState.addDictKey('job-data', {})
         self.uiState.addDictKey('source-data', {})
         self.uiState.addDictKey('targets-data', {})
@@ -74,50 +77,61 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             loader = IniFile()
             props = self.config["properties"]
             niceLevel = props.get("nice-level", None)
+            #FIXME: Better checks for path roots
+            self._local = Local.createFromComponentProperties(props)
             if props.has_key("config"):
                 if props.has_key("report"):
                     raise Exception("Component properties 'config' "
                                     + "and 'report' should not be "
                                     + "specified at the same time")
-                configPath = props["config"]
-                if not os.path.exists(configPath):
-                    raise Exception("Config file not found ('%s')" % configPath)
-                self.debug("Loading configuration from '%s'", configPath)
-                self._config = JobConfig()
-                loader.loadFromFile(self._config, configPath)
-                self._report = JobReport()
+                configPath = VirtualPath(props["config"])
+                localConfigPath = configPath.localize(self._local)
+                if not os.path.exists(localConfigPath):
+                    raise Exception("Config file not found ('%s')" 
+                                    % localConfigPath)
+                self.debug("Loading configuration from '%s'", localConfigPath)
+                self._config = TranscodingConfig()
+                loader.loadFromFile(self._config, localConfigPath)
+                self._report = TranscodingReport()
                 self._report.init(self._config)
                 self._report.configPath = configPath
                 self._diagnoseMode = False
-                self._job.setup(self._config, self._report, 
+                self._job.setup(self._local, self._config, self._report, 
                                 niceLevel=niceLevel)
             else:
                 if props.has_key("report"):
-                    reportPath = props["report"]
-                    if not os.path.exists(reportPath):
-                        raise Exception("Report file not found ('%s')" % reportPath)
-                    self.debug("Loading report from '%s'", reportPath)
-                    baseReport = JobReport()
+                    reportPath = VirtualPath(props["report"])
+                    localReportPath = reportPath.localize(self._local)
+                    if not os.path.exists(localReportPath):
+                        raise Exception("Report file not found ('%s')" 
+                                        % localReportPath)
+                    self.debug("Loading report from '%s'", localReportPath)
+                    baseReport = TranscodingReport()
                     loader.loadFromFile(baseReport, reportPath)
                     configPath = baseReport.configPath
-                    if not os.path.exists(configPath):
-                        raise Exception("Config file not found ('%s')" % configPath)
-                    self.debug("Loading configuration from '%s'", configPath)
-                    self._config = JobConfig()
-                    loader.loadFromFile(self._config, configPath)
-                    repFilePath = baseReport.source.filePath
-                    confInputFile = self._config.source.inputFile
+                    localConfigPath = configPath.localize(self._local)
+                    if not os.path.exists(localConfigPath):
+                        raise Exception("Config file not found ('%s')" 
+                                        % localConfigPath)
+                    self.debug("Loading configuration from '%s'", 
+                               localConfigPath)
+                    self._config = TranscodingConfig()
+                    loader.loadFromFile(self._config, localConfigPath)
+                    virtRepFilePath = baseReport.source.filePath
+                    repFilePath = virtRepFilePath.localize(self._local)
+                    virtConfInputFile = self._config.source.inputFile
+                    confInputFile = virtConfInputFile.localize(self._local)
                     if not repFilePath.endswith(confInputFile):
                         raise Exception("The report source file-path property "
                                         + "doesn't match the configuration "
                                         + "source input-file property")
                     altInputDir = repFilePath[:-len(confInputFile)]
-                    self._report = JobReport()
+                    self._report = TranscodingReport()
                     self._report.init(self._config)
                     self._report.configPath = configPath
                     self.info("Entering diagnose mode")
                     self._diagnoseMode = True
-                    self._job.setup(self._config, self._report,
+                    self._job.setup(self._local, self._config, self._report,
                                     moveInputFile=False,
                                     altInputDir=altInputDir,
                                     niceLevel=niceLevel)
@@ -181,6 +195,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.uiState.setitem('job-data', "job-state", state)
     
     def onSourceInfo(self, info):
+        inputFile = info["input-file"]
+        virtFile = VirtualPath.virtualize(inputFile, self._local)
+        info["input-file"] = str(virtFile)
         for key, value in info.iteritems():
             self.uiState.setitem('source-data', key, value)
     
@@ -212,7 +229,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.uiState.setitem('job-data', "status", status)
         
     def _fireTranscodingReport(self, reportPath):
-        self.uiState.setitem('job-data', "transcoding-report", reportPath)
+        virtPath = VirtualPath.virtualize(reportPath, self._local)
+        self.uiState.setitem('job-data', "transcoding-report", str(virtPath))
         
     
     ## Private Methods ##
@@ -222,6 +240,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             assert report == self._report, ("Job creates it's own report "
                                             + "instance. It's Baaaaad.")
             config = self._config
+            # FIXME: Very ugly, should not ask the job for this
             self._reportPath = self._job.getDoneReportPath()
             self.__writeReport(report, self._reportPath)
             self._fireTranscodingReport(self._reportPath)
@@ -243,6 +262,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 m = messages.Error(T_(failure.getErrorMessage()),
                                    debug=log.getFailureMessage(failure))
                 self.addMessage(m)
+            # FIXME: Very ugly, should not ask the job for this
             self._reportPath = self._job.getFailedReportPath()
             self.__writeReport(report, self._reportPath)
             self._fireTranscodingReport(self._reportPath)
@@ -269,6 +289,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         try:
             self.warning("Transcoding Acknowledge Error: %s",
                          log.getFailureMessage(failure))
+            # FIXME: Very ugly, should not ask the job for this
             newReportPath = self._job.getFailedReportPath()
             if newReportPath != self._reportPath:
                 self._reportPath = newReportPath
@@ -283,14 +304,15 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.addMessage(m)
 
     def __writeReport(self, report, path):
+        localPath = path # Already localized
         #if running in diagnose mode, don't overrite it
         if self._diagnoseMode:
-            path = path + ".diag"
-        self.debug("Writing report file '%s'", path)
+            localPath = localPath + ".diag"
+        self.debug("Writing report file '%s'", localPath)
         try:
-            ensureDir(os.path.dirname(path), "report")
+            ensureDir(os.path.dirname(localPath), "report")
             saver = IniFile()
-            saver.saveToFile(report, path)
+            saver.saveToFile(report, localPath)
         except properties.PropertyError, e:
             self.warning("Failed to write report; %s"
                          % log.getExceptionMessage(e))

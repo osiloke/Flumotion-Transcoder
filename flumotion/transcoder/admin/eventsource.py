@@ -36,7 +36,7 @@ class EventSource(object):
         for interface, listeners in self._listeners.items():
             if not interface.providedBy(listener):
                 self.log("Interface %s not provided by listener %s",
-                         interface.__class__.__name__,
+                         interface.__name__,
                          listener.__class__.__name__)
                 continue
             assert not (listener in listeners)

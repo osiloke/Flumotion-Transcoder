@@ -11,9 +11,10 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import utils
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.substitution import Variables
-from flumotion.transcoder.admin.virtualpath import VirtualPath
 from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.context.profilecontext import ProfileContext
 from flumotion.transcoder.admin.context.profilecontext import UnboundProfileContext
@@ -113,47 +114,47 @@ class CustomerContext(object):
     def getInputBase(self):
         folder = self.store.getInputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_INPUT_DIR)
+                            adminconsts.DEFAULT_INPUT_DIR)
 
     def getOutputBase(self):
         folder = self.store.getOutputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_OUTPUT_DIR)
+                            adminconsts.DEFAULT_OUTPUT_DIR)
     
     def getFailedBase(self):
         folder = self.store.getFailedDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_FAILED_DIR)
+                            adminconsts.DEFAULT_FAILED_DIR)
     
     def getDoneBase(self):
         folder = self.store.getDoneDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_DONE_DIR)
+                            adminconsts.DEFAULT_DONE_DIR)
     
     def getLinkBase(self):
         folder = self.store.getLinkDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_LINK_DIR)
+                            adminconsts.DEFAULT_LINK_DIR)
     
     def getWorkBase(self):
         folder = self.store.getWorkDir()
         return self._getDir(constants.TEMP_ROOT, folder, 
-                            constants.DEFAULT_WORK_DIR)
+                            adminconsts.DEFAULT_WORK_DIR)
     
     def getConfigBase(self):
         folder = self.store.getConfigDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_CONFIG_DIR)
+                            adminconsts.DEFAULT_CONFIG_DIR)
     
     def getFailedRepBase(self):
         folder = self.store.getFailedRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_FAILEDREP_DIR)
+                            adminconsts.DEFAULT_FAILEDREP_DIR)
     
     def getDoneRepBase(self):
         folder = self.store.getDoneRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            constants.DEFAULT_DONEREP_DIR)
+                            adminconsts.DEFAULT_DONEREP_DIR)
 
     def getMonitorLabel(self):
         template = self.transcoding.admin.config.monitorLabelTemplate

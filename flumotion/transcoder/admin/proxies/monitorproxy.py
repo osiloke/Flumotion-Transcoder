@@ -14,7 +14,7 @@ import os
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.virtualpath import VirtualPath
+from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
@@ -53,12 +53,12 @@ class MonitorProxy(ComponentProxy):
     properties_factory = MonitorProperties
     
     @classmethod
-    def loadTo(cls, worker, name, label, properties):
+    def loadTo(cls, worker, name, label, properties, timeout=None):
         manager = worker.getParent()
         atmosphere = manager.getAtmosphere()
         return atmosphere._loadComponent('file-monitor', 
                                          name,  label, worker, 
-                                         properties)
+                                         properties, timeout)
     
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):
@@ -139,8 +139,8 @@ class MonitorProxy(ComponentProxy):
         worker = self.getWorker()
         assert worker != None
         context = worker.getContext()
-        roots = context.getRoots()
-        return VirtualPath.fromPath(path, roots)
+        local = context.getLocal()
+        return VirtualPath.virtualize(path, local)
 
     def __cbRetrieveFiles(self, ui):
         files = []
@@ -148,9 +148,9 @@ class MonitorProxy(ComponentProxy):
         assert ui != None
         assert worker != None
         context = worker.getContext()
-        roots = context.getRoots()
+        local = context.getLocal()
         for (p, f), s in ui.get("pending-files", {}).iteritems():
-            files.append((VirtualPath.fromPath(p, roots), f, s))
+            files.append((VirtualPath.virtualize(p, local), f, s))
         return files
     
 

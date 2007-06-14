@@ -13,7 +13,7 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import properties
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 
 
 class ManagerConfig(properties.PropertyBag):
@@ -27,21 +27,24 @@ class ManagerConfig(properties.PropertyBag):
 
 class WorkerConfig(properties.PropertyBag):
     roots = properties.Dict(properties.String('roots'))
-    maxJobs = properties.Integer('max-jobs', 1, False, True)
+    maxTask = properties.Integer('max-task', 1, False, True)
 
 
 class DataSourceConfig(properties.PropertyBag):
     file = properties.String('file', None, True)
 
-
-class AdminConfig(properties.RootPropertyBag):
-    debug = properties.String("debug")
+class AdminConfig(properties.PropertyBag):
     datasource = properties.Child("data-source", DataSourceConfig)
+    roots = properties.Dict(properties.String('roots'))
+
+class ClusterConfig(properties.RootPropertyBag):
+    debug = properties.String("debug")
+    admin = properties.Child("admin", AdminConfig)
     manager = properties.Child("manager", ManagerConfig)
     workerDefaults = properties.Child('worker-defaults', WorkerConfig)
     workers = properties.ChildDict('workers', WorkerConfig)
     transcoderLabelTemplate = properties.String("transcoder-label-template",
-                                                constants.TRANSCODER_LABEL_TEMPLATE)
+                                                adminconsts.TRANSCODER_LABEL_TEMPLATE)
     monitorLabelTemplate = properties.String("monitor-label-template",
-                                             constants.MONITOR_LABEL_TEMPLATE)
+                                             adminconsts.MONITOR_LABEL_TEMPLATE)
     

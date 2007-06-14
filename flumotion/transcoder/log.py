@@ -81,9 +81,6 @@ class LoggerProxy(object):
     def setLogger(self, logger, **kwargs):
         self._logger = logger
         self._kwargs = kwargs
-        # If no logger is specified, use the global logger
-        if logger == None:
-            self._logger = flog
     
     def getLogPrefix(self, kwargs):
         return None
@@ -127,3 +124,22 @@ class LoggerProxy(object):
     def error(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
         self._logger.error(*args, **kwargs)
+
+
+### Helper functions to log without logger ##
+
+def log(self, *args, **kwargs):
+    flog.log("trans", *args, **kwargs)
+
+def debug(self, *args, **kwargs):
+    flog.debug("trans", *args, **kwargs)
+
+def info(self, *args, **kwargs):
+    flog.info("trans", *args, **kwargs)
+
+def warning(self, *args, **kwargs):
+    flog.warning("trans", *args, **kwargs)
+
+def error(self, *args, **kwargs):
+    flog.error("trans", *args, **kwargs)
+

@@ -19,7 +19,7 @@ from flumotion.common.log import Loggable
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
@@ -27,30 +27,11 @@ from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 
 
-class ITaskManagerListener(Interface):
-    def onTaskAdded(self, takser, task):
-        pass
-    
-    def onTaskRemoved(self, tasker, task):
-        pass
-
-    
-class TaskManagerListener(object):
-    
-    implements(ITaskManagerListener)
-
-    def onTaskAdded(self, takser, task):
-        pass
-    
-    def onTaskRemoved(self, tasker, task):
-        pass
-    
-
 class TaskManager(Loggable, EventSource, ComponentListener):
     
     logCategory = 'admin-tasks'
     
-    def __init__(self, interfaces=ITaskManagerListener):
+    def __init__(self, interfaces):
         EventSource.__init__(self, interfaces)
         self._identifiers = {} # {identifiers: ComponentProperties}
         self._tasks = {} # {ComponentProperties: IAdminTask}
@@ -81,7 +62,6 @@ class TaskManager(Loggable, EventSource, ComponentListener):
                 self.__releaseTasklessComponent(m)
                 task.addMonitor(m)
         self._onTaskAdded(task)
-        self._fireEvent(task, "TaskAdded")
     
     def removeTask(self, identifier):
         assert identifier in self._identifiers
@@ -90,9 +70,9 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         self.debug("Removing task '%s'", task.getLabel())
         del self._identifiers[identifier]
         del self._tasks[props]
+        self._onTaskRemoved(task)
         for c in task.stop():
             self.__apartTasklessComponent(c)
-        self._fireEvent(task, "TaskRemoved")
 
     def getTasks(self):
         return self._tasks.values()
@@ -139,7 +119,7 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         self.log("Component '%s' added to task manager %s", 
                  component.getLabel(), self.__class__.__name__)
         self._pending += 1
-        d = component.waitProperties(constants.TASKER_WAITPROPS_TIMEOUT)        
+        d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
         args = (component,)
         d.addCallbacks(self.__cbAddComponent, 
                        self.__ebGetPropertiesFailed,
@@ -150,7 +130,7 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         assert isinstance(component, ComponentProxy)
         self.log("Component '%s' removed from task manager %s", 
                  component.getLabel(), self.__class__.__name__)
-        d = component.waitProperties(constants.TASKER_WAITPROPS_TIMEOUT)        
+        d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
         d.addCallback(self.__cbRemoveComponent, component)
         return d
 
@@ -192,13 +172,6 @@ class TaskManager(Loggable, EventSource, ComponentListener):
     
     def _onTasklessComponentRemoved(self, component):
         pass
-
-
-    ## Overriden Methods ##
-    
-    def _doSyncListener(self, listener):
-        for t in self._taks.itervalues():
-            self._fireEventTo(t, listener, "TaskAdded")
 
 
     ## IComponentListener Overrided Methods ##

@@ -17,9 +17,9 @@ from zope.interface import Interface
 from flumotion.transcoder.admin.admintask import IAdminTask
 
 
-class TaskBalancer(object):
+class MonitorBalancer(object):
     """
-    Handle the distribution of tasks to a set of worker.
+    Handle the distribution of monitoring tasks to a set of worker.
     """
     
     def __init__(self):

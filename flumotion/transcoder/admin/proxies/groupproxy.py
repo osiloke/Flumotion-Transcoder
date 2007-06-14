@@ -122,17 +122,17 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     ## Protected/Friend Methods
     
     def _loadComponent(self, componentType, componentName,
-                       componentLabel, worker, properties):
+                       componentLabel, worker, properties, timeout=None):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
-        props = properties.getComponentProperties(worker.getContext())
+        props = properties.asComponentProperties(worker.getContext())
         resDef = defer.Deferred()
         initDef = defer.Deferred()
         self._waitCompLoaded[identifier] = initDef
         callDef = self._manager._callRemote('loadComponent', componentType,
                                             compId, componentLabel, 
                                             props, worker.getName())
-        to = utils.createTimeout(constants.LOAD_COMPONENT_TIMEOUT,
+        to = utils.createTimeout(timeout or constants.LOAD_COMPONENT_TIMEOUT,
                                  self.__asyncComponentLoadedTimeout, callDef)
         args = (identifier, initDef, resDef, to)
         callDef.addCallbacks(self.__cbComponentLoaded, 

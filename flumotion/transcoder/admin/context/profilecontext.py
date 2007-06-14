@@ -11,9 +11,9 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import utils
+from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.substitution import Variables
-from flumotion.transcoder.admin.virtualpath import VirtualPath
 from flumotion.transcoder.admin.context.targetcontext import TargetContext
 
 #TODO: Do some value caching
@@ -26,7 +26,7 @@ def _buildBaseGetter(baseGetterName, storeGetterName):
             value = self._expandDir(folder)
             value = utils.ensureAbsDirPath(value)
             value = utils.cleanupPath(value)
-            return VirtualPath(value, parent.getRootName())
+            return VirtualPath(value, parent.getRoot())
         return parent.append(self.getSubdir())
     return getter
 
@@ -101,9 +101,12 @@ class UnboundProfileContext(object):
                 dirGetter = _buildDirGetter(baseGetterName, relGetterName)
                 fileGetter = _buildFileGetter(relGetterName)
                 pathGetter = _buildPathGetter(dirGetterName, fileGetterName)
-                setattr(cls, fileGetterName, fileGetter)
-                setattr(cls, pathGetterName, pathGetter)
-                setattr(cls, dirGetterName, dirGetter)
+                if not hasattr(cls, fileGetterName):
+                    setattr(cls, fileGetterName, fileGetter)
+                if not hasattr(cls, pathGetterName):
+                    setattr(cls, pathGetterName, pathGetter)
+                if not hasattr(cls, dirGetterName):
+                    setattr(cls, dirGetterName, dirGetter)
 
     def __init__(self, profileStore, customerContext):
         self.customer = customerContext
@@ -184,14 +187,14 @@ class ProfileContext(UnboundProfileContext):
         self._vars.addFileVars(inputAbstractPath, "source")
 
     def getTargetContextByName(self, targetName):
-        return TargetContext(self, self.store[targetName])
+        return TargetContext(self.store[targetName], self)
 
     def getTargetContext(self, target):
         assert target.getParent() == self.store
-        return TargetContext(self, target)
+        return TargetContext(target, self)
 
     def iterTargetContexts(self):
-        return LazyEncapsulationIterator(ProfileContext, 
+        return LazyEncapsulationIterator(TargetContext, 
                                          self.store.iterTargets(), self)
 
     def getInputRelPath(self):

@@ -44,7 +44,8 @@ class ProfileStoreListener(object):
 class ProfileStore(BaseStore):
 
     # MetaStore metaclass will create getters/setters for these properties
-    __overridable_properties__ = ["outputFileTemplate",
+    __overridable_properties__ = ["outputMediaTemplate",
+                                  "outputThumbTemplate",
                                   "linkFileTemplate",
                                   "configFileTemplate",
                                   "reportFileTemplate",
@@ -57,7 +58,7 @@ class ProfileStore(BaseStore):
                                   "processPriority",
                                   "preprocessCommand",
                                   "postprocessCommand",
-                                  "preprocesstimeout",
+                                  "preprocessTimeout",
                                   "postprocessTimeout",
                                   "transcodingTimeout",
                                   "monitoringPeriod"]
@@ -96,7 +97,7 @@ class ProfileStore(BaseStore):
         return iter(self._targets)
 
     def iterTargets(self):
-        return self._target.itervalues()
+        return self._targets.itervalues()
 
 
     ## Overridden Methods ##

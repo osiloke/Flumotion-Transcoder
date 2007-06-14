@@ -30,7 +30,8 @@ class TargetStoreListener(object):
 class TargetStore(BaseStore):
 
     # MetaStore metaclass will create getters/setters for these properties
-    __overridable_properties__ = ["outputFileTemplate",
+    __overridable_properties__ = ["outputMediaTemplate",
+                                  "outputThumbTemplate",
                                   "linkFileTemplate",
                                   "linkTemplate",
                                   "linkURLPrefix",

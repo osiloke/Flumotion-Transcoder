@@ -300,7 +300,7 @@ class BaseComponentProxy(FlumotionProxy):
         assert conf != None, "Component state without config dict"
         props = conf.get("properties")
         assert props != None, "Component state without porperty dict"
-        return self.properties_factory.createFromWorkerDict(workerContext, props)
+        return self.properties_factory.createFromComponentDict(workerContext, props)
     
     def _onComponentRunning(self, worker):
         pass
@@ -338,7 +338,7 @@ class BaseComponentProxy(FlumotionProxy):
     def __componentRequestedWorkerChanged(self, workerName):
         self._requestedWorkerName = workerName
         mgrCtx = self.getManager().getContext()
-        workerCtx = mgrCtx.getWorkerContext(workerName)
+        workerCtx = mgrCtx.admin.getWorkerContext(workerName)
         props = self._doExtractProperties(workerCtx, self._componentState)
         self._properties.setValue(props)
     

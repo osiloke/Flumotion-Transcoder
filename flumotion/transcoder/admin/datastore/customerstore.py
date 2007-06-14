@@ -45,7 +45,8 @@ class CustomerStoreListener(object):
 class CustomerStore(BaseStore):
 
     # MetaStore metaclass will create getters/setters for these properties
-    __overridable_properties__ = ["outputFileTemplate",
+    __overridable_properties__ = ["outputMediaTemplate",
+                                  "outputThumbTemplate",
                                   "linkFileTemplate",
                                   "configFileTemplate",
                                   "reportFileTemplate",
@@ -58,7 +59,7 @@ class CustomerStore(BaseStore):
                                   "processPriority",
                                   "preprocessCommand",
                                   "postprocessCommand",
-                                  "preprocesstimeout",
+                                  "preprocessTimeout",
                                   "postprocessTimeout",
                                   "transcodingTimeout",
                                   "monitoringPeriod"]

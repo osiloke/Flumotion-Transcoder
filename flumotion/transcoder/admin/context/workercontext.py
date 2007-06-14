@@ -10,9 +10,13 @@
 
 # Headers in this file shall remain intact.
 
+from flumotion.transcoder.local import Local
+
+
 class WorkerContext(object):
     
-    def __init__(self, label, workerConfig, workerDefault):
+    def __init__(self, adminCtx, label, workerConfig, workerDefault):
+        self.admin = adminCtx
         self._label = label
         self._config = workerConfig
         self._default = workerDefault
@@ -20,8 +24,13 @@ class WorkerContext(object):
     def getLabel(self):
         return self._label
     
-    def getRoots(self):
-        d = dict(self._default.roots)
+    def getLocal(self):
+        roots = dict(self._default.roots)
         if self._config:
-            d.update(self._config.roots)
-        return d
+            roots.update(self._config.roots)
+        return Local(self._label, roots)
+
+    def getMaxTask(self):
+        if self._config and (self._config.maxTask != None):
+            return self._config.maxTask
+        return self._default.maxTask

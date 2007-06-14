@@ -18,7 +18,10 @@ import time
 import datetime
 
 from twisted.python.failure import Failure
+
 from flumotion.transcoder import log, pipelinecrawler
+from flumotion.transcoder.virtualpath import VirtualPath
+
 
 class ReportVisitor(pipelinecrawler.PipelineVisitor):
     """
@@ -216,12 +219,6 @@ def _loadDiscoverer(analyse, discoverer):
     for t, v in discoverer.othertags.iteritems():
         analyse.otherTags[str(t)] = str(v)
 
-def _addTargetFile(target, work, output):
-    if len(target.workFiles) != len(target.outputFiles):
-        raise Exception("Report's file list invalid")
-    target.workFiles.append(work)
-    target.outputFiles.append(output)
-
 
 class CPUUsageMixin(object):
     
@@ -265,11 +262,12 @@ class SourceReporter(object):
 
 class TargetReporter(CPUUsageMixin):
     
-    def __init__(self, rootReport, targetIndex):
+    def __init__(self, local, rootReport, targetIndex):
         report = rootReport.targets[targetIndex]
         CPUUsageMixin.__init__(self, report, 
                                {"postprocess": "cpuUsagePostprocess",
                                 "analyse": "cpuUsageAnalyse"})
+        self.local = local
         self.report = report
         self._postprocessStartTime = None
     
@@ -292,21 +290,34 @@ class TargetReporter(CPUUsageMixin):
         _loadDiscoverer(self.report.analyse, discoverer)    
 
     def addFile(self, work, output):
-        _addTargetFile(self.report, work, output)
+        if len(self.report.workFiles) != len(self.report.outputFiles):
+            raise Exception("Report's file list invalid")
+        virtWork = VirtualPath.virtualize(work, self.local)
+        virtOutput = VirtualPath.virtualize(output, self.local)
+        self.report.workFiles.append(virtWork)
+        self.report.outputFiles.append(virtOutput)
+        
+    def getFiles(self):
+        return [(work.localize(self.local), output.localize(self.local))
+                for work, output in zip(self.report.workFiles,
+                                        self.report.outputFiles)]
 
 
 class Reporter(CPUUsageMixin):
     
-    def __init__(self, report):
+    def __init__(self, local, report):
         CPUUsageMixin.__init__(self, report, 
                                {"job": "cpuUsageTotal",                                
                                 "preprocess": "cpuUsagePreprocess",
                                 "transcoding": "cpuUsageTranscoding"})        
+        self.local = local
         self.report = report
 
     def init(self, context):
         sourceCtx = context.getSourceContext()
-        self.report.source.filePath = sourceCtx.getInputPath()
+        inputPath = sourceCtx.getInputPath()
+        self.report.source.filePath = VirtualPath.virtualize(inputPath, self.local)
+        self.report.local.loadFromLocal(context.local)
 
     _timeLookup = {"start": "startTime",
                    "done": "doneTime",
@@ -320,7 +331,7 @@ class Reporter(CPUUsageMixin):
         return SourceReporter(self.report)
     
     def getTargetReporter(self, targetIndex):
-        return TargetReporter(self.report, targetIndex)
+        return TargetReporter(self.local, self.report, targetIndex)
 
     def addError(self, error=None):
         _addTaskError(self.report, error)
