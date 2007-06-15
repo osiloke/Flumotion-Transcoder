@@ -16,7 +16,7 @@ import os.path
 
 from twisted.internet import reactor, error, defer
 
-from flumotion.common import messages, log
+from flumotion.common import common, messages, log
 from flumotion.component import component
 from flumotion.component.component import moods
 
@@ -53,6 +53,8 @@ class FileMonitor(component.BaseComponent):
         props = self.config["properties"]
         directories = props.get("directory", [])
         self.uiState.set('monitored-directories', directories)
+        for directory in directories:
+            common.ensureDir(directory, "monitored")
         return component.BaseComponent.do_setup(self)
 
     def do_start(self, *args, **kwargs):
