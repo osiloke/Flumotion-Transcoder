@@ -17,8 +17,8 @@ COMPONENT_WAIT_TO_KILL = 30
 MONITORSET_TUNE_PERIOD = 10
 
 # Componenet label template
-TRANSCODER_LABEL_TEMPLATE = "transcoder-%(customerName)s-%(profileName)s"
-MONITOR_LABEL_TEMPLATE = "monitor-%(customerName)s"
+TRANSCODER_LABEL_TEMPLATE = "%(customerName)s/%(profileName)s:%(sourcePath)s"
+MONITOR_LABEL_TEMPLATE = "Monitor for %(customerName)s"
 
 # Maximum time to wait for the admin to load 
 # and initialize all components stats
