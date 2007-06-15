@@ -19,13 +19,12 @@ import signal
 
 from twisted.internet import reactor, defer
 
-from flumotion.common import log as flog
 from flumotion.common import worker, messages
 
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-transcoder')
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import utils, log
 
 KILL_TIMEOUT = 10
 
@@ -34,7 +33,7 @@ class ProcessError(Exception):
     pass
 
 
-class Process(worker.ProcessProtocol, flog.Loggable):
+class Process(worker.ProcessProtocol, log.Loggable):
     
     def __init__(self, type, command, logger=None):
         self._logger = logger or self

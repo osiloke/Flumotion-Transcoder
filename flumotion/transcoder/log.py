@@ -20,6 +20,24 @@ from flumotion.common import log as flog
 from flumotion.transcoder.errors import TranscoderError
 
 
+# Proxy some flumotion.comon.log class, functions and constants
+Loggable = flog.Loggable
+
+setFluDebug = flog.setFluDebug
+getCategoryLevel = flog.getCategoryLevel
+
+LOG = flog.LOG
+DEBUG = flog.DEBUG
+INFO = flog.INFO
+WARNING = flog.WARNING
+ERROR = flog.ERROR
+
+
+_DEFAULT_CATEGORY = ""
+
+def setDefaultCategory(category):
+    _DEFAULT_CATEGORY = category
+
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)
     if isinstance(exception, TranscoderError):
@@ -129,17 +147,17 @@ class LoggerProxy(object):
 ### Helper functions to log without logger ##
 
 def log(self, *args, **kwargs):
-    flog.log("trans", *args, **kwargs)
+    flog.log(_DEFAULT_CATEGORY, *args, **kwargs)
 
 def debug(self, *args, **kwargs):
-    flog.debug("trans", *args, **kwargs)
+    flog.debug(_DEFAULT_CATEGORY, *args, **kwargs)
 
 def info(self, *args, **kwargs):
-    flog.info("trans", *args, **kwargs)
+    flog.info(_DEFAULT_CATEGORY, *args, **kwargs)
 
 def warning(self, *args, **kwargs):
-    flog.warning("trans", *args, **kwargs)
+    flog.warning(_DEFAULT_CATEGORY, *args, **kwargs)
 
 def error(self, *args, **kwargs):
-    flog.error("trans", *args, **kwargs)
+    flog.error(_DEFAULT_CATEGORY, *args, **kwargs)
 

@@ -15,9 +15,9 @@
 import gobject
 import os
 
-from flumotion.common.log import Loggable
+from flumotion.transcoder import log
 
-class Watcher(gobject.GObject, Loggable):
+class Watcher(gobject.GObject, log.Loggable):
     """
     Watches for changes in a directory
 

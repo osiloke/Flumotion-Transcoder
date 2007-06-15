@@ -32,7 +32,7 @@ class MultiTranscoder(object):
     Takes a logger, an input file and a report and a timeout.
     transcoding and thumbnailing targets can be added.
     
-    @type logger: L{flumotion.common.log.Loggable}
+    @type logger: L{flumotion.transcoder.log.Loggable}
     """    
     def __init__(self, logger, sourcePath, timeout=30,
                  progressCallback=None,

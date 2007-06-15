@@ -12,11 +12,11 @@
 
 from zope.interface import implements
 
-from flumotion.common.log import Loggable
+from flumotion.transcoder import log
 
 from flumotion.transcoder.admin.datasource import datasource
 
-class SQLDataSource(Loggable):
+class SQLDataSource(log.Loggable):
     
     implements(datasource.IDataSource)
     

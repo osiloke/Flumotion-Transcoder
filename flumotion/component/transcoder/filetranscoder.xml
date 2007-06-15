@@ -43,11 +43,8 @@
       </dependencies>
       <directories>
         <directory name="flumotion/transcoder">
-          <filename location="constants.py" />
           <filename location="process.py" />
           <filename location="properties.py" />
-          <filename location="local.py" />
-          <filename location="virtualpath.py" />
           <filename location="inifile.py" />
           <filename location="transconfig.py" />
           <filename location="transreport.py" />

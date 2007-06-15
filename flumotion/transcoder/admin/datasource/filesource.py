@@ -15,10 +15,8 @@ import random
 from zope.interface import implements
 from twisted.python import failure
 
-from flumotion.common.log import Loggable
-
-from flumotion.transcoder import inifile
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, inifile, utils
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 
@@ -59,9 +57,9 @@ class DataWrapper(object):
         return self.__dict__['_data']
 
 
-class FileDataSource(Loggable):
+class FileDataSource(log.Loggable):
     
-    logCategory = 'trans-source'
+    logCategory = adminconsts.DATASOURCE_LOG_CATEGORY
     
     implements(datasource.IDataSource)
     

@@ -16,11 +16,13 @@ import os.path
 
 from twisted.internet import reactor, error, defer
 
-from flumotion.common import common, messages, log
+from flumotion.common import common, messages
 from flumotion.component import component
 from flumotion.component.component import moods
 
+from flumotion.transcoder import log
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import DirectoryWatcher
 
 from flumotion.common.messages import N_
@@ -39,12 +41,13 @@ class FileMonitor(component.BaseComponent):
     """
     
     componentMediumClass = FileMonitorMedium
-    logCategory = 'file-monitor'
+    logCategory = compconsts.MONITOR_LOG_CATEGORY
 
     
     ## Overriden Methods ##
 
     def init(self):
+        log.setDefaultCategory(compconsts.MONITOR_LOG_CATEGORY)
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []

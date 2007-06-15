@@ -15,7 +15,6 @@ from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
-from flumotion.common.log import Loggable
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
@@ -27,9 +26,9 @@ from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 
 
-class TaskManager(Loggable, EventSource, ComponentListener):
+class TaskManager(log.Loggable, EventSource, ComponentListener):
     
-    logCategory = 'admin-tasks'
+    logCategory = "" # Should be set by child classes
     
     def __init__(self, interfaces):
         EventSource.__init__(self, interfaces)

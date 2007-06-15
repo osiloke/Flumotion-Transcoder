@@ -15,10 +15,9 @@ from zope.interface import Interface, implements
 from flumotion.admin import multi
 #To register Jellyable classes
 from flumotion.common import planet
-from flumotion.common.log import Loggable
 from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.proxies import managerproxy
@@ -26,7 +25,7 @@ from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 
 
 
-class FlumotionProxiesLogger(Loggable):
+class FlumotionProxiesLogger(log.Loggable):
     logCategory = adminconsts.PROXIES_LOG_CATEGORY
 
 

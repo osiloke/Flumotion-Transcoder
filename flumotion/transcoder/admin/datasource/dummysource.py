@@ -15,9 +15,7 @@ from zope.interface import implements
 from twisted.internet import reactor, defer
 from twisted.python import failure
 
-from flumotion.common.log import Loggable
-
-from flumotion.transcoder import utils
+from flumotion.transcoder import utils, log
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
@@ -239,7 +237,7 @@ class DummyData(object):
         source._apply(self)
     
     
-class DummyDataSource(Loggable):
+class DummyDataSource(log.Loggable):
     
     implements(datasource.IDataSource)
     

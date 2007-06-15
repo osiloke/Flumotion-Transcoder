@@ -22,10 +22,8 @@ from flumotion.component import component
 from flumotion.component.component import moods
 from flumotion.common.common import ensureDir
 from flumotion.common import errors, messages
-from flumotion.common import log as flog
 
-
-from flumotion.component.transcoder import job
+from flumotion.component.transcoder import job, compconsts
 from flumotion.transcoder import properties, log, enums
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import TranscoderStatusEnum
@@ -35,7 +33,6 @@ from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.inifile import IniFile
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.local import Local
-
 
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-transcoder')
@@ -56,7 +53,7 @@ class FileTranscoderMedium(component.BaseComponentMedium):
 class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     componentMediumClass = FileTranscoderMedium
-    logCategory = 'file-trans'
+    logCategory = compconsts.TRANSCODER_LOG_CATEGORY
 
 
     ## Public Methods ##
@@ -71,6 +68,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     ## Overriden Methods ##
 
     def init(self):
+        log.setDefaultCategory(compconsts.TRANSCODER_LOG_CATEGORY)
         self.logName = None
         self._diagnoseMode = False
         self._waitAcknowledge = False
@@ -245,7 +243,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         return None
 
     def _logCurrentException(self):
-        if flog.getCategoryLevel(self.logCategory) < flog.DEBUG:
+        if log.getCategoryLevel(self.logCategory) < log.DEBUG:
             return
         tb = StringIO()
         traceback.print_exc(file=tb)

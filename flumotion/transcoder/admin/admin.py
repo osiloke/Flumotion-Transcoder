@@ -13,8 +13,6 @@
 from zope.interface import implements
 from twisted.internet import reactor, defer
 
-from flumotion.common.log import Loggable
-
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
@@ -44,7 +42,7 @@ from flumotion.transcoder.admin.transprops import TranscoderProperties
 #from flumotion.transcoder.admin.proxies.managerset import ManagerSetListener
 #from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
 
-class TranscoderAdmin(Loggable,
+class TranscoderAdmin(log.Loggable,
                       MonitorSetListener,
                       MonitorListener,
                       AdminStoreListener,

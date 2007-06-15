@@ -19,10 +19,10 @@ import optparse
 
 from twisted.internet import reactor
 
-from flumotion.common import log, common, errors
+from flumotion.common import common, errors
 from flumotion.configure import configure
 
-from flumotion.transcoder import inifile
+from flumotion.transcoder import inifile, log
 from flumotion.transcoder.admin import admin, adminconfig, adminconsts
 
 def parse_options(args):
@@ -75,9 +75,8 @@ def possess(daemonizeTo=None):
                 'A flumotion-transcoder-admin is already running '
                 + 'as pid %d' % pid)
         else:
-            log.warning(adminconsts.ADMIN_LOG_CATEGORY,
-                "flumotion-transcoder-admin should have been "
-                "running with pid %d.  Restarting" % pid)
+            log.warning("flumotion-transcoder-admin should have been "
+                        "running with pid %s.  Restarting", str(pid))
             common.deletePidFile('transcoder-admin')
 
     logPath = os.path.join(configure.logdir, 'transcoder-admin.log')
@@ -88,17 +87,19 @@ def possess(daemonizeTo=None):
     common.daemonize(stdout=logPath, stderr=logPath, 
                      directory=daemonizeTo)
 
-    log.info(adminconsts.ADMIN_LOG_CATEGORY, 'Started daemon')
+    log.info('Started daemon')
 
     # from now on I should keep running, whatever happens
-    log.debug(adminconsts.ADMIN_LOG_CATEGORY, 'writing pid file')
+    log.debug('writing pid file')
     common.writePidFile('transcoder-admin')
 
 def exorcize():
-    log.debug(adminconsts.ADMIN_LOG_CATEGORY, 'deleting pid file')
+    log.debug('deleting pid file')
     common.deletePidFile('transcoder-admin')
 
 def main(args):
+    log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
+    
     options, configPath = parse_options(args)
     
     loader = inifile.IniFile()
@@ -123,4 +124,4 @@ def main(args):
     if options.daemonize:
         exorcize()
 
-    log.info(adminconsts.ADMIN_LOG_CATEGORY, 'Stopping transcoder-admin')
+    log.info('Stopping transcoder-admin')

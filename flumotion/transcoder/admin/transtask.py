@@ -13,7 +13,6 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor
 
-from flumotion.common.log import Loggable
 from flumotion.common.planet import moods
 
 from flumotion.transcoder import log
