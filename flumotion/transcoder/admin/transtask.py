@@ -274,10 +274,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self._fireEvent(self._transcoder, "TranscoderSelected")
         # Retrieve and synchronize UI state
         d = transcoder.retrieveUIState(adminconsts.TRANSCODER_UI_TIMEOUT)
-        args = (transcoder,)
         d.addCallbacks(self.__cbGotUIState,
                        self.__ebUIStateFailed,
-                       callbackArgs=args, errbackArgs=args)        
+                       errbackArgs=(transcoder,))
         # Stop all transcoders other than the selected one
         for t in self._transcoders:
             if t != self._transcoder:

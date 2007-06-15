@@ -1,8 +1,16 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask.__electMonitor):
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.__electTranscoder):
+	Corrected get UI state callbacks parameter.
+
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/utils.py (callWithTimeout, __ebForwardErrback,
 	  __cbForwardCallback):
-	  Return the correcte deferred, and properly cancel the timeout.
+	  Return the correct deferred, and properly cancel the timeout.
 
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 

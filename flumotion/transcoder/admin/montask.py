@@ -264,10 +264,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self._fireEvent(self._monitor, "MonitoringActivated")
         # Retrieve and synchronize UI state
         d = monitor.retrieveUIState(adminconsts.MONITOR_UI_TIMEOUT)
-        args = (monitor,)
         d.addCallbacks(self.__cbGotUIState,
                        self.__ebUIStateFailed,
-                       callbackArgs=args, errbackArgs=args)
+                       errbackArgs=(monitor,))
         # Stop all monitor other than the selected one
         for m in self._monitors:
             if m != self._monitor:
