@@ -146,18 +146,18 @@ class LoggerProxy(object):
 
 ### Helper functions to log without logger ##
 
-def log(self, *args, **kwargs):
+def log(*args, **kwargs):
     flog.log(_DEFAULT_CATEGORY, *args, **kwargs)
 
-def debug(self, *args, **kwargs):
+def debug(*args, **kwargs):
     flog.debug(_DEFAULT_CATEGORY, *args, **kwargs)
 
-def info(self, *args, **kwargs):
+def info(*args, **kwargs):
     flog.info(_DEFAULT_CATEGORY, *args, **kwargs)
 
-def warning(self, *args, **kwargs):
+def warning(*args, **kwargs):
     flog.warning(_DEFAULT_CATEGORY, *args, **kwargs)
 
-def error(self, *args, **kwargs):
+def error(*args, **kwargs):
     flog.error(_DEFAULT_CATEGORY, *args, **kwargs)
 
