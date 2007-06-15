@@ -178,4 +178,5 @@ class TranscoderProperties(ComponentPropertiesMixin):
         if self._niceLevel:
             props.append(("nice-level", self._niceLevel))
         props.append(("admin-id", self._name))
+        props.append(("wait-acknowledge", True))
         return props
