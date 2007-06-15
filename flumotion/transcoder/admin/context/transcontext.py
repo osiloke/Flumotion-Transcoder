@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
+from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.context.customercontext import CustomerContext
 
     

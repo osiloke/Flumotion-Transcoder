@@ -16,7 +16,7 @@ import copy
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder.admin.utils import digestParameters
+from flumotion.transcoder.utils import digestParameters
 
     
     

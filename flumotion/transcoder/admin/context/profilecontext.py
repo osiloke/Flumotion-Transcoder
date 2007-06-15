@@ -12,7 +12,7 @@
 
 from flumotion.transcoder import utils
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
+from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.substitution import Variables
 from flumotion.transcoder.admin.context.targetcontext import TargetContext
 

@@ -26,7 +26,7 @@ from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import ComponentDomainEnum
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.waiters import AssignWaiters, ValueWaiters
 from flumotion.transcoder.admin.errors import OrphanComponentError
 from flumotion.transcoder.admin.compprops import GenericComponentProperties
@@ -229,11 +229,11 @@ class BaseComponentProxy(FlumotionProxy):
         # First try SIGTERM
         d = self.signal(signal.SIGTERM)
         # And wait for a while
-        d.addCallback(utils.delayedSuccess, constants.COMPONENT_WAIT_TO_KILL)
+        d.addCallback(utils.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
         # Try SIGKILL if the component still exists on the worker
         d.addCallback(utils.dropResult, self.signal, signal.SIGKILL)        
         # And wait for a while
-        d.addCallback(utils.delayedSuccess, constants.COMPONENT_WAIT_TO_KILL)
+        d.addCallback(utils.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
         # If UnknownComponentError has not been raise try a last time
         d.addCallback(utils.dropResult, self.signal, signal.SIGKILL)
         d.addCallbacks(utils.overrideResult, utils.resolveFailure, 
@@ -447,7 +447,7 @@ class BaseComponentProxy(FlumotionProxy):
             self.__asyncForceStop(defer._nothing, status, label, resultDeferred)
             return
         status["kill-retries"] = status.setdefault("Kill-retries", 0) + 1
-        if status["kill-retries"] > constants.FORCED_DELETION_MAX_RETRY:
+        if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
              # if kill fail, theres nothing we can do, do we ?
             msg = "Could not force component '%s' deletion" % label
             self.warning("%s", msg)
@@ -471,7 +471,7 @@ class BaseComponentProxy(FlumotionProxy):
     def __asyncForceStopFailed(self, failure, status, label, resultDeferred):
         if self.__isOperationTerminated(status, resultDeferred): return
         status["stop-retries"] = status.setdefault("stop-retries", 0) + 1
-        if status["stop-retries"] > constants.FORCED_DELETION_MAX_RETRY:
+        if status["stop-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
             if (status.get("already_killed", False) 
                 or (not status.get("can_kill", True))):
                 # if already killed or we are not allowed to kill, 
@@ -490,7 +490,7 @@ class BaseComponentProxy(FlumotionProxy):
         if failure.check(BusyComponentError):
             # The component is buzy changing mood,
             # so wait mood change (with a timeout)    
-            d = self.waitMoodChange(constants.FORCED_DELETION_TIMEOUT)
+            d = self.waitMoodChange(adminconsts.FORCED_DELETION_TIMEOUT)
             d.addBoth(self.__asyncForceStop, status, label, resultDeferred)
             return
         # FIXME: make flumotion raise a specific exception 
@@ -510,7 +510,7 @@ class BaseComponentProxy(FlumotionProxy):
     def __asyncForceDeleteFailed(self, failure, status, label, resultDeferred):
         if self.__isOperationTerminated(status, resultDeferred): return
         status["delete-retries"] = status.setdefault("delete-retries", 0) + 1
-        if status["delete-retries"] > constants.FORCED_DELETION_MAX_RETRY:
+        if status["delete-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
              # if deletion fail, theres nothing we can do, do we ?
             msg = "Could not force component '%s' deletion" % label
             self.warning("%s", msg)

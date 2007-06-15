@@ -15,7 +15,7 @@ from flumotion.common import common
 
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import OperationTimedOutError
-from flumotion.transcoder.admin import constants
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import componentproxy
 
@@ -133,7 +133,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         callDef = self._manager._callRemote('loadComponent', componentType,
                                             compId, componentLabel, 
                                             props, worker.getName())
-        to = utils.createTimeout(timeout or constants.LOAD_COMPONENT_TIMEOUT,
+        to = utils.createTimeout(timeout or adminconsts.LOAD_COMPONENT_TIMEOUT,
                                  self.__asyncComponentLoadedTimeout, callDef)
         args = (identifier, initDef, resDef, to)
         callDef.addCallbacks(self.__cbComponentLoaded, 

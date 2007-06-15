@@ -22,7 +22,7 @@ from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.admin.errors import PropertiesError
 from flumotion.transcoder.admin.compprops import IComponentProperties
 from flumotion.transcoder.admin.compprops import ComponentPropertiesMixin
-from flumotion.transcoder.admin.utils import digestParameters
+from flumotion.transcoder.utils import digestParameters
 
 class MonitorProperties(ComponentPropertiesMixin):
     

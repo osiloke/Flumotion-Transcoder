@@ -1,3 +1,22 @@
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/compprops.py:
+	* flumotion/transcoder/admin/context/customercontext.py:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	* flumotion/transcoder/admin/context/transcontext.py:
+	* flumotion/transcoder/admin/monprops.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.kill,
+	  BaseComponentProxy.__asyncRetryKillIfNeeded,
+	  BaseComponentProxy.__asyncForceStopFailed,
+	  BaseComponentProxy.__asyncForceDeleteFailed):
+	* flumotion/transcoder/admin/proxies/groupproxy.py
+	  (ComponentGroupProxy._loadComponent):
+	* flumotion/transcoder/admin/proxies/monitorset.py:
+	* flumotion/transcoder/admin/proxies/transcoderset.py:
+	* flumotion/transcoder/admin/transprops.py:
+	Corrected some import path that changed.
+
 2007-06-14  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* The admin can now react to monitoring event and 

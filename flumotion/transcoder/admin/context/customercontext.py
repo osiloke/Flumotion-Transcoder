@@ -15,7 +15,7 @@ from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder import constants
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.substitution import Variables
-from flumotion.transcoder.admin.utils import LazyEncapsulationIterator
+from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.context.profilecontext import ProfileContext
 from flumotion.transcoder.admin.context.profilecontext import UnboundProfileContext
 
