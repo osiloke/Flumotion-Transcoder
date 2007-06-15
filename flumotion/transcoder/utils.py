@@ -19,6 +19,9 @@ import random
 
 from twisted.internet import defer, reactor
 
+from flumotion.transcoder import log
+from flumotion.transcoder.errors import OperationTimedOutError
+
 
 class LazyEncapsulationIterator(object):
     
@@ -178,6 +181,33 @@ def joinPath(*parts):
 
 ## Deferred Utility Functions ##
 
+def callWithTimeout(timeout, callable, *args, **kwargs):
+    d = callable(*args, **kwargs)
+    if not timeout: return d
+    result = defer.Deferred()
+    to = createTimeout(timeout, __asyncCallTimeout, result)
+    args = (result, to)
+    d.addCallbacks(__cbForwardCallback, __ebForwardErrback, 
+                   callbackArgs=args, errbackArgs=args)
+
+def __asyncCallTimeout(d):
+    error = OperationTimedOutError("Asynchronous Call Timed Out")
+    d.errback(error)
+
+def __ebForwardErrback(failure, to, d):
+    if hasTimedOut(to):
+        log.warning("Received failure for a timed out call: %s",
+                    log.getFailureMessage(failure))
+        return
+    d.errback(failure)
+
+def __cbForwardCallback(result, to, d):
+    if hasTimedOut(to):
+        log.warning("Received result for a timed out call: %s",
+                    str(result))
+        return
+    d.callback(result)
+
 def createTimeout(timeout, callback, *args, **kwargs):
     if timeout == None:
         return None
@@ -186,6 +216,9 @@ def createTimeout(timeout, callback, *args, **kwargs):
 def cancelTimeout(timeout):
     if timeout and timeout.active():
         timeout.cancel()
+
+def hasTimedOut(timeout):
+    return timeout and not timeout.active()
 
 def delayedSuccess(result, delay):
     """
