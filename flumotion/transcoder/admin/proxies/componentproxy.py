@@ -119,6 +119,16 @@ class BaseComponentProxy(FlumotionProxy):
     def getDomain(self):
         return self._domain
     
+    def retrieveUIState(self, timeout=None):
+        if self._hasUIState():
+            return defer.succeed(self)
+        if not self.isRunning():
+            error = TranscoderError("Cannot retrieve UI state of "
+                                    "a non-running component")
+            return defer.fail(error)
+        self.__retrieveUIState(timeout)
+        return self._waitUIState(timeout)
+    
     def isRunning(self):
         return (self._worker != None)
     
@@ -367,8 +377,6 @@ class BaseComponentProxy(FlumotionProxy):
                 
     def __componentMoodChanged(self, moodnum):
         mood = moods.get(moodnum)
-        if (mood == moods.happy) and not self._hasUIState():
-            self.__retrieveUIState()
         if mood != self._mood.getValue():
             self._mood.setValue(mood)
             self._fireEvent(mood, "ComponentMoodChanged")
@@ -378,8 +386,8 @@ class BaseComponentProxy(FlumotionProxy):
             self._onUnsetUIState(self._getUIState())
             self._setUIState(None)
 
-    def __retrieveUIState(self):
-        d = self._callRemote('getUIState')
+    def __retrieveUIState(self, timeout=None):
+        d = utils.callWithTimeout(timeout, self._callRemote, 'getUIState')
         d.addCallbacks(self.__cbUIStateRetrievalDone,
                        self.__ebUIStateRetrievalFailed)
     
