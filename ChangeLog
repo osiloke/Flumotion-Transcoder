@@ -1,5 +1,10 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/utils.py (callWithTimeout):
+	Should return the new deferred.
+
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/compprops.py:
 	* flumotion/transcoder/admin/context/customercontext.py:
 	* flumotion/transcoder/admin/context/profilecontext.py:
