@@ -29,7 +29,7 @@ getCategoryLevel = flog.getCategoryLevel
 LOG = flog.LOG
 DEBUG = flog.DEBUG
 INFO = flog.INFO
-WARNING = flog.WARNING
+WARN = flog.WARN
 ERROR = flog.ERROR
 
 
