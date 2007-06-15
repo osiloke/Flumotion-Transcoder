@@ -1,5 +1,11 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.onTranscoderJobStateChanged):
+	  Added logging of transcoder job state changes.
+
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoderMedium.remote_acknowledge,
 	  FileTranscoder.do_acknowledge, FileTranscoder.init,

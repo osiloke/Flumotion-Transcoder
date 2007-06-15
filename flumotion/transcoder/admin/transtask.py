@@ -216,6 +216,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
 
     def onTranscoderJobStateChanged(self, transcoder, jobState):
         if not self.isActive() or (transcoder != self._transcoder): return
+        self.log("Transcoding task '%s' transcoder '%s' "
+                 "job state change to %s", self.getLabel(), 
+                 transcoder.getName(), jobState.name)
         if jobState == JobStateEnum.waiting_ack:
             if not transcoder.isAcknowledged():
                 d = transcoder.acknowledge()
