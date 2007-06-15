@@ -60,7 +60,7 @@ class TranscoderAdmin(Loggable,
                       #ManagerListener
                       ):
     
-    logCategory = 'trans-admin'
+    logCategory = adminconsts.ADMIN_LOG_CATEGORY
     
     def __init__(self, config):
         self._adminCtx = AdminContext(config)

@@ -23,9 +23,7 @@ from flumotion.common import log, common, errors
 from flumotion.configure import configure
 
 from flumotion.transcoder import inifile
-from flumotion.transcoder.admin import admin, adminconfig
-
-LOG_CATEGORY = 'trans-admin'
+from flumotion.transcoder.admin import admin, adminconfig, adminconsts
 
 def parse_options(args):
     usage = 'usage: flumotion-transcoder-admin [options] CONFIG-FILE'
@@ -77,7 +75,7 @@ def possess(daemonizeTo=None):
                 'A flumotion-transcoder-admin is already running '
                 + 'as pid %d' % pid)
         else:
-            log.warning(LOG_CATEGORY,
+            log.warning(adminconsts.ADMIN_LOG_CATEGORY,
                 "flumotion-transcoder-admin should have been "
                 "running with pid %d.  Restarting" % pid)
             common.deletePidFile('transcoder-admin')
@@ -90,14 +88,14 @@ def possess(daemonizeTo=None):
     common.daemonize(stdout=logPath, stderr=logPath, 
                      directory=daemonizeTo)
 
-    log.info(LOG_CATEGORY, 'Started daemon')
+    log.info(adminconsts.ADMIN_LOG_CATEGORY, 'Started daemon')
 
     # from now on I should keep running, whatever happens
-    log.debug(LOG_CATEGORY, 'writing pid file')
+    log.debug(adminconsts.ADMIN_LOG_CATEGORY, 'writing pid file')
     common.writePidFile('transcoder-admin')
 
 def exorcize():
-    log.debug(LOG_CATEGORY, 'deleting pid file')
+    log.debug(adminconsts.ADMIN_LOG_CATEGORY, 'deleting pid file')
     common.deletePidFile('transcoder-admin')
 
 def main(args):
@@ -125,4 +123,4 @@ def main(args):
     if options.daemonize:
         exorcize()
 
-    log.info(LOG_CATEGORY, 'Stopping transcoder-admin')
+    log.info(adminconsts.ADMIN_LOG_CATEGORY, 'Stopping transcoder-admin')

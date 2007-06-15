@@ -50,7 +50,7 @@ class TranscodingListener(object):
 class Transcoding(TaskManager, WorkerSetListener, 
                  TranscoderSetListener, TranscoderListener):
     
-    logCategory = 'trans-transcoding'
+    logCategory = adminconsts.TRANSCODING_LOG_CATEGORY
     
     def __init__(self, workerset, transcoderset):
         TaskManager.__init__(self, ITranscodingListener)

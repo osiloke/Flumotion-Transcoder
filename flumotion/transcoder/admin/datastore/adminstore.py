@@ -23,7 +23,7 @@ from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
 
 
 class StoreLogger(Loggable):
-    logCategory = 'admin-stores'
+    logCategory = adminconsts.STORES_LOG_CATEGORY
 
 
 class IAdminStoreListener(Interface):

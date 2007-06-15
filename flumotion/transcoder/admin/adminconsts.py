@@ -10,6 +10,15 @@
 
 # Headers in this file shall remain intact.
 
+# Log categories
+ADMIN_LOG_CATEGORY = "admin"
+STORES_LOG_CATEGORY = "stores"
+PROXIES_LOG_CATEGORY = "proxies"
+DATASOURCE_LOG_CATEGORY = "datasource"
+MONITORING_LOG_CATEGORY = "monitoring"
+TRANSCODING_LOG_CATEGORY = "transcoding"
+
+
 # The time a proxy wait after a SIGTERM to send a SIGKILL to a component
 COMPONENT_WAIT_TO_KILL = 30
 
@@ -32,14 +41,16 @@ MONITOR_LOAD_TIMEOUT = 30
 MONITOR_START_DELAY = 3
 # Maximum time to wait for a monitor to go happy
 MONITOR_HAPPY_TIMEOUT = 60
-# Used to retrieve monitored files from UI State
-MONITOR_UI_TIMEOUT = 10
+# Used to retrieve monitors UI State
+MONITOR_UI_TIMEOUT = 20
 
 # Maximum time for Monitoring to wait for transcoder operations
 TRANSCODER_LOAD_TIMEOUT = 30
 TRANSCODER_START_DELAY = 3
 # Maximum time to wait for a monitor to go happy
 TRANSCODER_HAPPY_TIMEOUT = 60
+# Used to retrieve transcoders UI State
+TRANSCODER_UI_TIMEOUT = 20
 
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10

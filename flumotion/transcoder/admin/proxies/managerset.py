@@ -19,6 +19,7 @@ from flumotion.common.log import Loggable
 from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
 from flumotion.transcoder import utils
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.proxies import managerproxy
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
@@ -26,7 +27,7 @@ from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 
 
 class FlumotionProxiesLogger(Loggable):
-    logCategory = 'trans-proxies'
+    logCategory = adminconsts.PROXIES_LOG_CATEGORY
 
 
 class IManagerSetListener(Interface):

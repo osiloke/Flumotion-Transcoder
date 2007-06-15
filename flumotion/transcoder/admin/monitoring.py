@@ -53,7 +53,7 @@ class MonitoringListener(object):
 class Monitoring(TaskManager, WorkerSetListener, 
                  MonitorSetListener, MonitorListener):
     
-    logCategory = 'trans-monitoring'
+    logCategory = adminconsts.MONITORING_LOG_CATEGORY
     
     def __init__(self, workerset, monitorset):
         TaskManager.__init__(self, IMonitoringListener)
