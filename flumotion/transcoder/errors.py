@@ -45,7 +45,20 @@ class TranscoderError(Exception):
                 self.causeDetails = "Unknown"
 
 
-class VirtualPathError(TranscoderError):
+class LocalizationError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class VirtualPathError(LocalizationError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class OperationTimedOutError(TranscoderError):
+    """
+    An asynchronous operation timed out.
+    """
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 

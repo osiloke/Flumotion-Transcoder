@@ -18,8 +18,8 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
+from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.taskmanager import TaskManager
 from flumotion.transcoder.admin.monbalancer import MonitorBalancer
 from flumotion.transcoder.admin.proxies.workerset import WorkerSetListener

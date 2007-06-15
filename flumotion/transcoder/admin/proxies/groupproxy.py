@@ -14,8 +14,8 @@ from twisted.internet import defer, reactor
 from flumotion.common import common
 
 from flumotion.transcoder import utils
+from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin import constants
-from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import componentproxy
 
@@ -129,6 +129,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         resDef = defer.Deferred()
         initDef = defer.Deferred()
         self._waitCompLoaded[identifier] = initDef
+        
         callDef = self._manager._callRemote('loadComponent', componentType,
                                             compId, componentLabel, 
                                             props, worker.getName())

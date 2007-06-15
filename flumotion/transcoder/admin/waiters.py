@@ -14,7 +14,7 @@ from zope.interface import Interface, implements
 from twisted.internet import defer, reactor
 
 from flumotion.transcoder import utils
-from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import WaiterError
 
 

@@ -25,14 +25,6 @@ class PropertiesError(TranscoderError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
-class OperationTimedOutError(TranscoderError):
-    """
-    An asynchronous operation timed out.
-    """
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
 class ComponentRejectedError(TranscoderError):
     """
     A component set rejected the component.

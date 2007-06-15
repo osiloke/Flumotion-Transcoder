@@ -18,7 +18,6 @@ from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
 from flumotion.transcoder.admin import adminelement
 from flumotion.transcoder.admin.waiters import IWaiters
-from flumotion.transcoder.admin.errors import OperationTimedOutError
 
 #TODO: Rewrite this... It's a mess
 

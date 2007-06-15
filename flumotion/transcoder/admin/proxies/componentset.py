@@ -15,7 +15,7 @@ from twisted.internet import reactor, defer
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
-from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener

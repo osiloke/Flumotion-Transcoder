@@ -18,7 +18,6 @@ from flumotion.transcoder import utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
-from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.waiters import PassiveWaiters
 from flumotion.transcoder.admin.waiters import CounterWaiters
 
