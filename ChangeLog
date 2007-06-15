@@ -1,5 +1,15 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoderMedium.remote_acknowledge,
+	  FileTranscoder.do_acknowledge, FileTranscoder.init,
+	  FileTranscoder.do_setup, FileTranscoder.onacknowledged,
+	  FileTranscoder.__ebacknowledgeError,
+	  FileTranscoder.__finalizeStandardMode):
+	Corrected typo.
+	
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/log.py:
 	Changed wrong WARNING to WARN.
 

@@ -40,8 +40,8 @@ T_ = messages.gettexter('flumotion-transcoder')
 
 class FileTranscoderMedium(component.BaseComponentMedium):
     
-    def remote_acknowlege(self):
-        self.comp.do_acknowlege()
+    def remote_acknowledge(self):
+        self.comp.do_acknowledge()
         
     def remote_getReportPath(self):
         path = self.comp._getReportPath()
@@ -61,7 +61,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def do_acknowledge(self):
         d = self._job.acknowledge()
         d.addCallback(self.__cbJobTerminated)
-        d.addErrback(self.__ebAcknowledgeError)
+        d.addErrback(self.__ebacknowledgeError)
         return d
 
         
@@ -71,7 +71,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         log.setDefaultCategory(compconsts.TRANSCODER_LOG_CATEGORY)
         self.logName = None
         self._diagnoseMode = False
-        self._waitAcknowledge = False
+        self._waitacknowledge = False
         self._job = job.TranscoderJob(self, self)
         self._report = None
         self._reportPath = None
@@ -91,7 +91,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.setting_up)
             loader = IniFile()
             props = self.config["properties"]
-            self._waitAcknowledge = props.get("wait-acknowledge", False)
+            self._waitacknowledge = props.get("wait-acknowledge", False)
             niceLevel = props.get("nice-level", None)
             #FIXME: Better checks for path roots
             self._local = Local.createFromComponentProperties(props)
@@ -198,7 +198,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         for key, value in info.iteritems():
             self.uiState.setitem('job-data', key, value)
         
-    def onAcknowledged(self):
+    def onacknowledged(self):
         self.uiState.setitem('job-data', "acknowledged", True)
 
     def onJobError(self, error):
@@ -311,9 +311,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                                debug=log.getExceptionMessage(e))
             self.addMessage(m)
 
-    def __ebAcknowledgeError(self, failure):
+    def __ebacknowledgeError(self, failure):
         try:
-            self.warning("Transcoding Acknowledge Error: %s",
+            self.warning("Transcoding acknowledge Error: %s",
                          log.getFailureMessage(failure))
             # FIXME: Very ugly, should not ask the job for this
             newReportPath = self._job.getFailedReportPath()
@@ -377,5 +377,5 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def __finalizeStandardMode(self, report, succeed):
         if not succeed:
             self.setMood(moods.sad)
-        if not self._waitAcknowledge:
+        if not self._waitacknowledge:
             self.do_acknowledge()
