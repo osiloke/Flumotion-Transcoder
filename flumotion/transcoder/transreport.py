@@ -104,6 +104,8 @@ class LocalReport(properties.PropertyBag):
 class TranscodingReport(properties.RootPropertyBag, TaskReport):
 
     state = properties.Enum('state', JobStateEnum, JobStateEnum.pending)
+    status = properties.Enum('status', TranscoderStatusEnum, 
+                             TranscoderStatusEnum.pending)
     startTime = properties.DateTime('time-start')
     doneTime = properties.DateTime('time-done')
     ackTime = properties.DateTime('time-ack')
