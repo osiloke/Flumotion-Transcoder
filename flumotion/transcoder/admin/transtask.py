@@ -19,6 +19,8 @@ from flumotion.common.planet import moods
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.log import LoggerProxy
+from flumotion.transcoder.enums import TranscoderStatusEnum
+from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
@@ -32,16 +34,19 @@ from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListene
 #      happy timeout may be triggered. For now, just using a large timeout.
 
 class ITranscodingTaskListener(Interface):
-    def onTranscoderStart(self, task, transcoder):
+    def onTranscoderSelected(self, task, transcoder):
         pass
     
-    def onTranscoderLost(self, task, transcoder):
+    def onTranscoderReleased(self, task, transcoder):
         pass
     
     def onTranscodingFailed(self, task, transcoder):
         pass
     
-    def onTranscodingSucceed(self, task, transcoder):
+    def onTranscodingDone(self, task, transcoder):
+        pass
+    
+    def onTranscodingTerminated(self, task, succeed):
         pass
 
     
@@ -49,16 +54,19 @@ class TranscodingTaskListener(object):
     
     implements(ITranscodingTaskListener)
 
-    def onTranscoderStart(self, task, transcoder):
+    def onTranscoderSelected(self, task, transcoder):
         pass
     
-    def onTranscoderLost(self, task, transcoder):
+    def onTranscoderReleased(self, task, transcoder):
         pass
     
     def onTranscodingFailed(self, task, transcoder):
         pass
     
-    def onTranscodingSucceed(self, task, transcoder):
+    def onTranscodingDone(self, task, transcoder):
+        pass
+
+    def onTranscodingTerminated(self, task, succeed):
         pass
 
 
@@ -74,7 +82,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self._started = False
         self._paused = False
         self._pendingName = None
-        self._active = True
+        self._terminated = False
         self._delayed = None # IDelayedCall
         self._transcoder = None # Active TranscoderProxy
         self._transcoders = {} # {TranscoderProxy: None}
@@ -91,7 +99,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         return self._properties
 
     def isActive(self):
-        return self._started and (not self._paused)
+        return (not self._terminated) and self._started and (not self._paused)
 
     def getActiveComponent(self):
         return self._transcoder
@@ -99,16 +107,14 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def getActiveWorker(self):
         if self._transcoder:
             return self._transcoder.getWorker()
-        for m in self._transcoders:
-            if m.getMood() == moods.happy:
-                return m.getWorker()
-        return None
+        transcoder = self.__selectValidTranscoder()
+        return transcoder and transcoder.getWorker()
 
     def addComponent(self, transcoder):
         assert isinstance(transcoder, TranscoderProxy)
         assert not (transcoder in self._transcoders)
-        self.log("Transcoder '%s' added to task %s", 
-                 transcoder.getLabel(), self.getLabel())
+        self.log("Transcoder '%s' added to task '%s'", 
+                 transcoder.getName(), self.getLabel())
         self._transcoders[transcoder] = None
         transcoder.addListener(self)
         transcoder.syncListener(self)
@@ -116,15 +122,14 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def removeComponent(self, transcoder):
         assert isinstance(transcoder, TranscoderProxy)
         assert transcoder in self._transcoders
-        self.log("Transcoder '%s' removed from task %s", 
-                 transcoder.getLabel(), self.getLabel())
+        self.log("Transcoder '%s' removed from task '%s'", 
+                 transcoder.getName(), self.getLabel())
         del self._transcoders[transcoder]
         transcoder.removeListener(self)
         if transcoder == self._transcoder:
             self.__relieveTranscoder()
     
     def start(self, paused=False):
-        print "%"*40
         if self._started: return
         self.log("Starting transcoding task '%s'", self.getLabel())
         self._started = True
@@ -144,7 +149,6 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.log("Resuming transcoding task '%s'", self.getLabel())
             self._paused = False
             self.__startup()
-                    
     
     def stop(self):
         """
@@ -157,7 +161,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.__relieveTranscoder()
         for m in self._transcoders:
             m.removeListener()
-        self._active = False
+        self._terminated = True
         return self._transcoders.keys()
     
     def abort(self):
@@ -169,7 +173,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         for m in self._transcoders:
             m.removeListener(self)
         self._transcoders.clear()
-        self._active = False
+        self._terminated = True
 
     def suggestWorker(self, worker):
         self.log("Worker '%s' suggested to transcoding task '%s'", 
@@ -184,35 +188,55 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
 
     ## IComponentListener Overrided Methods ##
     
-    def onComponentMoodChanged(self, component, mood):
+    def onComponentMoodChanged(self, transcoder, mood):
         if not self.isActive(): return
         self.log("Transcoding task '%s' transcoder '%s' goes %s", 
-                 self.getLabel(), component.getLabel(), mood.name)
-        if component.getName() == self._pendingName:
+                 self.getLabel(), transcoder.getName(), mood.name)
+        if transcoder.getName() == self._pendingName:
             return
-        if component == self._transcoder:
+        if transcoder == self._transcoder:
             if mood == moods.happy:
                 return
-            self.warning("Selected transcoder for '%s' gone %s", 
-                         self._label, mood.name)
+            if (mood == moods.sad) and (transcoder.isRunning()):
+                return
+            self.warning("Task '%s' selected transcoder '%s' gone %s",
+                         self.getLabel(), transcoder.getName(), mood.name)
             self.__relieveTranscoder()
             self.__delayedStartTranscoder()
             return
         if mood == moods.sleeping:
-            d = component.forceDelete()
-            d.addErrback(self.__ebTranscoderDeleteFailed, component)
+            self.__deleteTranscoder(transcoder)
             return
-        # Don't stop/delete sad component
-        if mood == moods.sad:
-            return
-        # If no transcoder is selected, don't stop any happy transcoder
+        # If no transcoder is selected, don't stop any happy monitor
         if (not self._transcoder) and (mood == moods.happy):
             return
-        d = component.forceStop()
-        d.addErrback(self.__ebTranscoderStopFailed, component)
+        self.__stopTranscoder(transcoder)
 
 
     ## ITranscoderListener Overrided Methods ##
+
+    def onTranscoderJobStateChanged(self, transcoder, jobState):
+        if not self.isActive() or (transcoder != self._transcoder): return
+        if jobState == JobStateEnum.waiting_ack:
+            if not transcoder.isAcknowledged():
+                d = transcoder.acknowledge()
+                d.addErrback(self.__ebAcknowledgeFailed, transcoder)
+            return
+        if jobState == JobStateEnum.terminated:
+            status = transcoder.getStatus()
+            if status == TranscoderStatusEnum.done:
+                self.info("Transcoding task '%s' done", self.getLabel())
+                self._fireEvent(transcoder, "TranscodingDone")
+                self.__taskTerminated(True)
+            elif status == TranscoderStatusEnum.failed:
+                self.info("Transcoding task '%s' failed", self.getLabel())
+                self._fireEvent(transcoder, "TranscodingFailed")
+                self.__taskTerminated(False)
+            else:
+                self.waring("Unexpected transcoder status/state combination.")
+                self.__relieveTranscoder()
+                self.__delayedStartTranscoder()
+                return
     
 
     ## Overrided 
@@ -225,11 +249,19 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.onComponentMoodChanged(m, m.getMood())
         self.__startTranscoder()            
     
+    def __taskTerminated(self, succeed):
+        self._terminated = True        
+        self.__relieveTranscoder()
+        # Stop all transcoders
+        for t in self._transcoders:
+            self.__stopTranscoder(t)
+        self._fireEvent(succeed, "TranscodingTerminated")
+    
     def __relieveTranscoder(self):
         if self._transcoder:
-            self.log("Transcoder %s releved by transcoding task %s",
+            self.log("Transcoder '%s' releved by transcoding task '%s'",
                      self._transcoder.getName(), self.getLabel())
-            self._fireEvent(self._transcoder, "TranscoderLost")
+            self._fireEvent(self._transcoder, "TranscoderReleased")
             self._transcoder = None
             
     def __electTranscoder(self, transcoder):
@@ -237,13 +269,50 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         if self._transcoder:
             self.__relieveTranscoder()
         self._transcoder = transcoder
-        self.log("Transcoder %s elected by transcoding task %s",
+        self.log("Transcoder '%s' elected by transcoding task '%s'",
                  self._transcoder.getName(), self.getLabel())
-        self._fireEvent(self._transcoder, "TranscoderStart")
-        # Stop all transcoder other than the selected one
-        for m in self._transcoders:
-            if m != self._transcoder:
-                self.__stopTranscoder(m)
+        self._fireEvent(self._transcoder, "TranscoderSelected")
+        # Retrieve and synchronize UI state
+        d = transcoder.retrieveUIState(adminconsts.TRANSCODER_UI_TIMEOUT)
+        args = (transcoder,)
+        d.addCallbacks(self.__cbGotUIState,
+                       self.__ebUIStateFailed,
+                       callbackArgs=args, errbackArgs=args)        
+        # Stop all transcoders other than the selected one
+        for t in self._transcoders:
+            if t != self._transcoder:
+                self.__stopTranscoder(t)
+
+    def  __cbGotUIState(self, transcoder):
+        if transcoder != self._transcoder: return
+        transcoder.syncListener(self)
+            
+    def __ebUIStateFailed(self, failure, transcoder):
+        if transcoder != self._transcoder: return
+        self.warning("Failed to retrieve task '%s' "
+                     "transcoder '%s' UI state: %s",
+                     self.getLabel(), transcoder.getName(), 
+                     log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+        self.__relieveTranscoder()
+        self.__delayedStartTranscoder()
+
+    def __selectValidTranscoder(self):
+        result = None
+        for transcoder in self._transcoders:
+            mood = transcoder.getMood()
+            # If a transcoder is happy, it's a valid option
+            if mood == moods.happy:
+                result = transcoder
+            elif mood == moods.sad:
+                status = transcoder.getStatus()
+                # If it's sad but its status is failed,
+                # it's a failed transcoding
+                if status == TranscoderStatusEnum.failed:
+                    # But only select it if there is no other
+                    if not result:
+                        result = transcoder
+        return result
 
     def __delayedStartTranscoder(self):
         if self._delayed:
@@ -254,7 +323,6 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                                           self.__startTranscoder)
 
     def __startTranscoder(self):
-        print "#"*40, "__startTranscoder", self.isActive()
         if not self.isActive(): return
         if self._delayed:
             if self._delayed.active():
@@ -266,22 +334,18 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                      self._pendingName)
             return
         if not self._worker:
-            self.warning("Couldn't start transcoder for '%s', no worker found",
-                         self._label)
+            self.warning("Couldn't start transcoder for task '%s', "
+                         "no worker found", self.getLabel())
             return
         # Check there is a valid transcoder already running
-        for m in self._transcoders:
-            # If it exists an happy transcoder on the 
-            # wanted worker, just elect it
-            if ((m.getWorker() == self._worker) 
-                and (m.getMood() == moods.happy)):
-                self.__electTranscoder(m)
-                return
-        print "#"*40, "__startTranscoder", "Ok"
+        transcoder = self.__selectValidTranscoder()
+        if transcoder:
+            self.__electTranscoder(transcoder)
+            return
         transcoderName = utils.genUniqueIdentifier()
         workerName = self._worker.getName()
-        self.debug("Starting %s transcoder %s on %s",
-                   self._label, transcoderName, workerName)
+        self.debug("Starting task '%s' transcoder '%s' on  worker '%s'",
+                   self.getLabel(), transcoderName, workerName)
         self._pendingName = transcoderName
         d = TranscoderProxy.loadTo(self._worker, transcoderName, 
                                    self._label, self._properties,
@@ -292,20 +356,22 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                        callbackArgs=args, errbackArgs=args)
 
     def __stopTranscoder(self, transcoder):
-        self.debug("Stopping %s transcoder %s", self._label, transcoder.getName())
+        self.debug("Stopping task '%s' transcoder '%s'", 
+                   self.getLabel(), transcoder.getName())
         # Don't stop sad transcoders
         if transcoder.getMood() != moods.sad:
             d = transcoder.forceStop()
             d.addErrback(self.__ebTranscoderStopFailed, transcoder.getName())
 
     def __deleteTranscoder(self, transcoder):
-        self.debug("Deleting %s transcoder %s", self._label, transcoder.getName())
+        self.debug("Deleting task '%s' transcoder '%s'", 
+                   self.getLabel(), transcoder.getName())
         d = transcoder.forceDelete()
         d.addErrback(self.__ebTranscoderDeleteFailed, transcoder.getName())
     
     def __cbTranscoderStartSucceed(self, result, transcoderName, workerName):
-        self.debug("Succeed to load %s transcoder '%s' on worker '%s'", 
-                   self._label, transcoderName, workerName)
+        self.debug("Succeed to start task '%s' transcoder '%s' on worker '%s'",
+                   self.getLabel(), transcoderName, workerName)
         assert transcoderName == result.getName()
         assert transcoderName == self._pendingName
         # If the target worker changed, abort and start another transcoder
@@ -323,16 +389,16 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                        callbackArgs=args, errbackArgs=args)
         
     def __ebTranscoderStartFailed(self, failure, transcoderName, workerName):
-        self.warning("Failed to start %s transcoder '%s' on worker '%s': %s", 
-                     self._label, transcoderName, workerName, 
-                     log.getFailureMessage(failure))
+        self.warning("Failed to start task '%s' transcoder '%s' "
+                     "on worker '%s': %s", self.getLabel(), transcoderName, 
+                     workerName, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self._pendingName = None
         self.__delayedStartTranscoder()
         
     def __cbTranscoderGoesHappy(self, mood, transcoder, workerName):
-        self.debug("%s transcoder '%s' on worker '%s' goes Happy", 
-                   self._label, transcoder.getName(), workerName)
+        self.debug("Task '%s' transcoder '%s' on worker '%s' goes happy", 
+                   self.getLabel(), transcoder.getName(), workerName)
         self._pendingName = None
         if workerName == self._worker:
             self.__electTranscoder(transcoder)
@@ -341,8 +407,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.__startTranscoder()
                 
     def __ebTranscoderNotHappy(self, failure, transcoder, workerName):
-        self.warning("%s transcoder '%s' on worker '%s' fail to be happy: %s", 
-                     self._label, transcoder.getName(), workerName,
+        self.warning("Task '%s' transcoder '%s' on worker '%s' "
+                     "fail to become happy: %s",
+                     self.getLabel(), transcoder.getName(), workerName,
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self._pendingName = None
@@ -354,11 +421,22 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.__delayedStartTranscoder()
         
     def __ebTranscoderStopFailed(self, failure, name):
-        self.warning("Failed to stop %s transcoder %s: %s", 
-                     self._label, name, log.getFailureMessage(failure))
+        self.warning("Failed to stop task '%s' transcoder '%s': %s", 
+                     self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
     def __ebTranscoderDeleteFailed(self, failure, transcoder):
-        self.warning("Failed to delete transcoder '%s': %s", 
-                     transcoder.getLabel(), log.getFailureMessage(failure))
+        self.warning("Failed to delete task '%s' transcoder '%s': %s", 
+                     self.getLabel(), transcoder.getName(),
+                     log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+
+    def __ebAcknowledgeFailed(self, failure, transcoder):
+        if self._transcoder != transcoder: return
+        self.warning("Failed to acknowledge task '%s' transcoder '%s': %s", 
+                     self.getLabel(), transcoder.getLabel(), 
+                     log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+        self.__relieveTranscoder()
+        self.__delayedStartTranscoder()
+    
