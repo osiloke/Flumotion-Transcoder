@@ -315,14 +315,16 @@ class Reporter(CPUUsageMixin):
 
     def init(self, context):
         sourceCtx = context.getSourceContext()
-        inputPath = sourceCtx.getInputPath()
-        self.report.source.filePath = VirtualPath.virtualize(inputPath, self.local)
+        self.setSourcePath(sourceCtx.getInputPath())
         self.report.local.loadFromLocal(context.local)
 
     _timeLookup = {"start": "startTime",
                    "done": "doneTime",
                    "acknowledge": "ackTime",
                    "terminated": "terminateTime"}
+
+    def setSourcePath(self, path):
+        self.report.source.filePath = VirtualPath.virtualize(path, self.local)
 
     def time(self, name):
         setattr(self.report, self._timeLookup[name], datetime.datetime.now())

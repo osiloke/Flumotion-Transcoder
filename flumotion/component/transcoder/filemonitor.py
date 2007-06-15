@@ -26,9 +26,12 @@ from flumotion.component.transcoder.watcher import DirectoryWatcher
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-transcoder')
 
+
 class FileMonitorMedium(component.BaseComponentMedium):
-    def remote_setFileState(self, base, file, status):        
+    
+    def remote_setFileState(self, base, file, status):
         self.comp.setFileState(base, file, status)
+
 
 class FileMonitor(component.BaseComponent):
     """
