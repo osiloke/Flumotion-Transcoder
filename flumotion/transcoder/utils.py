@@ -189,7 +189,7 @@ def callWithTimeout(timeout, callable, *args, **kwargs):
     args = (result, to)
     d.addCallbacks(__cbForwardCallback, __ebForwardErrback, 
                    callbackArgs=args, errbackArgs=args)
-    return d
+    return result
 
 def __asyncCallTimeout(d):
     error = OperationTimedOutError("Asynchronous Call Timed Out")
@@ -200,6 +200,7 @@ def __ebForwardErrback(failure, d, to):
         log.warning("Received failure for a timed out call: %s",
                     log.getFailureMessage(failure))
         return
+    cancelTimeout(to)
     d.errback(failure)
 
 def __cbForwardCallback(result, d, to):
@@ -207,6 +208,7 @@ def __cbForwardCallback(result, d, to):
         log.warning("Received result for a timed out call: %s",
                     str(result))
         return
+    cancelTimeout(to)
     d.callback(result)
 
 def createTimeout(timeout, callback, *args, **kwargs):
