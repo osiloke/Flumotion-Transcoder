@@ -108,8 +108,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     def addComponent(self, monitor):
         assert isinstance(monitor, MonitorProxy)
         assert not (monitor in self._monitors)
-        self.log("Monitor '%s' added to task %s", 
-                 monitor.getLabel(), self.getLabel())
+        self.log("Monitor '%s' added to task '%s'", 
+                 monitor.getName(), self.getLabel())
         self._monitors[monitor] = None
         monitor.addListener(self)
         monitor.syncListener(self)
@@ -117,8 +117,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     def removeComponent(self, monitor):
         assert isinstance(monitor, MonitorProxy)
         assert monitor in self._monitors
-        self.log("Monitor '%s' removed from task %s", 
-                 monitor.getLabel(), self.getLabel())
+        self.log("Monitor '%s' removed from task '%s'", 
+                 monitor.getName(), self.getLabel())
         del self._monitors[monitor]
         monitor.removeListener(self)
         if monitor == self._monitor:
@@ -182,32 +182,27 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
 
     ## IComponentListener Overrided Methods ##
     
-    def onComponentMoodChanged(self, component, mood):
+    def onComponentMoodChanged(self, monitor, mood):
         if not self.isActive(): return
         self.log("Monitoring task '%s' monitor '%s' goes %s", 
-                 self.getLabel(), component.getLabel(), mood.name)
-        if component.getName() == self._pendingName:
+                 self.getLabel(), monitor.getName(), mood.name)
+        if monitor.getName() == self._pendingName:
             return
-        if component == self._monitor:
+        if monitor == self._monitor:
             if mood == moods.happy:
                 return
-            self.warning("Selected monitor for '%s' gone %s", 
-                         self._label, mood.name)
+            self.warning("Task '%s' selected monitor '%s' gone %s",
+                         self.getLabel(), monitor.getName(), mood.name)
             self.__relieveMonitor()
             self.__delayedStartMonitor()
             return
         if mood == moods.sleeping:
-            d = component.forceDelete()
-            d.addErrback(self.__ebMonitorDeleteFailed, component)
-            return
-        # Don't stop/delete sad component
-        if mood == moods.sad:
+            self.__deleteMonitor(monitor)
             return
         # If no monitor is selected, don't stop any happy monitor
         if (not self._monitor) and (mood == moods.happy):
             return
-        d = component.forceStop()
-        d.addErrback(self.__ebMonitorStopFailed, component)
+        self.__stopMonitor(monitor)
 
 
     ## IMonitorListener Overrided Methods ##
@@ -254,7 +249,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     
     def __relieveMonitor(self):
         if self._monitor:
-            self.log("Monitor %s releved by monitoring task %s",
+            self.log("Monitor '%s' releved by monitoring task '%s'",
                      self._monitor.getName(), self.getLabel())
             self._fireEvent(self._monitor, "MonitoringDeactivated")
             self._monitor = None
@@ -264,29 +259,32 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if self._monitor:
             self.__relieveMonitor()
         self._monitor = monitor
-        self.log("Monitor %s elected by monitoring task %s",
+        self.log("Monitor '%s' elected by monitoring task '%s'",
                  self._monitor.getName(), self.getLabel())
         self._fireEvent(self._monitor, "MonitoringActivated")
-        # Synchronize all monitored files
-        d = monitor.waitFiles(adminconsts.MONITOR_UI_TIMEOUT)
-        d.addCallbacks(self.__cbForwardFileEvents,
-                       self.__ebGetFilesTimeout,
-                       callbackArgs=(monitor,), errbackArgs=(monitor,))
+        # Retrieve and synchronize UI state
+        d = monitor.retrieveUIState(adminconsts.MONITOR_UI_TIMEOUT)
+        args = (monitor,)
+        d.addCallbacks(self.__cbGotUIState,
+                       self.__ebUIStateFailed,
+                       callbackArgs=args, errbackArgs=args)
         # Stop all monitor other than the selected one
         for m in self._monitors:
             if m != self._monitor:
                 self.__stopMonitor(m)
 
-    def  __cbForwardFileEvents(self, files, monitor):
+    def  __cbGotUIState(self, monitor):
         if monitor != self._monitor: return
-        for d, f, s in files:
-            self.onMonitorFileChanged(monitor, d, f, s)
+        monitor.syncListener(self)
             
-    def __ebGetFilesTimeout(self, failure, monitor):
+    def __ebUIStateFailed(self, failure, monitor):
         if monitor != self._monitor: return
-        self.warning("Failed to retrieve actual file list of monitor %s: %s",
-                     monitor.getLabel(), log.getFailureMessage(failure))
+        self.warning("Failed to retrieve task '%s' monitor '%s' UI state: %s",
+                     self.getLabel(), monitor.getName(), 
+                     log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+        self.__relieveMonitor()
+        self.__delayedStartMonitor()
             
     def __delayedStartMonitor(self):
         if self._delayed:
@@ -308,8 +306,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                      self._pendingName)
             return
         if not self._worker:
-            self.warning("Couldn't start monitor for '%s', no worker found",
-                         self._label)
+            self.warning("Couldn't start monitor for task '%s', "
+                         "no worker found", self.getLabel())
             return
         # Check there is a valid monitor already running
         for m in self._monitors:
@@ -321,8 +319,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                 return
         monitorName = utils.genUniqueIdentifier()
         workerName = self._worker.getName()
-        self.debug("Starting %s monitor %s on %s",
-                   self._label, monitorName, workerName)
+        self.debug("Starting task '%s' monitor '%s' on worker '%s'",
+                   self.getLabel(), monitorName, workerName)
         self._pendingName = monitorName
         d = MonitorProxy.loadTo(self._worker, monitorName, 
                                 self._label, self._properties,
@@ -333,20 +331,22 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                        callbackArgs=args, errbackArgs=args)
 
     def __stopMonitor(self, monitor):
-        self.debug("Stopping %s monitor %s", self._label, monitor.getName())
+        self.debug("Stopping task '%s' monitor '%s'", 
+                   self.getLabel(), monitor.getName())
         # Don't stop sad monitors
         if monitor.getMood() != moods.sad:
             d = monitor.forceStop()
             d.addErrback(self.__ebMonitorStopFailed, monitor.getName())
 
     def __deleteMonitor(self, monitor):
-        self.debug("Deleting %s monitor %s", self._label, monitor.getName())
+        self.debug("Deleting task '%s' monitor '%s'", 
+                   self.getLabel(), monitor.getName())
         d = monitor.forceDelete()
         d.addErrback(self.__ebMonitorDeleteFailed, monitor.getName())
     
     def __cbMonitorStartSucceed(self, result, monitorName, workerName):
-        self.debug("Succeed to load %s monitor '%s' on worker '%s'", 
-                   self._label, monitorName, workerName)
+        self.debug("Succeed to start task '%s' monitor '%s' on worker '%s'",
+                   self.getLabel(), monitorName, workerName)
         assert monitorName == result.getName()
         assert monitorName == self._pendingName
         # If the target worker changed, abort and start another monitor
@@ -364,16 +364,16 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                        callbackArgs=args, errbackArgs=args)
         
     def __ebMonitorStartFailed(self, failure, monitorName, workerName):
-        self.warning("Failed to start %s monitor '%s' on worker '%s': %s", 
-                     self._label, monitorName, workerName, 
-                     log.getFailureMessage(failure))
+        self.warning("Failed to start task '%s' monitor '%s' "
+                     "on worker '%s': %s", self.getLabel(), monitorName, 
+                     workerName, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self._pendingName = None
         self.__delayedStartMonitor()
         
     def __cbMonitorGoesHappy(self, mood, monitor, workerName):
-        self.debug("%s monitor '%s' on worker '%s' goes Happy", 
-                   self._label, monitor.getName(), workerName)
+        self.debug("Task '%s' monitor '%s' on worker '%s' goes happy", 
+                   self.getLabel(), monitor.getName(), workerName)
         self._pendingName = None
         if workerName == self._worker:
             self.__electMonitor(monitor)
@@ -382,8 +382,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             self.__startMonitor()
                 
     def __ebMonitorNotHappy(self, failure, monitor, workerName):
-        self.warning("%s monitor '%s' on worker '%s' fail to be happy: %s", 
-                     self._label, monitor.getName(), workerName,
+        self.warning("Task '%s' monitor '%s' on worker '%s' "
+                     "fail to become happy: %s", self.getLabel(), 
+                     monitor.getName(), workerName, 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self._pendingName = None
@@ -395,11 +396,12 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self.__delayedStartMonitor()
         
     def __ebMonitorStopFailed(self, failure, name):
-        self.warning("Failed to stop %s monitor %s: %s", 
-                     self._label, name, log.getFailureMessage(failure))
+        self.warning("Failed to stop '%s' monitor '%s': %s", 
+                     self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
     def __ebMonitorDeleteFailed(self, failure, monitor):
-        self.warning("Failed to delete monitor '%s': %s", 
-                     monitor.getLabel(), log.getFailureMessage(failure))
+        self.warning("Failed to delete task '%s' monitor '%s': %s", 
+                     self.getLabel(), monitor.getName(), 
+                     log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
