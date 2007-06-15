@@ -1,5 +1,11 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/utils.py (__ebForwardErrback,
+	  __cbForwardCallback):
+	Corrected function parameter order.
+
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/utils.py (callWithTimeout):
 	Should return the new deferred.
 

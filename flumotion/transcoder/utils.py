@@ -195,14 +195,14 @@ def __asyncCallTimeout(d):
     error = OperationTimedOutError("Asynchronous Call Timed Out")
     d.errback(error)
 
-def __ebForwardErrback(failure, to, d):
+def __ebForwardErrback(failure, d, to):
     if hasTimedOut(to):
         log.warning("Received failure for a timed out call: %s",
                     log.getFailureMessage(failure))
         return
     d.errback(failure)
 
-def __cbForwardCallback(result, to, d):
+def __cbForwardCallback(result, d, to):
     if hasTimedOut(to):
         log.warning("Received result for a timed out call: %s",
                     str(result))
