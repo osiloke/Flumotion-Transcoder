@@ -10,13 +10,20 @@
 
 # Headers in this file shall remain intact.
 
+import os
+
 from zope.interface import implements
 
+from flumotion.transcoder import utils, inifile, log
+from flumotion.transcoder.transreport import TranscodingReport
+from flumotion.transcoder.enums import TranscoderStatusEnum
+from flumotion.transcoder.enums import JobStateEnum
+from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.admin.transprops import TranscoderProperties
 
 
@@ -25,6 +32,9 @@ class ITranscoderListener(IComponentListener):
         pass
     
     def onTranscoderStatusChanged(self, transcoder, status):
+        pass
+    
+    def onTranscoderJobStateChanged(self, transcoder, jobState):
         pass
 
 
@@ -36,6 +46,9 @@ class TranscoderListener(ComponentListener):
         pass
     
     def onTranscoderStatusChanged(self, transcoder, status):
+        pass
+
+    def onTranscoderJobStateChanged(self, transcoder, jobState):
         pass
 
 
@@ -59,24 +72,42 @@ class TranscoderProxy(ComponentProxy):
                                 componentContext, 
                                 componentState, domain,
                                 ITranscoderListener)
+    
         
     ## Public Methods ##
     
     def getTranscoderProgress(self):
-        ui = self._getUIState()
-        assert ui, "No UI State"
-        jobData = ui.get("job-data", None)
-        if jobData:
-            return jobData.get('progress', 0.0)
-        return 0.0
+        return self.__getUIValue("job-data", "progress", 0.0)
     
+    def getStatus(self):
+        return self.__getUIValue("job-data", "status", 
+                                 TranscoderStatusEnum.pending)
+    
+    def getJobState(self):
+        return self.__getUIValue("job-data", "job-state", 
+                                 JobStateEnum.pending)
+    
+    def getReport(self, timeout=None):
+        d = utils.callWithTimeout(timeout, self._callRemote, "getReportPath")
+        d.addCallback(self.__cbLoadReport)
+        return d
+        
+    
+    def isAcknowledged(self):
+        return self.__getUIValue("job-data", "acknowledged", False)
+
+    def acknowledge(self, timeout=None):
+        return utils.callWithTimeout(timeout, self._callRemote, "acknowledge")        
+
+
     ## Overriden Methods ##
     
     _handlerLookup = {"job-data":
                       {"progress":  ("_onTranscoderProgress", None, 0.0),
                        "status":    ("_onTranscoderStatusChanged", None, 
-                                     TranscoderStatusEnum.pending)}}
-
+                                     TranscoderStatusEnum.pending),
+                       "job-state": ("_onTranscoderJobStateChanged", None, 
+                                     JobStateEnum.pending)}}
     
     def _doBroadcastUIState(self, uiState):
         for key, handlers in self._handlerLookup.iteritems():
@@ -125,6 +156,39 @@ class TranscoderProxy(ComponentProxy):
 
     def _onTranscoderStatusChanged(self, status):
         self._fireEvent(status, "TranscoderStatusChanged")
+
+    def _onTranscoderJobStateChanged(self, state):
+        self._fireEvent(state, "TranscoderJobStateChanged")
+
+    
+    ## Private Methodes ##
+    
+    def __getUIValue(self, groupName, name, default=None):
+        ui = self._getUIState()
+        assert ui, "No UI State"
+        group = ui.get(groupName, None)
+        if group:
+            return group.get(name, default)
+        return default
+
+    def __cbLoadReport(self, path):
+        context = self.getContext()
+        local = context.group.manager.admin.getLocal()
+        localPath = VirtualPath(path).localize(local)
+        if not os.path.exists(localPath):
+            message = ("Transcoder report file '%s' not found" % localPath)
+            self.log.warning("%s", message)
+            raise TranscoderError(message)
+        loader = inifile.IniFile()
+        report = TranscodingReport()
+        try:
+            loader.loadFromFile(report, localPath)
+        except Exception, e:
+            message = ("Failed to load transcoder report file '%s': %s"
+                       % (localPath, log.getExceptionMessage(e)))
+            log.warning("%s", message)
+            raise TranscoderError(message)
+        return report
 
 
 registerProxy("file-transcoder", TranscoderProxy)
