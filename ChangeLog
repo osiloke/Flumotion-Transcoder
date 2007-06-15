@@ -1,5 +1,18 @@
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.getLabel,
+	  TaskManager.addTask, TaskManager.removeTask, TaskManager.start,
+	  TaskManager.pause, TaskManager.resume, TaskManager.abort,
+	  TaskManager.addComponent, TaskManager.removeComponent,
+	  TaskManager.onComponentMoodChanged, TaskManager._tryStarting,
+	  TaskManager.__cbAddComponent, TaskManager.__ebGetPropertiesFailed,
+	  TaskManager.__ebStopFailed, TaskManager.__ebDeleteFailed,
+	  TaskManager.__ebStartupFailed, TaskManager.__ebResumeFailed,
+	  TaskManager.__ebPauseFailed):
+	  Added a label to the task manager for better logging.
+
+2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py
 	  (MonitoringTask.__electMonitor):
 	* flumotion/transcoder/admin/transtask.py

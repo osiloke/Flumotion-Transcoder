@@ -48,9 +48,13 @@ class TaskManager(Loggable, EventSource, ComponentListener):
     def initialize(self):
         return defer.succeed(self)
     
+    def getLabel(self):
+        return self.__class__.__name__
+    
     def addTask(self, identifier, task):
         assert IAdminTask.providedBy(task)
-        self.debug("Adding task '%s'", task.getLabel())
+        self.debug("Adding task '%s' to manager '%s'", 
+                   task.getLabel(), self.getLabel())
         props = task.getProperties()
         assert not (props in self._tasks)
         assert not (identifier in self._identifiers)
@@ -69,7 +73,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         assert identifier in self._identifiers
         props = self._identifiers[identifier]
         task = self._tasks[props]
-        self.debug("Removing task '%s'", task.getLabel())
+        self.debug("Removing task '%s' from manager '%s'", 
+                   task.getLabel(), self.getLabel())
         del self._identifiers[identifier]
         del self._tasks[props]
         self._onTaskRemoved(task)
@@ -86,13 +91,15 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         return self._started and (not self._paused)
 
     def start(self):
-        self.log("Ready to start task manager %s", self.__class__.__name__)
+        self.log("Ready to start task manager '%s'", 
+                 self.getLabel())
         self._ready = True
         self._tryStarting()
 
     def pause(self):
         if self._started and (not self._paused):
-            self.log("Pausing task manager %s", self.__class__.__name__)
+            self.log("Pausing task manager '%s'", 
+                     self.getLabel())
             self._paused = True
             d = defer.succeed(self)
             d.addCallback(utils.dropResult, self._doPause)
@@ -101,7 +108,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
 
     def resume(self):
         if self._started and self._paused:
-            self.log("Resuming task manager %s", self.__class__.__name__)
+            self.log("Resuming task manager '%s'", 
+                     self.getLabel())
             self._paused = False
             d = defer.succeed(self)
             d.addCallback(utils.dropResult, self._doResume)
@@ -110,7 +118,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
             d.addErrback(self.__ebResumeFailed)
 
     def abort(self):
-        self.log("Aborting task manager %s", self.__class__.__name__)
+        self.log("Aborting task manager '%s'", 
+                 self.getLabel())
         for task in self._tasks.itervalues():
             task.abort()
         self._tasks.clear()
@@ -118,8 +127,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
 
     def addComponent(self, component):
         assert isinstance(component, ComponentProxy)
-        self.log("Component '%s' added to task manager %s", 
-                 component.getLabel(), self.__class__.__name__)
+        self.log("Component '%s' added to task manager '%s'", 
+                 component.getLabel(), self.getLabel())
         self._pending += 1
         d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
         args = (component,)
@@ -130,8 +139,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
     
     def removeComponent(self, component):
         assert isinstance(component, ComponentProxy)
-        self.log("Component '%s' removed from task manager %s", 
-                 component.getLabel(), self.__class__.__name__)
+        self.log("Component '%s' removed from task manager '%s'", 
+                 component.getLabel(), self.getLabel())
         d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
         d.addCallback(self.__cbRemoveComponent, component)
         return d
@@ -180,21 +189,22 @@ class TaskManager(Loggable, EventSource, ComponentListener):
     
     def onComponentMoodChanged(self, component, mood):
         if not self.isActive(): return
-        self.log("Taskless monitor '%s' goes %s", 
-                 component.getLabel(), mood.name)
+        self.log("Task manager '%s' taskless component '%s' goes %s",
+                 self.getLabel(), component.getName(), mood.name)
         if mood == moods.sleeping:
             d = component.forceDelete()
-            d.addErrback(self.__ebDeleteFailed, component.getLabel())
+            d.addErrback(self.__ebDeleteFailed, component.getName())
         elif mood != moods.sad:
             d = component.forceStop()
-            d.addErrback(self.__ebStopFailed, component.getLabel())
+            d.addErrback(self.__ebStopFailed, component.getName())
 
     ## Protected Methods ##
     
     def _tryStarting(self):
         if ((not self._started) and self._ready 
             and (self._pending == 0)):
-            self.log("Starting task manager %s", self.__class__.__name__)
+            self.log("Starting task manager '%s'", 
+                     self.getLabel())
             self._started = True
             self._pause = False
             d = defer.succeed(self)
@@ -237,8 +247,9 @@ class TaskManager(Loggable, EventSource, ComponentListener):
             task = self._tasks[props]
             task.addComponent(component)
         else:
-            msg = ("Component '%s' added to an unknown task "
-                   "configuration." % component.getLabel())
+            msg = ("Task manager '%s' ask to add component '%s' "
+                   "without matching task" 
+                   % (self.getLabel(), component.getName()))
             self.warning("%s", msg)
             self.__apartTasklessComponent(component)
         self._pending -= 1
@@ -246,8 +257,8 @@ class TaskManager(Loggable, EventSource, ComponentListener):
         return component
     
     def __ebGetPropertiesFailed(self, failure, component):
-        msg = ("Fail to retrieve component '%s' properties."
-               % component.getLabel())
+        msg = ("Task manager '%s' fail to retrieve component '%s' properties."
+               % (self.getLabel(), component.getName()))
         self.warning("%s", msg)
         self.debug("%s", log.getFailureTraceback(failure))
         self.__apartTasklessComponent(component)
@@ -265,30 +276,30 @@ class TaskManager(Loggable, EventSource, ComponentListener):
             self.__releaseTasklessComponent(component)
         return component
 
-    def __ebStopFailed(self, failure, label):
-        self.warning("Task Manager failed to stop component '%s': %s",
-                     label, log.getFailureMessage(failure))
+    def __ebStopFailed(self, failure, name):
+        self.warning("Task manager '%s' failed to stop component '%s': %s",
+                     self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
 
-    def __ebDeleteFailed(self, failure, label):
-        self.warning("Task Manager failed to delete component '%s': %s",
-                     label, log.getFailureMessage(failure))
+    def __ebDeleteFailed(self, failure, name):
+        self.warning("Task manager '%s' failed to delete component '%s': %s",
+                     self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
 
     def __ebStartupFailed(self, failure):
         self._started = False
-        self.warning("Task Manager failed to startup: %s",
-                     log.getFailureMessage(failure))
+        self.warning("Task Manager '%s' failed to startup: %s",
+                     self.getLabel(), log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
     def __ebResumeFailed(self, failure):
         self._pause = True
-        self.warning("Task Manager failed to resume: %s",
-                     log.getFailureMessage(failure))
+        self.warning("Task Manager '%s' failed to resume: %s",
+                     self.getLabel(), log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
     def __ebPauseFailed(self, failure):
         self._pause = False
-        self.warning("Task Manager failed to pause: %s",
-                     log.getFailureMessage(failure))
+        self.warning("Task Manager '%s' failed to pause: %s",
+                     self.getLabel(), log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
