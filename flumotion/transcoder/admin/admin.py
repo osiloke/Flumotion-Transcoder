@@ -49,6 +49,7 @@ class TranscoderAdmin(log.Loggable,
                       CustomerStoreListener,
                       ProfileStoreListener,
                       MonitoringTaskListener,
+                      TranscodingTaskListener
                       ## Just for debug ##
                       #TargetStoreListener,
                       #ComponentSetListener,
@@ -162,12 +163,20 @@ class TranscoderAdmin(log.Loggable,
         self.info("Monitoring %s: File %s added", monitoringtask.getLabel(), 
                   profileCtx.getInputPath())
         task = TranscodingTask(self._transcoding, profileCtx)
-        self._transcoding.addTask(profileCtx.getIdentifier(), task)
+        task.addListener(self)
+        self._transcoding.addTask(task, task)
 
     
     def onMonitoredFileRemoved(self, monitoringtask, profileCtx):
         self.info("Monitoring %s: File %s removed", monitoringtask.getLabel(), 
                   profileCtx.getInputPath())
+
+    ## ITranscodingTaskListener Overriden Methods ##
+    
+    def onTranscodingTerminated(self, task, succeed):
+        task.removeListener(self)
+        self._transcoding.removeTask(task)
+
 
 
     ## IAdminStoreListener Overriden Methods ##

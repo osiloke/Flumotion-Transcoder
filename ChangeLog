@@ -1,5 +1,13 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
+	  TranscoderAdmin.onMonitoredFileAdded,
+	  TranscoderAdmin.onMonitoredFileRemoved,
+	  TranscoderAdmin.onTranscodingTerminated):
+	  Basic transcoding impelmentation without scheduling.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/groupproxy.py
 	  (ComponentGroupProxy._stateAppend):
 	Menor cleanup.
