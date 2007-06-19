@@ -325,6 +325,9 @@ class BaseComponentProxy(FlumotionProxy):
     ## Protected Methods ##
 
     def _getUIDictValue(self, key, name, default):
+        # For now, do not allow getting a ui state value
+        # if the UI state has not been retrieved
+        assert self._uiState != None
         if not self._uiState:
             return default
         return self.__getUIDictValue(self._uiState, key, name, default)

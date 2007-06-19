@@ -1,6 +1,13 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._getUIDictValue):
+	  For now, do not allow getting a ui state value
+      if the UI state has not been retrieved
+	
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy._getUIDictValue,
 	  BaseComponentProxy._waitUIDictValue,
 	  BaseComponentProxy.__getUIDictValue):
