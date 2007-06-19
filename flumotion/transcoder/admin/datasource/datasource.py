@@ -270,6 +270,8 @@ class IDataSource(Interface):
             videoPAR (int[2])
             videoFramerate (int[2])
             videoScaleMethod (VideoScaleMethodEnum)
+        For Audio/Video targets, it has the following additional fields:
+            tolerance (AudioVideoToleranceEnum)
         For a Thumbnails targets, it has the following fields:
             thumbsWidth (int)
             thumbsHeight (int)

@@ -20,6 +20,7 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
+from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.datasource import datasource
 
@@ -146,7 +147,8 @@ AUDIOVIDEO_CONFIG = {'type': TargetTypeEnum.audiovideo,
                      'videoMaxHeight': None,
                      'videoPAR': None,
                      'videoFramerate': None,
-                     'videoScaleMethod': None}
+                     'videoScaleMethod': None,
+                     'tolerance': None}
 
 THUMBNAILS_CONFIG = {'type': TargetTypeEnum.thumbnails,
                      'thumbsWidth': None,

@@ -17,6 +17,7 @@ from flumotion.common import common
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
+from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.component.transcoder.binmaker import makeEncodeBin
 from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
 from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
@@ -105,6 +106,7 @@ class AudioTarget(FileTarget):
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_audio:
             self._raiseError("Source media doesn't have audio stream")
+        return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
         audioEncBin = makeAudioEncodeBin(self._config, discoverer, self._tag)
@@ -134,6 +136,7 @@ class VideoTarget(FileTarget):
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_video:
             self._raiseError("Source media doesn't have video stream")
+        return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
         videoEncBin = makeVideoEncodeBin(self._config, discoverer, self._tag)
@@ -160,26 +163,39 @@ class AudioVideoTarget(FileTarget):
             videoWidth
             videoHeight
             muxer
+            tolerance
         """
         FileTarget.__init__(self, outputPath, config, tag, logger, data)
 
     def _sourceDiscovered(self, discoverer):
-        if not discoverer.is_audio:
+        tolerance = self._config.tolerance
+        if not ((tolerance == AudioVideoToleranceEnum.allow_without_audio) 
+            or discoverer.is_audio):
             self._raiseError("Source media doesn't have audio stream")
-        if not discoverer.is_video:
+        if not ((tolerance == AudioVideoToleranceEnum.allow_without_video) 
+            or discoverer.is_video):
             self._raiseError("Source media doesn't have video stream")
+        return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
         tag = self._tag
-        audioEncBin = makeAudioEncodeBin(self._config, discoverer, tag)
-        videoEncBin = makeVideoEncodeBin(self._config, discoverer, tag)
+        if discoverer.is_audio:
+            audioEncBin = makeAudioEncodeBin(self._config, discoverer, tag)
+        else:
+            audioEncBin = None
+        if discoverer.is_video:
+            videoEncBin = makeVideoEncodeBin(self._config, discoverer, tag)
+        else:
+            videoEncBin = None
         encBin = makeEncodeBin(self.getOutputPath(), self._config, 
                                       discoverer, tag, audioEncBin, videoEncBin)
         pipeline.add(encBin)
-        tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
-        tees['audiosink'].get_pad('src%d').link(encBin.get_pad('audiosink'))
-        self._bins["video-encoder"] = videoEncBin
-        self._bins["audio-encoder"] = audioEncBin
+        if videoEncBin:
+            tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
+            self._bins["video-encoder"] = videoEncBin
+        if videoEncBin:
+            tees['audiosink'].get_pad('src%d').link(encBin.get_pad('audiosink'))
+            self._bins["audio-encoder"] = audioEncBin
 
 
 class ThumbnailsTarget(TranscodingTarget):
@@ -241,6 +257,7 @@ class ThumbnailsTarget(TranscodingTarget):
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_video:
             self._raiseError("Source media doesn't have video stream")
+        return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
         setupMethods = {PeriodUnitEnum.seconds: self._setupThumbnailBySeconds,

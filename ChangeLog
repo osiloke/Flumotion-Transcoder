@@ -1,3 +1,23 @@
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder-data.ini:
+	* flumotion/component/transcoder/targets.py
+	  (AudioTarget._sourceDiscovered, VideoTarget._sourceDiscovered,
+	  AudioVideoTarget.__init__, AudioVideoTarget._sourceDiscovered,
+	  AudioVideoTarget._updatePipeline, _sourceDiscovered):
+	* flumotion/transcoder/admin/datasource/dataprops.py (AudioVideoData):
+	* flumotion/transcoder/admin/datasource/datasource.py
+	  (IDataSource.retrieveTargetConfig):
+	* flumotion/transcoder/admin/datasource/dummysource.py:
+	* flumotion/transcoder/admin/datastore/configstore.py
+	  (AudioVideoConfig.getTolerance):
+	* flumotion/transcoder/admin/transprops.py
+	  (createTranscodingConfigFromContext):
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/transconfig.py (AudioVideoConfig):
+	Added a tolerence property for the Audio/Video tragets to
+	be able to allow the input files without audio.
+
 2007-06-15  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/transtask.py

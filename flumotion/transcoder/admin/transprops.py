@@ -75,7 +75,9 @@ def createTranscodingConfigFromContext(profileCtx):
             tc.config.videoMaxWidth = cs.getVideoMaxWidth()
             tc.config.videoMaxHeight = cs.getVideoMaxHeight()
             tc.config.videoScaleMethod = cs.getVideoScaleMethod()
-            tc.config.muxer = cs.getMuxer()
+            tc.config.muxer = cs.getMuxer()            
+        if tt == TargetTypeEnum.audiovideo:
+            tc.config.tolerance = cs.getTolerance()
         if tt == TargetTypeEnum.thumbnails:
             tc.config.periodValue = cs.getPeriodValue()
             tc.config.periodUnit = cs.getPeriodUnit()

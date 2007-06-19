@@ -92,6 +92,9 @@ class AudioVideoConfig(AudioConfig, VideoConfig):
     def __init__(self, data):
         super(AudioVideoConfig, self).__init__(data)
 
+    def getTolerance(self):
+        return self._data.tolerance        
+
 
 class ThumbnailsConfig(BaseConfig):
     """

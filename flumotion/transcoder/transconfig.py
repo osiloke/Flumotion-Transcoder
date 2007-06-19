@@ -19,6 +19,7 @@ from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import TargetTypeEnum
+from flumotion.transcoder.enums import AudioVideoToleranceEnum
 
 
 class CustomerConfig(properties.PropertyBag):
@@ -66,7 +67,9 @@ class VideoConfig(properties.PropertyBag):
     
     
 class AudioVideoConfig(AudioConfig, VideoConfig):
-    pass
+    tolerance = properties.Enum('tolerance', 
+                                AudioVideoToleranceEnum,
+                                AudioVideoToleranceEnum.strict)
 
 class ThumbnailsConfig(properties.PropertyBag):
     periodValue = properties.Integer('period-value', None, True, True)
