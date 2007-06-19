@@ -1,5 +1,16 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._getUIDictValue,
+	  BaseComponentProxy.__cbGetUIDictValue):
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.getTranscoderProgress, TranscoderProxy.getStatus,
+	  TranscoderProxy.getJobState, TranscoderProxy.isAcknowledged,
+	  TranscoderProxy.getReport):
+	  Change the UI State's getters to return deferred.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/targets.py
 	  (AudioVideoTarget._updatePipeline):
 	  Corrected copy/past error.

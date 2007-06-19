@@ -76,26 +76,27 @@ class TranscoderProxy(ComponentProxy):
         
     ## Public Methods ##
     
-    def getTranscoderProgress(self):
-        return self.__getUIValue("job-data", "progress", 0.0)
+    def getTranscoderProgress(self, timeout=None):
+        return self._getUIDictValue("job-data", "progress", 0.0, timeout)
     
-    def getStatus(self):
-        return self.__getUIValue("job-data", "status", 
-                                 TranscoderStatusEnum.pending)
+    def getStatus(self, timeout=None):
+        return self._getUIDictValue("job-data", "status", 
+                                 TranscoderStatusEnum.pending,
+                                 timeout)
     
-    def getJobState(self):
-        return self.__getUIValue("job-data", "job-state", 
-                                 JobStateEnum.pending)
+    def getJobState(self, timeout=None):
+        return self._getUIDictValue("job-data", "job-state", 
+                                 JobStateEnum.pending, timeout)
+
+    def isAcknowledged(self, timeout=None):
+        return self._getUIDictValue("job-data", "acknowledged", 
+                                    False, timeout)
     
     def getReport(self, timeout=None):
         d = utils.callWithTimeout(timeout, self._callRemote, "getReportPath")
         d.addCallback(self.__cbLoadReport)
         return d
-        
     
-    def isAcknowledged(self):
-        return self.__getUIValue("job-data", "acknowledged", False)
-
     def acknowledge(self, timeout=None):
         return utils.callWithTimeout(timeout, self._callRemote, "acknowledge")        
 
@@ -163,14 +164,6 @@ class TranscoderProxy(ComponentProxy):
     
     ## Private Methodes ##
     
-    def __getUIValue(self, groupName, name, default=None):
-        ui = self._getUIState()
-        assert ui, "No UI State"
-        group = ui.get(groupName, None)
-        if group:
-            return group.get(name, default)
-        return default
-
     def __cbLoadReport(self, path):
         context = self.getContext()
         local = context.group.manager.admin.getLocal()

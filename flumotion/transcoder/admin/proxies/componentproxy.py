@@ -324,6 +324,11 @@ class BaseComponentProxy(FlumotionProxy):
     
     ## Protected Methods ##
 
+    def _getUIDictValue(self, key, name, default, timeout=None):
+        d = self._waitUIState(timeout)
+        d.addCallback(self.__cbGetUIDictValue, key, name, default)
+        return d
+
     def _waitUIState(self, timeout=None):
         return self._uiState.wait(timeout)
 
@@ -347,6 +352,12 @@ class BaseComponentProxy(FlumotionProxy):
 
 
     ## Private Methods ##
+    
+    def __cbGetUIDictValue(self, state, key, name, default):
+        values = state.get(key, None)
+        if values:
+            return values.get(name, default)
+        return default
     
     def __componentRequestedWorkerChanged(self, workerName):
         self._requestedWorkerName = workerName
