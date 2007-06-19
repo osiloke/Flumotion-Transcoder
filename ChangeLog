@@ -1,5 +1,20 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._getUIDictValue,
+	  BaseComponentProxy._waitUIDictValue,
+	  BaseComponentProxy.__getUIDictValue):
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.getTranscoderProgress,
+	  TranscoderProxy.waitTranscoderProgress, TranscoderProxy.getStatus,
+	  TranscoderProxy.waitStatus, TranscoderProxy.getJobState,
+	  TranscoderProxy.waitJobState, TranscoderProxy.isAcknowledged,
+	  TranscoderProxy.waitIsAcknowledged):
+	  Added the synchronous getter too. There are usefull in the event
+	  handlers where you  know the ui state is set.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/transcoderproxy.py
 	  (TranscoderProxy.waitTranscoderProgress, TranscoderProxy.waitStatus,
 	  TranscoderProxy.waitJobState, TranscoderProxy.waitIsAcknowledged):

@@ -76,21 +76,35 @@ class TranscoderProxy(ComponentProxy):
         
     ## Public Methods ##
     
+    def getTranscoderProgress(self):
+        return self._getUIDictValue("job-data", "progress", 0.0)
+    
     def waitTranscoderProgress(self, timeout=None):
-        return self._getUIDictValue("job-data", "progress", 0.0, timeout)
+        return self._waitUIDictValue("job-data", "progress", 0.0, timeout)
     
-    def waitStatus(self, timeout=None):
+    def getStatus(self):
         return self._getUIDictValue("job-data", "status", 
-                                 TranscoderStatusEnum.pending,
-                                 timeout)
+                                    TranscoderStatusEnum.pending)
+        
+    def waitStatus(self, timeout=None):
+        return self._waitUIDictValue("job-data", "status", 
+                                     TranscoderStatusEnum.pending,
+                                     timeout)
     
-    def waitJobState(self, timeout=None):
+    def getJobState(self):
         return self._getUIDictValue("job-data", "job-state", 
-                                 JobStateEnum.pending, timeout)
+                                    JobStateEnum.pending)
+        
+    def waitJobState(self, timeout=None):
+        return self._waitUIDictValue("job-data", "job-state", 
+                                     JobStateEnum.pending, timeout)
+
+    def isAcknowledged(self):
+        return self._getUIDictValue("job-data", "acknowledged", False)
 
     def waitIsAcknowledged(self, timeout=None):
-        return self._getUIDictValue("job-data", "acknowledged", 
-                                    False, timeout)
+        return self._waitUIDictValue("job-data", "acknowledged", 
+                                     False, timeout)
     
     def getReport(self, timeout=None):
         d = utils.callWithTimeout(timeout, self._callRemote, "getReportPath")
