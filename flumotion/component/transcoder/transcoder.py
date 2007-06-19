@@ -351,7 +351,7 @@ class MultiTranscoder(object):
                     return
                 if position >= 0:
                     positions.append(position)
-            position = min(positions)
+            position = position and min(positions) or 0
             if  self._progressCallback:
                 self._progressCallback(position * 100.0 / self._duration)
             self._progressTimeout = reactor.callLater(PROGRESS_TIMEOUT,

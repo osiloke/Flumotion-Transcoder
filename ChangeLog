@@ -1,5 +1,11 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/transcoder.py
+	  (MultiTranscoder._updateProgress):
+	  Corrected a bug for when there is no sink yet.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoderMedium.remote_acknowledge,
 	  FileTranscoder.do_acknowledge, FileTranscoder.init,
