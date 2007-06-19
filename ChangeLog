@@ -1,5 +1,15 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py (MonitoringTask.stop,
+	  MonitoringTask.__startup, MonitoringTask.__startMonitor,
+	  MonitoringTask.__cbMonitorStartSucceed,
+	  MonitoringTask.__cbMonitorGoesHappy):
+	* flumotion/transcoder/admin/transtask.py (TranscodingTask.stop,
+	  TranscodingTask.__cbTranscoderGoesHappy):
+	Corrected a bug when removeing listener, and comparing worker name.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
 	  TranscoderAdmin.onMonitoredFileAdded,
 	  TranscoderAdmin.onMonitoredFileRemoved,

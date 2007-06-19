@@ -159,7 +159,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.log("Stopping transcoding task '%s'", self.getLabel())
         self.__relieveTranscoder()
         for m in self._transcoders:
-            m.removeListener()
+            m.removeListener(self)
         self._terminated = True
         return self._transcoders.keys()
     
@@ -401,7 +401,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.debug("Task '%s' transcoder '%s' on worker '%s' goes happy", 
                    self.getLabel(), transcoder.getName(), workerName)
         self._pendingName = None
-        if workerName == self._worker:
+        if self._worker and (workerName == self._worker.getName()):
             self.__electTranscoder(transcoder)
         else:
             # If the wanted worker changed, just start a new transcoder

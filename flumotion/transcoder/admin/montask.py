@@ -155,7 +155,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self.log("Stopping monitoring task '%s'", self.getLabel())
         self.__relieveMonitor()
         for m in self._monitors:
-            m.removeListener()
+            m.removeListener(self)
         self._active = False
         return self._monitors.keys()
     
@@ -242,6 +242,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         return None
     
     def __startup(self):
+        self.log("Startup monitoring task '%s'", self.getLabel())
         for m in self._monitors:
             self.onComponentMoodChanged(m, m.getMood())
         self.__startMonitor()            
@@ -307,6 +308,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             self.warning("Couldn't start monitor for task '%s', "
                          "no worker found", self.getLabel())
             return
+        self.log("Task '%s' try to start a new monitor",
+                 self.getLabel())
         # Check there is a valid monitor already running
         for m in self._monitors:
             # If it exists an happy monitor on the 
@@ -350,6 +353,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         # If the target worker changed, abort and start another monitor
         if ((not self._worker) 
             or (self._worker and (workerName != self._worker.getName()))):
+            self.log("Task '%s' suggested worker changed while "
+                     "starting monitor '%s'", self.getLabel(), monitorName)
             self._pendingName = None
             self.__stopMonitor(result)
             self.__delayedStartMonitor()
@@ -373,7 +378,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self.debug("Task '%s' monitor '%s' on worker '%s' goes happy", 
                    self.getLabel(), monitor.getName(), workerName)
         self._pendingName = None
-        if workerName == self._worker:
+        if self._worker and (workerName == self._worker.getName()):
             self.__electMonitor(monitor)
         else:
             # If the wanted worker changed, just start a new monitor
