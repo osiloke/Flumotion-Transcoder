@@ -76,19 +76,19 @@ class TranscoderProxy(ComponentProxy):
         
     ## Public Methods ##
     
-    def getTranscoderProgress(self, timeout=None):
+    def waitTranscoderProgress(self, timeout=None):
         return self._getUIDictValue("job-data", "progress", 0.0, timeout)
     
-    def getStatus(self, timeout=None):
+    def waitStatus(self, timeout=None):
         return self._getUIDictValue("job-data", "status", 
                                  TranscoderStatusEnum.pending,
                                  timeout)
     
-    def getJobState(self, timeout=None):
+    def waitJobState(self, timeout=None):
         return self._getUIDictValue("job-data", "job-state", 
                                  JobStateEnum.pending, timeout)
 
-    def isAcknowledged(self, timeout=None):
+    def waitIsAcknowledged(self, timeout=None):
         return self._getUIDictValue("job-data", "acknowledged", 
                                     False, timeout)
     

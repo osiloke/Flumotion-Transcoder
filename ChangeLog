@@ -1,5 +1,12 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.waitTranscoderProgress, TranscoderProxy.waitStatus,
+	  TranscoderProxy.waitJobState, TranscoderProxy.waitIsAcknowledged):
+	  Change getters names from getXX to waitXX because it return a deferred.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy._getUIDictValue,
 	  BaseComponentProxy.__cbGetUIDictValue):
