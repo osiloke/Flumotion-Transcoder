@@ -105,7 +105,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     def _stateAppend(self, state, key, value):
         if key == 'components':
             assert value != None
-            self.log("Component state %s added to ", value.get('name'))
+            self.log("Component state %s added", value.get('name'))
             if self.isActive():
                 self.__componentStateAdded(value)
         self._onStateAppend(key, value)

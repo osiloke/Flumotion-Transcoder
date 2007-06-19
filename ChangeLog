@@ -1,5 +1,11 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/groupproxy.py
+	  (ComponentGroupProxy._stateAppend):
+	Menor cleanup.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy.__isOperationTerminated,
 	  BaseComponentProxy.__stopOrDelete,
