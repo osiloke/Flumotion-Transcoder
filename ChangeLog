@@ -1,5 +1,12 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.retrieveUIState):
+	  Made the retrieveUIState deferred return the component 
+	  inplace of the state reference.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py (MonitoringTask.stop,
 	  MonitoringTask.__startup, MonitoringTask.__startMonitor,
 	  MonitoringTask.__cbMonitorStartSucceed,

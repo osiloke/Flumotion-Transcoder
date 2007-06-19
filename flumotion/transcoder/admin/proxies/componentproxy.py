@@ -128,7 +128,9 @@ class BaseComponentProxy(FlumotionProxy):
                                     "a non-running component")
             return defer.fail(error)
         self.__retrieveUIState(timeout)
-        return self._waitUIState(timeout)
+        d = self._waitUIState(timeout)
+        d.addCallback(utils.overrideResult, self)
+        return d
     
     def isRunning(self):
         return (self._worker != None)
