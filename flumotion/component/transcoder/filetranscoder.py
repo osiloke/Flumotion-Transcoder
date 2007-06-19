@@ -59,9 +59,10 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     ## Public Methods ##
     
     def do_acknowledge(self):
+        self.onAcknowledged()
         d = self._job.acknowledge()
         d.addCallback(self.__cbJobTerminated)
-        d.addErrback(self.__ebacknowledgeError)
+        d.addErrback(self.__ebAcknowledgeError)
         return d
 
         
@@ -71,7 +72,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         log.setDefaultCategory(compconsts.TRANSCODER_LOG_CATEGORY)
         self.logName = None
         self._diagnoseMode = False
-        self._waitacknowledge = False
+        self._waitAcknowledge = False
         self._job = job.TranscoderJob(self, self)
         self._report = None
         self._reportPath = None
@@ -91,7 +92,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.setting_up)
             loader = IniFile()
             props = self.config["properties"]
-            self._waitacknowledge = props.get("wait-acknowledge", False)
+            self._waitAcknowledge = props.get("wait-acknowledge", False)
             niceLevel = props.get("nice-level", None)
             #FIXME: Better checks for path roots
             self._local = Local.createFromComponentProperties(props)
@@ -198,7 +199,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         for key, value in info.iteritems():
             self.uiState.setitem('job-data', key, value)
         
-    def onacknowledged(self):
+    def onAcknowledged(self):
         self.uiState.setitem('job-data', "acknowledged", True)
 
     def onJobError(self, error):
@@ -311,7 +312,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                                debug=log.getExceptionMessage(e))
             self.addMessage(m)
 
-    def __ebacknowledgeError(self, failure):
+    def __ebAcknowledgeError(self, failure):
         try:
             self.warning("Transcoding acknowledge Error: %s",
                          log.getFailureMessage(failure))
@@ -377,5 +378,5 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def __finalizeStandardMode(self, report, succeed):
         if not succeed:
             self.setMood(moods.sad)
-        if not self._waitacknowledge:
+        if not self._waitAcknowledge:
             self.do_acknowledge()

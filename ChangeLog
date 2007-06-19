@@ -1,5 +1,18 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoderMedium.remote_acknowledge,
+	  FileTranscoder.do_acknowledge, FileTranscoder.init,
+	  FileTranscoder.do_setup, FileTranscoder.onAcknowledged,
+	  FileTranscoder.__ebAcknowledgeError,
+	  FileTranscoder.__finalizeDiagnoseMode,
+	  FileTranscoder.__finalizeStandardMode):
+	* flumotion/component/transcoder/job.py (TranscoderJob.acknowledge):
+	Allow acknowledge method to be called more than one time.
+	Some name cleanup.
+	
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-data.ini:
 	* flumotion/component/transcoder/targets.py
 	  (AudioTarget._sourceDiscovered, VideoTarget._sourceDiscovered,

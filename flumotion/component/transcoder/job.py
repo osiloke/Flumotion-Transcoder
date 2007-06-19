@@ -251,11 +251,14 @@ class TranscoderJob(log.LoggerProxy):
         this prevent moving a file used by two instances at the same time.
         Must be called after calling start.
         """
+        if self._acknowledged:
+            self.warning("Transcoding job already acknowledged")
+            return self._ackList
         #When acknowleged, the job cannot be stopped util completion
+        self._acknowledged = True
         self._runningState = RunningState.acknowledged
         self._context.info("Transcoding job acknowledged")
         self._context.reporter.time("acknowledge")
-        self._acknowledged = True
         self._ack.callback(defer._nothing)
         return self._ackList
         
