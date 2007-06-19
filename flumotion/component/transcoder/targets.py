@@ -193,7 +193,7 @@ class AudioVideoTarget(FileTarget):
         if videoEncBin:
             tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
             self._bins["video-encoder"] = videoEncBin
-        if videoEncBin:
+        if audioEncBin:
             tees['audiosink'].get_pad('src%d').link(encBin.get_pad('audiosink'))
             self._bins["audio-encoder"] = audioEncBin
 

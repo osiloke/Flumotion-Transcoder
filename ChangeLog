@@ -1,5 +1,11 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/targets.py
+	  (AudioVideoTarget._updatePipeline):
+	  Corrected copy/past error.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy.retrieveUIState):
 	  Made the retrieveUIState deferred return the component 
