@@ -138,10 +138,23 @@ class Transcoding(TaskManager, WorkerSetListener,
                          log.getFailureMessage(result))
             self.debug("%s", log.getFailureTraceback(result))
         self.log("Starting/Resuming transcoding")
+        d = defer.Deferred()
         for task in self.iterTasks():
-            worker = task.getActiveWorker()
-            self._balancer.addTask(task, worker)
-        self._balancer.balance()
+            d.addCallback(self.__cbRetrieveActiveWorker, task)
+        d.addCallback(utils.dropResult, self._balancer.balance)
+        d.addErrback(self.__ebStartingFailure)
+        d.callback(defer._nothing)
+
+    def __cbRetrieveActiveWorker(self, _, task):
+        d = task.waitActiveWorker(adminconsts.TRANSCODER_ACTIVE_WORKER_TIMEOUT)
+        # Call self._balancer.addTask(task, worker)
+        d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
+        return d
+
+    def __ebStartingFailure(self, failure):
+        self.warning("Failure during transcoding starting/resuming: %s",
+                     log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
 
     def __ebAddComponentFailed(self, failure, name):
         self.warning("Failed to add transcoder '%s' "

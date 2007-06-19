@@ -261,3 +261,9 @@ def resolveFailure(failure, result, *args):
 
 def overrideResult(result, newResult):
     return newResult
+
+def shiftResult(result, callable, index, *args, **kwargs):
+    new = list(args)
+    new.insert(index, result)
+    return callable(*new, **kwargs)
+    

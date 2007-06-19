@@ -11,7 +11,7 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 
 from flumotion.common.planet import moods
 
@@ -103,11 +103,12 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def getActiveComponent(self):
         return self._transcoder
 
-    def getActiveWorker(self):
+    def waitActiveWorker(self, timeout=None):
         if self._transcoder:
-            return self._transcoder.getWorker()
-        transcoder = self.__selectValidTranscoder()
-        return transcoder and transcoder.getWorker()
+            return defer.succeed(self._transcoder.getWorker())
+        d = self.__waitPotentialTranscoder(timeout)
+        d.addCallback(lambda t: t and t.getWorker())
+        return d
 
     def addComponent(self, transcoder):
         assert isinstance(transcoder, TranscoderProxy)
@@ -225,6 +226,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                 d.addErrback(self.__ebAcknowledgeFailed, transcoder)
             return
         if jobState == JobStateEnum.terminated:
+            # I know the UI State is retrieved
             status = transcoder.getStatus()
             if status == TranscoderStatusEnum.done:
                 self.info("Transcoding task '%s' done", self.getLabel())
@@ -298,23 +300,49 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.__relieveTranscoder()
         self.__delayedStartTranscoder()
 
-    def __selectValidTranscoder(self):
-        result = None
+    def __waitPotentialTranscoder(self, timeout=None):
+        
+        def cbGotStatus(status, transcoder):
+            return (transcoder, status, transcoder.getMood())
+        
+        def ebGetStatusError(failure, transcoder):
+            self.warning("Failed to retrieve transcoder '%s' status: %s",
+                         transcoder.getName(), log.getFailureMessage(failure))
+            self.debug("%s", log.getFailureTraceback(failure))
+            # Resolve the error
+            return None
+        
+        defs = []        
         for transcoder in self._transcoders:
-            mood = transcoder.getMood()
+            d = transcoder.waitStatus(adminconsts.TRANSCODER_UI_TIMEOUT)
+            args = (transcoder,)
+            d.addCallbacks(cbGotStatus, ebGetStatusError,
+                           callbackArgs=args, errbackArgs=args)
+            defs.append(d)
+        dl = defer.DeferredList(defs, fireOnOneCallback=False,
+                                fireOnOneErrback=True,
+                                consumeErrors=True)
+        dl.addCallback(self.__cbSelectPotentialTranscoder)
+        return dl
+        
+    def __cbSelectPotentialTranscoder(self, results): 
+        selected = None
+        for succeed, result in results:
+            if not succeed:
+                continue
+            transcoder, status, mood = result
             # If a transcoder is happy, it's a valid option
             if mood == moods.happy:
-                result = transcoder
+                selected = transcoder
             elif mood == moods.sad:
-                status = transcoder.getStatus()
                 # If it's sad but its status is failed,
                 # it's a failed transcoding
                 if status == TranscoderStatusEnum.failed:
                     # But only select it if there is no other
-                    if not result:
-                        result = transcoder
-        return result
-
+                    if not selected:
+                        selected = transcoder
+        return selected
+    
     def __delayedStartTranscoder(self):
         if self._delayed:
             return
@@ -338,16 +366,38 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.warning("Couldn't start transcoder for task '%s', "
                          "no worker found", self.getLabel())
             return
+        # Set the pendingName right now to prevent other
+        # transoder to be started
+        self._pendingName = utils.genUniqueIdentifier()
+        self.log("Task '%s' Looking for a potential transcoder",
+                 self.getLabel())
         # Check there is a valid transcoder already running
-        transcoder = self.__selectValidTranscoder()
+        to = adminconsts.TRANSCODER_POTENTIAL_WORKER_TIMEOUT
+        d = self.__waitPotentialTranscoder(to)
+        d.addCallbacks(self.__cbGotPotentialTranscoder, 
+                       self.__ebPotentialTranscoderFailure)
+        
+    def __ebPotentialTranscoderFailure(self, failure):
+        self.warning("Failure looking for a potential transcoder for task '%s': %s", 
+                     self.getLabel(), log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+        self.__loadTranscoder()
+        
+        
+    def __cbGotPotentialTranscoder(self, transcoder):
         if transcoder:
+            self.log("Task '%s' Found a the potential transcoder '%s'",
+                 self.getLabel(), transcoder.getName())
+            self._pendingName = None
             self.__electTranscoder(transcoder)
             return
-        transcoderName = utils.genUniqueIdentifier()
+        self.__loadTranscoder()
+        
+    def __loadTranscoder(self):
+        transcoderName = self._pendingName
         workerName = self._worker.getName()
         self.debug("Starting task '%s' transcoder '%s' on  worker '%s'",
                    self.getLabel(), transcoderName, workerName)
-        self._pendingName = transcoderName
         d = TranscoderProxy.loadTo(self._worker, transcoderName, 
                                    self._label, self._properties,
                                    adminconsts.TRANSCODER_LOAD_TIMEOUT)

@@ -11,7 +11,7 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 
 from flumotion.common.planet import moods
 
@@ -96,13 +96,13 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     def getActiveComponent(self):
         return self._monitor
 
-    def getActiveWorker(self):
+    def waitActiveWorker(self, timeout=None):
         if self._monitor:
-            return self._monitor.getWorker()
+            return defer.succeed(self._monitor.getWorker())
         for m in self._monitors:
             if m.getMood() == moods.happy:
-                return m.getWorker()
-        return None
+                return defer.succeed(m.getWorker())
+        return defer.succeed(None)
 
     def addComponent(self, monitor):
         assert isinstance(monitor, MonitorProxy)

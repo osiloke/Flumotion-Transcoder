@@ -50,6 +50,6 @@ class IAdminTask(Interface):
     def suggestWorker(self, worker):
         pass
     
-    def getActiveWorker(self):
+    def waitActiveWorker(self, timeout=None):
         pass
     
