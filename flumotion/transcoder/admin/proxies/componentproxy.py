@@ -14,6 +14,7 @@ import signal
 
 from zope.interface import Interface, implements
 from twisted.internet import defer
+from twisted.spread.pb import DeadReferenceError
 
 from flumotion.common import common
 #To register Jellyable classes
@@ -24,7 +25,7 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
-from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.errors import TranscoderError, OperationAborted
 from flumotion.transcoder.enums import ComponentDomainEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.waiters import AssignWaiters, ValueWaiters
@@ -400,76 +401,83 @@ class BaseComponentProxy(FlumotionProxy):
         self.warning("Component '%s' fail to retrieve its UI state: %s",
                      self.getLabel(), log.getFailureMessage(failure))
 
-    def __isOperationTerminated(self, status, resultDeferred):
+    def __isOperationTerminated(self, failure, status, resultDef):
         if not self.isValid():
             # Assume the objectives is fulfilled,
-            resultDeferred.callback(self)
+            resultDef.callback(self)
+            return True
+        if failure and failure.check(DeadReferenceError):
+            msg = ("Forced Stop/Delete of component '%s' aborted "
+                   "because the remote reference died" % self.getLabel())
+            self.warning("%s", msg)
+            error = OperationAborted(msg, cause=failure.value)
+            resultDef.errback(error)
             return True
         return False
     
-    def __stopOrDelete(self, _, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __stopOrDelete(self, _, status, label, resultDef):
+        if self.__isOperationTerminated(None, status, resultDef): return
         mood = self.getMood()
         if mood != moods.sleeping:
-            self.__asyncForceStop(_, status, label, resultDeferred)
+            self.__asyncForceStop(_, status, label, resultDef)
         else:
-            self.__asyncForceDelete(_, status, label, resultDeferred)
+            self.__asyncForceDelete(_, status, label, resultDef)
     
-    def __asyncForceStop(self, _, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncForceStop(self, _, status, label, resultDef):
+        if self.__isOperationTerminated(None, status, resultDef): return
         if not status.get("can_stop", True):
-            resultDeferred.callback(self)
+            resultDef.callback(self)
             return
         d = self.stop()
-        args = (status, label, resultDeferred)
+        args = (status, label, resultDef)
         d.addCallbacks(self.__asyncForceDelete,
                        self.__asyncForceStopFailed,  
                        callbackArgs=args, errbackArgs=args)  
 
-    def __asyncForceDelete(self, _, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncForceDelete(self, _, status, label, resultDef):
+        if self.__isOperationTerminated(None, status, resultDef): return
         if not status.get("can_delete", True):
-            resultDeferred.callback(self)
+            resultDef.callback(self)
             return
         d = self.delete()
-        args = (status, label, resultDeferred)
-        d.addCallbacks(resultDeferred.callback,
+        args = (status, label, resultDef)
+        d.addCallbacks(resultDef.callback,
                        self.__asyncForceDeleteFailed,
                        errbackArgs=args)
     
-    def __asyncRetryKillIfNeeded(self, success, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncRetryKillIfNeeded(self, success, status, label, resultDef):
+        if self.__isOperationTerminated(None, status, resultDef): return
         if success:
             # After beeing killed the componenet go sad, so it should be 
             # stopped again. For this we reset the stop retries counter.
             status["stop-retries"] = 0
             status["already_killed"] = True
-            self.__asyncForceStop(defer._nothing, status, label, resultDeferred)
+            self.__asyncForceStop(defer._nothing, status, label, resultDef)
             return
         status["kill-retries"] = status.setdefault("Kill-retries", 0) + 1
         if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
              # if kill fail, theres nothing we can do, do we ?
             msg = "Could not force component '%s' deletion" % label
             self.warning("%s", msg)
-            resultDeferred.errback(TranscoderError(msg))
+            resultDef.errback(TranscoderError(msg))
             return
         # Failed to kill, try again to stop or delete
         self.__stopOrDelete(defer._nothing, status, 
-                            label, resultDeferred)
+                            label, resultDef)
         
-    def __asyncForceKillFailed(self, failure, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncForceKillFailed(self, failure, status, label, resultDef):
+        if self.__isOperationTerminated(failure, status, resultDef): return
         if failure.check(OrphanComponentError):
             # The component don't have worker
             self.__stopOrDelete(defer._nothing, status, 
-                                label, resultDeferred)
+                                label, resultDef)
             return
         self.warning("Component '%s' killing failed: %s",
                      label, log.getFailureMessage(failure))
-        self.__asyncRetryKillIfNeeded(False, status, label, resultDeferred)
+        self.__asyncRetryKillIfNeeded(False, status, label, resultDef)
     
-    def __asyncForceStopFailed(self, failure, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncForceStopFailed(self, failure, status, label, resultDef):
+        if self.__isOperationTerminated(failure, status, resultDef): return
         status["stop-retries"] = status.setdefault("stop-retries", 0) + 1
         if status["stop-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
             if (status.get("already_killed", False) 
@@ -478,11 +486,11 @@ class BaseComponentProxy(FlumotionProxy):
                 # theres nothing we can do, do we ?
                 msg = "Could not force component '%s' deletion" % label
                 self.warning("%s", msg)
-                resultDeferred.errback(TranscoderError(msg))
+                resultDef.errback(TranscoderError(msg))
                 return
             # If we already tried too much, kill the component
             d = self.kill()
-            args = (status, label, resultDeferred)
+            args = (status, label, resultDef)
             d.addCallbacks(self.__asyncRetryKillIfNeeded, 
                            self.__asyncForceKillFailed,
                            callbackArgs=args, errbackArgs=args)
@@ -491,7 +499,7 @@ class BaseComponentProxy(FlumotionProxy):
             # The component is buzy changing mood,
             # so wait mood change (with a timeout)    
             d = self.waitMoodChange(adminconsts.FORCED_DELETION_TIMEOUT)
-            d.addBoth(self.__asyncForceStop, status, label, resultDeferred)
+            d.addBoth(self.__asyncForceStop, status, label, resultDef)
             return
         # FIXME: make flumotion raise a specific exception 
         # when there is mood conflicts
@@ -499,29 +507,29 @@ class BaseComponentProxy(FlumotionProxy):
             #Maybe the component was already stopped ?
             if self.getMood() == moods.sleeping:
                 self.__asyncForceDelete(defer._nothing, status, 
-                                        label, resultDeferred)
+                                        label, resultDef)
                 return
         # The component raised an error
         # so just log the error and try again
         self.warning("Fail to stop component '%s': %s",
                      label, log.getFailureMessage(failure))
-        self.__asyncForceStop(defer._nothing, status, label, resultDeferred)
+        self.__asyncForceStop(defer._nothing, status, label, resultDef)
     
-    def __asyncForceDeleteFailed(self, failure, status, label, resultDeferred):
-        if self.__isOperationTerminated(status, resultDeferred): return
+    def __asyncForceDeleteFailed(self, failure, status, label, resultDef):
+        if self.__isOperationTerminated(failure, status, resultDef): return
         status["delete-retries"] = status.setdefault("delete-retries", 0) + 1
         if status["delete-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
              # if deletion fail, theres nothing we can do, do we ?
             msg = "Could not force component '%s' deletion" % label
             self.warning("%s", msg)
-            resultDeferred.errback(TranscoderError(msg))
+            resultDef.errback(TranscoderError(msg))
             return
         # The component is still buzzy, don't log, just retry
         if not failure.check(BusyComponentError):
             self.warning("Fail to delete component '%s': %s",
                          label, log.getFailureMessage(failure))
         #FIXME: What about already deleted component ?
-        self.__asyncForceDelete(defer._nothing, status, label, resultDeferred)
+        self.__asyncForceDelete(defer._nothing, status, label, resultDef)
 
 
 class DefaultComponentProxy(BaseComponentProxy):

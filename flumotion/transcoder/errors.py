@@ -63,6 +63,14 @@ class OperationTimedOutError(TranscoderError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
+class OperationAborted(TranscoderError):
+    """
+    An asynchronous operation couldn't be done.
+    """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
 class HandledTranscoderError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)

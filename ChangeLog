@@ -1,5 +1,20 @@
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.__isOperationTerminated,
+	  BaseComponentProxy.__stopOrDelete,
+	  BaseComponentProxy.__asyncForceStop,
+	  BaseComponentProxy.__asyncForceDelete,
+	  BaseComponentProxy.__asyncRetryKillIfNeeded,
+	  BaseComponentProxy.__asyncForceKillFailed,
+	  BaseComponentProxy.__asyncForceStopFailed,
+	  BaseComponentProxy.__asyncForceDeleteFailed):
+	* flumotion/transcoder/errors.py (OperationAborted,
+	  OperationAborted.__init__):
+	  Try to properly handle stale broker error.
+
+2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/transcoder.py
 	  (MultiTranscoder._updateProgress):
 	  Corrected a bug for when there is no sink yet.
