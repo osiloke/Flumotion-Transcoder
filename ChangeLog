@@ -1,3 +1,8 @@
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/compconsts.py:
+	Added component's constants file.
+
 2007-06-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/adminconsts.py:
