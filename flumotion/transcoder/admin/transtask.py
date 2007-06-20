@@ -303,7 +303,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def __waitPotentialTranscoder(self, timeout=None):
         
         def cbGotStatus(status, transcoder):
-            return (transcoder, status, transcoder.getMood())
+            return (transcoder, status, 
+                    transcoder.isAcknowledged(), 
+                    transcoder.getMood())
         
         def ebGetStatusError(failure, transcoder):
             self.warning("Failed to retrieve transcoder '%s' status: %s",
@@ -328,9 +330,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def __cbSelectPotentialTranscoder(self, results): 
         selected = None
         for succeed, result in results:
-            if not succeed:
+            if not (succeed and result):
                 continue
-            transcoder, status, mood = result
+            transcoder, status, acknowledged, mood = result
             # If a transcoder is happy, it's a valid option
             if mood == moods.happy:
                 selected = transcoder
@@ -338,8 +340,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                 # If it's sad but its status is failed,
                 # it's a failed transcoding
                 if status == TranscoderStatusEnum.failed:
-                    # But only select it if there is no other
-                    if not selected:
+                    # But only select it if there is no other already 
+                    # selected, and it was not already acknowledged
+                    if not (selected or acknowledged):
                         selected = transcoder
         return selected
     
@@ -382,7 +385,6 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                      self.getLabel(), log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self.__loadTranscoder()
-        
         
     def __cbGotPotentialTranscoder(self, transcoder):
         if transcoder:

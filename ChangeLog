@@ -1,5 +1,14 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py (TranscodingTask.cbGotStatus,
+	  TranscodingTask.__cbSelectPotentialTranscoder):
+	  Do not select as potential transcoder one taht 
+	  has already been acknowledged. This to allow the transcoding
+	  of a file that previously fail and for which a sad component
+	  is still running.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy._getUIDictValue,
 	  BaseComponentProxy.__isOperationTerminated):
