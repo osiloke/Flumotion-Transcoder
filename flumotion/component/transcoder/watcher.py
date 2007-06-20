@@ -110,7 +110,8 @@ class PeriodicalWatcher(Watcher):
             if s == oldfiles[f]:
                 self.log("File '%s' completed", f)
                 self.emit('file-completed', f)
-                oldfiles[f] = None
+                self._files[f] = None
+                continue
             self._files[f] = s
         return True
 

@@ -1,5 +1,11 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/watcher.py
+	  (PeriodicalWatcher._checkForChanges):
+	Corrected a bug that keep the watcher emiting file-completed.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-data.ini:
 	Corrected typo.
 
