@@ -169,12 +169,18 @@ class AudioVideoTarget(FileTarget):
 
     def _sourceDiscovered(self, discoverer):
         tolerance = self._config.tolerance
-        if not ((tolerance == AudioVideoToleranceEnum.allow_without_audio) 
-            or discoverer.is_audio):
-            self._raiseError("Source media doesn't have audio stream")
-        if not ((tolerance == AudioVideoToleranceEnum.allow_without_video) 
-            or discoverer.is_video):
-            self._raiseError("Source media doesn't have video stream")
+        if not discoverer.is_audio:
+            if tolerance == AudioVideoToleranceEnum.allow_without_audio:
+                self.info("Source media doesn't have audio stream, "
+                          "but we tolerate it")
+            else:
+                self._raiseError("Source media doesn't have audio stream")
+        if not discoverer.is_video:
+            if tolerance == AudioVideoToleranceEnum.allow_without_video:
+                self.info("Source media doesn't have video stream, "
+                          "but we tolerate it")
+            else:
+                self._raiseError("Source media doesn't have video stream")
         return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):

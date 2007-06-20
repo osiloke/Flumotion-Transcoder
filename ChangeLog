@@ -1,5 +1,12 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/targets.py
+	  (AudioVideoTarget._sourceDiscovered):
+	  Log when a input file do not have audio or video
+	  stream but we tolerate it.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py (TranscodingTask.cbGotStatus,
 	  TranscodingTask.__cbSelectPotentialTranscoder):
 	  Do not select as potential transcoder one taht 
