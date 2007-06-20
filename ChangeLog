@@ -1,5 +1,11 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/utils.py (resolveFailure):
+	  Made the resolveFailure resolve all failure 
+	  if no error type is specified.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admintask.py (IAdminTask.isActive,
 	  IAdminTask.hasTerminated):
 	* flumotion/transcoder/admin/montask.py (MonitoringTask.hasTerminated,

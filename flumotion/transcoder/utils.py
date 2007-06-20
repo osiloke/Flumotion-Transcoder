@@ -254,8 +254,10 @@ def resolveFailure(failure, result, *args):
     If the failure's error type is in the specified
     arguments, the specified result is returned,
     otherwise the received failure is passed down. 
+    If no error type are specified, all failure 
+    will be resolved.
     """
-    if failure.check(args):
+    if (not args) or failure.check(args):
         return result
     return failure
 
@@ -266,4 +268,3 @@ def shiftResult(result, callable, index, *args, **kwargs):
     new = list(args)
     new.insert(index, result)
     return callable(*new, **kwargs)
-    
