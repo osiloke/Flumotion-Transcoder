@@ -74,16 +74,21 @@ class PipelineCrawler(PipelineVisitor):
         return [e for e in elements if e != None]
         
     def _padElement(self, pad, direction):
+        if not pad: 
+            gst.warning("GStreamer internal behavior changed, "
+                        + "cannot properly crawl the pipline")
+            return None
         if isinstance(pad, gst.GhostPad):
             return self._padElement(pad.get_target(), direction)
         if pad.get_direction() == direction:
             return self._padElement(pad.get_peer(), direction)
         parent = pad.get_parent()
-        if isinstance(parent, gst.GhostPad):
-            return self._padElement(parent.get_peer(), direction)
         if parent == None:
             gst.warning("GStreamer internal behavior changed, "
                         + "cannot properly crawl the pipline")
+            return None
+        if isinstance(parent, gst.GhostPad):
+            return self._padElement(parent.get_peer(), direction)        
         return parent
 
     def _enterElement(self, element, branch, force=False):

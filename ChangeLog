@@ -1,5 +1,11 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/pipelinecrawler.py
+	  (PipelineCrawler._padElement):
+	Better handling of gstreamer changes.	  
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py
 	  (TranscodingTask.waitActiveWorker, TranscodingTask.waitSynchronized,
 	  TranscodingTask.__electTranscoder, TranscodingTask.ebGetStatusError,
