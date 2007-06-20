@@ -219,8 +219,19 @@ class TranscoderAdmin(log.Loggable,
     ## Private Methods ##
     
     def __startup(self):
-        self._transcoding.start()
-        self._monitoring.start()
+        def deb(result, text):
+            self.debug(text)
+            return result        
+        d = defer.Deferred()
+        d.addCallback(deb, "#"*20 + "Starting Monitoring")
+        d.addCallback(utils.dropResult, self._monitoring.start,
+                      adminconsts.MONITORING_START_TIMEOUT)
+        d.addCallback(deb, "#"*20 + "Starting Transcoding")
+        d.addCallback(utils.dropResult, self._transcoding.start,
+                      adminconsts.TRANSCODING_START_TIMEOUT)
+        d.addCallback(deb, "#"*20 + "Starting Done")
+        d.addErrback(self.__ebSartupFailed)
+        d.callback(defer._nothing)
         
     def __cbAdminInitialized(self, result):
         # First wait for the store to become idle
@@ -235,3 +246,9 @@ class TranscoderAdmin(log.Loggable,
         reactor.stop()
         self.error("Transcoder Admin initialization failed: %s",
                    log.getFailureMessage(failure))
+
+    def __ebSartupFailed(self, failure):
+        self.warning("Failed to startup administration: %s",
+                     log.getFailureMessage(failure))
+        self.debug("%s", log.getFailureTraceback(failure))
+        

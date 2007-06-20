@@ -1,5 +1,27 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.deb,
+	  TranscoderAdmin.__ebAdminInitializationFailed,
+	  TranscoderAdmin.__ebSartupFailed):
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/admintask.py (IAdminTask.waitActiveWorker,
+	  IAdminTask.waitSynchronized):
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask.waitSynchronized, MonitoringTask.__electMonitor):
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.__init__,
+	  TaskManager.start, TaskManager.pause, TaskManager.resume,
+	  TaskManager.addComponent, TaskManager.removeComponent,
+	  TaskManager.waitSynchronized, TaskManager.__cbStartup,
+	  TaskManager.__ebPauseFailed, TaskManager.__cbWaitSynchronized):
+	Added a waitSynchronized that is called for each task and waited for
+	before firing the deferred returned by the taskmanager's start method.
+	It's used for ensuring the monitro retrived there UI state and
+	synchronized there UI events for the admin to create the transcoding
+	tasks. This way when the transcoding task manager start,
+	it have all the information to properly resume tasks.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy.__init__, BaseComponentProxy.waitUIState,
 	  BaseComponentProxy.__retrieveUIState,

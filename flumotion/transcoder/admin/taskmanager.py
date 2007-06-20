@@ -20,6 +20,7 @@ from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import ComponentRejectedError
+from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
@@ -37,6 +38,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self._taskless = {} # {ComponentProxy: None}
         self._ready = False
         self._started = False
+        self._activeWaiters = AssignWaiters(False)
         self._paused = False
         self._pending = 0
         reactor.addSystemEventTrigger("before", "shutdown", self.abort)
@@ -89,23 +91,25 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def isActive(self):
         return self._started and (not self._paused)
 
-    def start(self):
+    def start(self, timeout=None):
         self.log("Ready to start task manager '%s'", 
                  self.getLabel())
         self._ready = True
         self._tryStarting()
+        return self._activeWaiters.wait(timeout)
 
     def pause(self):
         if self._started and (not self._paused):
             self.log("Pausing task manager '%s'", 
                      self.getLabel())
             self._paused = True
+            self._activeWaiters.setValue(False)
             d = defer.succeed(self)
             d.addCallback(utils.dropResult, self._doPause)
             d.addCallback(self.__cbCallForAllTasks, "pause")
             d.addErrback(self.__ebPauseFailed)
 
-    def resume(self):
+    def resume(self, timeout=None):
         if self._started and self._paused:
             self.log("Resuming task manager '%s'", 
                      self.getLabel())
@@ -115,6 +119,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             d.addCallback(self.__cbCallForAllTasks, "resume")
             d.addCallback(self.__cbStartup)
             d.addErrback(self.__ebResumeFailed)
+        return self._activeWaiters.wait(timeout)
 
     def abort(self):
         self.log("Aborting task manager '%s'", 
@@ -129,7 +134,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self.log("Component '%s' added to task manager '%s'", 
                  component.getLabel(), self.getLabel())
         self._pending += 1
-        d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
+        d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
         args = (component,)
         d.addCallbacks(self.__cbAddComponent, 
                        self.__ebGetPropertiesFailed,
@@ -140,8 +145,13 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         assert isinstance(component, ComponentProxy)
         self.log("Component '%s' removed from task manager '%s'", 
                  component.getLabel(), self.getLabel())
-        d = component.waitProperties(adminconsts.TASKER_WAITPROPS_TIMEOUT)        
+        d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
         d.addCallback(self.__cbRemoveComponent, component)
+        return d
+
+    def waitSynchronized(self, timeout=None):
+        d = self._activeWaiters.wait(timeout)
+        d.addCallback(self.__cbWaitSynchronized)
         return d
 
 
@@ -218,6 +228,17 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def __cbStartup(self, _):
         for c in self._taskless:
             self.onComponentMoodChanged(c, c.getMood())
+        defs = []
+        for task in self._tasks.itervalues():
+            d = task.waitSynchronized(adminconsts.TASKMANAGER_SYNCH_TIMEOUT)
+            defs.append(d)
+        dl = defer.DeferredList(defs,
+                                fireOnOneCallback=False,
+                                fireOnOneErrback=False,
+                                consumeErrors=True)
+        dl.addCallback(utils.dropResult, 
+                       self._activeWaiters.setValue,
+                       True)
 
     def __cbCallForAllTasks(self, _, action):
         assert action in ["start", "stop", "pause", "resume"]
@@ -306,3 +327,9 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self.warning("Task Manager '%s' failed to pause: %s",
                      self.getLabel(), log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+
+    def __cbWaitSynchronized(self, result):
+        defs = []
+        for task in self._tasks:
+            defs.append(task.waitSynchronized())
+        dl = d

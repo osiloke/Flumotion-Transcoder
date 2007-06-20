@@ -107,6 +107,14 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                 return defer.succeed(m.getWorker())
         return defer.succeed(None)
 
+    def waitSynchronized(self, timeout=None):
+        if self._monitor:
+            # Wait UI State to be sure the file events are fired
+            d = self._monitor.waitUIState(timeout)
+            d.addCallback(utils.overrideResult, self)
+            return d
+        return defer.succeed(self)
+
     def addComponent(self, monitor):
         assert isinstance(monitor, MonitorProxy)
         assert not (monitor in self._monitors)
@@ -266,7 +274,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                  self._monitor.getName(), self.getLabel())
         self._fireEvent(self._monitor, "MonitoringActivated")
         # Retrieve and synchronize UI state
-        d = monitor.retrieveUIState(adminconsts.MONITOR_UI_TIMEOUT)
+        d = monitor.waitUIState(adminconsts.MONITOR_UI_TIMEOUT)
         d.addCallbacks(self.__cbGotUIState,
                        self.__ebUIStateFailed,
                        errbackArgs=(monitor,))

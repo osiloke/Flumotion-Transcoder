@@ -58,4 +58,6 @@ class IAdminTask(Interface):
     
     def waitActiveWorker(self, timeout=None):
         pass
-    
+
+    def waitSynchronized(self, timeout=None):
+        pass
