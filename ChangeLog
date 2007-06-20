@@ -1,7 +1,7 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/utils.py (resolveFailure):
-	  Made the resolveFailure resolve all failure 
+	  Made the resolveFailure resolve all failures
 	  if no error type is specified.
 
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
