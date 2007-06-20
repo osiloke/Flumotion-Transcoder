@@ -1,5 +1,21 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.hasTerminated,
+	  TranscodingTask.onTranscoderJobStateChanged,
+	  TranscodingTask.__terminateTask, TranscodingTask.__cbTaskTerminated,
+	  TranscodingTask.__waitStopTranscoder,
+	  TranscodingTask.__stopTranscoder,
+	  TranscodingTask.__waitDeleteTranscoder,
+	  TranscodingTask.__deleteTranscoder,
+	  TranscodingTask.__ebTranscoderStopFailed,
+	  TranscodingTask.__ebTranscoderDeleteFailed,
+	  TranscodingTask.__ebAcknowledgeFailed):
+	  Now wait for all transcoder to be stoped and deleted 
+	  before firing the TranscodingTerminated event.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/utils.py (resolveFailure):
 	  Made the resolveFailure resolve all failures
 	  if no error type is specified.

@@ -100,6 +100,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def isActive(self):
         return (not self._terminated) and self._started and (not self._paused)
 
+    def hasTerminated(self):
+        return self._terminated
+
     def getActiveComponent(self):
         return self._transcoder
 
@@ -231,11 +234,11 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             if status == TranscoderStatusEnum.done:
                 self.info("Transcoding task '%s' done", self.getLabel())
                 self._fireEvent(transcoder, "TranscodingDone")
-                self.__taskTerminated(True)
+                self.__terminateTask(True)
             elif status == TranscoderStatusEnum.failed:
                 self.info("Transcoding task '%s' failed", self.getLabel())
                 self._fireEvent(transcoder, "TranscodingFailed")
-                self.__taskTerminated(False)
+                self.__terminateTask(False)
             else:
                 self.waring("Unexpected transcoder status/state combination.")
                 self.__relieveTranscoder()
@@ -253,12 +256,26 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
             self.onComponentMoodChanged(m, m.getMood())
         self.__startTranscoder()            
     
-    def __taskTerminated(self, succeed):
+    def __terminateTask(self, succeed):
         self._terminated = True        
         self.__relieveTranscoder()
         # Stop all transcoders
-        for t in self._transcoders:
-            self.__stopTranscoder(t)
+        defs = []
+        for t in self._transcoders:            
+            defs.append(self.__waitDeleteTranscoder(t))
+        dl = defer.DeferredList(defs,
+                                fireOnOneCallback=False,
+                                fireOnOneErrback=False,
+                                consumeErrors=True)
+        dl.addCallback(self.__cbTaskTerminated, succeed)
+        
+    def __cbTaskTerminated(self, results, succeed):
+        for ok, failure in results:
+            if not ok:
+                self.warning("Failure during transcoding task '%s' "
+                             "termination: %s", self.getLabel(),
+                             log.getFailureMessage(failure))
+                self.debug("%s", log.getFailureTraceback(failure))
         self._fireEvent(succeed, "TranscodingTerminated")
     
     def __relieveTranscoder(self):
@@ -408,19 +425,33 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                        self.__ebTranscoderStartFailed,
                        callbackArgs=args, errbackArgs=args)
 
-    def __stopTranscoder(self, transcoder):
+    def __waitStopTranscoder(self, transcoder):
         self.debug("Stopping task '%s' transcoder '%s'", 
                    self.getLabel(), transcoder.getName())
         # Don't stop sad transcoders
         if transcoder.getMood() != moods.sad:
             d = transcoder.forceStop()
             d.addErrback(self.__ebTranscoderStopFailed, transcoder.getName())
+            return d
+        return defer.succeed(transcoder)
 
-    def __deleteTranscoder(self, transcoder):
+    def __stopTranscoder(self, transcoder):
+        d = self.__waitStopTranscoder(transcoder)
+        d.addErrback(utils.resolveFailure, None)
+
+    def __waitDeleteTranscoder(self, transcoder):
         self.debug("Deleting task '%s' transcoder '%s'", 
                    self.getLabel(), transcoder.getName())
-        d = transcoder.forceDelete()
-        d.addErrback(self.__ebTranscoderDeleteFailed, transcoder.getName())
+        # Don't delete sad transcoders
+        if transcoder.getMood() != moods.sad:
+            d = transcoder.forceDelete()
+            d.addErrback(self.__ebTranscoderDeleteFailed, transcoder.getName())
+            return d
+        return defer.succeed(transcoder)
+
+    def __deleteTranscoder(self, transcoder):
+        d = self.__waitDeleteTranscoder(transcoder)
+        d.addErrback(utils.resolveFailure, None)
     
     def __cbTranscoderStartSucceed(self, result, transcoderName, workerName):
         self.debug("Succeed to start task '%s' transcoder '%s' on worker '%s'",
@@ -477,17 +508,19 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         self.warning("Failed to stop task '%s' transcoder '%s': %s", 
                      self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+        return failure
         
-    def __ebTranscoderDeleteFailed(self, failure, transcoder):
+    def __ebTranscoderDeleteFailed(self, failure, name):
         self.warning("Failed to delete task '%s' transcoder '%s': %s", 
-                     self.getLabel(), transcoder.getName(),
+                     self.getLabel(), name,
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+        return failure
 
     def __ebAcknowledgeFailed(self, failure, transcoder):
         if self._transcoder != transcoder: return
         self.warning("Failed to acknowledge task '%s' transcoder '%s': %s", 
-                     self.getLabel(), transcoder.getLabel(), 
+                     self.getLabel(), transcoder.getName(), 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         self.__relieveTranscoder()
