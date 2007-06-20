@@ -25,7 +25,7 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
-from flumotion.transcoder.errors import TranscoderError, OperationAborted
+from flumotion.transcoder.errors import TranscoderError, OperationAbortedError
 from flumotion.transcoder.enums import ComponentDomainEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.waiters import AssignWaiters, ValueWaiters
@@ -431,7 +431,7 @@ class BaseComponentProxy(FlumotionProxy):
             msg = ("Forced Stop/Delete of component '%s' aborted "
                    "because the remote connection was lost" % self.getLabel())
             self.warning("%s", msg)
-            error = OperationAborted(msg, cause=failure.value)
+            error = OperationAbortedError(msg, cause=failure.value)
             resultDef.errback(error)
             return True
         return False
@@ -453,7 +453,7 @@ class BaseComponentProxy(FlumotionProxy):
         args = (status, label, resultDef)
         d.addCallbacks(self.__asyncForceDelete,
                        self.__asyncForceStopFailed,  
-                       callbackArgs=args, errbackArgs=args)  
+                       callbackArgs=args, errbackArgs=args)
 
     def __asyncForceDelete(self, _, status, label, resultDef):
         if self.__isOperationTerminated(None, status, resultDef): return

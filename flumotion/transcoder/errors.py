@@ -63,7 +63,7 @@ class OperationTimedOutError(TranscoderError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
-class OperationAborted(TranscoderError):
+class OperationAbortedError(TranscoderError):
     """
     An asynchronous operation couldn't be done.
     """

@@ -1,5 +1,13 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.__isOperationTerminated,
+	  BaseComponentProxy.__asyncForceStop):
+	* flumotion/transcoder/errors.py (OperationAbortedError):
+	  Changed OperationAborted exception to OperationAbortedError.
+	
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/targets.py
 	  (AudioVideoTarget._sourceDiscovered):
 	  Log when a input file do not have audio or video
