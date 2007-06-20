@@ -1,5 +1,18 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py (IAdminTask.isActive,
+	  IAdminTask.hasTerminated):
+	* flumotion/transcoder/admin/montask.py (MonitoringTask.hasTerminated,
+	  MonitoringTask.__deleteMonitor):
+	* flumotion/transcoder/admin/taskmanager.py
+	  (TaskManager.__apartTasklessComponent,
+	  TaskManager.__releaseTasklessComponent,
+	  TaskManager.__cbRemoveComponent):
+	  Added hasTerminated method.
+	  Added some more logging.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy.__isOperationTerminated,
 	  BaseComponentProxy.__asyncForceStop):

@@ -93,6 +93,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     def isActive(self):
         return self._started and (not self._paused)
 
+    def hasTerminated(self):
+        return False
+
     def getActiveComponent(self):
         return self._monitor
 
@@ -342,8 +345,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
     def __deleteMonitor(self, monitor):
         self.debug("Deleting task '%s' monitor '%s'", 
                    self.getLabel(), monitor.getName())
-        d = monitor.forceDelete()
-        d.addErrback(self.__ebMonitorDeleteFailed, monitor.getName())
+        if monitor.getMood() != moods.sad:
+            d = monitor.forceDelete()
+            d.addErrback(self.__ebMonitorDeleteFailed, monitor.getName())
     
     def __cbMonitorStartSucceed(self, result, monitorName, workerName):
         self.debug("Succeed to start task '%s' monitor '%s' on worker '%s'",

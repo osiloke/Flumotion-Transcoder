@@ -18,6 +18,12 @@ class IAdminTask(Interface):
     def getLabel(self):
         pass
     
+    def isActive(self):
+        pass
+    
+    def hasTerminated(self):
+        pass
+    
     def getProperties(self):
         pass
     

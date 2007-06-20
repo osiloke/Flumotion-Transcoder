@@ -228,15 +228,19 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         return self._taskless.keys()
     
     def __apartTasklessComponent(self, component):
+        self.log("Task manager '%s' takes apart taskless component '%s'",
+                 self.getLabel(), component.getName())
         self._taskless[component] = None
         component.addListener(self)
         component.syncListener(self)
         self._onTasklessComponentAdded(component)
     
     def __releaseTasklessComponent(self, component):
+        self.log("Task manager '%s' release taskless component '%s'",
+                 self.getLabel(), component.getName())
         assert component in self._taskless
-        component.removeListener(self)
         del self._taskless[component]
+        component.removeListener(self)
         self._onTasklessComponentRemoved(component)
     
     def __cbAddComponent(self, props, component):
@@ -271,7 +275,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         if props in self._tasks:
             task = self._tasks[props]
             task.removeComponent(component)
-        if component in self._taskless:            
+        if component in self._taskless:
             self.__releaseTasklessComponent(component)
         return component
 
