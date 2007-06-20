@@ -187,9 +187,12 @@ class TranscoderJob(log.LoggerProxy):
                                            consumeErrors=True)
         #Wait the transcoding task
         def readyForAck(result):
-            self._readyForAck.callback(defer._nothing)
+            if isinstance(result, Failure):
+                self._readyForAck.errback(result)
+            else:
+                self._readyForAck.callback(result)
             return result
-        d.addBoth(readyForAck)
+        d.addBoth(readyForAck)        
         self._ackList.addCallback(self.__cbDoAcknowledge, context)
         #Setup output files moving
         self._ackList.addCallback(self.__cbMoveOutputFiles, context)
@@ -742,6 +745,7 @@ class TranscoderJob(log.LoggerProxy):
 
     ### Called by Deferreds ###
     def __cbDoAcknowledge(self, results, context):
+        self.debug("#"*20 + " "  + str(results))
         for success, result in results:
             if not success:
                 return result
@@ -779,7 +783,7 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         self._setJobState(JobStateEnum.input_file_moving)
         sourceCtx = context.getSourceContext()
-        
+        self.debug("#"*20 + " " + str(result))
         if isinstance(result, Failure):
             #We are in an Errback
             error = result

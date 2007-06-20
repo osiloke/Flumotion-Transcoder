@@ -1,5 +1,12 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py (TranscoderJob.readyForAck,
+	  TranscoderJob.__cbDoAcknowledge, TranscoderJob.__bbMoveInputFile):
+	  Corrected a bug where the failures were not propagated 
+	  to the acknowledge deferred chain.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py
 	  (TranscodingTask.hasTerminated,
 	  TranscodingTask.onTranscoderJobStateChanged,
