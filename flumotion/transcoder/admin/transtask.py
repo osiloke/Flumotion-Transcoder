@@ -112,6 +112,9 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         d = self.__waitPotentialTranscoder(timeout)
         d.addCallback(lambda t: t and t.getWorker())
         return d
+    
+    def waitSynchronized(self, timeout=None):
+        return defer.succeed(self)
 
     def addComponent(self, transcoder):
         assert isinstance(transcoder, TranscoderProxy)
@@ -294,7 +297,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                  self._transcoder.getName(), self.getLabel())
         self._fireEvent(self._transcoder, "TranscoderSelected")
         # Retrieve and synchronize UI state
-        d = transcoder.retrieveUIState(adminconsts.TRANSCODER_UI_TIMEOUT)
+        d = transcoder.waitUIState(adminconsts.TRANSCODER_UI_TIMEOUT)
         d.addCallbacks(self.__cbGotUIState,
                        self.__ebUIStateFailed,
                        errbackArgs=(transcoder,))
@@ -333,13 +336,10 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         
         defs = []        
         for transcoder in self._transcoders:
-            d = transcoder.waitStatus(adminconsts.TRANSCODER_UI_TIMEOUT)
-            args = (transcoder,)
-            d.addCallbacks(cbGotStatus, ebGetStatusError,
-                           callbackArgs=args, errbackArgs=args)
+            d = transcoder.waitUIState(adminconsts.TRANSCODER_UI_TIMEOUT)
             defs.append(d)
         dl = defer.DeferredList(defs, fireOnOneCallback=False,
-                                fireOnOneErrback=True,
+                                fireOnOneErrback=False,
                                 consumeErrors=True)
         dl.addCallback(self.__cbSelectPotentialTranscoder)
         return dl
@@ -347,9 +347,18 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
     def __cbSelectPotentialTranscoder(self, results): 
         selected = None
         for succeed, result in results:
-            if not (succeed and result):
+            if not succeed:
+                self.warning("Failure during potential transcoder selection "
+                             "of task '%s': %s", self.getLabel(),
+                             log.getFailureMessage(result))
+                self.debug("%s", log.getFailureTraceback(result))
                 continue
-            transcoder, status, acknowledged, mood = result
+            if not result:
+                continue
+            transcoder = result
+            status = transcoder.getStatus()
+            acknowledged = transcoder.isAcknowledged()
+            mood = transcoder.getMood()
             # If a transcoder is happy, it's a valid option
             if mood == moods.happy:
                 selected = transcoder
@@ -405,7 +414,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
         
     def __cbGotPotentialTranscoder(self, transcoder):
         if transcoder:
-            self.log("Task '%s' Found a the potential transcoder '%s'",
+            self.log("Task '%s' found the potential transcoder '%s'",
                  self.getLabel(), transcoder.getName())
             self._pendingName = None
             self.__electTranscoder(transcoder)
