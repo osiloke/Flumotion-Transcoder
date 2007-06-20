@@ -745,7 +745,6 @@ class TranscoderJob(log.LoggerProxy):
 
     ### Called by Deferreds ###
     def __cbDoAcknowledge(self, results, context):
-        self.debug("#"*20 + " "  + str(results))
         for success, result in results:
             if not success:
                 return result
@@ -783,7 +782,6 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         self._setJobState(JobStateEnum.input_file_moving)
         sourceCtx = context.getSourceContext()
-        self.debug("#"*20 + " " + str(result))
         if isinstance(result, Failure):
             #We are in an Errback
             error = result
