@@ -16,8 +16,9 @@ import gobject
 import os
 
 from flumotion.transcoder import log
+from flumotion.component.transcoder import compconsts
 
-class Watcher(gobject.GObject, log.Loggable):
+class Watcher(gobject.GObject, log.LoggerProxy):
     """
     Watches for changes in a directory
 
@@ -44,8 +45,9 @@ class Watcher(gobject.GObject, log.Loggable):
                               (gobject.TYPE_STRING, ))
         }
 
-    def __init__(self):
+    def __init__(self, logger):
         gobject.GObject.__init__(self)
+        log.LoggerProxy.__init__(self, logger)
 
     def start(self):
         """
@@ -62,8 +64,8 @@ class PeriodicalWatcher(Watcher):
     """
     Periodically scan for changes.
     """
-    def __init__(self, timeout=30, *args, **kwargs):
-        Watcher.__init__(self, *args, **kwargs)
+    def __init__(self, logger, timeout=30, *args, **kwargs):
+        Watcher.__init__(self, logger, *args, **kwargs)
         self.timeout = timeout
         self._sigid = None
         self._files = {}
@@ -74,7 +76,8 @@ class PeriodicalWatcher(Watcher):
             gobject.source_remove(self._sigid)
         if reset:
             self._files = {}
-        self._sigid = gobject.timeout_add(self.timeout * 1000, self._checkForChanges)
+        self._sigid = gobject.timeout_add(self.timeout * 1000, 
+                                          self._checkForChanges)
 
     def stop(self):
         if self._sigid:
@@ -82,17 +85,21 @@ class PeriodicalWatcher(Watcher):
             self._sigid = None
         
     def _checkForChanges(self):
-        self.log("watching...")
+        self.log("Watching...")
         newfiles = self._listFiles()
         oldfiles = self._files
         self.log("Comparing new files (%d) to old files (%d)",
                  len(newfiles), len(oldfiles))
-        for f in [x for x in oldfiles.iterkeys() if not x in newfiles]:
+        for f in [x for x in oldfiles if not (x in newfiles)]:
+            self.log("File '%s' removed", f)
             self.emit('file-removed', f)
-            del oldfiles[f]
+            del self._files[f]
         for f, s in newfiles.iteritems():
+            self.log("File '%s' size change from %s to %s", 
+                     f, str(oldfiles.get(f, None)), str(s))
             #new file
-            if not f in oldfiles:
+            if not (f in oldfiles):
+                self.log("File '%s' added", f)
                 self.emit('file-added', f)
                 self._files[f] = s
                 continue
@@ -101,8 +108,10 @@ class PeriodicalWatcher(Watcher):
                 continue
             #Completed file
             if s == oldfiles[f]:
+                self.log("File '%s' completed", f)
                 self.emit('file-completed', f)
                 oldfiles[f] = None
+            self._files[f] = s
         return True
 
     def _listFiles(self):
@@ -118,8 +127,8 @@ class DirectoryWatcher(PeriodicalWatcher):
     Watches a directory for new files.
     path : path to check for new/removed files        
     """
-    def __init__(self, path, *args, **kwargs):
-        PeriodicalWatcher.__init__(self, *args, **kwargs)
+    def __init__(self, logger, path, *args, **kwargs):
+        PeriodicalWatcher.__init__(self, logger, *args, **kwargs)
         self.path = path
 
     def _listFiles(self):
@@ -136,17 +145,18 @@ class DirectoryWatcher(PeriodicalWatcher):
         result = {}
         base = self.path
         os.path.walk(base, step, result)
+        self.log(str(result))
         return result
         
 class FilesWatcher(PeriodicalWatcher):
     """
     Watches a collection of files for modifications.
     """
-    def __init__(self, files, *args, **kwargs):
+    def __init__(self, logger, files, *args, **kwargs):
         """
         files : list of absolute filenames
         """
-        PeriodicalWatcher.__init__(self, *args, **kwargs)
+        PeriodicalWatcher.__init__(self, logger, *args, **kwargs)
         self.files = files
 
     def _listFiles(self):

@@ -65,7 +65,7 @@ class FileMonitor(component.BaseComponent):
         period = props["scan-period"]
         directories = props.get("directory", [])
         for d in directories:
-            watcher = DirectoryWatcher(d, timeout=period)
+            watcher = DirectoryWatcher(self, d, timeout=period)
             watcher.connect('file-added', self._file_added, d)
             watcher.connect('file-completed', self._file_completed, d)
             watcher.connect('file-removed', self._file_removed, d)

@@ -1,5 +1,18 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/filemonitor.py (FileMonitor.do_start):
+	* flumotion/component/transcoder/transcoder.py
+	  (MultiTranscoder._discovered_callback):
+	* flumotion/component/transcoder/watcher.py (Watcher, Watcher.__init__,
+	  PeriodicalWatcher.__init__, PeriodicalWatcher.start,
+	  PeriodicalWatcher._checkForChanges, DirectoryWatcher.__init__,
+	  DirectoryWatcher.step, FilesWatcher, FilesWatcher.__init__):
+	  Corrected a major bug of the watchers. They virtualy don't work before.
+	  Changed the watchers to use LoggerProxy.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py:
 	  Removed debug lines that was commited.
 

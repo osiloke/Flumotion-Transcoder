@@ -175,7 +175,7 @@ class MultiTranscoder(object):
             expectedOutputs = list()
             for t in self._targets:
                 t._pushExpectedOutputs(expectedOutputs)
-            self._watcher = FilesWatcher(expectedOutputs, 
+            self._watcher = FilesWatcher(self, expectedOutputs, 
                                          timeout=self._timeout)
             self._watcher.connect('file-completed', self._watcher_callback)
             self._watcher.connect('file-not-present', self._watcher_callback)
