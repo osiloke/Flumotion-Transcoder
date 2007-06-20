@@ -90,6 +90,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._context = componentContext
         self._domain = domain
         self._componentState = componentState
+        self._retrievingUIState = False
         self._uiState = AssignWaiters()
         self._requestedWorkerName = None
         self._worker = None
@@ -120,9 +121,7 @@ class BaseComponentProxy(FlumotionProxy):
     def getDomain(self):
         return self._domain
     
-    def retrieveUIState(self, timeout=None):
-        if self._hasUIState():
-            return defer.succeed(self)
+    def waitUIState(self, timeout=None):
         if not self.isRunning():
             error = TranscoderError("Cannot retrieve UI state of "
                                     "a non-running component")
@@ -409,6 +408,8 @@ class BaseComponentProxy(FlumotionProxy):
             self._setUIState(None)
 
     def __retrieveUIState(self, timeout=None):
+        if self._retrievingUIState: return
+        self._retrievingUIState = True
         d = utils.callWithTimeout(timeout, self._callRemote, 'getUIState')
         d.addCallbacks(self.__cbUIStateRetrievalDone,
                        self.__ebUIStateRetrievalFailed)
@@ -419,6 +420,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._onSetUIState(uiState)
     
     def __ebUIStateRetrievalFailed(self, failure):
+        self._retrievingUIState = False
         self.warning("Component '%s' fail to retrieve its UI state: %s",
                      self.getLabel(), log.getFailureMessage(failure))
 

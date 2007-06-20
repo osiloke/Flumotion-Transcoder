@@ -1,5 +1,15 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.__init__, BaseComponentProxy.waitUIState,
+	  BaseComponentProxy.__retrieveUIState,
+	  BaseComponentProxy.__ebUIStateRetrievalFailed):
+    Corrected a bug that made the ui state to be retrieved
+    more than one time, and then fail when trying to register
+    the listeners.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/compconsts.py:
 	* flumotion/component/transcoder/filemonitor.py (FileMonitor.do_start):
 	* flumotion/component/transcoder/transcoder.py
