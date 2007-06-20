@@ -18,6 +18,7 @@ import urllib
 import random
 
 from flumotion.transcoder.enums import TargetTypeEnum
+from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.component.transcoder.reporter import Reporter
 
@@ -91,10 +92,10 @@ class SourceContext(BaseContext):
         
 class TargetContext(TaskContext):
     
-    _typeInfo = {TargetTypeEnum.audio:      (True, False),
-                 TargetTypeEnum.video:      (False, True),
-                 TargetTypeEnum.audiovideo: (True, True),
-                 TargetTypeEnum.thumbnails: (False, False)}
+    _typeInfo = {TargetTypeEnum.audio:      (True, False, True),
+                 TargetTypeEnum.video:      (False, True, True),
+                 TargetTypeEnum.audiovideo: (True, True, True),
+                 TargetTypeEnum.thumbnails: (False, False, False)}
     
     def __init__(self, context, targetIndex):
         tag = "(%s:%s:%s) " % (context.config.customer.name,
@@ -183,11 +184,42 @@ class TargetContext(TaskContext):
                                 args)
 
     #Maybe it should go out of this class
-    def hasAudio(self):
+    def shouldBeAnalyzed(self):
+        return self._typeInfo[self.config.type][2]
+
+    def shouldGenerateLinkFile(self):
+        return self._typeInfo[self.config.type][2] and self.hasLinkConfig()
+
+    #Maybe it should go out of this class
+    def shouldHaveAudio(self):
+        """
+        Return True if a target must have audio,
+        False if it must NOT have audio and None
+        if it may have audio.
+        """
+        #FIXME: Avoid special casing
+        if self.config.type == TargetTypeEnum.audiovideo:
+            allow_without_audio = AudioVideoToleranceEnum.allow_without_audio
+            tolerance = self.config.config.tolerance
+            if tolerance == allow_without_audio:
+                return None
+            return True
         return self._typeInfo[self.config.type][0]
     
     #Maybe it should go out of this class
-    def hasVideo(self):
+    def shouldHaveVideo(self):
+        """
+        Return True if a target must have video,
+        False if it must NOT have video and None
+        if it may have video.
+        """
+        #FIXME: Avoid special casing
+        if self.config.type == TargetTypeEnum.audiovideo:
+            allow_without_video = AudioVideoToleranceEnum.allow_without_video
+            tolerance = self.config.config.tolerance
+            if tolerance == allow_without_video:
+                return None
+            return True
         return self._typeInfo[self.config.type][1]
 
 

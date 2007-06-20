@@ -1,5 +1,15 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py (TargetContext,
+	  TargetContext.shouldBeAnalyzed, TargetContext.shouldGenerateLinkFile,
+	  TargetContext.shouldHaveAudio, TargetContext.shouldHaveVideo):
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob.__cbProcessTarget, TranscoderJob.__cbTargetIsAMedia):
+	  Properly handle the verification of target files when
+	  beeing tolerant.
+
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/compconsts.py:
 	Added component's constants file.
 

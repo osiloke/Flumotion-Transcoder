@@ -558,8 +558,6 @@ class TranscoderJob(log.LoggerProxy):
         if not os.path.isfile(inputPath):
             raise Exception("Invalid source file ('%s')" % inputPath)
     
-
-    
     def __showFailure(self, context, task, failure):
         context.debug("Traceback of %s failure with filenames cleaned up:\n%s" 
                       % (task, log.cleanTraceback(failure.getTraceback())))
@@ -724,7 +722,7 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         targetCtx.info("Start target processing")
         d = defer.Deferred()
-        if targetCtx.hasAudio() or targetCtx.hasVideo():
+        if targetCtx.shouldBeAnalyzed():
             #Setup target output file analysis
             d.addCallback(self.__cbTargetAnalyseOutputFile, targetCtx)
             d.addErrback(self.__ebFatalFailure, targetCtx, "target analysis")
@@ -732,12 +730,11 @@ class TranscoderJob(log.LoggerProxy):
             #Setup target post-processing
             d.addCallback(self.__cbTargetPerformPostProcessing, targetCtx)
             d.addErrback(self.__ebFatalFailure, targetCtx, "post-processing")
-        if targetCtx.hasAudio() or targetCtx.hasVideo():
-            if targetCtx.hasLinkConfig():
-                #Setup target link file generation
-                d.addCallback(self.__cbTargetGenerateLinkFile, targetCtx)
-                d.addErrback(self.__ebRecoverableFailure, targetCtx,
-                                 "link file generation")
+        if targetCtx.shouldGenerateLinkFile():
+            #Setup target link file generation
+            d.addCallback(self.__cbTargetGenerateLinkFile, targetCtx)
+            d.addErrback(self.__ebRecoverableFailure, targetCtx,
+                             "link file generation")
         d.addCallback(self.__cbTargetDone, targetCtx)
         d.addErrback(self.__ebTargetFailed, targetCtx)
         d.callback(result)
@@ -851,23 +848,36 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         targetCtx.reporter.doAnalyse(discoverer)
         self._fireTargetInfo(targetCtx)
-        expa = targetCtx.hasAudio()
-        expv = targetCtx.hasVideo()
+        expa = targetCtx.shouldHaveAudio()
+        expv = targetCtx.shouldHaveVideo()
         gota = discoverer.is_audio
         gotv = discoverer.is_video
-        if ((gota != expa) or (gotv != expv)):
-            if expa: expas = "" 
-            else: expas = "no "
-            if expv: expvs = "" 
-            else: expvs = "no "
-            if gota: gotas = "" 
-            else: gotas = "no "
-            if gotv: gotvs = "" 
-            else: gotvs = "no "
-            raise TranscoderError(("Expected %saudio and %svideo, "
-                                   + "but got %saudio and %svideo")
-                                   % (expas, expvs, gotas, gotvs),
-                                   data=targetCtx)
+        
+        if ((expa and (gota != expa)) or (expv and (gotv != expv))):
+            expChunks = []
+            gotChunks = []
+            if expa != None:
+                if expa: 
+                    expChunks.append("audio")
+                else: 
+                    expChunks.append("no audio")
+                if gota: 
+                    gotChunks.append("audio")
+                else: 
+                    gotChunks.append("no audio")
+            if expv != None:
+                if expv: 
+                    expChunks.append("video")
+                else: 
+                    expChunks.append("no video")
+                if gotv: 
+                    gotChunks.append("video")
+                else: 
+                    gotChunks.append("no video")
+            message = ("Expected %s, and got %s" 
+                       % (" and ".join(expChunks) or "nothing",
+                          " and ".join(gotChunks) or "nothing"))
+            raise TranscoderError(message, data=targetCtx)
         return result
         
     ### Called by Deferreds ###
