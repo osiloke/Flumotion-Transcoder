@@ -1,5 +1,14 @@
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._getUIDictValue,
+	  BaseComponentProxy.__isOperationTerminated):
+	  Check for the PBConnectionLost exception.
+	  Corrected a bug where the UI state waiter was used
+	  insteed of the proper value, changed to use the getter.
+	  
+2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/context.py (TargetContext,
 	  TargetContext.shouldBeAnalyzed, TargetContext.shouldGenerateLinkFile,
 	  TargetContext.shouldHaveAudio, TargetContext.shouldHaveVideo):

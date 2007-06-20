@@ -14,7 +14,7 @@ import signal
 
 from zope.interface import Interface, implements
 from twisted.internet import defer
-from twisted.spread.pb import DeadReferenceError
+from twisted.spread.pb import PBConnectionLost
 
 from flumotion.common import common
 #To register Jellyable classes
@@ -327,10 +327,10 @@ class BaseComponentProxy(FlumotionProxy):
     def _getUIDictValue(self, key, name, default):
         # For now, do not allow getting a ui state value
         # if the UI state has not been retrieved
-        assert self._uiState != None
-        if not self._uiState:
+        assert self._hasUIState()
+        if not self._hasUIState():
             return default
-        return self.__getUIDictValue(self._uiState, key, name, default)
+        return self.__getUIDictValue(self._getUIState(), key, name, default)
 
     def _waitUIDictValue(self, key, name, default, timeout=None):
         d = self._waitUIState(timeout)
@@ -427,9 +427,9 @@ class BaseComponentProxy(FlumotionProxy):
             # Assume the objectives is fulfilled,
             resultDef.callback(self)
             return True
-        if failure and failure.check(DeadReferenceError):
+        if failure and failure.check(PBConnectionLost):
             msg = ("Forced Stop/Delete of component '%s' aborted "
-                   "because the remote reference died" % self.getLabel())
+                   "because the remote connection was lost" % self.getLabel())
             self.warning("%s", msg)
             error = OperationAborted(msg, cause=failure.value)
             resultDef.errback(error)
