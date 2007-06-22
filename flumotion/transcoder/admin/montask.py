@@ -415,8 +415,8 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                      self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
         
-    def __ebMonitorDeleteFailed(self, failure, monitor):
+    def __ebMonitorDeleteFailed(self, failure, name):
         self.warning("Failed to delete task '%s' monitor '%s': %s", 
-                     self.getLabel(), monitor.getName(), 
+                     self.getLabel(), name, 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))

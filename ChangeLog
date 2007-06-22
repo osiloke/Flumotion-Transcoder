@@ -1,5 +1,11 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask.__ebMonitorDeleteFailed):
+	Corrected some logging bug.
+
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-admin.ini:
 	Changed the configuration to use teh dev cluster.
 
