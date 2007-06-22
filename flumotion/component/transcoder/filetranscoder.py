@@ -24,7 +24,7 @@ from flumotion.common.common import ensureDir
 from flumotion.common import errors, messages
 
 from flumotion.component.transcoder import job, compconsts
-from flumotion.transcoder import properties, log, enums
+from flumotion.transcoder import properties, log
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum

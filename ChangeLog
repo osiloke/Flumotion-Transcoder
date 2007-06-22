@@ -1,5 +1,11 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/transcoder/enums.py:
+	Some cleanup.
+
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/base.xml:
 	* flumotion/component/transcoder/filemonitor.xml:
 	* flumotion/component/transcoder/filetranscoder.xml:

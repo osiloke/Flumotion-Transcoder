@@ -12,6 +12,7 @@
 
 from flumotion.common import enum
 
+
 ComponentDomainEnum = enum.EnumClass('ComponentDomainEnum',
                                      ('atmosphere', 
                                       'flow'))
