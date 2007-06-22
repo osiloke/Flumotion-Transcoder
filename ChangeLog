@@ -1,5 +1,10 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-admin.ini:
+	Changed the configuration to use teh dev cluster.
+
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py:
 	* flumotion/transcoder/enums.py:
 	Some cleanup.
