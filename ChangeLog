@@ -1,5 +1,11 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob.__bbJobTerminated):
+	Properly propagate failures.
+
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoder.do_setup, FileTranscoder.do_start,
 	  FileTranscoder.do_stop, FileTranscoder.__abortTranscoding,

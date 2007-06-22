@@ -642,7 +642,11 @@ class TranscoderJob(log.LoggerProxy):
         context.reporter.time("terminated")
         self._setJobState(JobStateEnum.terminated)
         self._runningState = RunningState.terminated
-        return context.reporter.report
+        # If it failed, propagate the failure
+        if isinstance(result, Failure):
+            return result
+        else:
+            return context.reporter.report
 
     ### Called by Deferreds ###
     def __cbPerformPreProcessing(self, result, context):
