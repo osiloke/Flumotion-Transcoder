@@ -1,3 +1,10 @@
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/base.xml:
+	* flumotion/component/transcoder/filemonitor.xml:
+	* flumotion/component/transcoder/filetranscoder.xml:
+	Corrected the components registry files.
+
 2007-06-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/watcher.py

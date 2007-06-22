@@ -13,7 +13,7 @@
         <property name="wait-acknowledge" type="bool" required="no" multiple="no"/>
         <property name="config" type="string" required="no" multiple="no"/>
         <property name="report" type="string" required="no" multiple="no"/>
-        <property name="nice-level" type="int" required="no" multiple="no"/>        
+        <property name="nice-level" type="int" required="no" multiple="no"/>
         <property name="local-root" type="string" required="no" multiple="yes"/> 
         <property name="local-name" type="string" required="no" multiple="no"/> 
       </properties>
@@ -24,22 +24,19 @@
 
     <bundle project="transcoder" name="file-transcoder-admin-gtk">
       <dependencies>
-        <dependency name="component" />
-        <dependency name="transcoder-base" />
-        <dependency name="base-admin-gtk" />        
+        <dependency name="transcoder-base-admin-gtk" />
       </dependencies>
       <directories>
         <directory name="flumotion/component/transcoder">
           <filename location="filetranscoder_admin_gtk.py" />
-          <filename location="filetranscoder.glade" />          
+          <filename location="filetranscoder.glade" />
         </directory>
       </directories>
     </bundle>
 
     <bundle project="transcoder" name="file-transcoder">
       <dependencies>
-        <dependency name="component" />
-        <dependency name="transcoder-base" />
+        <dependency name="transcoder-base-component" />
       </dependencies>
       <directories>
         <directory name="flumotion/transcoder">
@@ -48,7 +45,7 @@
           <filename location="inifile.py" />
           <filename location="transconfig.py" />
           <filename location="transreport.py" />
-          <filename location="pipelinecrawler.py" />          
+          <filename location="pipelinecrawler.py" />
         </directory>
         <directory name="flumotion/component/transcoder">
           <filename location="reporter.py" />
@@ -60,6 +57,7 @@
           <filename location="gstutils.py" />
           <filename location="videosize.py" />
           <filename location="binmaker.py" />
+          <filename location="thumbsink.py" />
         </directory>
       </directories>
     </bundle>

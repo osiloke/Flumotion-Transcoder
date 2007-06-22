@@ -11,7 +11,7 @@
       <properties>
         <property name="admin-id" type="string" required="no" multiple="no"/>
         <property name="directory" type="string" required="no" multiple="yes"/>
-        <property name="scan-period" type="int" required="yes" multiple="no"/>        
+        <property name="scan-period" type="int" required="yes" multiple="no"/>
       </properties>
 
     </component>
@@ -20,27 +20,23 @@
 
     <bundle project="transcoder" name="file-monitor-admin-gtk">
       <dependencies>
-        <dependency name="component" />
-        <dependency name="transcoder-base" />
-        <dependency name="base-admin-gtk" />        
+        <dependency name="transcoder-base-admin-gtk" />
       </dependencies>
       <directories>
         <directory name="flumotion/component/transcoder">
           <filename location="filemonitor_admin_gtk.py" />
-          <filename location="filemonitor.glade" />          
+          <filename location="filemonitor.glade" />
         </directory>
       </directories>
     </bundle>
 
     <bundle project="transcoder" name="file-monitor">
       <dependencies>
-        <dependency name="component" />
-        <dependency name="transcoder-base" />
+        <dependency name="transcoder-base-component" />
       </dependencies>
       <directories>
         <directory name="flumotion/component/transcoder">
           <filename location="filemonitor.py" />
-          <filename location="watcher.py" />          
         </directory>
       </directories>
     </bundle>
