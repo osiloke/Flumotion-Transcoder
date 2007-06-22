@@ -160,10 +160,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("File transcoder component setup failed")
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
-            self.setMood(moods.sad)
+            self.__abortTranscoding(e)
             raise errors.ComponentSetupHandledError(e)
 
     def do_start(self, *args, **kwargs):
@@ -175,10 +172,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("File transcoder component startup failed")
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
-            self.setMood(moods.sad)
+            self.__abortTranscoding(e)
             raise errors.ComponentStartHandledError(e)
             
     def do_stop(self, *args, **kwargs):
@@ -187,9 +181,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("File transcoder component stopping failed")
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
+            self.__abortTranscoding(e)
             return component.BaseComponent.do_stop(self)
 
     
@@ -262,6 +254,15 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     ## Private Methods ##
     
+    def __abortTranscoding(self, e=None):
+        self._fireStatusChanged(TranscoderStatusEnum.failed)
+        if e:
+            m = messages.Error(T_(str(e)), 
+                               debug=log.getExceptionMessage(e))
+            self.addMessage(m)
+        else:
+            self.setMood(moods.sad)
+    
     def __cbJobDone(self, report):
         try:
             assert report == self._report, ("Job creates it's own report "
@@ -276,9 +277,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
+            self.__abortTranscoding(e)
         
     
     def __ebJobFailed(self, failure):
@@ -298,8 +297,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
+            self.__abortTranscoding(e)
 
     def __cbJobTerminated(self, result):
         try:
@@ -308,14 +306,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
+            self.__abortTranscoding(e)
 
     def __ebAcknowledgeError(self, failure):
         try:
             self.warning("Transcoding acknowledge Error: %s",
                          log.getFailureMessage(failure))
+            self._fireStatusChanged(TranscoderStatusEnum.failed)
+            self.setMood(moods.sad)
             # FIXME: Very ugly, should not ask the job for this
             newReportPath = self._job.getFailedReportPath()
             if newReportPath != self._reportPath:
@@ -326,9 +324,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
+            self.__abortTranscoding(e)
 
     def __writeReport(self, report, path):
         localPath = path # Already localized
@@ -336,15 +332,11 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if self._diagnoseMode:
             localPath = localPath + ".diag"
         self.debug("Writing report file '%s'", localPath)
-        try:
-            report.status = self.status
-            ensureDir(os.path.dirname(localPath), "report")
-            saver = IniFile()
-            saver.saveToFile(report, localPath)
-        except properties.PropertyError, e:
-            self.warning("Failed to write report; %s"
-                         % log.getExceptionMessage(e))
-
+        report.status = self.status
+        ensureDir(os.path.dirname(localPath), "report")
+        saver = IniFile()
+        saver.saveToFile(report, localPath)
+    
     def __finalize(self, report, succeed):
         if self._diagnoseMode:
             self.__finalizeDiagnoseMode(report, succeed)

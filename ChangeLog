@@ -1,5 +1,15 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.do_setup, FileTranscoder.do_start,
+	  FileTranscoder.do_stop, FileTranscoder.__abortTranscoding,
+	  FileTranscoder.__cbJobDone, FileTranscoder.__ebJobFailed,
+	  FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError, FileTranscoder.__writeReport):
+	Properly abort and change the status when an exception is catched.
+	
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py
 	  (MonitoringTask.__ebMonitorDeleteFailed):
 	Corrected some logging bug.
