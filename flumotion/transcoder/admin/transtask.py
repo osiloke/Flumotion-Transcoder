@@ -243,7 +243,7 @@ class TranscodingTask(LoggerProxy, EventSource, TranscoderListener):
                 self._fireEvent(transcoder, "TranscodingFailed")
                 self.__terminateTask(False)
             else:
-                self.waring("Unexpected transcoder status/state combination.")
+                self.warning("Unexpected transcoder status/state combination.")
                 self.__relieveTranscoder()
                 self.__delayedStartTranscoder()
                 return

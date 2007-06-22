@@ -1,5 +1,11 @@
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.onTranscoderJobStateChanged):
+	 Corrected logging bug.
+
+2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__startup):
 	Removed debug logging.
 	
