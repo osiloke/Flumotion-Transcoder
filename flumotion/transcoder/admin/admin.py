@@ -219,17 +219,11 @@ class TranscoderAdmin(log.Loggable,
     ## Private Methods ##
     
     def __startup(self):
-        def deb(result, text):
-            self.debug(text)
-            return result        
         d = defer.Deferred()
-        d.addCallback(deb, "#"*20 + "Starting Monitoring")
         d.addCallback(utils.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
-        d.addCallback(deb, "#"*20 + "Starting Transcoding")
         d.addCallback(utils.dropResult, self._transcoding.start,
                       adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addCallback(deb, "#"*20 + "Starting Done")
         d.addErrback(self.__ebSartupFailed)
         d.callback(defer._nothing)
         
