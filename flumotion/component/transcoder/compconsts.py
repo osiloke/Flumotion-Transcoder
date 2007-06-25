@@ -16,3 +16,6 @@
 # Logging categories
 TRANSCODER_LOG_CATEGORY = "file-trans"
 MONITOR_LOG_CATEGORY = "file-monitor"
+
+# Discoverer max interleave in seconds
+MAX_INTERLEAVE = 2

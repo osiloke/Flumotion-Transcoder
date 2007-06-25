@@ -14,10 +14,10 @@
 
 import gst
 from gst.extend import discoverer
-from twisted.internet import defer
-from flumotion.component.transcoder import videosize
 
-MAX_INTERLEAVE = 10
+from twisted.internet import defer
+
+from flumotion.component.transcoder import compconsts, videosize
 
 
 class Discoverer(discoverer.Discoverer):
@@ -26,7 +26,7 @@ class Discoverer(discoverer.Discoverer):
     """
     def __init__(self, filePath):
         discoverer.Discoverer.__init__(self, filePath, 
-                                       max_interleave=MAX_INTERLEAVE)
+                                       max_interleave=compconsts.MAX_INTERLEAVE)
         self.filePath = filePath
         
     def discover(self):

@@ -1,5 +1,11 @@
 2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/gstutils.py (Discoverer.__init__):
+	Moved the max-interleave constants to compconsts.
+	
+2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/binmaker.py (_logPreferredSize,
 	  makeVideoEncodeBin):
 	  Use transcoder.log insteed of gst logging.
