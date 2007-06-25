@@ -1,5 +1,17 @@
 2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.glade:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py
+	  (FileTranscoderAdminGtkNode._jobProgressEvent):
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob._transcoderProgressCallback):
+	* flumotion/component/transcoder/transcoder.py (MultiTranscoder.start,
+	  MultiTranscoder._discovered_callback, MultiTranscoder._startProgress,
+	  MultiTranscoder._updateProgress):
+	Do not abort if the pipeline duration cannot be retrieved.
+
+2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoder.do_setup):
 	Corrected the job setup from a report.

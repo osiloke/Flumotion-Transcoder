@@ -272,7 +272,11 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         return False
     
     def _jobProgressEvent(self, value):
-        self._progress.set_fraction(value / 100.0)
+        if value != None:
+            self._progress.set_fraction(value / 100.0)
+        else:
+            self._progress.set_fraction(0)
+            self._progress.set_text(_("No Progression Information"))
         return False
 
     def _jobErrorEvent(self, value):

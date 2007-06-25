@@ -305,8 +305,12 @@ class TranscoderJob(log.LoggerProxy):
         self.logName = name
 
     def _transcoderProgressCallback(self, percent):
-        self._context.log("Progress: %d %%" % int(percent))
-        self._fireProgress(percent)
+        if percent == None:
+            self.info("Progression not supported")
+            self._fireProgress(None)
+        else:
+            self._context.log("Progress: %d %%" % int(percent))
+            self._fireProgress(percent)
 
     def _transcoderDiscoveredCallback(self, discoverer, ismedia):
         #FIXME: Don't reference the global context

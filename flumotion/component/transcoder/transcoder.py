@@ -13,14 +13,17 @@
 # Headers in this file shall remain intact.
 
 import os
+
 import gobject
 import gst
 from gst.extend.discoverer import Discoverer
+
 from twisted.internet import reactor, defer
 from twisted.python.failure import Failure
-from flumotion.component.transcoder import gstutils
+
 from flumotion.transcoder import log
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import FilesWatcher
 from flumotion.component.transcoder import targets
 
@@ -99,7 +102,7 @@ class MultiTranscoder(object):
 
         # discover the source media
         discoverer = Discoverer(self._sourcePath, 
-                                max_interleave=gstutils.MAX_INTERLEAVE)
+                                max_interleave=compconsts.MAX_INTERLEAVE)
         discoverer.connect('discovered', self._discovered_callback)
         discoverer.discover()
         
@@ -133,6 +136,7 @@ class MultiTranscoder(object):
 
     def _discovered_callback(self, discoverer, ismedia):
         try:
+            self.debug("#"*40 + " _discovered_callback " + str(ismedia))
             if self._discoveredCallback:
                 self._discoveredCallback(discoverer, ismedia)
             
@@ -321,20 +325,31 @@ class MultiTranscoder(object):
     def _startProgress(self):
         if not self._duration:
             try:
+                self.log('Querying the pipeline duration')
                 pipe = self._pipeline
                 duration, format = pipe.query_duration(gst.FORMAT_TIME)
             except gst.QueryError, e:
-                self._postErrorMessage("Failed to retrieve pipline duration", 
-                                       log.getExceptionMessage(e))
+                self.warning("Failed to retrieve pipline duration: %s",
+                             log.getExceptionMessage(e))
+                self._duration = None
+                self._updateProgress()
                 return
             if format != gst.FORMAT_TIME:
                 self._postErrorMessage("Bad pipline duration format",
                                        log.getExceptionMessage(e))
-                return
-            self._duration = duration
+                self.warning("Bad pipline duration format: %s",
+                             log.getExceptionMessage(e))
+                self._duration = None
+            else:
+                self._duration = duration
             self._updateProgress()
 
     def _updateProgress(self):
+        # Check if progression annot be done
+        if self._duration == None:
+            if  self._progressCallback:
+                self._progressCallback(None)
+            return
         try:
             self._progressTimeout = None
             positions = []
