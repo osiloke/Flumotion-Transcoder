@@ -1,3 +1,9 @@
+2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/binmaker.py (_logPreferredSize,
+	  makeVideoEncodeBin):
+	  Use transcoder.log insteed of gst logging.
+
 2007-06-22  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/transtask.py

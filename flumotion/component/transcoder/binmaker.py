@@ -13,6 +13,8 @@
 # Headers in this file shall remain intact.
 
 import gst
+
+from flumotion.transcoder import log
 from flumotion.component.transcoder import videosize
 from flumotion.component.transcoder import gstutils
 
@@ -114,7 +116,7 @@ def _logPreferredSize(msg, config):
         maxs = " (max %sx%s)" % (mws, mhs)
     else:
         maxs = ""
-    gst.info("%s %sx%s%s%s" % (msg, ws, hs, maxs, pars))
+    log.info("%s %sx%s%s%s" % (msg, ws, hs, maxs, pars))
 
 def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     bin = gst.Bin()
@@ -136,13 +138,13 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     scale.props.method = 1
     
     inputSize = _getInputVideoSize(config, discoverer)
-    gst.info("makeVideoEncodeBin - Input Video Size: %dx%d %d/%d"
+    log.info("makeVideoEncodeBin - Input Video Size: %dx%d %d/%d"
              % (inputSize[0], inputSize[1], 
                 inputSize[2].num, inputSize[2].denom))
     _logPreferredSize("makeVideoEncodeBin - Preferred Video Size:",
                       config)                    
     outputSize = _getOutputVideoSize(config, discoverer, inputSize)
-    gst.info("makeVideoEncodeBin - Output Video Size: %dx%d %d/%d"
+    log.info("makeVideoEncodeBin - Output Video Size: %dx%d %d/%d"
              % (outputSize[0], outputSize[1], 
                 outputSize[2].num, outputSize[2].denom))
     caps = _getOutputVideoCaps(config, discoverer, outputSize)
@@ -158,7 +160,7 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     
     box = _getOutputVideoBox(config, discoverer, outputSize)
     if (box[0] != 0) or (box[1] != 0) or (box[2] != 0) or (box[3] != 0):
-        gst.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" 
+        log.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" 
                  % box)
         videobox = gst.element_factory_make("videobox", "videobox-%s" % tag)
         videobox.props.left = box[0]
