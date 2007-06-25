@@ -124,7 +124,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                                         % localReportPath)
                     self.debug("Loading report from '%s'", localReportPath)
                     baseReport = TranscodingReport()
-                    loader.loadFromFile(baseReport, reportPath)
+                    loader.loadFromFile(baseReport, localReportPath)
                     configPath = baseReport.configPath
                     localConfigPath = configPath.localize(self._local)
                     if not os.path.exists(localConfigPath):
@@ -136,8 +136,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                     loader.loadFromFile(self._config, localConfigPath)
                     virtRepFilePath = baseReport.source.filePath
                     repFilePath = virtRepFilePath.localize(self._local)
-                    virtConfInputFile = self._config.source.inputFile
-                    confInputFile = virtConfInputFile.localize(self._local)
+                    confInputFile = self._config.source.inputFile
                     if not repFilePath.endswith(confInputFile):
                         raise Exception("The report source file-path property "
                                         + "doesn't match the configuration "
