@@ -1,5 +1,12 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.waitStatus):
+	Change the waitStatus to use the remote method inplace of
+	the UI State. This way it works even with early error cases.
+
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/montask.py
 	  (IMonitoringTaskListener.onFailToRunOnWorker,

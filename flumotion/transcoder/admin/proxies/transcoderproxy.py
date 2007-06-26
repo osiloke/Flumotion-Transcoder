@@ -87,9 +87,11 @@ class TranscoderProxy(ComponentProxy):
                                     TranscoderStatusEnum.pending)
         
     def waitStatus(self, timeout=None):
-        return self._waitUIDictValue("job-data", "status", 
-                                     TranscoderStatusEnum.pending,
-                                     timeout)
+        """
+        Wait status do not use the UI State, because in some early
+        error cases the UI State cannot be retrieved.
+        """
+        return utils.callWithTimeout(timeout, self._callRemote, "getStatus")
     
     def getJobState(self):
         return self._getUIDictValue("job-data", "job-state", 
