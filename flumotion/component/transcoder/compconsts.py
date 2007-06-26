@@ -19,3 +19,7 @@ MONITOR_LOG_CATEGORY = "file-monitor"
 
 # Discoverer max interleave in seconds
 MAX_INTERLEAVE = 2
+
+
+# Falling back thumbnailing interval in second
+FALLING_BACK_THUMBS_PERIOD_VALUE = 1
