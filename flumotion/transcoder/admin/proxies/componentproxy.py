@@ -360,6 +360,27 @@ class BaseComponentProxy(FlumotionProxy):
 
     ## Private Methods ##
     
+    def __cbGotActiveWorker(self, worker, name):
+        currName = self._componentState.get('workerName')
+        if currName != name:
+            self.log("Component '%s' active worker changed from '%s' to '%s'",
+                     self.getLabel(), name, currName)
+            return
+        self._worker = worker
+        self._onComponentRunning(worker)
+        if self.isActive():
+            self._fireEvent(worker, "ComponentRunning")
+        
+    def __ebGetActiveWorkerFail(self, failure, name):
+        currName = self._componentState.get('workerName')
+        if currName != name:
+            self.log("Component '%s' active worker changed from '%s' to '%s'",
+                     self.getLabel(), name, currName)
+            return
+        self.warning("Component '%s' said to be running "
+                     + "on an unknown worker '%s'",
+                     self.getLabel(), name)
+    
     def __getUIDictValue(self, state, key, name, default):
         values = state.get(key, None)
         if values:
@@ -385,16 +406,12 @@ class BaseComponentProxy(FlumotionProxy):
             if self.isActive():
                 self._fireEvent(oldWorker, "ComponentOrphaned")
         if workerName:
-            newWorker = self._manager.getWorkerByName(workerName)
-            if newWorker:
-                self._worker = newWorker
-                self._onComponentRunning(newWorker)
-                if self.isActive():
-                    self._fireEvent(newWorker, "ComponentRunning")
-            else:
-                self.warning("Component '%s' said to be running "
-                             + "on an unknown worker '%s'",
-                             self.getLabel(), workerName)
+            timeout = adminconsts.WAIT_WORKER_TIMEOUT
+            d = self._manager.waitWorkerByName(workerName, timeout)
+            args = (workerName,)
+            d.addCallbacks(self.__cbGotActiveWorker,
+                           self.__ebGetActiveWorkerFail,
+                           callbackArgs=args, errbackArgs=args)
                 
     def __componentMoodChanged(self, moodnum):
         mood = moods.get(moodnum)
@@ -403,9 +420,10 @@ class BaseComponentProxy(FlumotionProxy):
             self._fireEvent(mood, "ComponentMoodChanged")
 
     def __discardUIState(self):
+        self._retrievingUIState = False
         if self._hasUIState():
             self._onUnsetUIState(self._getUIState())
-            self._setUIState(None)
+            self._setUIState(None)            
 
     def __retrieveUIState(self, timeout=None):
         if self._retrievingUIState: return
@@ -416,8 +434,9 @@ class BaseComponentProxy(FlumotionProxy):
     
     def __cbUIStateRetrievalDone(self, uiState):
         self.log("Component '%s' received UI State", self.getLabel())
-        self._setUIState(uiState)
-        self._onSetUIState(uiState)
+        if self._retrievingUIState:
+            self._setUIState(uiState)
+            self._onSetUIState(uiState)
     
     def __ebUIStateRetrievalFailed(self, failure):
         self._retrievingUIState = False
@@ -608,5 +627,3 @@ class ComponentProxy(BaseComponentProxy):
     def _onUnsetUIState(self, uiState):
         uiState.removeListener(self)
 
-    
-    

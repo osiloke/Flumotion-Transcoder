@@ -1,5 +1,27 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.__cbGotActiveWorker,
+	  BaseComponentProxy.__ebGetActiveWorkerFail,
+	  BaseComponentProxy.__componentActiveWorkerChanged,
+	  BaseComponentProxy.__discardUIState,
+	  BaseComponentProxy.__cbUIStateRetrievalDone):
+	* flumotion/transcoder/admin/proxies/managerproxy.py
+	  (ManagerProxy.__init__, ManagerProxy.getWorkers,
+	  ManagerProxy.getContext, ManagerProxy.getWorkerByName,
+	  ManagerProxy.waitWorkerByName):
+	* flumotion/transcoder/admin/waiters.py
+	  (ValueWaiters.__asyncWaitTimeout, ItemWaiters, ItemWaiters.__init__,
+	  ItemWaiters.isWaiting, ItemWaiters.wait, ItemWaiters.setValue,
+	  ItemWaiters.getValue, ItemWaiters.setItem, ItemWaiters.delItem,
+	  ItemWaiters.getItem, ItemWaiters.getItems,
+	  ItemWaiters.__asyncWaitTimeout, ItemWaiters.__fireCallbacks):
+	Added a waiter that wait for item to be added to a dict.
+	Use this waiter to wait for worker instance when a component worker
+	state property is set to know when firing events.
+
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoderMedium.remote_getStatus, FileTranscoder.getStatus,
 	  FileTranscoder.init, FileTranscoder._fireStatusChanged,

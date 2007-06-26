@@ -32,9 +32,6 @@ class IWaiters(Interface):
     def getValue(self, value):
         pass
     
-    def wait(self, timeout=None):
-        pass
-    
 
 class BaseWaiters(object):
     
@@ -268,3 +265,67 @@ class ValueWaiters(object):
     def __asyncWaitTimeout(self, d, goodValues, wrongValues):
         self.__removeWaiter(d, None, goodValues, wrongValues)
         d.errback(OperationTimedOutError("Waiter Timeout"))
+
+
+class ItemWaiters(object):
+    """
+    Wait for an item with a specified key to be
+    inserted in a dict.
+    """
+    
+    implements(IWaiters)
+    
+    def __init__(self, value=None):
+        self._waiters = {} # {key: {Deffered: IDelayedCall}}
+        self._value = value or dict()
+        
+    def isWaiting(self):
+        return True
+        
+    def wait(self, key, timeout=None):
+        if key in self._value:
+            return defer.succeed(self._value[key])
+        d = defer.Deferred()
+        to = utils.createTimeout(timeout, self.__asyncWaitTimeout, key, d)
+        self._waiters.setdefault(key, dict())[d] = to
+        return d
+    
+    def setValue(self, value):
+        self._value = value
+        for key in value:
+            self.__fireCallbacks(key)
+    
+    def getValue(self):
+        return self._value
+    
+    def setItem(self, key, item):
+        self._value[key] = item
+        self.__fireCallbacks(key)
+        
+    def delItem(self, key, item):
+        del self._value[key]
+        
+    def getItem(self, *args):
+        return self._value.get(*args)
+        
+    def getItems(self):
+        return self._value.values()
+    
+    
+    ## Private Methods ##
+    
+    def __asyncWaitTimeout(self, key, d):
+        defs = self._waiters.get(key, None)
+        if defs:
+            defs.pop(d)
+            if not defs:
+                del self._waiters[key]
+            err = OperationTimedOutError("Waiter Timeout")
+            d.errback(err)
+    
+    def __fireCallbacks(self, key):
+        defs = self._waiters.pop(key, None)
+        if defs:
+            for d, to in defs.iteritems():
+                utils.cancelTimeout(to)
+                d.callback(self._value[key])

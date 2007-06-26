@@ -15,6 +15,7 @@ from twisted.internet import defer
 
 from flumotion.transcoder import utils
 from flumotion.transcoder.admin.waiters import AssignWaiters
+from flumotion.transcoder.admin.waiters import ItemWaiters
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import workerproxy
 from flumotion.transcoder.admin.proxies import flowproxy
@@ -79,7 +80,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._context = managerContext
         self._admin = admin
         self._planetState = planetState
-        self._workers = {} # {identifier: Worker}
+        self._workers = ItemWaiters() # ItemWaiters of {identifier: Worker}
         self._atmosphere = AssignWaiters(None)
         self._flows = {} # {identifier: Flow}
         self.__updateIdleTarget()
@@ -101,17 +102,22 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         return self._flows.values()
     
     def getWorkers(self):
-        return self._workers.values()
+        return self._workers.getItems()
 
     def getContext(self):
         return self._context
     
-    ## Overriden Public Methods ##
-    
     def getWorkerByName(self, name):
         workerId = self.__getWorkerUniqueIdByName(name)
-        return self._workers.get(workerId, None)
+        return self._workers.getItem(workerId, None)
 
+    def waitWorkerByName(self, name, timeout=None):
+        workerId = self.__getWorkerUniqueIdByName(name)
+        return self._workers.wait(workerId, timeout)
+
+    
+    ## Overriden Public Methods ##
+    
 
     ## Overriden Methods ##
     
