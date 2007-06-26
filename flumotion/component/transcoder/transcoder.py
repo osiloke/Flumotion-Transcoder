@@ -136,7 +136,6 @@ class MultiTranscoder(object):
 
     def _discovered_callback(self, discoverer, ismedia):
         try:
-            self.debug("#"*40 + " _discovered_callback " + str(ismedia))
             if self._discoveredCallback:
                 self._discoveredCallback(discoverer, ismedia)
             
@@ -346,7 +345,7 @@ class MultiTranscoder(object):
 
     def _updateProgress(self):
         # Check if progression annot be done
-        if self._duration == None:
+        if not (self._duration and (self._duration > 0)):
             if  self._progressCallback:
                 self._progressCallback(None)
             return
@@ -367,6 +366,8 @@ class MultiTranscoder(object):
                 if position >= 0:
                     positions.append(position)
             position = position and min(positions) or 0
+            # force position <= duration
+            position = min(position, self._duration)
             if  self._progressCallback:
                 self._progressCallback(position * 100.0 / self._duration)
             self._progressTimeout = reactor.callLater(PROGRESS_TIMEOUT,

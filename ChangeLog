@@ -1,5 +1,12 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/transcoder.py
+	  (MultiTranscoder._updateProgress):
+	Handle media without known duration, and ensure that the progress
+	send to the callback is in [0,100]
+	
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/targets.py (_sourceDiscovered,
 	  _setupThumbnailByFrames, _setupThumbnailByKeyFrames,
 	  _setupThumbnailByPercent, _percent_get_next,
