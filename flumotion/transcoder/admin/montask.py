@@ -32,6 +32,9 @@ from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 #      happy timeout may be triggered. For now, just using a large timeout.
 
 class IMonitoringTaskListener(Interface):
+    def onFailToRunOnWorker(self, task, worker):
+        pass
+    
     def onMonitoringActivated(self, task, monitor):
         pass
     
@@ -48,6 +51,9 @@ class IMonitoringTaskListener(Interface):
 class MonitoringTaskListener(object):
     
     implements(IMonitoringTaskListener)
+
+    def onFailToRunOnWorker(self, task, worker):
+        pass
 
     def onMonitoringActivated(self, task, monitor):
         pass
@@ -80,7 +86,9 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self._monitors = {} # {MonitorProxy: None}
         self._label = customerCtx.getMonitorLabel()
         self._properties = MonitorProperties.createFromContext(customerCtx)
-        
+        self._retry = 0
+        self._holdLost = None
+    
 
     ## IAdminTask IMplementation ##
         
@@ -185,8 +193,17 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         self.log("Worker '%s' suggested to monitoring task '%s'", 
                  worker and worker.getLabel(), self.getLabel())
         if (worker != self._worker) or (not self._monitor):
+            # If we change the worker, reset the retry counter
+            self.__resetRetryCounter()
             self._worker = worker
-            self.__startMonitor()
+            # If we currently holding for a lost monitor, 
+            # do not start a new one right now.
+            if self.__isHoldingMonitor():
+                self.log("Task '%s' do not start a new monitor "
+                         "because it's holding a lost monitor",
+                         self.getLabel())
+            else:
+                self.__startMonitor()
         return self._worker
 
 
@@ -199,10 +216,20 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if monitor.getName() == self._pendingName:
             return
         if monitor == self._monitor:
+            if (mood != moods.lost):
+                self.__releaseHold()
             if mood == moods.happy:
+                # Normal case
                 return
             self.warning("Task '%s' selected monitor '%s' gone %s",
                          self.getLabel(), monitor.getName(), mood.name)
+            if mood == moods.lost:
+                # If the component goes lost, wait a fixed amount of time
+                # to cope with small transient failures.
+                self.__holdLostMonitor(monitor)                
+                return
+            if mood == moods.sad:
+                self.__incRetryCounter()
             self.__relieveMonitor()
             self.__delayedStartMonitor()
             return
@@ -262,6 +289,7 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
         if self._monitor:
             self.log("Monitor '%s' releved by monitoring task '%s'",
                      self._monitor.getName(), self.getLabel())
+            self.__releaseHold()
             self._fireEvent(self._monitor, "MonitoringDeactivated")
             self._monitor = None
             
@@ -298,11 +326,20 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             
     def __delayedStartMonitor(self):
         if self._delayed:
+            self.log("Monitor start already scheduled for task '%s'",
+                     self.getLabel())
+            return
+        if self.__isRetriesExhausted():
+            self.warning("Task '%s' reach the maximum attempts (%s) "
+                         "of starting a monitor on worker '%s'", 
+                         self.getLabel(), str(self.__getRetryCount()), 
+                         self._worker.getName())
+            self._fireEvent(self._worker, "FailToRunOnWorker")
             return
         self.log("Scheduling monitor start for task '%s'",
                  self.getLabel())
-        self._delayed = reactor.callLater(adminconsts.MONITOR_START_DELAY,
-                                          self.__startMonitor)
+        timeout = self.__getRetryDelay()
+        self._delayed = reactor.callLater(timeout, self.__startMonitor)
 
     def __startMonitor(self):
         if not self.isActive(): return
@@ -394,7 +431,10 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
             self.__electMonitor(monitor)
         else:
             # If the wanted worker changed, just start a new monitor
-            self.__startMonitor()
+            # And because the monitor was pending to start, 
+            # its event were ignored so resend the mood changing event
+            self.onComponentMoodChanged(monitor, mood)
+            self.__delayedStartMonitor()
                 
     def __ebMonitorNotHappy(self, failure, monitor, workerName):
         self.warning("Task '%s' monitor '%s' on worker '%s' "
@@ -420,3 +460,60 @@ class MonitoringTask(LoggerProxy, EventSource, MonitorListener):
                      self.getLabel(), name, 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
+
+    def __getRetryCount(self):
+        return self._retry
+
+    def __resetRetryCounter(self):
+        self.log("Reset task '%s' retry counter", self.getLabel())
+        self._retry = 0
+        
+    def __incRetryCounter(self):
+        self._retry += 1
+        self.log("Monitorting task '%s' retry count set to %s of %s",
+                 self.getLabel(), self._retry, 
+                 adminconsts.MONITOR_START_MAX_ATTEMPTS)
+        
+    def __isRetriesExhausted(self):
+        return self._retry > adminconsts.MONITOR_START_MAX_ATTEMPTS
+    
+    def __getRetryDelay(self):
+        base = adminconsts.MONITOR_START_DELAY
+        factor = adminconsts.MONITOR_START_DELAY_FACTOR
+        return base * factor ** (self._retry - 1)
+    
+    def __holdLostMonitor(self, monitor):
+        if self._holdLost != None:
+            return
+        self.log("Task '%s' is holding lost monitor '%s'",
+                 self.getLabel(), monitor.getName())
+        timeout = adminconsts.MONITOR_LOST_HOLD_TIMEOUT
+        self._holdLost = utils.createTimeout(timeout, 
+                                             self.__asyncCheckIfStillLost,
+                                             monitor)
+    
+    def __releaseHold(self):
+        if self._holdLost == None:
+            return
+        self.log("Task '%s' cancel the lost monitor hold", self.getLabel())
+        utils.cancelTimeout(self._holdLost)
+        self._holdLost = None
+    
+    def __isHoldingMonitor(self):
+        return self._holdLost != None
+    
+    def __asyncCheckIfStillLost(self, monitor):
+        self._holdLost = None
+        if monitor != self._monitor:
+            self.log("Task '%s' hold on monitor '%s' not invalid anymore",
+                     self.getLabel(), monitor.getName())
+            return
+        if monitor.getMood() != moods.lost:
+            self.log("Task '%s' monitor '%s' not lost anymore, releasing the hold",
+                     self.getLabel(), monitor.getName())
+            return
+        self.log("Task '%s' monitor '%s' still lost",
+                 self.getLabel(), monitor.getName())
+        self.__incRetryCounter()
+        self.__relieveMonitor()
+        self.__delayedStartMonitor()         

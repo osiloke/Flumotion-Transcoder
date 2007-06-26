@@ -33,30 +33,45 @@ MONITOR_LABEL_TEMPLATE = "Monitor for %(customerName)s"
 # and initialize all components stats
 WAIT_IDLE_TIMEOUT = 30
 
+# Maximum time to wait for a worker instance 
+# when the worker name is set to a component state
+WAIT_WORKER_TIMEOUT = 30
+
 # Maximum time to wait for component properties
 TASKMANAGER_WAITPROPS_TIMEOUT = 30
 TASKMANAGER_SYNCH_TIMEOUT = 30
 
 # Maximum time for Monitoring to wait for monitor operations
 MONITOR_LOAD_TIMEOUT = 30
-MONITOR_START_DELAY = 3
 # Maximum time to wait for a monitor to go happy
 MONITOR_HAPPY_TIMEOUT = 60
 # Used to retrieve monitors UI State
 MONITOR_UI_TIMEOUT = 20
 MONITOR_ACTIVE_WORKER_TIMEOUT = 20
+MONITOR_LOST_HOLD_TIMEOUT = 60
+MONITOR_START_MAX_ATTEMPTS = 4
+MONITOR_START_DELAY = 2
+MONITOR_START_DELAY_FACTOR = 2.7182818284590451
+
 MONITORING_START_TIMEOUT = 30
+
 
 # Maximum time for Monitoring to wait for transcoder operations
 TRANSCODER_LOAD_TIMEOUT = 30
-TRANSCODER_START_DELAY = 3
 # Maximum time to wait for a monitor to go happy
 TRANSCODER_HAPPY_TIMEOUT = 60
 # Used to retrieve transcoders UI State
 TRANSCODER_UI_TIMEOUT = 20
+TRANSCODER_STATUS_TIMEOUT = 20
 TRANSCODER_ACTIVE_WORKER_TIMEOUT = 20
 TRANSCODER_POTENTIAL_WORKER_TIMEOUT = 20
+TRANSCODER_LOST_HOLD_TIMEOUT = 60
+TRANSCODER_START_MAX_ATTEMPTS = 3
+TRANSCODER_START_DELAY = 2
+TRANSCODER_START_DELAY_FACTOR = 2.7182818284590451
+
 TRANSCODING_START_TIMEOUT = 30
+
 
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10
