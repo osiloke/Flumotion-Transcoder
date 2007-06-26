@@ -1,5 +1,14 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentset.py
+	  (ComponentSetSkeleton.__cbPostAcceptAddition,
+	  ComponentSetSkeleton.__removeComponent,
+	  BaseComponentSet._doAddComponent,
+	  BaseComponentSet._doRejectComponent):
+	Properly remove rejected components.
+
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/transcoderproxy.py
 	  (TranscoderProxy.waitStatus):
 	Change the waitStatus to use the remote method inplace of

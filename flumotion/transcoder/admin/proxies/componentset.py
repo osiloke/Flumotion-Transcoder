@@ -208,6 +208,7 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         
     def __cbPostAcceptAddition(self, accepted, component):
         identifier = component.getIdentifier()
+        assert not (identifier in self._rejecteds)
         if accepted:
             self._doAddComponent(component)
             if identifier in self._compWaiters:
@@ -216,6 +217,7 @@ class ComponentSetSkeleton(RootFlumotionProxy,
                     d.callback(component)
                 del self._compWaiters[identifier]
         else:
+            self._rejecteds[identifier] = component
             self._doRejectComponent(component)
             if identifier in self._compWaiters:
                 for d, to in self._compWaiters[identifier].items():
@@ -228,6 +230,9 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         self.debug("%s", log.getFailureTraceback(failure))
         
     def __removeComponent(self, component):
+        identifier = component.getIdentifier()
+        if identifier in self._rejecteds:
+            del self._rejecteds[identifier]
         if self.hasComponent(component):
             self._doRemoveComponent(component)
             
@@ -268,14 +273,11 @@ class BaseComponentSet(ComponentSetSkeleton):
     def _doAddComponent(self, component):
         identifier = component.getIdentifier()
         assert not (identifier in self._components)
-        assert not (identifier in self._rejecteds)
         self._components[identifier] = component        
 
     def _doRejectComponent(self, component):
         identifier = component.getIdentifier()
         assert not (identifier in self._components)
-        assert not (identifier in self._rejecteds)
-        self._rejecteds[identifier] = component
 
     def _doRemoveComponent(self, component):
         identifier = component.getIdentifier()
