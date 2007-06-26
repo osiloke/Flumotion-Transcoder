@@ -1,5 +1,11 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-data.ini:
+	Force the maximum number of thumbnail to creates,
+	because of some media files having wrong duration.
+
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentset.py
 	  (ComponentSetSkeleton.__cbPostAcceptAddition,
 	  ComponentSetSkeleton.__removeComponent,
