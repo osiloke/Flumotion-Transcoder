@@ -18,6 +18,7 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
+from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.binmaker import makeEncodeBin
 from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
 from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
@@ -263,6 +264,19 @@ class ThumbnailsTarget(TranscodingTarget):
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_video:
             self._raiseError("Source media doesn't have video stream")
+        if ((self._config.periodUnit == PeriodUnitEnum.percent)
+            and not (discoverer.videolength and (discoverer.videolength > 0))
+            and not (discoverer.audiolength and (discoverer.audiolength > 0))):
+            self.warning("Cannot generate percent-based thumbnails with a "
+                         "source media without known duration, "
+                         "falling back to second-based thumbnailing.")
+            newMax = max((100 / (self._config.periodValue or 10)) - 1, 1)
+            if self._config.maxCount:
+                self._config.maxCount = min(self._config.maxCount, newMax)
+            else:
+                self._config.maxCount = newMax
+            self._config.periodUnit = PeriodUnitEnum.seconds
+            self._config.periodValue = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
         return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
@@ -298,6 +312,10 @@ class ThumbnailsTarget(TranscodingTarget):
         self._count = 0
         self._max = self._config.maxCount
         self._nextFrame = self._config.periodValue
+        self.log("Setup to create a thumbnail each %s frames %s",
+                 str(self._nextFrame), self._max
+                 and ("to a maximum of %s thumbnails" % str(self._max))
+                 or "without limitation")
     
     def _thumbnail_prob_by_frames(self, pad, buffer):
         self._frame += 1
@@ -313,6 +331,11 @@ class ThumbnailsTarget(TranscodingTarget):
         self._count = 0
         self._max = self._config.maxCount
         self._nextKeyFrame = self._config.periodValue
+        self.log("Setup to create a thumbnail each %s keyframes %s",
+                 str(self._nextKeyFrame), self._max
+                 and ("to a maximum of %s thumbnails" % str(self._max))
+                 or "without limitation")
+        
     
     def _thumbnail_prob_by_keyframes(self, pad, buffer):
         if not buffer.flag_is_set(gst.BUFFER_FLAG_DELTA_UNIT):
@@ -326,31 +349,57 @@ class ThumbnailsTarget(TranscodingTarget):
 
     def _setupThumbnailByPercent(self, discoverer):
         self._count = 0
-        self._length = discoverer.videolength
+        self._length = max(discoverer.videolength, discoverer.audiolength)
         self._max = self._config.maxCount
-        percent = self._config.periodValue
-        self._nextTimestamp = (self._length * percent) / 100
+        self._percent = self._config.periodValue
+        self._nextTimestamp = None
+        self.log("Setup to create a thumbnail each %s percent of total "
+                 "length %s sconds %s", str(self._percent), 
+                 str(self._length / gst.SECOND), self._max
+                 and ("to a maximum of %s thumbnails" % str(self._max))
+                 or "without limitation")
+    
+    def _percent_get_next(self, timestamp):
+        return timestamp + (self._length * self._percent) / 100
     
     def _thumbnail_prob_by_percent(self, pad, buffer):
+        next = self._nextTimestamp
+        curr = buffer.timestamp
+        if next == None:
+            next = self._percent_get_next(curr)
+            self._nextTimestamp = next
         if (not self._max) or (self._count < self._max):
-            if buffer.timestamp >= self._nextTimestamp:
+            if (curr >= next):
                 self._count += 1
-                percent = self._config.periodValue                
-                self._nextTimestamp = (((self._count + 1) 
-                                        * self._length
-                                        * percent) / 100)
+                next = self._percent_get_next(curr)
+                self._nextTimestamp = next
                 return True
         return False
     
     def _setupThumbnailBySeconds(self, discoverer):
+        self._max = self._config.maxCount
         self._count = 0
-        self._nextTimestamp = self._config.periodValue * gst.SECOND
+        self._interval = self._config.periodValue
+        self._nextTimestamp = None        
+        self.log("Setup to create a thumbnail each %s seconds %s",
+                 str(self._interval), self._max
+                 and ("to a maximum of %s thumbnails" % str(self._max))
+                 or "without limitation")
+    
+    def _seconds_get_next(self, timestamp):
+        return timestamp + self._interval * gst.SECOND
     
     def _thumbnail_prob_by_seconds(self, pad, buffer):
-        if self._count < self._config.maxCount:
+        next = self._nextTimestamp
+        curr = buffer.timestamp
+        if next == None:
+            next = self._seconds_get_next(curr)
+            self._nextTimestamp = next
+        if (not self._max) or (self._count < self._max):
             if buffer.timestamp >= self._nextTimestamp:
                 self._count += 1
-                self._nextTimestamp += self._config.periodValue * gst.SECOND
+                next = self._seconds_get_next(curr)
+                self._nextTimestamp = next
                 return True
         return False
     

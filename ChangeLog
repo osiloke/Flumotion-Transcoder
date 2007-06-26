@@ -1,3 +1,13 @@
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/targets.py (_sourceDiscovered,
+	  _setupThumbnailByFrames, _setupThumbnailByKeyFrames,
+	  _setupThumbnailByPercent, _percent_get_next,
+	  _thumbnail_prob_by_percent, _setupThumbnailBySeconds,
+	  _seconds_get_next, _thumbnail_prob_by_seconds):
+	Properly do the thumbnailing calcules relative to the first timestamp.
+	If no duration is available fallback to second-based thumbnailing.
+
 2007-06-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filetranscoder.glade:
