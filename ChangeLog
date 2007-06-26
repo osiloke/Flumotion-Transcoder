@@ -1,5 +1,17 @@
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoderMedium.remote_getStatus, FileTranscoder.getStatus,
+	  FileTranscoder.init, FileTranscoder._fireStatusChanged,
+	  FileTranscoder.__abortTranscoding, FileTranscoder.__writeReport):
+	* flumotion/transcoder/enums.py:
+	Added the "aborted" status value used when something not related
+	to the transcoding task make the job fail.
+	Added a remote method to retrieve the status to be able
+	to retrieve it even when the UI State is not disponible.
+
+2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/transcoder.py
 	  (MultiTranscoder._updateProgress):
 	Handle media without known duration, and ensure that the progress

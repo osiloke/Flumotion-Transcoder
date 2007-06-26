@@ -94,12 +94,14 @@ TranscoderStatusEnum = enum.EnumClass('TranscoderStatusEnum',
                                        'setting_up', 
                                        'working',
                                        'done', 
-                                       'failed'), 
+                                       'failed',
+                                       'aborted'), 
                                       ('Pending', 
                                        'Setting up', 
                                        'Working',
                                        'Done', 
-                                       'Failed'))
+                                       'Failed',
+                                       'Aborted'))
 
 MonitorFileStateEnum = enum.EnumClass('MonitorFileStateEnum',
                                       ('pending', 

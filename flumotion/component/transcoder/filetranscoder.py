@@ -40,6 +40,9 @@ T_ = messages.gettexter('flumotion-transcoder')
 
 class FileTranscoderMedium(component.BaseComponentMedium):
     
+    def remote_getStatus(self):
+        return self.comp.getStatus()
+    
     def remote_acknowledge(self):
         self.comp.do_acknowledge()
         
@@ -57,6 +60,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
 
 
     ## Public Methods ##
+    
+    def getStatus(self):
+        return self._status
     
     def do_acknowledge(self):
         self.onAcknowledged()
@@ -78,14 +84,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self._reportPath = None
         self._config = None
         self._local = None
-        self.status = TranscoderStatusEnum.pending
+        self._status = TranscoderStatusEnum.pending
         self.uiState.addDictKey('job-data', {})
         self.uiState.addDictKey('source-data', {})
         self.uiState.addDictKey('targets-data', {})
         self.uiState.setitem('job-data', "progress", 0.0)
         self.uiState.setitem('job-data', "job-state", JobStateEnum.pending)
         self.uiState.setitem('job-data', "acknowledged", False)
-        self.uiState.setitem('job-data', "status", self.status)
+        self.uiState.setitem('job-data', "status", self._status)
         
     def do_setup(self):
         try:
@@ -243,7 +249,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                    log.cleanTraceback(tb.getvalue()))
     
     def _fireStatusChanged(self, status):
-        self.status = status
+        self._status = status
         self.uiState.setitem('job-data', "status", status)
         
     def _fireTranscodingReport(self, reportPath):
@@ -254,7 +260,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     ## Private Methods ##
     
     def __abortTranscoding(self, e=None):
-        self._fireStatusChanged(TranscoderStatusEnum.failed)
+        self._fireStatusChanged(TranscoderStatusEnum.aborted)
         if e:
             m = messages.Error(T_(str(e)), 
                                debug=log.getExceptionMessage(e))
@@ -331,7 +337,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if self._diagnoseMode:
             localPath = localPath + ".diag"
         self.debug("Writing report file '%s'", localPath)
-        report.status = self.status
+        report.status = self._status
         ensureDir(os.path.dirname(localPath), "report")
         saver = IniFile()
         saver.saveToFile(report, localPath)
