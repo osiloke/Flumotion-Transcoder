@@ -41,36 +41,30 @@ WAIT_WORKER_TIMEOUT = 30
 TASKMANAGER_WAITPROPS_TIMEOUT = 30
 TASKMANAGER_SYNCH_TIMEOUT = 30
 
-# Maximum time for Monitoring to wait for monitor operations
-MONITOR_LOAD_TIMEOUT = 30
-# Maximum time to wait for a monitor to go happy
-MONITOR_HAPPY_TIMEOUT = 60
-# Used to retrieve monitors UI State
-MONITOR_UI_TIMEOUT = 20
-MONITOR_ACTIVE_WORKER_TIMEOUT = 20
-MONITOR_LOST_HOLD_TIMEOUT = 60
-MONITOR_START_MAX_ATTEMPTS = 4
-MONITOR_START_DELAY = 2
-MONITOR_START_DELAY_FACTOR = 2.7182818284590451
+# Maximum time for admin tasks to wait for a component to be loaded
+TASK_LOAD_TIMEOUT = 30
+# Maximum time for admin tasks to wait for a component becoming happy
+TASK_HAPPY_TIMEOUT = 60
+# First delay to wait when retrying to load a component
+TASK_START_DELAY = 2
+# The factor to apply to the delay 
+TASK_START_DELAY_FACTOR = 2.7182818284590451
+# Maximum time to hold a lost component before starting another one
+TASK_HOLD_TIMEOUT = 60
+# Maximum time to look for a valid component before starting a new one
+TASK_POTENTIAL_COMPONENT_TIMEOUT = 20
+# Maximum time to wait when retrieving component UI State
+TASK_UISTATE_TIMEOUT = 20
 
+
+MONITOR_MAX_ATTEMPTS = 4
 MONITORING_START_TIMEOUT = 30
+MONITORING_ACTIVE_WORKER_TIMEOUT = 20
 
-
-# Maximum time for Monitoring to wait for transcoder operations
-TRANSCODER_LOAD_TIMEOUT = 30
-# Maximum time to wait for a monitor to go happy
-TRANSCODER_HAPPY_TIMEOUT = 60
-# Used to retrieve transcoders UI State
-TRANSCODER_UI_TIMEOUT = 20
 TRANSCODER_STATUS_TIMEOUT = 20
-TRANSCODER_ACTIVE_WORKER_TIMEOUT = 20
-TRANSCODER_POTENTIAL_WORKER_TIMEOUT = 20
-TRANSCODER_LOST_HOLD_TIMEOUT = 60
-TRANSCODER_START_MAX_ATTEMPTS = 3
-TRANSCODER_START_DELAY = 2
-TRANSCODER_START_DELAY_FACTOR = 2.7182818284590451
-
+TRANSCODER_MAX_ATTEMPTS = 3
 TRANSCODING_START_TIMEOUT = 30
+TRANSCODING_ACTIVE_WORKER_TIMEOUT = 20
 
 
 # Forced component deletion constants

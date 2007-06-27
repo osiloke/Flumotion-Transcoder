@@ -1,3 +1,12 @@
+2007-06-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/monitoring.py
+	  (Monitoring.__cbRetrieveActiveWorker):
+	* flumotion/transcoder/admin/transcoding.py
+	  (Transcoding.__cbRetrieveActiveWorker):
+	Constants cleanup.
+
 2007-06-26  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/transcoder-data.ini:

@@ -146,7 +146,7 @@ class Transcoding(TaskManager, WorkerSetListener,
         d.callback(defer._nothing)
 
     def __cbRetrieveActiveWorker(self, _, task):
-        d = task.waitActiveWorker(adminconsts.TRANSCODER_ACTIVE_WORKER_TIMEOUT)
+        d = task.waitValidWorker(adminconsts.TRANSCODING_ACTIVE_WORKER_TIMEOUT)
         # Call self._balancer.addTask(task, worker)
         d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
         return d
