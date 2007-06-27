@@ -1,5 +1,66 @@
 2007-06-27  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py (IAdminTask.getWorker,
+	  IAdminTask.waitValidWorker, IAdminTask.waitSynchronized, AdminTask,
+	  AdminTask.__init__, AdminTask.getLabel, AdminTask.getProperties,
+	  AdminTask.isActive, AdminTask.hasTerminated,
+	  AdminTask.getActiveComponent, AdminTask.getWorker,
+	  AdminTask.getComponents, AdminTask.iterComponents,
+	  AdminTask.addComponent, AdminTask.removeComponent, AdminTask.start,
+	  AdminTask.pause, AdminTask.resume, AdminTask.stop, AdminTask.abort,
+	  AdminTask.suggestWorker, AdminTask.waitSynchronized,
+	  AdminTask.waitValidWorker, AdminTask._onComponentAdded,
+	  AdminTask._onComponentRemoved, AdminTask._onComponentHold,
+	  AdminTask._onComponentHoldCanceled, AdminTask._onComponentLost,
+	  AdminTask._onComponentElected, AdminTask._onComponentRelieved,
+	  AdminTask._onComponentStartingUp,
+	  AdminTask._onComponentStartupCanceled,
+	  AdminTask._doChainWaitSynchronized,
+	  AdminTask._doChainWaitPotentialComponent, AdminTask._doStartup,
+	  AdminTask._doAcceptSuggestedWorker, AdminTask._doChainTerminate,
+	  AdminTask._doTerminated, AdminTask._doAborted,
+	  AdminTask._doSelectPotentialComponent, AdminTask._doLoadComponent,
+	  AdminTask._terminate, AdminTask._abort,
+	  AdminTask._isPendingComponent, AdminTask._isElectedComponent,
+	  AdminTask._hasElectedComponent, AdminTask._resetRetryCounter,
+	  AdminTask._holdLostComponent, AdminTask._cancelComponentHold,
+	  AdminTask._isHoldingLostComponent, AdminTask._waitStopComponent,
+	  AdminTask._stopComponent, AdminTask._waitDeleteComponent,
+	  AdminTask._deleteComponent, AdminTask.__startup,
+	  AdminTask.__cbMultiDeleteResults, AdminTask.__bbTaskTerminated,
+	  AdminTask.__relieveComponent, AdminTask.__electComponent,
+	  AdminTask.__waitPotentialComponent,
+	  AdminTask.__cbMultiUIStateResults,
+	  AdminTask.__bbSelectPotentialComponent,
+	  AdminTask.__cancelComponentStartup, AdminTask.__componentStarted,
+	  AdminTask.__componentLoaded, AdminTask.__delayedStartComponent,
+	  AdminTask.__startComponent, AdminTask.__ebPotentialComponentFailure,
+	  AdminTask.__cbGotPotentialComponent, AdminTask.__loadNewComponent,
+	  AdminTask.__shouldContinueComponentStartup,
+	  AdminTask.__cbComponentLoadSucceed,
+	  AdminTask.__ebComponentLoadFailed, AdminTask.__cbComponentGoesHappy,
+	  AdminTask.__ebComponentNotHappy, AdminTask.__cbGotUIState,
+	  AdminTask.__ebUIStateFailed, AdminTask.__ebComponentStopFailed,
+	  AdminTask.__ebComponentDeleteFailed, AdminTask.__cbGetValidWorker,
+	  AdminTask.__ebNoValidWorker, AdminTask.__asyncHoldTimeout,
+	  AdminTask.__getRetryCount, AdminTask.__incRetryCounter,
+	  AdminTask.__canRetry, AdminTask.__getRetryDelay):
+	* flumotion/transcoder/admin/montask.py (MonitoringTask,
+	  MonitoringTask.__init__, MonitoringTask._onComponentAdded,
+	  MonitoringTask._onComponentRemoved,
+	  MonitoringTask._onComponentElected,
+	  MonitoringTask._onComponentRelieved,
+	  MonitoringTask._onComponentStartupCanceled,
+	  MonitoringTask._doStartup, MonitoringTask._doAborted,
+	  MonitoringTask._doSelectPotentialComponent,
+	  MonitoringTask._doLoadComponent,
+	  MonitoringTask.onComponentMoodChanged):
+	Cleanup and refactorization. Grouped all common code in the
+	base class AdminTask, to be able to share it between
+	MonitoringTask and TranscodingTask.
+	
+2007-06-27  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py
 	  (AdminElement.__cbWaitChildIdle, AdminElement.__cbLogFailures):
 	Changed to not abort with the first error, and log all failures.
