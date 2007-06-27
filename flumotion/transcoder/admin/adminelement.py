@@ -318,9 +318,21 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         childs = self._doGetChildElements()
         if not childs: return element
         defs = [c.waitIdle(timeout) for c in childs]
-        d = defer.DeferredList(defs, fireOnOneErrback=1, consumeErrors=1)
-        d.addCallback(utils.overrideResult, self)
+        d = defer.DeferredList(defs, 
+                               fireOnOneCallback=False,
+                               fireOnOneErrback=False, 
+                               consumeErrors=True)
+        d.addCallback(self.__cbLogFailures, self)
         return d
+    
+    def __cbLogFailures(self, results, newResult):
+        for succeed, result in results:
+            if not succeed:
+                self.warning("Failure waiting for element '%s' "
+                             "become idle: %s", self.getLabel(),
+                             log.getFailureMessage(result))
+                self.debug("%s", log.getFailureTraceback(result))
+        return newResult
     
     def __cbInitializationSucceed(self, result):
         self.log("%s successfully initialized", 
