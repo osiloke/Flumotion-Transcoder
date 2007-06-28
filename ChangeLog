@@ -1,5 +1,12 @@
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.onComponentMoodChanged):
+	Added the lost component holding call,
+	and corrected a refactoring bug.
+
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py
 	  (TranscoderJob.__cbDoAcknowledge, TranscoderJob.__cbMoveOutputFiles,
 	  TranscoderJob.__bbMoveInputFile, TranscoderJob.moveSource):

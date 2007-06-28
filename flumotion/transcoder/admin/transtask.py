@@ -110,6 +110,11 @@ class TranscodingTask(AdminTask, TranscoderListener):
             self.warning("Transcoding task '%s' selected transcoder '%s' "
                          "gone %s", self.getLabel(), 
                          transcoder.getName(), mood.name)
+            if mood == moods.lost:
+                # If the transcoder goes lost, wait a fixed amount of time
+                # to cope with small transient failures.
+                self._holdLostComponent(transcoder)
+                return
             self._abort()
             return
         if mood == moods.sleeping:
@@ -118,7 +123,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         # If no transcoder is selected, don't stop any happy monitor
         if (not self._hasElectedComponent()) and (mood == moods.happy):
             return
-        self.__stopComponent(transcoder)
+        self._stopComponent(transcoder)
 
 
     ## ITranscoderListener Overrided Methods ##
