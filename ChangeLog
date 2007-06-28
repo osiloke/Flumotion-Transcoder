@@ -1,3 +1,9 @@
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob.__bbMoveInputFile, TranscoderJob.moveSource):
+	Forward to the event listener the errors when moving input file.	 
+
 2007-06-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admintask.py (IAdminTask.getWorker,

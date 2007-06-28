@@ -793,17 +793,9 @@ class TranscoderJob(log.LoggerProxy):
         if isinstance(result, Failure):
             #We are in an Errback
             error = result
-            def terminate(error):
-                if error:
-                    return error
-                return result
         else:
             #We are in a Callback
             error = None
-            def terminate(error):
-                if error:
-                    raise error.value
-                return result
             
         def moveSource(to):
             source = sourceCtx.getInputPath()
@@ -823,7 +815,7 @@ class TranscoderJob(log.LoggerProxy):
                 error = Failure()
                 context.reporter.addError(error)
                 context.reporter.setFatalError(error.getErrorMessage())
-        
+                self._fireError(context, error.getErrorMessage())
         if error:
             try:
                 newFile = sourceCtx.getFailedInputPath()
@@ -833,8 +825,11 @@ class TranscoderJob(log.LoggerProxy):
                 context.warning("Failed to move input file: %s", 
                                 log.getExceptionMessage(e))
                 context.reporter.addError(e)
+                self._fireError(context, error.getErrorMessage())
         
-        return terminate(error)
+        if error:
+            return error
+        return result
 
     ### Called by Deferreds ###
     def __cbTargetAnalyseOutputFile(self, result, targetCtx):
