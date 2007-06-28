@@ -753,31 +753,36 @@ class TranscoderJob(log.LoggerProxy):
 
     ### Called by Deferreds ###
     def __cbDoAcknowledge(self, results, context):
+        # The transcoding succeed if all deferred succeed
+        result = True
         for success, result in results:
-            if not success:
-                return result
-        return None
-
-    ### Called by Deferreds ###
-    def __cbMoveOutputFiles(self, result, context):
-        # If stopping don't do anything
-        if self._isStopping(): return
-        context.debug("Moving output files")
-        self._setJobState(JobStateEnum.output_file_moving)
-        for targetCtx in context.getTargetContexts():
-            for src, dest in targetCtx.reporter.getFiles():
-                context.log("Moving '%s' to '%s'", src, dest)
-                ensureDir(os.path.dirname(dest), "transcoding done")
-                shutil.move(src, dest)
+            result = result and success
         return result
 
     ### Called by Deferreds ###
-    def __bbMoveInputFile(self, result, context):
+    def __cbMoveOutputFiles(self, succeed, context):
+        # If stopping don't do anything
+        if self._isStopping(): return
+        if succeed:
+            context.debug("Moving output files")
+            self._setJobState(JobStateEnum.output_file_moving)
+            for targetCtx in context.getTargetContexts():
+                for src, dest in targetCtx.reporter.getFiles():
+                    context.log("Moving '%s' to '%s'", src, dest)
+                    ensureDir(os.path.dirname(dest), "transcoding done")
+                    shutil.move(src, dest)
+        else:
+            context.debug("Skipping moving output files, "
+                          "because transcoding fail")
+        return succeed
+
+    ### Called by Deferreds ###
+    def __bbMoveInputFile(self, succeedOrFailure, context):
         """
         Can be called as a Callback or an Errback.
-        If it's called with a non-failure parameter,
+        If it's called with a non-failure parameter and its True,
         it will try to move the input file to the done folder.
-        If it's called with a failure parameter, 
+        If it's called with a failure parameter or its False, 
         it will try to move the input file to the failed folder.
         If the move operation fail when trying to move to
         the done folder, it try to move to input file to the
@@ -790,12 +795,14 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         self._setJobState(JobStateEnum.input_file_moving)
         sourceCtx = context.getSourceContext()
-        if isinstance(result, Failure):
+        if isinstance(succeedOrFailure, Failure):
             #We are in an Errback
-            error = result
+            error = succeedOrFailure
+            succeed = False
         else:
             #We are in a Callback
             error = None
+            succeed = succeedOrFailure
             
         def moveSource(to):
             source = sourceCtx.getInputPath()
@@ -804,7 +811,7 @@ class TranscoderJob(log.LoggerProxy):
             ensureDir(os.path.dirname(to), "transcoding done")
             shutil.move(source, to)
             
-        if not error:
+        if (not error) and succeed:
             try:
                 newFile = sourceCtx.getDoneInputPath()
                 moveSource(newFile)
@@ -816,7 +823,7 @@ class TranscoderJob(log.LoggerProxy):
                 context.reporter.addError(error)
                 context.reporter.setFatalError(error.getErrorMessage())
                 self._fireError(context, error.getErrorMessage())
-        if error:
+        if error or (not succeed):
             try:
                 newFile = sourceCtx.getFailedInputPath()
                 moveSource(newFile)
@@ -829,7 +836,7 @@ class TranscoderJob(log.LoggerProxy):
         
         if error:
             return error
-        return result
+        return succeedOrFailure
 
     ### Called by Deferreds ###
     def __cbTargetAnalyseOutputFile(self, result, targetCtx):

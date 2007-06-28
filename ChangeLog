@@ -1,5 +1,14 @@
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob.__cbDoAcknowledge, TranscoderJob.__cbMoveOutputFiles,
+	  TranscoderJob.__bbMoveInputFile, TranscoderJob.moveSource):
+	Do not propagate the transcoder failure to the acknowledge chain,
+	only the transcoding outcome.  Otherwise failed transcoding cannot
+	be acknowledged successfully.
+
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py (TranscodingTask,
 	  TranscodingTask.__init__, TranscodingTask.getProfileContext,
 	  TranscodingTask.onComponentMoodChanged,
