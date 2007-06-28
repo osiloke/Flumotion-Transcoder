@@ -87,7 +87,7 @@ class AdminTask(LoggerProxy, EventSource):
     HOLD_TIMEOUT = adminconsts.TASK_HOLD_TIMEOUT
     POTENTIAL_TIMEOUT = adminconsts.TASK_POTENTIAL_COMPONENT_TIMEOUT
     UISTATE_TIMEOUT = adminconsts.TASK_UISTATE_TIMEOUT
-    MAX_ATTEMPTS = 0
+    MAX_RETRIES = 0
     
     def __init__(self, logger, label, properties, interface):
         LoggerProxy.__init__(self, logger)
@@ -322,14 +322,14 @@ class AdminTask(LoggerProxy, EventSource):
         If the maximum attempts are reache,
         _doAborted will be called.
         """
-        self.__incRetryCounter()
         self.__relieveComponent()
         if self.__canRetry():
+            self.__incRetryCounter()
             self.__delayedStartComponent()
         else:
             self.warning("Admin task '%s' reach the maximum attempts (%s) "
                          "of starting a component on worker '%s'", 
-                         self.getLabel(), str(self.__getRetryCount()), 
+                         self.getLabel(), str(self.__getRetryCount() + 1),
                          self._worker.getName())
             self._doAborted()
             return
@@ -492,6 +492,13 @@ class AdminTask(LoggerProxy, EventSource):
             self._onComponentStartupCanceled(component)
         self._pendingName = None
         self.__startComponent()
+        
+    def __abortComponentStartup(self, component=None):
+        if component:
+            self._stopComponent(component)
+            self._onComponentStartupCanceled(component)
+        self._pendingName = None
+        self._abort()
 
     def __componentStarted(self, component):
         self._pendingName = None
@@ -592,7 +599,7 @@ class AdminTask(LoggerProxy, EventSource):
                      "on worker '%s': %s", self.getLabel(), componentName,
                      workerName, log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
-        self.__cancelComponentStartup()
+        self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, component, workerName):
         self.debug("Admin task '%s' component '%s' goes happy on worker '%s'", 
@@ -612,7 +619,7 @@ class AdminTask(LoggerProxy, EventSource):
                      self.getLabel(), component.getName(), workerName,
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
-        self.__cancelComponentStartup(component)
+        self.__abortComponentStartup(component)
 
     def  __cbGotUIState(self, _, component, workerName):
         self.debug("Admin task '%s' retrieved component '%s' UI State", 
@@ -629,7 +636,7 @@ class AdminTask(LoggerProxy, EventSource):
                      self.getLabel(), component.getName(), 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
-        self.__cancelComponentStartup(component)
+        self.__abortComponentStartup(component)
         
     def __ebComponentStopFailed(self, failure, name):
         self.warning("Admin task '%s' failed to stop component '%s': %s",
@@ -686,11 +693,11 @@ class AdminTask(LoggerProxy, EventSource):
         
     def __incRetryCounter(self):
         self._retry += 1
-        self.log("Admin task '%s' retry counter set to %s of %s",
-                 self.getLabel(), self._retry, self.MAX_ATTEMPTS)
+        self.log("Admin task '%s' retry counter set to %s out of %s",
+                 self.getLabel(), self._retry, self.MAX_RETRIES)
         
     def __canRetry(self):
-        return self._retry <= self.MAX_ATTEMPTS
+        return self._retry < self.MAX_RETRIES
     
     def __getRetryDelay(self):
         base = self.START_DELAY
