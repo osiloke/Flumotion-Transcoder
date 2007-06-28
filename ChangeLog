@@ -1,5 +1,12 @@
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
+	  TranscoderAdmin.onMonitoredFileAdded,
+	  TranscoderAdmin.onTranscodingTerminated):
+	Prevent duplication of files pending transcodification in testing code.
+
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoderMedium.remote_acknowledge,
 	  FileTranscoder.__cbJobTerminated,

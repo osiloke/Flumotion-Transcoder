@@ -73,6 +73,8 @@ class TranscoderAdmin(log.Loggable,
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
         
+        self._pendings = {}
+        
         ## Just for debug ##
         #self._components = ComponentSet(self._managers)
         #self._components.addListener(self)
@@ -162,9 +164,13 @@ class TranscoderAdmin(log.Loggable,
     def onMonitoredFileAdded(self, monitoringtask, profileCtx):
         self.info("Monitoring %s: File %s added", monitoringtask.getLabel(), 
                   profileCtx.getInputPath())
-        task = TranscodingTask(self._transcoding, profileCtx)
-        task.addListener(self)
-        self._transcoding.addTask(task, task)
+        if profileCtx.getInputPath() in self._pendings:
+            self._warning("File %s already pending to be transcoded",
+                          profileCtx.getInputPath())
+        else:
+            task = TranscodingTask(self._transcoding, profileCtx)
+            task.addListener(self)
+            self._transcoding.addTask(task, task)
 
     
     def onMonitoredFileRemoved(self, monitoringtask, profileCtx):
@@ -176,7 +182,9 @@ class TranscoderAdmin(log.Loggable,
     def onTranscodingTerminated(self, task, succeed):
         task.removeListener(self)
         self._transcoding.removeTask(task)
-
+        ctx = task.getProfileContext()
+        if ctx.getInputPath() in self._pendings:
+            del self._pendings[ctx.getInputPath()]
 
 
     ## IAdminStoreListener Overriden Methods ##
