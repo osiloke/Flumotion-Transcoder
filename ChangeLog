@@ -1,5 +1,15 @@
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoderMedium.remote_acknowledge,
+	  FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError):
+	Properly return failures when acknowledge fail,
+	and made the acknowledge remote method return
+	the transcoding status.
+
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py
 	  (TranscoderJob.__bbMoveInputFile, TranscoderJob.moveSource):
 	Forward to the event listener the errors when moving input file.	 

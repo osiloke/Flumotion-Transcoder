@@ -44,7 +44,7 @@ class FileTranscoderMedium(component.BaseComponentMedium):
         return self.comp.getStatus()
     
     def remote_acknowledge(self):
-        self.comp.do_acknowledge()
+        return self.comp.do_acknowledge()
         
     def remote_getReportPath(self):
         path = self.comp._getReportPath()
@@ -307,11 +307,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def __cbJobTerminated(self, result):
         try:
             self.__writeReport(self._report, self._reportPath)
-            return
+            # Acknowledge return the transcoding status
+            return self._status
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
             self.__abortTranscoding(e)
+            # Reraise for the do_acknowledge call to return the failure
+            raise e
 
     def __ebAcknowledgeError(self, failure):
         try:
@@ -325,11 +328,13 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 self._reportPath = newReportPath
                 self._fireTranscodingReport(self._reportPath)
             self.__writeReport(self._report, self._reportPath)
-            return
+            return failure
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
             self.__abortTranscoding(e)
+            # Reraise for the do_acknowledge call to return the failure
+            raise e
 
     def __writeReport(self, report, path):
         localPath = path # Already localized
