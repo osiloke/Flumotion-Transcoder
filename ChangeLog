@@ -1,5 +1,34 @@
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py (TranscodingTask,
+	  TranscodingTask.__init__, TranscodingTask.getProfileContext,
+	  TranscodingTask.onComponentMoodChanged,
+	  TranscodingTask.onTranscoderJobStateChanged,
+	  TranscodingTask._onComponentAdded,
+	  TranscodingTask._onComponentRemoved,
+	  TranscodingTask._onComponentHold,
+	  TranscodingTask._onComponentHoldCanceled,
+	  TranscodingTask._onComponentLost,
+	  TranscodingTask._onComponentElected,
+	  TranscodingTask._onComponentRelieved,
+	  TranscodingTask._onComponentStartingUp,
+	  TranscodingTask._onComponentStartupCanceled,
+	  TranscodingTask._doChainWaitSynchronized,
+	  TranscodingTask._doChainWaitPotentialComponent,
+	  TranscodingTask._doStartup, TranscodingTask._doAcceptSuggestedWorker,
+	  TranscodingTask._doChainTerminate, TranscodingTask._doTerminated,
+	  TranscodingTask._doAborted,
+	  TranscodingTask._doSelectPotentialComponent,
+	  TranscodingTask._doLoadComponent, TranscodingTask.__cbJobTerminated,
+	  TranscodingTask.__ebAcknowledgeFailed,
+	  TranscodingTask.__cbCheckForAbortedTranscoder,
+	  TranscodingTask.__ebFailToRetrieveStatus):
+	Refactored to use the base class AdminTask.
+	This automatically add retries limitation and lost component 
+	holding to the transcoding tasks.
+
+2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py (MonitoringTask,
 	  MonitoringTask.onMonitorFileRemoved,
 	  MonitoringTask.onMonitorFileChanged,
