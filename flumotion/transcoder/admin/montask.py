@@ -67,7 +67,7 @@ class MonitoringTaskListener(object):
 
 class MonitoringTask(AdminTask, MonitorListener):
     
-    MAX_ATTEMPTS = adminconsts.MONITOR_MAX_ATTEMPTS
+    MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
     
     def __init__(self, logger, customerCtx):
         AdminTask.__init__(self, logger, customerCtx.getMonitorLabel(),
@@ -75,53 +75,6 @@ class MonitoringTask(AdminTask, MonitorListener):
                            IMonitoringTaskListener)
         self._customerCtx = customerCtx
     
-
-    ## Virtual Method Implementation ##
-    
-    def _onComponentAdded(self, component):
-        component.addListener(self)
-        component.syncListener(self)
-
-    def _onComponentRemoved(self, component):
-        component.removeListener(self)
-
-    def _onComponentElected(self, component):
-        self._fireEvent(component, "MonitoringActivated")
-        component.syncListener(self)
-
-    def _onComponentRelieved(self, component):
-        self._fireEvent(component, "MonitoringDeactivated")
-
-    def _onComponentStartupCanceled(self, component):
-        # Because the monitor was pending to start, 
-        # this event was ignored
-        # So resend the mood changing event
-        mood = component.getMood()
-        self.onComponentMoodChanged(component, mood)
-    
-    def _doStartup(self):
-        for c in self.iterComponents():
-            self.onComponentMoodChanged(c, c.getMood())
-    
-    def _doAborted(self):
-        self._fireEvent(self.getWorker(), "FailToRunOnWorker")
-    
-    def _doSelectPotentialComponent(self, components):
-        for c in components:
-            # If it exists an happy monitor on the 
-            # wanted worker, just elect it
-            if ((c.getWorker() == self.getWorker()) 
-                and (c.getMood() == moods.happy)):
-                return c
-        return None
-    
-    def _doLoadComponent(self, worker, componentName, componentLabel,
-                         componentProperties, loadTimeout):
-        return MonitorProxy.loadTo(worker, componentName, 
-                                   componentLabel, 
-                                   componentProperties,
-                                   loadTimeout)
-
 
     ## IComponentListener Overrided Methods ##
     
@@ -159,7 +112,7 @@ class MonitoringTask(AdminTask, MonitorListener):
     ## IMonitorListener Overrided Methods ##
     
     def onMonitorFileRemoved(self, monitor, virtDir, file, state):
-        if (monitor != self._monitor): return
+        if not self._isElectedComponent(monitor): return
         if (state == MonitorFileStateEnum.downloading): return
         profile = self.__file2profile(virtDir, file)
         if not profile:
@@ -170,7 +123,7 @@ class MonitoringTask(AdminTask, MonitorListener):
         self._fireEvent(profile, "MonitoredFileRemoved")
     
     def onMonitorFileChanged(self, monitor, virtDir, file, state):
-        if (monitor != self._monitor): return
+        if not self._isElectedComponent(monitor): return
         if (state != MonitorFileStateEnum.pending): return
         profile = self.__file2profile(virtDir, file)
         if not profile:
@@ -179,6 +132,58 @@ class MonitoringTask(AdminTask, MonitorListener):
                          self._customerCtx.store.getName())
             return
         self._fireEvent(profile, "MonitoredFileAdded")
+
+
+    ## Virtual Methods Implementation ##
+    
+    def _onComponentAdded(self, component):
+        component.addListener(self)
+        component.syncListener(self)
+
+    def _onComponentRemoved(self, component):
+        component.removeListener(self)
+
+    def _onComponentElected(self, component):
+        self._fireEvent(component, "MonitoringActivated")
+        component.syncListener(self)
+
+    def _onComponentRelieved(self, component):
+        self._fireEvent(component, "MonitoringDeactivated")
+
+    def _onComponentStartupCanceled(self, component):
+        # Because the monitor was pending to start, 
+        # this event was ignored
+        # So resend the mood changing event
+        mood = component.getMood()
+        self.onComponentMoodChanged(component, mood)
+    
+    def _doAcceptSuggestedWorker(self, worker):
+        current = self.getWorker()
+        monitor = self.getActiveComponent()
+        return (worker != current) or (not monitor)
+
+    def _doStartup(self):
+        for c in self.iterComponents():
+            self.onComponentMoodChanged(c, c.getMood())
+    
+    def _doAborted(self):
+        self._fireEvent(self.getWorker(), "FailToRunOnWorker")
+    
+    def _doSelectPotentialComponent(self, components):
+        for c in components:
+            # If it exists an happy monitor on the 
+            # wanted worker, just elect it
+            if ((c.getWorker() == self.getWorker()) 
+                and (c.getMood() == moods.happy)):
+                return c
+        return None
+    
+    def _doLoadComponent(self, worker, componentName, componentLabel,
+                         componentProperties, loadTimeout):
+        return MonitorProxy.loadTo(worker, componentName, 
+                                   componentLabel, 
+                                   componentProperties,
+                                   loadTimeout)
 
 
     ## Private Methods ##
