@@ -1,5 +1,10 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py (TranscoderJob.moveSource):
+	Corrected copy/past bug.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoder.init, FileTranscoder.check_properties,
 	  FileTranscoder.do_check, FileTranscoder.transcoder_checks,

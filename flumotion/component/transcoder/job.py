@@ -832,7 +832,7 @@ class TranscoderJob(log.LoggerProxy):
                 context.warning("Failed to move input file: %s", 
                                 log.getExceptionMessage(e))
                 context.reporter.addError(e)
-                self._fireError(context, error.getErrorMessage())
+                self._fireError(context, str(e))
         
         if error:
             return error
