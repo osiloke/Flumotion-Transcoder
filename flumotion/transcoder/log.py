@@ -55,27 +55,39 @@ def getFailureMessage(failure):
             msg += "; CAUSED BY " + details
     return msg
 
-def getExceptionTraceback(exception):
+def getExceptionTraceback(exception=None, cleanup=False):
+    #FIXME: Only work if the exception was raised in the current context
     f = failure.Failure()
-    if f.value != exception:
+    if exception and (f.value != exception):
         return "Not Traceback information available"
     io = StringIO.StringIO()
-    print >> io, f.getTraceback()
+    tb = f.getTraceback()
+    if cleanup:
+        tb = cleanTraceback(tb)
+    print >> io, tb
     if isinstance(f.value, TranscoderError):
         if f.value.causeTraceback:
             print >> io, "\n\nCAUSED BY:\n\n"
-            print >> io, f.value.causeTraceback
+            tb = f.value.causeTraceback
+            if cleanup:
+                tb = cleanTraceback(tb)
+            print >> io, tb
     return io.getvalue()
 
-
-def getFailureTraceback(failure):
+def getFailureTraceback(failure, cleanup=False):
     io = StringIO.StringIO()
-    print >> io, failure.getTraceback()
+    tb = failure.getTraceback()
+    if cleanup:
+        tb = cleanTraceback(tb)
+    print >> io, tb
     exception = failure.value
     if exception and isinstance(exception, TranscoderError):
         if exception.causeTraceback:
             print >> io, "\n\nCAUSED BY:\n\n"
-            print >> io, exception.causeTraceback
+            tb = exception.causeTraceback
+            if cleanup:
+                tb = cleanTraceback(tb)
+            print >> io, tb
     return io.getvalue()
 
 def cleanTraceback(tb):

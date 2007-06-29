@@ -1,5 +1,11 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/log.py (getExceptionTraceback,
+	  getFailureTraceback):
+	Integrated traceback cleaning int getXXXTraceback.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/inifile.py (IniFile.loadFromFile,
 	  IniFile.saveToFile):
 	* flumotion/transcoder/properties.py (RootPropertyBag):
