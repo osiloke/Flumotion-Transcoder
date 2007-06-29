@@ -313,10 +313,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(TranscoderError, PropertyError):
-            self.__transcodingError(failure, task)
-            return
-        self.__unexpectedError(failure, task)
-        return failure
+            return self.__transcodingError(failure, task)
+        return self.__unexpectedError(failure, task)
 
     def __ebStopErrorFilter(self, failure):
         self.__unexpectedError(failure)
@@ -333,6 +331,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.debug("Traceback with filenames cleaned up:\n%s", 
                    log.getFailureTraceback(failure, True))
         self.setMood(moods.sad)
+        return failure
         
     def __unexpectedError(self, failure=None, task=None):
         self._fireStatusChanged(TranscoderStatusEnum.unexpected_error)
@@ -347,6 +346,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         m = messages.Error(T_(failure.getErroMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
+        return failure
     
     def __cbJobDone(self, report):
         try:

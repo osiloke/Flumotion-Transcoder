@@ -1,5 +1,13 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__ebErrorFilter, FileTranscoder.__transcodingError,
+	  FileTranscoder.__unexpectedError):
+	Properly return failure when handling check and setup to prevent the
+	transcoder to be started.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py (TranscodingTask.__init__,
 	  TranscodingTask.onComponentOrphaned,
 	  TranscodingTask.onComponentMoodChanged,
