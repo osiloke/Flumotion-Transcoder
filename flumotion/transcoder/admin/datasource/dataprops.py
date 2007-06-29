@@ -23,8 +23,8 @@ class AudioData(properties.PropertyBag):
     type = TargetTypeEnum.audio
     muxer = properties.String('muxer', None, True)
     audioEncoder = properties.String('audio-encoder', None, True)
-    audioRate = properties.String('audio-rate', None)
-    audioChannels = properties.String('audio-channels', None)
+    audioRate = properties.Integer('audio-rate', None)
+    audioChannels = properties.Integer('audio-channels', None)
 
     
 class VideoData(properties.PropertyBag):

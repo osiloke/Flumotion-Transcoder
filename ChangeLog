@@ -1,5 +1,10 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/dataprops.py (AudioData):
+	Changed wrong property type for audio-rate and audio-channels.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoder.__ebErrorFilter, FileTranscoder.__transcodingError,
 	  FileTranscoder.__unexpectedError):
