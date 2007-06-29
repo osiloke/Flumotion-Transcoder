@@ -1,3 +1,41 @@
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.init, FileTranscoder.check_properties,
+	  FileTranscoder.do_check, FileTranscoder.transcoder_checks,
+	  FileTranscoder.do_setup, FileTranscoder.transcoder_setup,
+	  FileTranscoder.do_start, FileTranscoder.transcoder_start,
+	  FileTranscoder.do_stop, FileTranscoder.component_stop,
+	  FileTranscoder._getReportPath, FileTranscoder._logCurrentException,
+	  FileTranscoder.__ebErrorFilter, FileTranscoder.__ebStopErrorFilter,
+	  FileTranscoder.__transcodingError, FileTranscoder.__unexpectedError,
+	  FileTranscoder.__cbJobDone, FileTranscoder.__ebJobFailed,
+	  FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError, FileTranscoder.__writeReport,
+	  FileTranscoder.__finalizeDiagnoseMode,
+	  FileTranscoder.__ebDiagnoseAcknowledgeFail,
+	  FileTranscoder.__finalizeStandardMode, FileTranscoder.__terminate,
+	  FileTranscoder.__terminateDiagnoseMode,
+	  FileTranscoder.__terminateStandardMode):
+	* flumotion/component/transcoder/filetranscoder.xml:
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/errors.py (TranscoderConfigError,
+	  TranscoderConfigError.__init__):
+	* flumotion/transcoder/local.py (Local.updateFromComponentProperties):
+	Refactorized for better check/setup/startup error handling.
+	Added two transcoding status, error and unexpected_error; error for
+	known error that the admin should considere as transcoding failure,
+	and unexpected_error for... unexpected errors where the admin could
+	choose to retry the transcoding task. The aborted status is removed
+	in favor of unexpected_error.
+	The file-transcoder component properties changed, 'report' is now used
+	to force the output report file, and to specify a report to load from
+	for diagnose purpose the propert 'diagnose' should be used.
+	When diganosing, the local is first loaded from the report, and then
+	updated with the component properties.
+	In diagnose mode now print the outcome message and stop the reactor 
+	after acknowledgment.
+
 2007-06-28  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/transtask.py

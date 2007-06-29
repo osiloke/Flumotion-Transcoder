@@ -24,6 +24,14 @@ class Local(object):
         self._name = name
         self._roots = dict(virtualRoots)
 
+    def updateFromComponentProperties(self, props):
+        roots = [prop.split(':', 1)
+                 for prop in props.get("local-root", [])]
+        self._roots.update(dict(roots))
+        name = props.get("local-name", "")
+        if name:
+            self._name = name
+
     def getName(self):
         return self._name
 

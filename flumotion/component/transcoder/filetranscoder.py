@@ -16,7 +16,8 @@ import os
 import traceback
 
 from StringIO import StringIO
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
+from twisted.python.failure import Failure
 
 from flumotion.component import component
 from flumotion.component.component import moods
@@ -26,10 +27,12 @@ from flumotion.common import errors, messages
 from flumotion.component.transcoder import job, compconsts
 from flumotion.transcoder import properties, log
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.transconfig import TranscodingConfig
 from flumotion.transcoder.transreport import TranscodingReport
+from flumotion.transcoder.properties import PropertyError
 from flumotion.transcoder.inifile import IniFile
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.local import Local
@@ -79,10 +82,13 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.logName = None
         self._diagnoseMode = False
         self._waitAcknowledge = False
-        self._job = job.TranscoderJob(self, self)
+        self._niceLevel = None
+        self._job = None
         self._report = None
-        self._reportPath = None
+        self._reportDefaultPath = None
+        self._reportForcedPath = None
         self._config = None
+        self._inputPath = None
         self._local = None
         self._status = TranscoderStatusEnum.pending
         self.uiState.addDictKey('job-data', {})
@@ -93,102 +99,152 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.uiState.setitem('job-data', "acknowledged", False)
         self.uiState.setitem('job-data', "status", self._status)
         
-    def do_setup(self):
-        try:
-            self._fireStatusChanged(TranscoderStatusEnum.setting_up)
-            loader = IniFile()
+    def check_properties(self, props, addMessage):
+        #TODO: Add directories/files right checks
+        if props.has_key("config"):
+            if props.has_key("diagnose"):
+                msg = ("Component properties 'config' "
+                       + "and 'diagnose' should not be "
+                       + "specified at the same time")
+                raise TranscoderConfigError(msg)
+            local = Local.createFromComponentProperties(props)
+            configPath = VirtualPath(props["config"])
+            localConfigPath = configPath.localize(local)
+            if not os.path.exists(localConfigPath):
+                msg = "Config file '%s' not found" % localConfigPath
+                raise TranscoderConfigError(msg)
+        elif props.has_key("diagnose"):
+            localReportPath = props["diagnose"]
+            if not os.path.exists(localReportPath):
+                msg = "Report file '%s' not found" % localReportPath
+                raise TranscoderConfigError(msg)
+        else:
+            msg = ("One of the component properties "
+                   + "'config' and 'diagnose' "
+                   + "should be specified")
+            raise TranscoderConfigError(msg)
+        if props.has_key("report"):
+            localRealPath = os.path.realpath(props["report"])
+            localReportDir = os.path.dirname(localRealPath)
+            if not os.path.exists(localReportDir):
+                msg = "Output report directory '%s' not found" % localReportDir
+                raise TranscoderConfigError(msg)
+            
+        
+    def do_check(self):
+        
+        def transcoder_checks(result):
             props = self.config["properties"]
-            self._waitAcknowledge = props.get("wait-acknowledge", False)
-            niceLevel = props.get("nice-level", None)
             #FIXME: Better checks for path roots
-            self._local = Local.createFromComponentProperties(props)
+            self._waitAcknowledge = props.get("wait-acknowledge", False)
+            self._niceLevel = props.get("nice-level", None)
+            localRepPath = props.get("report", None)
+            self._reportForcedPath = localRepPath and os.path.realpath(localRepPath)
             if props.has_key("config"):
-                if props.has_key("report"):
-                    raise Exception("Component properties 'config' "
-                                    + "and 'report' should not be "
-                                    + "specified at the same time")
+                self._local = Local.createFromComponentProperties(props)
                 configPath = VirtualPath(props["config"])
                 localConfigPath = configPath.localize(self._local)
-                if not os.path.exists(localConfigPath):
-                    raise Exception("Config file not found ('%s')" 
-                                    % localConfigPath)
-                self.debug("Loading configuration from '%s'", localConfigPath)
-                self._config = TranscodingConfig()
-                loader.loadFromFile(self._config, localConfigPath)
-                self._report = TranscodingReport()
-                self._report.init(self._config)
-                self._report.configPath = configPath
+                self.debug("Loading configuration from '%s'", 
+                           localConfigPath)
+                self._configPath = localConfigPath
+                self._inputPath = None
                 self._diagnoseMode = False
-                self._job.setup(self._local, self._config, self._report, 
-                                niceLevel=niceLevel)
             else:
-                if props.has_key("report"):
-                    reportPath = VirtualPath(props["report"])
-                    localReportPath = reportPath.localize(self._local)
-                    if not os.path.exists(localReportPath):
-                        raise Exception("Report file not found ('%s')" 
-                                        % localReportPath)
-                    self.debug("Loading report from '%s'", localReportPath)
-                    baseReport = TranscodingReport()
-                    loader.loadFromFile(baseReport, localReportPath)
-                    configPath = baseReport.configPath
-                    localConfigPath = configPath.localize(self._local)
-                    if not os.path.exists(localConfigPath):
-                        raise Exception("Config file not found ('%s')" 
-                                        % localConfigPath)
-                    self.debug("Loading configuration from '%s'", 
-                               localConfigPath)
-                    self._config = TranscodingConfig()
-                    loader.loadFromFile(self._config, localConfigPath)
-                    virtRepFilePath = baseReport.source.filePath
-                    repFilePath = virtRepFilePath.localize(self._local)
-                    confInputFile = self._config.source.inputFile
-                    if not repFilePath.endswith(confInputFile):
-                        raise Exception("The report source file-path property "
-                                        + "doesn't match the configuration "
-                                        + "source input-file property")
-                    altInputDir = repFilePath[:-len(confInputFile)]
-                    self._report = TranscodingReport()
-                    self._report.init(self._config)
-                    self._report.configPath = configPath
-                    self.info("Entering diagnose mode")
-                    self._diagnoseMode = True
-                    self._job.setup(self._local, self._config, self._report,
-                                    moveInputFile=False,
-                                    altInputDir=altInputDir,
-                                    niceLevel=niceLevel)
-                else:
-                    raise Exception("One of the component properties "
-                                    + "'config' and 'report' "
-                                    + "should be specified")
-            return component.BaseComponent.do_setup(self)
-        except Exception, e:
-            self.warning("File transcoder component setup failed")
-            self._logCurrentException()
-            self.__abortTranscoding(e)
-            raise errors.ComponentSetupHandledError(e)
+                localReportPath = props["diagnose"]
+                self.debug("Loading report from '%s'", localReportPath)
+                baseReport = TranscodingReport()
+                loader = IniFile()
+                loader.loadFromFile(baseReport, localReportPath)
+                self.info("Using local '%s' from report file", 
+                          baseReport.local.name)
+                self._local = baseReport.local.getLocal()
+                self._local.updateFromComponentProperties(props)
+                configPath = baseReport.configPath
+                localConfigPath = configPath.localize(self._local)
+                if not os.path.exists(localConfigPath):
+                    msg = "Config file not found ('%s')" % localConfigPath
+                    raise TranscoderConfigError(msg)
+                self._configPath = localConfigPath
+                virtAltPath = baseReport.source.filePath
+                self._inputPath = virtAltPath.localize(self._local)
+                self._diagnoseMode = True
+            return result
+        
+        self._fireStatusChanged(TranscoderStatusEnum.checking)
+        d = component.BaseComponent.do_check(self)
+        d.addCallback(transcoder_checks)
+        d.addErrback(self.__ebErrorFilter, "component checking")
+        return d
+        
+    def do_setup(self):
+        
+        def transcoder_setup(result):
+            localConfigPath = self._configPath
+            configPath = VirtualPath.virtualize(localConfigPath, self._local)
+            self.debug("Loading configuration from '%s'", localConfigPath)
+            
+            self._config = TranscodingConfig()
+            loader = IniFile()
+            loader.loadFromFile(self._config, localConfigPath)
+            
+            if self._inputPath:
+                confInputFile = self._config.source.inputFile
+                if not self._inputPath.endswith(confInputFile):
+                    raise Exception("The source file path "
+                                    + "doesn't match the configuration "
+                                    + "source input-file property")
+                altInputDir = self._inputPath[:-len(confInputFile)]
+            else:
+                altInputDir=None
+            
+            self._report = TranscodingReport()
+            self._report.init(self._config)
+            self._report.configPath = configPath
+            
+            if not self._diagnoseMode:
+                moveInputFile = True
+            else:
+                self.info("Entering diagnose mode")
+                moveInputFile = False
+            
+            self._job = job.TranscoderJob(self, self)
+            self._job.setup(self._local, self._config, self._report,
+                            moveInputFile=moveInputFile, 
+                            altInputDir=altInputDir,
+                            niceLevel=self._niceLevel)
+            return result
+
+        self._fireStatusChanged(TranscoderStatusEnum.setting_up)
+        d = component.BaseComponent.do_setup(self)
+        d.addCallback(transcoder_setup)
+        d.addErrback(self.__ebErrorFilter, "component setup")
+        return d
 
     def do_start(self, *args, **kwargs):
-        try:
-            self._fireStatusChanged(TranscoderStatusEnum.working)
+        
+        def transcoder_start(result):
             d = self._job.start()
             d.addCallbacks(self.__cbJobDone, self.__ebJobFailed)
-            return component.BaseComponent.do_start(self)
-        except Exception, e:
-            self.warning("File transcoder component startup failed")
-            self._logCurrentException()
-            self.__abortTranscoding(e)
-            raise errors.ComponentStartHandledError(e)
+            return result
+        
+        self._fireStatusChanged(TranscoderStatusEnum.working)
+        d = component.BaseComponent.do_start(self)
+        d.addCallback(transcoder_start)
+        d.addErrback(self.__ebErrorFilter, "component startup")
+        return d
             
     def do_stop(self, *args, **kwargs):
-        try:            
-            return self._job.stop()
-        except Exception, e:
-            self.warning("File transcoder component stopping failed")
-            self._logCurrentException()
-            self.__abortTranscoding(e)
+        
+        def component_stop(result):
             return component.BaseComponent.do_stop(self)
 
+        if self._job:
+            d = self._job.stop()
+        else:
+            d = defer.succeed(defer._nothing)
+        d.addCallback(component_stop)
+        d.addErrback(self.__ebStopErrorFilter)
+        return d
     
     ## Overriden Methods ##
     
@@ -235,18 +291,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     ## Protected/Friend Methods ##
 
     def _getReportPath(self):
-        if self._reportPath:
-            virtPath = VirtualPath.virtualize(self._reportPath, self._local)
+        if self._reportDefaultPath:
+            virtPath = VirtualPath.virtualize(self._reportDefaultPath, self._local)
             return virtPath
         return None
 
     def _logCurrentException(self):
-        if log.getCategoryLevel(self.logCategory) < log.DEBUG:
-            return
-        tb = StringIO()
-        traceback.print_exc(file=tb)
         self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.cleanTraceback(tb.getvalue()))
+                   log.getExceptionTraceback(None, True))
     
     def _fireStatusChanged(self, status):
         self._status = status
@@ -259,14 +311,42 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     ## Private Methods ##
     
-    def __abortTranscoding(self, e=None):
-        self._fireStatusChanged(TranscoderStatusEnum.aborted)
-        if e:
-            m = messages.Error(T_(str(e)), 
-                               debug=log.getExceptionMessage(e))
-            self.addMessage(m)
-        else:
-            self.setMood(moods.sad)
+    def __ebErrorFilter(self, failure, task=None):
+        if failure.check(TranscoderError, PropertyError):
+            self.__transcodingError(failure, task)
+            return
+        self.__unexpectedError(failure, task)
+        return failure
+
+    def __ebStopErrorFilter(self, failure):
+        self.__unexpectedError(failure)
+        return component.BaseComponent.do_stop(self)
+    
+    def __transcodingError(self, failure=None, task=None):
+        self._fireStatusChanged(TranscoderStatusEnum.error)
+        if not failure:
+            failure = Failure()
+        self.onJobError(failure.getErrorMessage())
+        self.warning("Transocding error%s: %s", 
+                     (task and " during %s" % task) or "",
+                     log.getFailureMessage(failure))
+        self.debug("Traceback with filenames cleaned up:\n%s", 
+                   log.getFailureTraceback(failure, True))
+        self.setMood(moods.sad)
+        
+    def __unexpectedError(self, failure=None, task=None):
+        self._fireStatusChanged(TranscoderStatusEnum.unexpected_error)
+        if not failure:
+            failure = Failure()
+        self.onJobError(failure.getErrorMessage())
+        self.warning("Unexpected error%s: %s", 
+                     (task and " during %s" % task) or "",
+                     log.getFailureMessage(failure))
+        self.debug("Traceback with filenames cleaned up:\n%s", 
+                   log.getFailureTraceback(failure, True))
+        m = messages.Error(T_(failure.getErroMessage()), 
+                           debug=log.getFailureMessage(failure))
+        self.addMessage(m)
     
     def __cbJobDone(self, report):
         try:
@@ -274,15 +354,15 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                                             + "instance. It's Baaaaad.")
             config = self._config
             # FIXME: Very ugly, should not ask the job for this
-            self._reportPath = self._job.getDoneReportPath()
-            self.__writeReport(report, self._reportPath)
-            self._fireTranscodingReport(self._reportPath)
+            self._reportDefaultPath = self._job.getDoneReportPath()
+            self.__writeReport(report)
+            self._fireTranscodingReport(self._reportDefaultPath)
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            self.__abortTranscoding(e)
+            self.__unexpectedError()
         
     
     def __ebJobFailed(self, failure):
@@ -294,25 +374,26 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                                    debug=log.getFailureMessage(failure))
                 self.addMessage(m)
             # FIXME: Very ugly, should not ask the job for this
-            self._reportPath = self._job.getFailedReportPath()
-            self.__writeReport(report, self._reportPath)
-            self._fireTranscodingReport(self._reportPath)
+            self._reportDefaultPath = self._job.getFailedReportPath()
+            self.__writeReport(report)
+            self._fireTranscodingReport(self._reportDefaultPath)
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            self.__abortTranscoding(e)
+            self.__unexpectedError()
 
     def __cbJobTerminated(self, result):
         try:
-            self.__writeReport(self._report, self._reportPath)
+            self.__writeReport(self._report)
+            self.__terminate(self._report, self._status)
             # Acknowledge return the transcoding status
             return self._status
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            self.__abortTranscoding(e)
+            self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
 
@@ -324,28 +405,32 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.setMood(moods.sad)
             # FIXME: Very ugly, should not ask the job for this
             newReportPath = self._job.getFailedReportPath()
-            if newReportPath != self._reportPath:
-                self._reportPath = newReportPath
-                self._fireTranscodingReport(self._reportPath)
-            self.__writeReport(self._report, self._reportPath)
+            if newReportPath != self._reportDefaultPath:
+                self._reportDefaultPath = newReportPath
+                self._fireTranscodingReport(self._reportDefaultPath)
+            self.__writeReport(self._report)
+            self.__terminate(self._report, self._status)
             return failure
         except Exception, e:
             self.warning("Unexpected exception: %s", str(e))
             self._logCurrentException()
-            self.__abortTranscoding(e)
+            self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
 
-    def __writeReport(self, report, path):
-        localPath = path # Already localized
-        #if running in diagnose mode, don't overrite it
-        if self._diagnoseMode:
-            localPath = localPath + ".diag"
-        self.debug("Writing report file '%s'", localPath)
+    def __writeReport(self, report):
+        if self._reportForcedPath:
+            reportPath = self._reportForcedPath
+        else:
+            reportPath = self._reportDefaultPath
+            #if running in diagnose mode, don't overrite it
+            if self._diagnoseMode:
+                reportPath = reportPath + ".diag"
+        self.debug("Writing report file '%s'", reportPath)
         report.status = self._status
-        ensureDir(os.path.dirname(localPath), "report")
+        ensureDir(os.path.dirname(reportPath), "report")
         saver = IniFile()
-        saver.saveToFile(report, localPath)
+        saver.saveToFile(report, reportPath)
     
     def __finalize(self, report, succeed):
         if self._diagnoseMode:
@@ -354,11 +439,31 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.__finalizeStandardMode(report, succeed)
             
     def __finalizeDiagnoseMode(self, report, succeed):
-        msg = ""
-        if succeed:
-            msg += "DONE"
+        self.info("Automatic acknowledgement")
+        d = self.do_acknowledge()
+        d.addErrback(self.__ebDiagnoseAcknowledgeFail)
+        
+    def __ebDiagnoseAcknowledgeFail(self, failure):
+        self.warning("Acknowledgment fail: %s",
+                     log.getFailureMessage(failure))
+        self.debug(log.getFailureTraceback(failure, True))
+        reactor.callLater(0, reactor.stop)
+        
+    def __finalizeStandardMode(self, report, succeed):
+        if not succeed:
+            self.setMood(moods.sad)
+        if not self._waitAcknowledge:
+            self.do_acknowledge()
+
+    def __terminate(self, report, status):
+        if self._diagnoseMode:
+            self.__terminateDiagnoseMode(report, status)
         else:
-            msg += "FAILED"
+            self.__terminateStandardMode(report, status)
+            
+    def __terminateDiagnoseMode(self, report, status):
+        msg = ""
+        msg += status.nick.upper()
         fatal = 0
         if report.fatalError:
             fatal += 1
@@ -374,11 +479,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if total > fatal:
             msg += " ** %d Recoverable Error(s)" % (total - fatal)
         self.info("*"*6 + " " + msg + " " + "*"*6)
-        d = self.do_acknowledge()
-        d.addBoth(lambda r: reactor.stop())
+        reactor.callLater(0, reactor.stop)
         
-    def __finalizeStandardMode(self, report, succeed):
-        if not succeed:
-            self.setMood(moods.sad)
-        if not self._waitAcknowledge:
-            self.do_acknowledge()
+    def __terminateStandardMode(self, report, succeed):
+        pass
