@@ -77,6 +77,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
                            ITranscodingTaskListener)
         self._profileCtx = profileCtx
         self._acknowledging = False
+        self._sadTimeout = None
         
     ## Public Methods ##
     
@@ -85,6 +86,18 @@ class TranscodingTask(AdminTask, TranscoderListener):
 
 
     ## IComponentListener Overrided Methods ##
+    
+    def onComponentOrphaned(self, transcoder, worker):
+        if not self.isActive(): return
+        if not self._isElectedComponent(transcoder): return
+        # The component segfaulted or has been killed
+        self.log("Transcoding task '%s' selected transcoder '%s' "
+                 "goes orphaned of worker '%s'", self.getLabel(),
+                 transcoder.getName(), worker.getName())
+        # The transcoder has been killed or has segfaulted.
+        # We don't abort right here because the transcoder mood
+        # would not be sad yet and it would be stopped and deleted.
+        # And we want it to be keeped for later investigations
     
     def onComponentMoodChanged(self, transcoder, mood):
         if not self.isActive(): return
@@ -96,16 +109,21 @@ class TranscodingTask(AdminTask, TranscoderListener):
         if self._isElectedComponent(transcoder):
             if (mood != moods.lost):
                 self._cancelComponentHold()
+            if (mood != moods.sad):
+                utils.cancelTimeout(self._sadTimeout)
             if mood == moods.happy:
                 return
-            if (mood == moods.sad) and transcoder.isRunning():
-                # Check for aborted transcoder
-                timeout = adminconsts.TRANSCODER_STATUS_TIMEOUT
-                d = transcoder.waitStatus(timeout)
-                args = (transcoder,)
-                d.addCallbacks(self.__cbCheckForAbortedTranscoder,
-                               self.__ebFailToRetrieveStatus,
-                               callbackArgs=args, errbackArgs=args)
+            if mood == moods.sad:
+                if not transcoder.isRunning():
+                    # The transcoder has been killed or segfaulted
+                    self._abort()
+                    return
+                # The transcoder can be a zombie or waiting for acknowledge.
+                # Timeout to prevent the task to stall.
+                timeout = adminconsts.TRANSCODER_SAD_TIMEOUT
+                to = utils.createTimeout(timeout, self.__asyncSadTimeout, 
+                                         transcoder)
+                self._sadTimeout = to
                 return
             self.warning("Transcoding task '%s' selected transcoder '%s' "
                          "gone %s", self.getLabel(), 
@@ -128,16 +146,26 @@ class TranscodingTask(AdminTask, TranscoderListener):
 
     ## ITranscoderListener Overrided Methods ##
 
+    def onTranscoderStatusChanged(self, transcoder, status):
+        if not self.isActive(): return
+        if not self._isElectedComponent(transcoder): return
+        self.log("Transcoding task '%s' transcoder '%s' "
+                 "status change to %s", self.getLabel(), 
+                 transcoder.getName(), status.name)
+        if status in [TranscoderStatusEnum.unexpected_error,
+                      TranscoderStatusEnum.error]:
+            self.__cbJobTerminated(status, transcoder)
+
     def onTranscoderJobStateChanged(self, transcoder, jobState):
         if not self.isActive(): return
-        if not self._isElectedComponent: return
+        if not self._isElectedComponent(transcoder): return
         self.log("Transcoding task '%s' transcoder '%s' "
                  "job state change to %s", self.getLabel(), 
                  transcoder.getName(), jobState.name)
         if jobState == JobStateEnum.waiting_ack:
             if not transcoder.isAcknowledged():
                 self._acknowledging = True
-                d = transcoder.acknowledge()
+                d = transcoder.acknowledge(adminconsts.TRANSCODER_ACK_TIMEOUT)
                 args = (transcoder,)
                 d.addCallbacks(self.__cbJobTerminated,
                                self.__ebAcknowledgeFailed,
@@ -172,6 +200,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         component.syncListener(self)
 
     def _onComponentRelieved(self, component):
+        utils.cancelTimeout(self._sadTimeout)
         self._fireEvent(component, "TranscoderReleased")
 
     def _onComponentStartingUp(self, component):
@@ -207,7 +236,8 @@ class TranscodingTask(AdminTask, TranscoderListener):
         self._fireEvent(result, "TranscodingTerminated")
     
     def _doAborted(self):
-        pass
+        # We tried but there nothing to do...
+        self.__transcodingFailed()
     
     def _doSelectPotentialComponent(self, components):
         selected = None
@@ -239,15 +269,38 @@ class TranscodingTask(AdminTask, TranscoderListener):
 
     ## Private Methods ##
     
+    def __transcodingFailed(self, transcoder=None):
+        transcoder = transcoder or self.getActiveComponent()
+        self.info("Transcoding task '%s' failed", self.getLabel())
+        self._fireEvent(self.getActiveComponent(), "TranscodingFailed")
+        self._terminate(False)
+    
+    def __transcodingSucceed(self, transcoder=None):
+        transcoder = transcoder or self.getActiveComponent()
+        self.info("Transcoding task '%s' done", self.getLabel())
+        self._fireEvent(transcoder, "TranscodingDone")
+        self._terminate(True)
+    
     def __cbJobTerminated(self, status, transcoder):
         if status == TranscoderStatusEnum.done:
-            self.info("Transcoding task '%s' done", self.getLabel())
-            self._fireEvent(transcoder, "TranscodingDone")
-            self._terminate(True)
+            self.__transcodingSucceed(transcoder)
         elif status == TranscoderStatusEnum.failed:
-            self.info("Transcoding task '%s' failed", self.getLabel())
-            self._fireEvent(transcoder, "TranscodingFailed")
-            self._terminate(False)
+            self.__transcodingFailed(transcoder)
+        elif status == TranscoderStatusEnum.unexpected_error:
+            # If the transcoder component got an unexpected error
+            # abort and eventualy retry
+            self.warning("Transcoding task '%s' transcoder '%s' "
+                         "got an unexpected error", 
+                         self.getLabel(), transcoder.getName())
+            self._abort()
+        elif status == TranscoderStatusEnum.error:
+            # If the transcoder component got a known error (transcoder related)
+            # it's assumed the error will raise again if we retry.
+            # So we do not retry and treat as a failed transcoding.
+            self.warning("Transcoding task '%s' transcoder '%s' "
+                         "goes to error status", self.getLabel(), 
+                         transcoder.getName())
+            self.__transcodingFailed(transcoder)
         elif status == TranscoderStatusEnum.aborted:
             self.info("Transcoding task '%s' aborted", self.getLabel())
             # Handled by the __cbCheckForAbortedTranscoder set in 
@@ -258,7 +311,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
         else:
             self.warning("Unexpected transcoder status/state combination.")
             self._abort()
-            return
     
     def __ebAcknowledgeFailed(self, failure, transcoder):
         if not self._isElectedComponent(transcoder): return
@@ -266,14 +318,14 @@ class TranscodingTask(AdminTask, TranscoderListener):
                      self.getLabel(), transcoder.getName(), 
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
-        self._abort()
-    
-    def __cbCheckForAbortedTranscoder(self, status, transcoder):
-        if status == TranscoderStatusEnum.aborted:
-            self.info("Transcoding task '%s' transcoder '%s' aborted")
+        # If the acknowledge fail, the state is unpredictable,
+        # so there is no sense to abort and retry.
+        self.__transcodingFailed(transcoder)
+        
+    def __asyncSadTimeout(self, transcoder):
+        if not self._isElectedComponent(transcoder): return
+        if self._acknowledging: return
+        if transcoder.getMood() == moods.sad:
+            self.warning("Transcoding task '%s' transcoder '%s' stall in sad mood", 
+                         self.getLabel(), transcoder.getName())
             self._abort()
-    
-    def __ebFailToRetrieveStatus(self, failure, transcoder):
-        self.warning("Transcoding task '%s' transcoder '%s' status retrieval "
-                     "fail: %s", log.getFailureMessage(failure))
-        self._abort()

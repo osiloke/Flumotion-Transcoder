@@ -1,5 +1,28 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py (TranscodingTask.__init__,
+	  TranscodingTask.onComponentOrphaned,
+	  TranscodingTask.onComponentMoodChanged,
+	  TranscodingTask.onTranscoderStatusChanged,
+	  TranscodingTask.onTranscoderJobStateChanged,
+	  TranscodingTask._onComponentRelieved, TranscodingTask._doAborted,
+	  TranscodingTask.__transcodingFailed,
+	  TranscodingTask.__transcodingSucceed,
+	  TranscodingTask.__cbJobTerminated,
+	  TranscodingTask.__ebAcknowledgeFailed,
+	  TranscodingTask.__asyncSadTimeout):
+	Forgot to fail after retries exhaustion.
+	Added a timeout for sad component, if the active component is sad
+	for too much time without acknowledging and is not dead, a timeout
+	is triggered to prevent zombie components.
+	Now handle transcoder status error and unexpected_error.
+	The error status make the transcoding fail, and the unexpected_error
+	status make it abort and retry.
+	If a transcoder goes sad and is not running anymore (killed or sigv),
+	the task abort and retry.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/log.py (getExceptionTraceback,
 	  getFailureTraceback):
 	Integrated traceback cleaning int getXXXTraceback.
