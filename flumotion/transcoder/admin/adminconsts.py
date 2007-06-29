@@ -46,9 +46,9 @@ TASK_LOAD_TIMEOUT = 30
 # Maximum time for admin tasks to wait for a component becoming happy
 TASK_HAPPY_TIMEOUT = 60
 # First delay to wait when retrying to load a component
-TASK_START_DELAY = 2
+TASK_START_DELAY = 3
 # The factor to apply to the delay 
-TASK_START_DELAY_FACTOR = 2.7182818284590451
+TASK_START_DELAY_FACTOR = 4
 # Maximum time to hold a lost component before starting another one
 TASK_HOLD_TIMEOUT = 60
 # Maximum time to look for a valid component before starting a new one
@@ -57,12 +57,15 @@ TASK_POTENTIAL_COMPONENT_TIMEOUT = 20
 TASK_UISTATE_TIMEOUT = 20
 
 
-MONITOR_MAX_RETRIES = 4
+MONITOR_MAX_RETRIES = 3
 MONITORING_START_TIMEOUT = 30
 MONITORING_ACTIVE_WORKER_TIMEOUT = 20
 
-TRANSCODER_STATUS_TIMEOUT = 20
-TRANSCODER_MAX_RETRIES = 3
+# Maximum time an elected transcoder can stay sad before starting another one
+TRANSCODER_SAD_TIMEOUT = 120
+# Maximum time a component can take to acknowledge
+TRANSCODER_ACK_TIMEOUT = 60
+TRANSCODER_MAX_RETRIES = 2
 TRANSCODING_START_TIMEOUT = 30
 TRANSCODING_ACTIVE_WORKER_TIMEOUT = 20
 

@@ -1,5 +1,10 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminconsts.py:
+	Constant tweaking
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py (TranscoderJob.moveSource):
 	Corrected copy/past bug.
 
