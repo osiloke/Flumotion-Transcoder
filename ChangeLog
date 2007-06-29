@@ -1,5 +1,18 @@
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/inifile.py (IniFile.loadFromFile,
+	  IniFile.saveToFile):
+	* flumotion/transcoder/properties.py (RootPropertyBag):
+	* flumotion/transcoder/transconfig.py (TranscodingConfig):
+	* flumotion/transcoder/transreport.py (LocalReport.loadFromLocal,
+	  LocalReport.getLocal, TranscodingReport):
+	Added version specification. It's only saved in the files,
+	there is no multi-version or version resolution managment yet.
+	But can still be very usfull later fore reading old version 
+	of the property files.
+
+2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	Constant tweaking
 

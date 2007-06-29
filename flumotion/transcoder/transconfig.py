@@ -99,6 +99,9 @@ class TargetConfig(properties.PropertyBag):
     
 
 class TranscodingConfig(properties.RootPropertyBag):
+    
+    VERSION = (1,0)
+    
     creationTime = properties.DateTime('creation-time')
     transcodingTimeout = properties.Integer('transcoding-timeout', 4)
     postProcessTimeout = properties.Integer('post-process-timeout', 60)

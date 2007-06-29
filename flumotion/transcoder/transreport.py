@@ -16,6 +16,7 @@ from flumotion.transcoder import properties
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.enums import TranscoderStatusEnum
+from flumotion.transcoder.local import Local
 
 
 class UsageProperty(properties.ValueProperty):
@@ -99,10 +100,15 @@ class LocalReport(properties.PropertyBag):
         self.name = local.getName()
         for name, value in local.iterVirtualRoots():
             self.roots[name] = value
+            
+    def getLocal(self):
+        return Local(self.name, self.roots)
                             
 
 class TranscodingReport(properties.RootPropertyBag, TaskReport):
 
+    VERSION = (1,0)
+    
     state = properties.Enum('state', JobStateEnum, JobStateEnum.pending)
     status = properties.Enum('status', TranscoderStatusEnum, 
                              TranscoderStatusEnum.pending)

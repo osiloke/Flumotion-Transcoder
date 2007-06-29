@@ -100,6 +100,7 @@ class IniFile(object):
         parser = ConfigParser.SafeConfigParser()        
         try:
             results = parser.read(filename)
+            parser.remove_section("HEADER")
             adapter = ConfigParserAdapter(parser, self.rootSectionName,
                                           self.secSep, self.propSep)
             propBag.loadFromAdapter(adapter)
@@ -121,8 +122,12 @@ class IniFile(object):
                 #The ConfigParser doesn't write the sections and properties ordered
                 #so I have to do it myself for the file to be more readable
                 #parser.write(f)
+                version = getattr(propBag, "VERSION", None)
+                if version:
+                    f.write("[HEADER]\n")
+                    f.write("version = %s\n\n" % '.'.join(map(str, version)))
                 sections = parser.sections()
-                sections.sort()
+                sections.sort()                    
                 for s in sections:
                     f.write("[%s]\n" % s)
                     options = parser.options(s)

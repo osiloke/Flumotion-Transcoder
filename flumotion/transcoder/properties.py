@@ -724,6 +724,7 @@ class PropertyBag(object):
 
 class RootPropertyBag(PropertyBag):
     
+    VERSION = None
     _rootProperty = RootBagProperty()
     
     def __init__(self):
