@@ -1,5 +1,20 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py
+	  (AdminTask._waitDeleteComponent):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (FileDataSource.initialize):
+	* flumotion/transcoder/admin/transbalancer.py
+	  (ITranscoderBalancerListener,
+	  ITranscoderBalancerListener.onSlotsAvailable,
+	  TranscoderBalancerListener,
+	  TranscoderBalancerListener.onSlotsAvailable, TranscoderBalancer,
+	  TranscoderBalancer.__init__, TranscoderBalancer.getAvailableSlots,
+	  TranscoderBalancer.removeTask, TranscoderBalancer.balance):
+	More logging, typo cleanup.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py (FileMonitor.init,
 	  FileMonitor.do_setup, FileMonitor.monitor_setup,
 	  FileMonitor.do_start, FileMonitor.monitor_startup,

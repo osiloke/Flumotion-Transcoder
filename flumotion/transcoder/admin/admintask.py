@@ -386,7 +386,7 @@ class AdminTask(LoggerProxy, EventSource):
         d.addErrback(utils.resolveFailure, None)
 
     def _waitDeleteComponent(self, component):
-        self.debug("Admin task task '%s' is deleting component '%s'", 
+        self.debug("Admin task '%s' is deleting component '%s'", 
                    self.getLabel(), component.getName())
         # Don't delete sad component
         if component.getMood() != moods.sad:

@@ -17,11 +17,18 @@ from zope.interface import Interface, implements
 from flumotion.transcoder.admin.admintask import IAdminTask
 
 
-class TaskProvider(Interface):
+class ITranscoderBalancerListener(Interface):
 
-    def onTaskSlotAvailable(self, balancer, count):
+    def onSlotsAvailable(self, balancer, count):
         pass
 
+
+class TranscoderBalancerListener(object):
+
+    implements(ITranscoderBalancerListener)
+
+    def onSlotsAvailable(self, balancer, count):
+        pass
 
 
 class TranscoderBalancer(object):
@@ -29,8 +36,8 @@ class TranscoderBalancer(object):
     Handle the distribution of transcoding tasks to a set of worker.
     """
     
-    def __init__(self, provider=None):
-        self._provider = provider
+    def __init__(self, listener=None):
+        self._listener = listener
         self._workers = {} # {worker: [task]}
         self._orphanes = []
         self._current = 0
@@ -38,6 +45,9 @@ class TranscoderBalancer(object):
         
     
     ## Public Methods ##
+        
+    def getAvailableSlots(self):
+        return self._maximum - self._current
         
     def clearTasks(self):
         self._current = 0
@@ -49,7 +59,6 @@ class TranscoderBalancer(object):
         assert not (worker in self._workers)
         self._workers[worker] = []
         self._maximum += worker.getContext().getMaxTask()
-        self.__fireTaskSlotAvailable()
         
     def removeWorker(self, worker):
         assert worker in self._workers
@@ -75,13 +84,11 @@ class TranscoderBalancer(object):
         if task in self._orphanes:
             self._orphanes.remove(task)
             self._current -= 1
-            self.__fireTaskSlotAvailable()
             return
         for tasks in self._workers.itervalues():
             if task in tasks:
                 tasks.remove(task)
                 self._current -= 1
-                self.__fireTaskSlotAvailable()
                 return
 
     def balance(self):
@@ -102,11 +109,6 @@ class TranscoderBalancer(object):
                     self._orphanes.extend(oldTasks)
                     for task in oldTasks:
                         task.suggestWorker(None)
-
-        
-    ## Private Methods ##
-    
-    def __fireTaskSlotAvailable(self):
-        available = self._maximum - self._current
-        if self._provider and (available > 0):
-            self._provider.onTaskSlotAvailable(self, available)
+        available = self.getAvailableSlots()
+        if self._listener and (available > 0):
+            self._listener.onSlotsAvailable(self, available)

@@ -69,6 +69,7 @@ class FileDataSource(log.Loggable):
         self._loader = inifile.IniFile();
     
     def initialize(self):
+        self.log("Initializing File Data Source")
         try:
             self._loader.loadFromFile(self._data, self._filePath)
             return asyncSuccess(self)
