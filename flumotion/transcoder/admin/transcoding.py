@@ -22,6 +22,7 @@ from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.taskmanager import TaskManager
 from flumotion.transcoder.admin.transbalancer import TranscoderBalancer
+from flumotion.transcoder.admin.transbalancer import TranscoderBalancerListener
 from flumotion.transcoder.admin.proxies.workerset import WorkerSetListener
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSetListener
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
@@ -33,6 +34,9 @@ class ITranscodingListener(Interface):
         pass
     
     def onTranscodingTaskRemoved(self, tasker, task):
+        pass
+    
+    def onSlotsAvailable(self, tasker, count):
         pass
 
     
@@ -46,9 +50,13 @@ class TranscodingListener(object):
     def onTranscodingTaskRemoved(self, tasker, task):
         pass
 
+    def onSlotsAvailable(self, tasker, count):
+        pass
+
 
 class Transcoding(TaskManager, WorkerSetListener, 
-                 TranscoderSetListener, TranscoderListener):
+                 TranscoderSetListener, TranscoderListener,
+                 TranscoderBalancerListener):
     
     logCategory = adminconsts.TRANSCODING_LOG_CATEGORY
     
@@ -56,15 +64,22 @@ class Transcoding(TaskManager, WorkerSetListener,
         TaskManager.__init__(self, ITranscodingListener)
         self._workers = workerset
         self._transcoders = transcoderset
-        self._balancer = TranscoderBalancer()
-        self._workers.addListener(self)
-        self._workers.syncListener(self)
-        self._transcoders.addListener(self)
-        self._transcoders.syncListener(self)
+        self._balancer = TranscoderBalancer(self)
         
 
     ## Public Method ##
     
+    def getAvailableSlots(self):
+        return self._balancer.getAvailableSlots()
+
+    def initialize(self):
+        self.log("Initializing Transcoding Manager")
+        self._workers.addListener(self)
+        self._transcoders.addListener(self)
+        self._workers.syncListener(self)
+        self._transcoders.syncListener(self)
+        return TaskManager.initialize(self)
+
 
     ## Overrided Virtual Methods ##
 
@@ -88,11 +103,13 @@ class Transcoding(TaskManager, WorkerSetListener,
         if self._started:
             self._balancer.addTask(task)
             self._balancer.balance()
+        self._fireEvent(task, "TranscodingTaskAdded")
     
     def _onTaskRemoved(self, task):
         if self._started:
             self._balancer.removeTask(task)
             self._balancer.balance()
+        self._fireEvent(task, "TranscodingTaskRemoved")
 
             
     ## IWorkerSetListener Overrided Methods ##
@@ -120,12 +137,20 @@ class Transcoding(TaskManager, WorkerSetListener,
         d = self.removeComponent(transcoder)
         d.addErrback(self.__ebRemoveComponentFailed, transcoder.getName())
 
+    ## ITranscodingBalancerListener Overriden Methods ##
+    
+    def onSlotsAvailable(self, balancer, count):
+        self._fireEvent(count, "SlotsAvailable")
+
 
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
-        for t in self._taks.itervalues():
+        for t in self._tasks.itervalues():
             self._fireEventTo(t, listener, "TranscodingTaskAdded")
+        available = self._balancer.getAvailableSlots()
+        if available > 0:
+            self._fireEventTo(available, listener, "SlotsAvailable")
 
 
     ## Private Methods ##

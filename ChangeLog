@@ -1,5 +1,19 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transcoding.py
+	  (ITranscodingListener.onTranscodingTaskRemoved,
+	  ITranscodingListener.onSlotsAvailable,
+	  TranscodingListener.onSlotsAvailable, Transcoding,
+	  Transcoding.__init__, Transcoding.getAvailableSlots,
+	  Transcoding.initialize, Transcoding._onTaskAdded,
+	  Transcoding._onTaskRemoved, Transcoding.onTranscoderRemovedFromSet,
+	  Transcoding.onSlotsAvailable, Transcoding._doSyncListener):
+	Add listeners and synchronize them when initializing.
+	Corrected some typo, forward task balancer events and publish 
+	a method to retrieve the number of available transcoding slots.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/monitoring.py (Monitoring.__init__,
 	  Monitoring.initialize, Monitoring._doSyncListener):
 	Add listeners and synchronize them when initializing.
