@@ -8,7 +8,7 @@ python_PYTHON = __init__.py main.py admin.py adminconfig.py adminelement.py \
                 montask.py substitution.py monbalancer.py \
                 waiters.py admintask.py monitoring.py \
                 taskmanager.py transtask.py transbalancer.py \
-                transcoding.py
+                transcoding.py scheduler.py
 python_DATA =
 
 clean-local:

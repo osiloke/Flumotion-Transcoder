@@ -1,5 +1,22 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/scheduler.py (ISchedulerListener,
+	  SchedulerListener, Scheduler, Scheduler.__init__,
+	  Scheduler.initialize, Scheduler.waitIdle, Scheduler.start,
+	  Scheduler.pause, Scheduler.resume, Scheduler.onMonitoringTaskAdded,
+	  Scheduler.onMonitoringTaskRemoved, Scheduler.onMonitoredFileAdded,
+	  Scheduler.onMonitoredFileRemoved, Scheduler.onTranscodingTaskAdded,
+	  Scheduler.onTranscodingTaskRemoved, Scheduler.onSlotsAvailable,
+	  Scheduler.onTranscoderSelected, Scheduler.onTranscoderReleased,
+	  Scheduler.onTranscodingFailed, Scheduler.onTranscodingDone,
+	  Scheduler.onTranscodingTerminated, Scheduler.__startup,
+	  Scheduler.__addTaskIfSlotsAvailable, Scheduler.__addTasks):
+	Added an empty scheduler implemenetation that only queue 
+	the pending transcoding tasks and start them in order.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transcoding.py
 	  (ITranscodingListener.onTranscodingTaskRemoved,
 	  ITranscodingListener.onSlotsAvailable,
