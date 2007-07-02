@@ -60,14 +60,18 @@ class Monitoring(TaskManager, WorkerSetListener,
         self._workers = workerset
         self._monitors = monitorset
         self._balancer = MonitorBalancer()
-        self._workers.addListener(self)
-        self._workers.syncListener(self)
-        self._monitors.addListener(self)
-        self._monitors.syncListener(self)
         
 
     ## Public Method ##
     
+    def initialize(self):
+        self.log("Initializing Monitoring Manager")
+        self._workers.addListener(self)
+        self._monitors.addListener(self)
+        self._workers.syncListener(self)
+        self._monitors.syncListener(self)
+        return TaskManager.initialize(self)
+
     
     ## Overrided Virtual Methods ##
 
@@ -129,7 +133,7 @@ class Monitoring(TaskManager, WorkerSetListener,
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
-        for t in self._taks.itervalues():
+        for t in self._tasks.itervalues():
             self._fireEventTo(t, listener, "MonitoringTaskAdded")
 
 

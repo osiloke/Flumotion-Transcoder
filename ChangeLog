@@ -1,5 +1,11 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/monitoring.py (Monitoring.__init__,
+	  Monitoring.initialize, Monitoring._doSyncListener):
+	Add listeners and synchronize them when initializing.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py
 	  (TranscodingTask.isAcknowledging):
 	Added a method to know if a transcoding task is already acknowledging.
