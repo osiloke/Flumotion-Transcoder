@@ -15,6 +15,7 @@
 import os.path
 
 from twisted.internet import reactor, error, defer
+from twisted.python.failure import Failure
 
 from flumotion.common import common, messages
 from flumotion.component import component
@@ -22,6 +23,8 @@ from flumotion.component.component import moods
 
 from flumotion.transcoder import log
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import DirectoryWatcher
 
@@ -51,27 +54,42 @@ class FileMonitor(component.BaseComponent):
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []
-        
+
     def do_setup(self):
-        props = self.config["properties"]
-        directories = props.get("directory", [])
-        self.uiState.set('monitored-directories', directories)
-        for directory in directories:
-            common.ensureDir(directory, "monitored")
-        return component.BaseComponent.do_setup(self)
+        
+        def monitor_setup(result):
+            props = self.config["properties"]
+            directories = props.get("directory", [])
+            self.uiState.set('monitored-directories', directories)
+            for directory in directories:
+                common.ensureDir(directory, "monitored")
+            return result
+    
+        d = component.BaseComponent.do_setup(self)
+        d.addCallback(monitor_setup)
+        d.addErrback(self.__ebErrorFilter, "component setup")
+        return d
 
     def do_start(self, *args, **kwargs):
-        props = self.config["properties"]
-        period = props["scan-period"]
-        directories = props.get("directory", [])
-        for d in directories:
-            watcher = DirectoryWatcher(self, d, timeout=period)
-            watcher.connect('file-added', self._file_added, d)
-            watcher.connect('file-completed', self._file_completed, d)
-            watcher.connect('file-removed', self._file_removed, d)
-            watcher.start()
-            self.watchers.append(watcher)
-        return component.BaseComponent.do_start(self)
+        
+        def monitor_startup(result):
+            props = self.config["properties"]
+            period = props["scan-period"]
+            directories = props.get("directory", [])
+            for d in directories:
+                watcher = DirectoryWatcher(self, d, timeout=period)
+                watcher.connect('file-added', self._file_added, d)
+                watcher.connect('file-completed', self._file_completed, d)
+                watcher.connect('file-removed', self._file_removed, d)
+                watcher.start()
+                self.watchers.append(watcher)
+            return result
+        
+        d = component.BaseComponent.do_start(self)
+        d.addCallback(monitor_startup)
+        d.addErrback(self.__ebErrorFilter, "component startup")
+        return d
+        
     
     def do_stop(self, *args, **kwargs):
         for w in self.watchers:
@@ -101,5 +119,37 @@ class FileMonitor(component.BaseComponent):
     def _file_removed(self, watcher, file, base):
         self.debug("File removed '%s'", os.path.join(base, file))
         self.uiState.delitem('pending-files', (base, file))
+    
+    
+    ## Private Methods ##
+    
+    def __ebErrorFilter(self, failure, task=None):
+        if failure.check(TranscoderError):
+            return self.__transcodingError(failure, task)
+        return self.__unexpectedError(failure, task)
+
+    def __monitorError(self, failure=None, task=None):
+        if not failure:
+            failure = Failure()
+        self.warning("Monitoring error%s: %s", 
+                     (task and " during %s" % task) or "",
+                     log.getFailureMessage(failure))
+        self.debug("Traceback with filenames cleaned up:\n%s", 
+                   log.getFailureTraceback(failure, True))
+        self.setMood(moods.sad)
+        return failure
         
+    def __unexpectedError(self, failure=None, task=None):
+        if not failure:
+            failure = Failure()
+        self.warning("Unexpected error%s: %s", 
+                     (task and " during %s" % task) or "",
+                     log.getFailureMessage(failure))
+        self.debug("Traceback with filenames cleaned up:\n%s", 
+                   log.getFailureTraceback(failure, True))
+        m = messages.Error(T_(failure.getErroMessage()), 
+                           debug=log.getFailureMessage(failure))
+        self.addMessage(m)
+        return failure
+
     

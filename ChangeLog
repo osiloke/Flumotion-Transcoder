@@ -1,3 +1,12 @@
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py (FileMonitor.init,
+	  FileMonitor.do_setup, FileMonitor.monitor_setup,
+	  FileMonitor.do_start, FileMonitor.monitor_startup,
+	  FileMonitor._file_removed, FileMonitor.__ebErrorFilter,
+	  FileMonitor.__monitorError, FileMonitor.__unexpectedError):
+	Refactorized for better setup/startup error handling.
+
 2007-06-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/transcoder-data.ini:
