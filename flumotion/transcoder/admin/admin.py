@@ -19,45 +19,26 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
-from flumotion.transcoder.admin.proxies.managerset import ManagerSet
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
 from flumotion.transcoder.admin.proxies.workerset import WorkerSet
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
-from flumotion.transcoder.admin.proxies.monitorset import MonitorSet, MonitorSetListener
+from flumotion.transcoder.admin.proxies.monitorset import MonitorSet
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 from flumotion.transcoder.admin.datastore.adminstore import AdminStore, AdminStoreListener
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore, CustomerStoreListener
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, ProfileStoreListener
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
-from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.monitoring import Monitoring
-from flumotion.transcoder.admin.transtask import TranscodingTask, TranscodingTaskListener
+from flumotion.transcoder.admin.montask import MonitoringTask
 from flumotion.transcoder.admin.transcoding import Transcoding
-
-## Just for debug ##
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
-from flumotion.transcoder.admin.transprops import TranscoderProperties
-#from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
-#from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereProxy, AtmosphereListener
-#from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy, ComponentListener
-#from flumotion.transcoder.admin.proxies.managerset import ManagerSetListener
-#from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
+from flumotion.transcoder.admin.scheduler import Scheduler
 
 class TranscoderAdmin(log.Loggable,
-                      MonitorSetListener,
+                      ManagerSetListener,
                       MonitorListener,
                       AdminStoreListener,
                       CustomerStoreListener,
-                      ProfileStoreListener,
-                      MonitoringTaskListener,
-                      TranscodingTaskListener
-                      ## Just for debug ##
-                      #TargetStoreListener,
-                      #ComponentSetListener,
-                      #AtmosphereListener,
-                      #ComponentListener,
-                      #ManagerSetListener,
-                      #ManagerListener
-                      ):
+                      ProfileStoreListener):
     
     logCategory = adminconsts.ADMIN_LOG_CATEGORY
     
@@ -72,16 +53,9 @@ class TranscoderAdmin(log.Loggable,
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
-        
-        self._pendings = {}
-        
-        ## Just for debug ##
-        #self._components = ComponentSet(self._managers)
-        #self._components.addListener(self)
-        #self._managers.addListener(self)
-        
-        self._store.addListener(self)
-        self._monitors.addListener(self)
+        self._scheduler = Scheduler(self._store, self._monitoring, 
+                                    self._transcoding)
+        self._started = False
 
     
     ## Public Methods ##
@@ -95,112 +69,64 @@ class TranscoderAdmin(log.Loggable,
         d.addCallback(lambda r: self._workers.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
         d.addCallback(lambda r: self._transcoders.initialize())
+        d.addCallback(lambda r: self._scheduler.initialize())
         d.addCallback(lambda r: self._monitoring.initialize())
+        d.addCallback(lambda r: self._transcoding.initialize())
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
-        #fire the initialization
+        # Register listeners
+        self._store.addListener(self)
+        self._managers.addListener(self)
+        self._store.syncListener(self)
+        self._managers.syncListener(self)
+        # fire the initialization
         d.callback(defer._nothing)
         return d
-
-
-    ## Just for debug ##
-#    def onComponentAddedToSet(self, componentset, component):
-#        self.info("Component %s Added To Set", component.getLabel())
-#        
-#    def onComponentRemovedFromSet(self, componentset, component):
-#        self.info("Component %s Removed From Set", component.getLabel())
-#        
-#    def onManagerAddedToSet(self, managerset, manager):
-#        self.info("Manager %s Added To Set", manager.getLabel())
-#        manager.addListener(self)
-#        manager.syncListener(self)
-#        
-#    def onManagerRemovedFromSet(self, managerset, manager):
-#        self.info("Manager %s Removed From Set", manager.getLabel())
-#        manager.removeListener(self)
-#        
-#    def onAtmosphereSet(self, manager, atmosphere):
-#        self.info("Atmosphere %s Added", atmosphere.getLabel())
-#        atmosphere.addListener(self)
-#        atmosphere.syncListener(self)
-#        
-#    def onAtmosphereUnset(self, manager, atmosphere):
-#        self.info("Atmosphere %s Removed", atmosphere.getLabel())
-#        atmosphere.removeListener(self)
-#        
-#    def onAtmosphereComponentAdded(self, atmosphere, component):
-#        self.info("Atmosphere Component %s Added", component.getLabel())
-#        
-#    def onAtmosphereComponentRemoved(self, atmosphere, component):
-#        self.info("Atmosphere Component %s Removed", component.getLabel())
 
 
     ## IManagerSetListener Overriden Methods ##
     
     def onDetached(self, managerset):
+        self.debug("Transcoder admin has been detached, pausing transcoding")
+        self._scheduler.pause()
         self._monitoring.pause()
+        self._transcoding.pause()
+        
         
     def onAttached(self, managerset):
-        self._monitoring.resume()
-
-
-    ## IMonitorSetListener Overriden Methods ##
-    
-    def onMonitorAddedToSet(self, monitorset, monitor):
-        self.info("Monitor %s Added To Set", monitor.getLabel())
-        
-    def onMonitorRemovedFromSet(self, monitorset, monitor):
-        self.info("Monitor %s Removed From Set", monitor.getLabel())
-
-
-    ## IMonitoringTaskListener Overriden Methods ## 
-    
-    def onMonitoringActivated(self, monitoringtask, monitor):
-        self.info("Monitoring %s activated", monitoringtask.getLabel())
-    
-    def onMonitoringDeactivated(self, monitoringtask, monitor):
-        self.info("Monitoring %s deactivated", monitoringtask.getLabel())
-
-    def onMonitoredFileAdded(self, monitoringtask, profileCtx):
-        self.info("Monitoring %s: File %s added", monitoringtask.getLabel(), 
-                  profileCtx.getInputPath())
-        if profileCtx.getInputPath() in self._pendings:
-            self._warning("File %s already pending to be transcoded",
-                          profileCtx.getInputPath())
-        else:
-            task = TranscodingTask(self._transcoding, profileCtx)
-            task.addListener(self)
-            self._transcoding.addTask(task, task)
-
-    
-    def onMonitoredFileRemoved(self, monitoringtask, profileCtx):
-        self.info("Monitoring %s: File %s removed", monitoringtask.getLabel(), 
-                  profileCtx.getInputPath())
-
-    ## ITranscodingTaskListener Overriden Methods ##
-    
-    def onTranscodingTerminated(self, task, succeed):
-        task.removeListener(self)
-        self._transcoding.removeTask(task)
-        ctx = task.getProfileContext()
-        if ctx.getInputPath() in self._pendings:
-            del self._pendings[ctx.getInputPath()]
+        if not self._started:
+            # Not yet started, it's not a resume but a startup
+            return
+        self.debug("Transcoder admin attached, resuming transcoding")
+        d = defer.Deferred()
+        # Wait a moment to let the workers the oportunity 
+        # to log back to the manager.
+        d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
+        d.addCallback(utils.dropResult, self._scheduler.resume,
+                      adminconsts.SCHEDULER_START_TIMEOUT)
+        d.addCallback(utils.dropResult, self._monitoring.resume,
+                      adminconsts.MONITORING_START_TIMEOUT)
+        d.addCallback(utils.dropResult, self._transcoding.resume,
+                      adminconsts.TRANSCODING_START_TIMEOUT)
+        d.addErrback(self.__ebResumeFailed)
+        d.callback(defer._nothing)
 
 
     ## IAdminStoreListener Overriden Methods ##
     
     def onCustomerAdded(self, admin, customer):
-        self.info("Customer '%s' Added", customer.getLabel())
+        self.debug("Customer '%s' Added", customer.getLabel())
         customer.addListener(self)
         customer.syncListener(self)
         custCtx = self._transCtx.getCustomerContext(customer)
         task = MonitoringTask(self._monitoring, custCtx)
-        task.addListener(self)
-        self._monitoring.addTask(customer.getName(), task)
+        self._monitoring.addTask(custCtx.getIdentifier(), task)
         
     def onCustomerRemoved(self, admin, customer):
-        self.info("Customer '%s' Removed", customer.getLabel())
+        self.debug("Customer '%s' Removed", customer.getLabel())
         customer.removeListener(self)
+        custCtx = self._transCtx.getCustomerContext(customer)
+        self._monitoring.removeTask(custCtx.getIdentifier())
         
         
     ## ICustomerStoreListener Overriden Methods ##
@@ -227,7 +153,11 @@ class TranscoderAdmin(log.Loggable,
     ## Private Methods ##
     
     def __startup(self):
+        self.debug("Starting up transcoder admin")
+        self._started = True
         d = defer.Deferred()
+        d.addCallback(utils.dropResult, self._scheduler.start,
+                      adminconsts.SCHEDULER_START_TIMEOUT)
         d.addCallback(utils.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
         d.addCallback(utils.dropResult, self._transcoding.start,
@@ -241,6 +171,8 @@ class TranscoderAdmin(log.Loggable,
         # And then for the managers/workers/components
         d.addBoth(utils.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(utils.dropResult, self._scheduler.waitIdle, 
+                  adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(utils.dropResult, self.__startup)
         return self
     
@@ -253,4 +185,3 @@ class TranscoderAdmin(log.Loggable,
         self.warning("Failed to startup administration: %s",
                      log.getFailureMessage(failure))
         self.debug("%s", log.getFailureTraceback(failure))
-        

@@ -1,5 +1,17 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
+	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
+	  TranscoderAdmin.onDetached, TranscoderAdmin.onAttached,
+	  TranscoderAdmin.onCustomerAdded, TranscoderAdmin.onCustomerRemoved,
+	  TranscoderAdmin.__startup, TranscoderAdmin.__cbAdminInitialized):
+	* flumotion/transcoder/admin/adminconsts.py:
+	Use the new scheduler class.
+	Added a delay when resuming to let time to the workers 
+	to log back	in the manager.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/scheduler.py (ISchedulerListener,
 	  SchedulerListener, Scheduler, Scheduler.__init__,

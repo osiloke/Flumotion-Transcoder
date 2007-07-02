@@ -17,7 +17,11 @@ PROXIES_LOG_CATEGORY = "proxies"
 DATASOURCE_LOG_CATEGORY = "datasource"
 MONITORING_LOG_CATEGORY = "monitoring"
 TRANSCODING_LOG_CATEGORY = "transcoding"
+SCHEDULER_LOG_CATEGORY = "scheduler"
 
+
+# The time to let the workers to log back in the manager before resuming
+RESUME_DELAY = 20
 
 # The time a proxy wait after a SIGTERM to send a SIGKILL to a component
 COMPONENT_WAIT_TO_KILL = 30
@@ -69,6 +73,7 @@ TRANSCODER_MAX_RETRIES = 2
 TRANSCODING_START_TIMEOUT = 30
 TRANSCODING_ACTIVE_WORKER_TIMEOUT = 20
 
+SCHEDULER_START_TIMEOUT = 30
 
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10
