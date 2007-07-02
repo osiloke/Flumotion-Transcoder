@@ -1,5 +1,11 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.isAcknowledging):
+	Added a method to know if a transcoding task is already acknowledging.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/taskmanager.py (TaskManager.getTask):
 	Added a task getter by identifier.
 

@@ -84,6 +84,9 @@ class TranscodingTask(AdminTask, TranscoderListener):
     def getProfileContext(self):
         return self._profileCtx
 
+    def isAcknowledging(self):
+        return self._acknowledging
+
 
     ## IComponentListener Overrided Methods ##
     
