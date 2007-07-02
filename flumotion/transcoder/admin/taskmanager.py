@@ -85,6 +85,9 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def getTasks(self):
         return self._tasks.values()
 
+    def getTask(self, identifier, default=None):
+        return self._tasks.get(identifier, default)
+
     def iterTasks(self):
         return self._tasks.itervalues()
 

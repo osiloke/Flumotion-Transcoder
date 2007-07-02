@@ -1,5 +1,10 @@
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.getTask):
+	Added a task getter by identifier.
+
+2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admintask.py
 	  (AdminTask._waitDeleteComponent):
 	* flumotion/transcoder/admin/datasource/filesource.py
