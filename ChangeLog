@@ -1,5 +1,19 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py (Scheduler,
+	  Scheduler.__init__, Scheduler.onMonitoredFileAdded,
+	  Scheduler.onMonitoredFileRemoved, Scheduler.onSlotsAvailable,
+	  Scheduler.onTranscodingTerminated, Scheduler.__startup,
+	  Scheduler.__startupTasksIfPossible, Scheduler.__startupTasks,
+	  Scheduler.__isProfileQueued, Scheduler.__getProfilePriority,
+	  Scheduler.__getKeyPriority, Scheduler.__queueProfile,
+	  Scheduler.__unqueuProfile, Scheduler.__popNextProfile):
+	Implemented a basic priority scheduling, the same way
+	the old transcoder was doing it.
+	task_priority = customer_priority * 1000 + profile_priority
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py (CustomerData,
 	  AdminData):

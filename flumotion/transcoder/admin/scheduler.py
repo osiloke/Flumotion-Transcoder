@@ -29,6 +29,11 @@ from flumotion.transcoder.admin.monitoring import IMonitoringListener
 from flumotion.transcoder.admin.transcoding import ITranscodingListener
 from flumotion.transcoder.admin.transtask import ITranscodingTaskListener
 
+#TODO: Implement a faire scheduler and prevent the possibility
+#      of the profile priority making the overhaul customer priority
+#      higher than other customer priorities.
+
+
 
 class ISchedulerListener(Interface):
     pass
@@ -40,10 +45,10 @@ class SchedulerListener(object):
 
 
 class Scheduler(log.Loggable, 
-                EventSource,
-                MonitoringListener,
-                MonitoringTaskListener,
-                TranscodingListener,
+                EventSource, 
+                MonitoringListener, 
+                MonitoringTaskListener, 
+                TranscodingListener, 
                 TranscodingTaskListener):
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
@@ -54,6 +59,7 @@ class Scheduler(log.Loggable,
         self._store = store
         self._monitoring = monitoring
         self._transcoding = transcoding
+        self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
         self._started = False
         self._paused = False
@@ -107,25 +113,25 @@ class Scheduler(log.Loggable,
     def onMonitoredFileAdded(self, task, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
-        if identifier in self._queue:
+        if self.__isProfileQueued(profileContext):
             self.debug("Already queued file '%s' added by "
                        "monitoring task '%s'", inputPath, task.getLabel())
         elif self._transcoding.getTask(identifier):
             self.debug("Already transcoding file '%s' added by "
                        "monitoring task '%s'", inputPath, task.getLabel())
         else:
-            self.debug("Queued file '%s' added by monitoring task '%s'",
+            self.debug("Queued file '%s' added by monitoring task '%s'", 
                        inputPath, task.getLabel())
-            self._queue[identifier] =  profileContext
-            self.__addTaskIfSlotsAvailable()
+            self.__queueProfile(profileContext)
+            self.__startupTasksIfPossible()
     
     def onMonitoredFileRemoved(self, montask, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
-        if identifier in self._queue:
+        if self.__isProfileQueued(profileContext):
             self.debug("Unqueue file '%s' removed by "
                        "monitoring task '%s'", inputPath, montask.getLabel())
-            del self._queue[identifier]
+            self.__unqueuProfile(profileContext)
         trantask = self._transcoding.getTask(identifier, None)
         if trantask and not trantask.isAcknowledging():
             self.debug("Cancel transcoding of file '%s' removed by "
@@ -147,7 +153,7 @@ class Scheduler(log.Loggable,
 
     def onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)
-        self.__addTasks(count)
+        self.__startupTasks(count)
 
 
     ## ITranscodingTaskLister Overriden Methods ##
@@ -165,7 +171,7 @@ class Scheduler(log.Loggable,
         pass
 
     def onTranscodingTerminated(self, task, succeed):
-        self.log("Transcoding task '%s' %s", task.getLabel(),
+        self.log("Transcoding task '%s' %s", task.getLabel(), 
                  (succeed and "succeed") or "failed")
         ctx = task.getProfileContext()
         self._transcoding.removeTask(ctx.getIdentifier())
@@ -176,20 +182,51 @@ class Scheduler(log.Loggable,
     def __startup(self):
         available = self._transcoding.getAvailableSlots()
         self.debug("Starting/Resuming transcoding scheduler (%d slots)", available)
-        self.__addTasks(available)
+        self.__startupTasks(available)
     
-    def __addTaskIfSlotsAvailable(self):
+    def __startupTasksIfPossible(self):
         available = self._transcoding.getAvailableSlots()
         if available > 0:
-            self.__addTasks(available)
+            self.__startupTasks(available)
     
-    def __addTasks(self, count):
-        keys = self._queue.keys()
-        for i in range(count):
-            if not self._queue: return
-            profCtx = self._queue.pop(keys[i])
+    def __startupTasks(self, count):
+        while count > 0:
+            profCtx = self.__popNextProfile()
+            if not profCtx: return
             self.log("Creating transcoding task for file '%s'", 
                      profCtx.getInputPath())
             identifier = profCtx.getIdentifier()
             task = TranscodingTask(self._transcoding, profCtx)
             self._transcoding.addTask(identifier, task)
+            count -= 1
+
+    def __isProfileQueued(self, profCtx):
+        return profCtx.getIdentifier() in self._queue
+            
+    def __getProfilePriority(self, profCtx):
+        custPri = profCtx.customer.store.getCustomerPriority()
+        profPri = profCtx.store.getTranscodingPriority()
+        return custPri * 1000 + profPri
+
+    def __getKeyPriority(self, key):
+        return self.__getProfilePriority(self._queue[key])
+
+    def __queueProfile(self, profCtx):
+        identifier = profCtx.getIdentifier()
+        assert not (identifier in self._queue)
+        self._queue[identifier] =  profCtx
+        self._order.append(identifier)
+        self._order.sort(key=self.__getKeyPriority)
+    
+    def __unqueuProfile(self, profCtx):
+        identifier = profCtx.getIdentifier()
+        assert identifier in self._queue
+        del self._queue[identifier]
+        self._order.remove(identifier)
+
+    def __popNextProfile(self):
+        if not self._order:
+            return None
+        identifier = self._order.pop()
+        profCtx = self._queue.pop(identifier)
+        return profCtx
