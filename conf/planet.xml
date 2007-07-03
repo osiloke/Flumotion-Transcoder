@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<planet>
+  <manager name="transcoder">
+    <component name="manager-bouncer" type="htpasswdcrypt-bouncer">
+      <property name="data"><![CDATA[user:PSfNpHTkpTx1M]]></property>
+    </component>
+    <plugs>
+      <plug socket="flumotion.component.plugs.lifecycle.ManagerLifecycle"
+	        type="transcoderenvironment">
+	  </plug>
+    </plugs>  
+  </manager>
+  <atmosphere>
+  </atmosphere>
+  <flow name="default">
+  </flow>
+</planet>

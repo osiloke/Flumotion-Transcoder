@@ -1,5 +1,17 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/planet.xml:
+	* configure.ac:
+	* flumotion/transcoder/manager/Makefile.am:
+	* flumotion/transcoder/manager/__init__.py:
+	* flumotion/transcoder/manager/plugs.py (TranscoderEnvironment):
+	* flumotion/transcoder/manager/plugs.xml:
+	Created a manager plug to setup the transcoder-specific environment.
+	It allow the import of transcoder modules that setup jellyer,
+	this way the manager can properly forward transcoder-specific types.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoderMedium.remote_getReportPath,
 	  FileTranscoder._fireTranscodingReport):

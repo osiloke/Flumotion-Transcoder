@@ -1,0 +1,24 @@
+<registry>
+  <plugs>
+    <plug socket="flumotion.component.plugs.lifecycle.ManagerLifecycle"
+          type="transcoderenvironment">
+      <entry location="flumotion/transcoder/manager/plugs.py"
+             function="TranscoderEnvironment"/>
+      <properties>
+      </properties>
+    </plug>
+  </plugs>
+
+  <bundles>
+    <bundle project="transcoder" name="transcoder-plugs">
+      <dependencies>
+        <dependency name="base-plugs-adminaction" />
+      </dependencies>
+      <directories>
+        <directory name="flumotion/transcoder/manager">
+          <filename location="plugs.py" />
+        </directory>
+      </directories>
+    </bundle>
+  </bundles>
+</registry> 
