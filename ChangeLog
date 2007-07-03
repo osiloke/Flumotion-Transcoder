@@ -1,3 +1,10 @@
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder-admin.ini:
+	* conf/transcoder-data.ini:
+	Setup 2 jobs for the workers on streamer1 and stremaer2.
+	Force audio-rate in all profiles.
+
 2007-07-02  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
