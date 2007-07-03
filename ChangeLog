@@ -1,5 +1,11 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/virtualpath.py (VirtualPath.append,
+	  VirtualPath.getStateFor, VirtualPath.setStateFor):
+	Made the VirtualPath class jellyable and unjellyable.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py
 	  (TranscodingTask.onComponentOrphaned):
 	Properly abort a task if it's already sad when going orphaned.

@@ -12,6 +12,9 @@
 
 import re
 
+from twisted.python.reflect import qual
+from twisted.spread import jelly
+
 from flumotion.transcoder import utils
 from flumotion.transcoder import constants
 from flumotion.transcoder.errors import VirtualPathError
@@ -107,4 +110,17 @@ class VirtualPath(object):
         path = utils.joinPath(self._path, utils.joinPath(*goodparts))
         return VirtualPath(path, self._root)
 
+
+    ## Jellyable Overriden Methods ##
+
+    def getStateFor(self, jellier):
+        return (self._root, self._path)
     
+    
+    ## Unjellyable Overriden Methods ##
+    
+    def setStateFor(self, unjellier, state):
+        self._root, self._path = state
+
+
+jelly.setUnjellyableForClass(qual(VirtualPath), VirtualPath)
