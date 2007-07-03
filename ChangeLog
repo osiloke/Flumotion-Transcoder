@@ -1,5 +1,11 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/Makefile.am:
+	* flumotion/transcoder/admin/datasource/dummysource.py:
+	Deleted old and deprectated dummy data source.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-admin.ini:
 	* conf/transcoder-data.ini:
 	Setup 2 jobs for the workers on streamer1 and stremaer2.

@@ -2,7 +2,7 @@ include $(top_srcdir)/common/python.mk
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/datasource
 
-python_PYTHON = __init__.py datasource.py dummysource.py \
+python_PYTHON = __init__.py datasource.py \
                 dataprops.py filesource.py \
                 sqlsource.py
 python_DATA =
