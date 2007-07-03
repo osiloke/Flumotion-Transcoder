@@ -1,5 +1,13 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoderMedium.remote_getReportPath,
+	  FileTranscoder._fireTranscodingReport):
+	Made the file transcoder component directly return
+	VirtualPath without converting it to string.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/virtualpath.py (VirtualPath.append,
 	  VirtualPath.getStateFor, VirtualPath.setStateFor):
 	Made the VirtualPath class jellyable and unjellyable.

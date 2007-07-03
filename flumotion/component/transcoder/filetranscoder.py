@@ -50,10 +50,7 @@ class FileTranscoderMedium(component.BaseComponentMedium):
         return self.comp.do_acknowledge()
         
     def remote_getReportPath(self):
-        path = self.comp._getReportPath()
-        if path:
-            return str(path)
-        return None
+        return self.comp._getReportPath()
         
 
 class FileTranscoder(component.BaseComponent, job.JobEventSink):
@@ -306,7 +303,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         
     def _fireTranscodingReport(self, reportPath):
         virtPath = VirtualPath.virtualize(reportPath, self._local)
-        self.uiState.setitem('job-data', "transcoding-report", str(virtPath))
+        self.uiState.setitem('job-data', "transcoding-report", virtPath)
         
     
     ## Private Methods ##
