@@ -1,5 +1,10 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/virtualpath.py (VirtualPath):
+	It's better if VirtualPath inherite from Jellyable and Unjellyable.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/planet.xml:
 	* configure.ac:
 	* flumotion/transcoder/manager/Makefile.am:

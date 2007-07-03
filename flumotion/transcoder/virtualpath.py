@@ -22,7 +22,7 @@ from flumotion.transcoder.errors import VirtualPathError
 
 _rootPattern = re.compile("(\w*):(.*)")
 
-class VirtualPath(object):
+class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
     
     @classmethod
     def transpose(cls, path, fromLocal, toLocal):
