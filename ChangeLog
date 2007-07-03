@@ -1,5 +1,11 @@
 2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.onComponentOrphaned):
+	Properly abort a task if it's already sad when going orphaned.
+
+2007-07-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py (Scheduler,
 	  Scheduler.__init__, Scheduler.onMonitoredFileAdded,
 	  Scheduler.onMonitoredFileRemoved, Scheduler.onSlotsAvailable,

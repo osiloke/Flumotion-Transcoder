@@ -29,6 +29,8 @@ from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListene
 #      lots of component at the same time.
 #      Because when starting lots of components, the transcoders
 #      happy timeout may be triggered. For now, just using a large timeout.
+#TODO: Cancel operations when going sad or lost, do not wait 
+#      for the timeout to be triggered
 
 class ITranscodingTaskListener(Interface):
     def onTranscoderSelected(self, task, transcoder):
@@ -98,9 +100,12 @@ class TranscodingTask(AdminTask, TranscoderListener):
                  "goes orphaned of worker '%s'", self.getLabel(),
                  transcoder.getName(), worker.getName())
         # The transcoder has been killed or has segfaulted.
-        # We don't abort right here because the transcoder mood
-        # would not be sad yet and it would be stopped and deleted.
+        # We abort only if the transcoder is already sad,
+        # because if it was not sad yet, it would be stopped and deleted.
         # And we want it to be keeped for later investigations
+        if transcoder.getMood() == moods.sad:
+            self._abort()
+            return
     
     def onComponentMoodChanged(self, transcoder, mood):
         if not self.isActive(): return
