@@ -81,7 +81,6 @@ FORCED_DELETION_MAX_RETRY = 3
 
 LOAD_COMPONENT_TIMEOUT = 30.0
 
-
 # AdminStore default values
 DEFAULT_OUTPUT_MEDIA_TEMPLATE = "%(targetPath)s%(sourceFile)s%(targetExtension)s"
 DEFAULT_OUTPUT_THUMB_TEMPLATE = "%(targetPath)s%(sourceFile)s.%%(index)03d%(targetExtension)s"
@@ -97,6 +96,10 @@ DEFAULT_MAIL_BODY_TEMPLATE = "Default Mail Body"
 DEFAULT_GETREQUEST_TIMEOUT = 30
 DEFAULT_GETREQUEST_RETRY_COUNT = 3
 DEFAULT_GETREQUEST_RETRY_SLEEP = 60
+DEFAULT_TRANSCODING_PRIORITY = 100
+
+# Default CustomerStore values
+DEFAULT_CUSTOMER_PRIORITY = 100
 
 # Default customer directories
 DEFAULT_INPUT_DIR = "/%s/files/incoming"

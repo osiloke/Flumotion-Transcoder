@@ -88,6 +88,8 @@ class IDataSource(Interface):
             reportFileTemplate (str)
             monitoringPeriod (int) : 
                 Gives the default period used to monitor the filesystem.
+            transcodingPriority (int) :
+                Gives the default priority of the transcoding jobs.
             transcodingTimeout (int) :
                 Gives the default timeout of the transcoding jobs.
             postprocessTimeout (int) :
@@ -135,6 +137,7 @@ class IDataSource(Interface):
            enablePostprocessing (bool) can be None
            enablePreprocessing (bool) can be None
            enableLinkFiles (bool) can be None
+           customerPriority (int) can be None
            transcodingPriority (int) can be None
            processPriority (int) can be None
            preprocessCommand (str) can be None

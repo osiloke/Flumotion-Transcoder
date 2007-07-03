@@ -153,6 +153,7 @@ class CustomerData(properties.PropertyBag):
     enablePostprocessing = properties.Boolean('post-processing-enabled', None)
     enablePreprocessing = properties.Boolean('pre-processing-enabled', None)
     enableLinkFiles = properties.Boolean('link-files-enabled', None)
+    customerPriority = properties.Integer('customer-priority', None, False, True)
     transcodingPriority = properties.Integer('transcoding-priority', None, False, True)
     processPriority = properties.Integer('process-priority', None, False, True)
     preprocessCommand = properties.String('pre-process-command', None)
@@ -167,6 +168,7 @@ class CustomerData(properties.PropertyBag):
 
 class AdminData(properties. RootPropertyBag):
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    transcodingPriority = properties.Integer('transcoding-priority', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     preprocessTimeout = properties.Integer('pre-process-timeout', None, False, True)

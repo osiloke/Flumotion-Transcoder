@@ -66,6 +66,8 @@ class AdminStore(BaseStore):
                                   constants.LINK_TEMPLATE,
                               "monitoringPeriod": 
                                   adminconsts.DEFAULT_MONITORING_PERIOD,
+                              "transcodingPriority": 
+                                  adminconsts.DEFAULT_TRANSCODING_PRIORITY,
                               "transcodingTimeout": 
                                   adminconsts.DEFAULT_TRANSCODING_TIMEOUT,
                               "postprocessTimeout": 

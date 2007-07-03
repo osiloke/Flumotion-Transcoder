@@ -15,6 +15,7 @@ from twisted.internet import defer
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
@@ -64,6 +65,7 @@ class CustomerStore(BaseStore):
                                   "transcodingTimeout",
                                   "monitoringPeriod"]
     
+    # MetaStore metaclass will create getters/setters for these properties
     __simple_properties__ = ["name",
                              "subdir",
                              "inputDir",
@@ -75,6 +77,10 @@ class CustomerStore(BaseStore):
                              "configDir",
                              "failedRepDir",
                              "doneRepDir"]
+    
+    # MetaStore metaclass will create getters/setters for these properties
+    __default_properties__ = {"customerPriority": 
+                                  adminconsts.DEFAULT_CUSTOMER_PRIORITY}
 
 
     def __init__(self, logger, parent, dataSource, customerData):

@@ -40,6 +40,7 @@ class TargetStore(BaseStore):
                                   "postprocessCommand"
                                   "postprocessTimeout"]
 
+    # MetaStore metaclass will create getters/setters for these properties
     __simple_properties__ = ["name",
                              "subdir",
                              "extension"]

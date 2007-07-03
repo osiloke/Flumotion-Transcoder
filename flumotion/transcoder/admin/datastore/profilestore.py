@@ -63,6 +63,7 @@ class ProfileStore(BaseStore):
                                   "transcodingTimeout",
                                   "monitoringPeriod"]
 
+    # MetaStore metaclass will create getters/setters for these properties
     __simple_properties__ = ["name",
                              "subdir",
                              "inputDir",
