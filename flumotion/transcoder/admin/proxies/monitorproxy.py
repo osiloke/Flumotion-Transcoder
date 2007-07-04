@@ -84,7 +84,8 @@ class MonitorProxy(ComponentProxy):
         pending = uiState.get("pending-files", None)
         if pending:
             for file, statenum in pending.iteritems():
-                self._onMonitorSetFile(file, statenum)
+                virtBase, relFile = file
+                self._onMonitorSetFile(virtBase, relFile, statenum)
     
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
@@ -99,13 +100,15 @@ class MonitorProxy(ComponentProxy):
         self.log("Monitor UI State '%s' item '%s' set to '%s'", 
                  key, subkey, value)
         if key == "pending-files":
-            self._onMonitorSetFile(subkey, value)
+            virtBase, relFile = subkey
+            self._onMonitorSetFile(virtBase, relFile, value)
     
     def _onUIStateDelitem(self, uiState, key, subkey, value):
         self.log("Monitor UI State '%s' item '%s' deleted", 
                  key, subkey)
         if key == "pending-files":
-            self._onMonitorDelFile(subkey, value)
+            virtBase, relFile = subkey
+            self._onMonitorDelFile(virtBase, relFile, value)
 
     def _onUnsetUIState(self, uiState):
         ComponentProxy._onUnsetUIState(self, uiState)
@@ -114,19 +117,21 @@ class MonitorProxy(ComponentProxy):
     
     ## UI State Handlers Methods ##
     
-    def _onMonitorSetFile(self, file, state):
-        folder, rel = file
-        args = (self.__local2virtual(folder), rel, state)
-        if file in self._alreadyAdded:
+    def _onMonitorSetFile(self, virtBase, relFile, state):
+        ident = (virtBase, relFile)
+        args = (virtBase, relFile, state)
+        if ident in self._alreadyAdded:
             self._fireEvent(args, "MonitorFileChanged")
         else:
-            self._alreadyAdded[file] = None
-            self._fireEvent(args, "MonitorFileAdded")
+            self._alreadyAdded[ident] = None
+            self._fireEvent(args, "MonitorFileAdded")            
+            self._callRemote("test")
             
-    def _onMonitorDelFile(self, file, state):
-        folder, rel = file
-        args = (self.__local2virtual(folder), rel, state)
-        assert file in self._alreadyAdded
+    def _onMonitorDelFile(self, virtBase, relFile, state):
+        ident = (virtBase, relFile)
+        args = (virtBase, relFile, state)
+        assert ident in self._alreadyAdded
+        del self._alreadyAdded[ident]
         self._fireEvent(args, "MonitorFileRemoved")
 
 
@@ -135,13 +140,6 @@ class MonitorProxy(ComponentProxy):
     
     ## Private Methods ##
     
-    def __local2virtual(self, path):
-        worker = self.getWorker()
-        assert worker != None
-        context = worker.getContext()
-        local = context.getLocal()
-        return VirtualPath.virtualize(path, local)
-
     def __cbRetrieveFiles(self, ui):
         files = []
         worker = self.getWorker()

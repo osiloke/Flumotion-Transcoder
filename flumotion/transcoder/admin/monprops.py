@@ -31,10 +31,8 @@ class MonitorProperties(ComponentPropertiesMixin):
     @classmethod
     def createFromComponentDict(cls, workerContext, props):
         scanPeriod = props.get("scan-period", None)
-        absPathList = props.get("directory", list())
+        directories = props.get("directory", list())
         name = props.get("admin-id", "")
-        local = workerContext.getLocal()
-        directories = [VirtualPath.virtualize(p, local) for p in absPathList]
         return cls(name, directories, scanPeriod)
     
     @classmethod
@@ -63,8 +61,9 @@ class MonitorProperties(ComponentPropertiesMixin):
         props = []
         local = workerContext.getLocal()
         for d in self._directories:
-            props.append(("directory", d.localize(local)))
+            props.append(("directory", str(d)))
         if self._scanPeriod:
             props.append(("scan-period", self._scanPeriod))
         props.append(("admin-id", self._name))
+        props.extend(local.asComponentProperties())
         return props

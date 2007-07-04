@@ -340,7 +340,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                      log.getFailureMessage(failure))
         self.debug("Traceback with filenames cleaned up:\n%s", 
                    log.getFailureTraceback(failure, True))
-        m = messages.Error(T_(failure.getErroMessage()), 
+        m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
         return failure

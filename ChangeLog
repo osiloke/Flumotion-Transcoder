@@ -1,5 +1,29 @@
 2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitorMedium.remote_setFileState,
+	  FileMonitorMedium.remote_test, FileMonitor.init,
+	  FileMonitor.do_check, FileMonitor.monitor_checks,
+	  FileMonitor.do_setup, FileMonitor.monitor_setup,
+	  FileMonitor.monitor_startup, FileMonitor.setFileState,
+	  FileMonitor._file_added, FileMonitor._file_completed,
+	  FileMonitor._file_removed, FileMonitor.__unexpectedError):
+	* flumotion/component/transcoder/filemonitor.xml:
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py
+	  (FileMonitorAdminGtkNode._addDirectory):
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__unexpectedError):
+	* flumotion/transcoder/admin/monprops.py
+	  (MonitorProperties.createFromComponentDict,
+	  MonitorProperties.asComponentProperties):
+	* flumotion/transcoder/admin/proxies/monitorproxy.py
+	  (MonitorProxy._doBroadcastUIState, MonitorProxy._onUIStateSetitem,
+	  MonitorProxy._onUIStateDelitem, MonitorProxy._onMonitorSetFile,
+	  MonitorProxy._onMonitorDelFile):
+	Made the file FileMonitor component use VirtualPath and Local.
+
+2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/virtualpath.py (VirtualPath.jellyFor,
 	  VirtualPath.unjellyFor):
 	Made the jellyer/unjellyer actually work.

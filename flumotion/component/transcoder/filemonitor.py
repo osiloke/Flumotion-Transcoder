@@ -22,6 +22,8 @@ from flumotion.component import component
 from flumotion.component.component import moods
 
 from flumotion.transcoder import log
+from flumotion.transcoder.local import Local
+from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
@@ -34,8 +36,11 @@ T_ = messages.gettexter('flumotion-transcoder')
 
 class FileMonitorMedium(component.BaseComponentMedium):
     
-    def remote_setFileState(self, base, file, status):
-        self.comp.setFileState(base, file, status)
+    def remote_setFileState(self, virtBase, file, status):
+        self.comp.setFileState(virtBase, file, status)
+        
+    def remote_test(self):
+        return VirtualPath("base", "test/file.txt")
 
 
 class FileMonitor(component.BaseComponent):
@@ -54,15 +59,33 @@ class FileMonitor(component.BaseComponent):
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []
+        self._local = None
+        self._scanPeriod = None
+        self._directories = []
+
+    def do_check(self):
+        
+        def monitor_checks(result):
+            props = self.config["properties"]
+            self._local = Local.createFromComponentProperties(props)
+            return result
+        
+        d = component.BaseComponent.do_check(self)
+        d.addCallback(monitor_checks)
+        d.addErrback(self.__ebErrorFilter, "component checking")
+        return d
 
     def do_setup(self):
         
         def monitor_setup(result):
             props = self.config["properties"]
-            directories = props.get("directory", [])
-            self.uiState.set('monitored-directories', directories)
-            for directory in directories:
-                common.ensureDir(directory, "monitored")
+            self._scanPeriod = props["scan-period"]
+            strDirs = props.get("directory", [])
+            self._directories = map(VirtualPath, strDirs)
+            self.uiState.set('monitored-directories', self._directories)
+            for virtDir in self._directories:
+                localDir = virtDir.localize(self._local)
+                common.ensureDir(localDir, "monitored")
             return result
     
         d = component.BaseComponent.do_setup(self)
@@ -73,14 +96,16 @@ class FileMonitor(component.BaseComponent):
     def do_start(self, *args, **kwargs):
         
         def monitor_startup(result):
-            props = self.config["properties"]
-            period = props["scan-period"]
-            directories = props.get("directory", [])
-            for d in directories:
-                watcher = DirectoryWatcher(self, d, timeout=period)
-                watcher.connect('file-added', self._file_added, d)
-                watcher.connect('file-completed', self._file_completed, d)
-                watcher.connect('file-removed', self._file_removed, d)
+            for virtDir in self._directories:
+                localDir = virtDir.localize(self._local)
+                watcher = DirectoryWatcher(self, localDir, 
+                                           timeout=self._scanPeriod)
+                watcher.connect('file-added', 
+                                self._file_added, virtDir)
+                watcher.connect('file-completed', 
+                                self._file_completed, virtDir)
+                watcher.connect('file-removed', 
+                                self._file_removed, virtDir)
                 watcher.start()
                 self.watchers.append(watcher)
             return result
@@ -100,25 +125,28 @@ class FileMonitor(component.BaseComponent):
 
     ## Public Methods ##
                 
-    def setFileState(self, base, file, status):        
-        self.uiState.setitem('pending-files', (base, file), status)
+    def setFileState(self, virtBase, file, status):        
+        self.uiState.setitem('pending-files', (virtBase, file), status)
 
 
     ## Signal Handler Methods ##
 
-    def _file_added(self, watcher, file, base):
-        self.debug("File added : '%s'", os.path.join(base, file))
-        self.uiState.setitem('pending-files', (base, file), 
+    def _file_added(self, watcher, file, virtBase):
+        localFile = virtBase.append(file).localize(self._local)
+        self.debug("File added : '%s'", localFile)
+        self.uiState.setitem('pending-files', (virtBase, file), 
                              MonitorFileStateEnum.downloading)
     
-    def _file_completed(self, watcher, file, base):
-        self.debug("File completed '%s'", os.path.join(base, file))
-        self.uiState.setitem('pending-files', (base, file), 
+    def _file_completed(self, watcher, file, virtBase):
+        localFile = virtBase.append(file).localize(self._local)
+        self.debug("File completed '%s'", localFile)
+        self.uiState.setitem('pending-files', (virtBase, file), 
                              MonitorFileStateEnum.pending)
     
-    def _file_removed(self, watcher, file, base):
-        self.debug("File removed '%s'", os.path.join(base, file))
-        self.uiState.delitem('pending-files', (base, file))
+    def _file_removed(self, watcher, file, virtBase):
+        localFile = virtBase.append(file).localize(self._local)
+        self.debug("File removed '%s'", localFile)
+        self.uiState.delitem('pending-files', (virtBase, file))
     
     
     ## Private Methods ##
@@ -147,7 +175,7 @@ class FileMonitor(component.BaseComponent):
                      log.getFailureMessage(failure))
         self.debug("Traceback with filenames cleaned up:\n%s", 
                    log.getFailureTraceback(failure, True))
-        m = messages.Error(T_(failure.getErroMessage()), 
+        m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
         return failure

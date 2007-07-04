@@ -20,6 +20,7 @@ from flumotion.common import errors, common
 
 from flumotion.transcoder import enums
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.component.base.admin_gtk import BaseAdminGtk, BaseAdminGtkNode
 
 _ = common.gettexter('flumotion-transcoder')
@@ -72,7 +73,7 @@ class FileMonitorAdminGtkNode(BaseAdminGtkNode):
         if self.directories.has_key(dir):
             self.warning("Directory '%s' already added", dir)
             return
-        self.directories[dir] = [{}, self.model.append(None, (dir, ""))]
+        self.directories[dir] = [{}, self.model.append(None, (str(dir), ""))]
 
     def _removeDirectory(self, dir):
         if not self.directories.has_key(dir):
