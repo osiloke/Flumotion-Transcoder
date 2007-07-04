@@ -1,6 +1,12 @@
 2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitorMedium.remote_setFileState):
+	Removed test remote method.
+
+2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitorMedium.remote_setFileState,
 	  FileMonitorMedium.remote_test, FileMonitor.init,
 	  FileMonitor.do_check, FileMonitor.monitor_checks,

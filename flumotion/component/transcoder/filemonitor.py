@@ -39,9 +39,6 @@ class FileMonitorMedium(component.BaseComponentMedium):
     def remote_setFileState(self, virtBase, file, status):
         self.comp.setFileState(virtBase, file, status)
         
-    def remote_test(self):
-        return VirtualPath("base", "test/file.txt")
-
 
 class FileMonitor(component.BaseComponent):
     """
