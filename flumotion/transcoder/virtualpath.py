@@ -113,14 +113,19 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
 
     ## Jellyable Overriden Methods ##
 
-    def getStateFor(self, jellier):
-        return (self._root, self._path)
+    def jellyFor(self, jellier):
+        sxp = jellier.prepare(self)
+        sxp.extend([
+            qual(self.__class__),
+            self._root, self._path])
+        return jellier.preserve(self, sxp)
     
     
     ## Unjellyable Overriden Methods ##
     
-    def setStateFor(self, unjellier, state):
-        self._root, self._path = state
+    def unjellyFor(self, unjellier, jellyList):
+        self._root, self._path = jellyList[1:]
+        return self
 
 
 jelly.setUnjellyableForClass(qual(VirtualPath), VirtualPath)
