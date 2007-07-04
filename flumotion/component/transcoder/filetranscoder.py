@@ -13,9 +13,7 @@
 # Headers in this file shall remain intact.
 
 import os
-import traceback
 
-from StringIO import StringIO
 from twisted.internet import reactor, defer
 from twisted.python.failure import Failure
 

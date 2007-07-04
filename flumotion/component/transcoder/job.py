@@ -10,9 +10,7 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 # Headers in this file shall remain intact.
 
-import sys
 import os
-import re
 import shutil
 import urllib
 

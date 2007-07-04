@@ -1,5 +1,11 @@
 2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	Import cleanup.
+
+2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitorMedium.remote_setFileState):
 	Removed test remote method.
