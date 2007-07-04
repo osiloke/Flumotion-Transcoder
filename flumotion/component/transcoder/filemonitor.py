@@ -12,7 +12,8 @@
 
 # Headers in this file shall remain intact.
 
-import os.path
+import os
+import shutil
 
 from twisted.internet import reactor, error, defer
 from twisted.python.failure import Failure
@@ -36,8 +37,11 @@ T_ = messages.gettexter('flumotion-transcoder')
 
 class FileMonitorMedium(component.BaseComponentMedium):
     
-    def remote_setFileState(self, virtBase, file, status):
-        self.comp.setFileState(virtBase, file, status)
+    def remote_setFileState(self, virtBase, relFile, status):
+        self.comp.setFileState(virtBase, relFile, status)
+        
+    def remote_moveFile(self, virtSrcBase, virtDestBase, relFile):
+        self.comp.moveFile(virtSrcBase, virtDestBase, relFile)
         
 
 class FileMonitor(component.BaseComponent):
@@ -47,6 +51,32 @@ class FileMonitor(component.BaseComponent):
     
     componentMediumClass = FileMonitorMedium
     logCategory = compconsts.MONITOR_LOG_CATEGORY
+
+
+    ## Public Methods ##
+
+    def moveFile(self, virtSrcBase, virtDestBase, relFile):
+        if not self._local:
+            raise TranscoderError("Component not properly setup yet")
+        locSrcPath = virtSrcBase.append(relFile).localize(self._local)
+        locDestPath = virtDestBase.append(relFile).localize(self._local)
+        locSrcPath = os.path.realpath(locSrcPath)
+        locDestPath = os.path.realpath(locDestPath)
+        locDestDir = os.path.dirname(locDestPath)
+        if not (virtSrcBase in self._directories):
+            self.warning("Forbidden to move file '%s' to '%s'",
+                         locSrcPath, locDestPath)
+            raise TranscoderError("Forbidden to move a file from other "
+                                  "directories than the monitored ones")
+        self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
+        try:
+            common.ensureDir(locDestDir, "input file destination")
+            shutil.move(locSrcPath, locDestPath)
+        except Exception, e:
+            msg = ("Fail to move file '%s' to '%s': %s" 
+                   % (locSrcPath, locDestPath, log.getExceptionMessage(e)))
+            self.warning("%s", msg)
+            error = TranscoderError(msg, cause=e)
 
     
     ## Overriden Methods ##
@@ -106,7 +136,7 @@ class FileMonitor(component.BaseComponent):
                 watcher.start()
                 self.watchers.append(watcher)
             return result
-        
+        file
         d = component.BaseComponent.do_start(self)
         d.addCallback(monitor_startup)
         d.addErrback(self.__ebErrorFilter, "component startup")
@@ -122,8 +152,8 @@ class FileMonitor(component.BaseComponent):
 
     ## Public Methods ##
                 
-    def setFileState(self, virtBase, file, status):        
-        self.uiState.setitem('pending-files', (virtBase, file), status)
+    def setFileState(self, virtBase, relFile, status):        
+        self.uiState.setitem('pending-files', (virtBase, relFile), status)
 
 
     ## Signal Handler Methods ##

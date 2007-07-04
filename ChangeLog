@@ -1,5 +1,14 @@
 2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitorMedium.remote_setFileState,
+	  FileMonitorMedium.remote_moveFile, FileMonitor, FileMonitor.moveFile,
+	  FileMonitor.monitor_startup, FileMonitor.setFileState):
+	Added a remote method that allow moving files, but only
+	if thery are from a monitored directory.
+
+2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py:
 	* flumotion/component/transcoder/job.py:
 	Import cleanup.
