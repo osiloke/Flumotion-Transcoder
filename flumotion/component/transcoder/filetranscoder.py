@@ -165,11 +165,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 self._diagnoseMode = True
             return result
         
-        self._fireStatusChanged(TranscoderStatusEnum.checking)
-        d = component.BaseComponent.do_check(self)
-        d.addCallback(transcoder_checks)
-        d.addErrback(self.__ebErrorFilter, "component checking")
-        return d
+        try:
+            self._fireStatusChanged(TranscoderStatusEnum.checking)
+            d = component.BaseComponent.do_check(self)
+            d.addCallback(transcoder_checks)
+            d.addErrback(self.__ebErrorFilter, "component checking")
+            return d
+        except:
+            self.__unexpectedError(task="component checks")
         
     def do_setup(self):
         
@@ -208,12 +211,15 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                             altInputDir=altInputDir,
                             niceLevel=self._niceLevel)
             return result
-
-        self._fireStatusChanged(TranscoderStatusEnum.setting_up)
-        d = component.BaseComponent.do_setup(self)
-        d.addCallback(transcoder_setup)
-        d.addErrback(self.__ebErrorFilter, "component setup")
-        return d
+        
+        try:
+            self._fireStatusChanged(TranscoderStatusEnum.setting_up)
+            d = component.BaseComponent.do_setup(self)
+            d.addCallback(transcoder_setup)
+            d.addErrback(self.__ebErrorFilter, "component setup")
+            return d
+        except:
+            self.__unexpectedError(task="component setup")
 
     def do_start(self, *args, **kwargs):
         
@@ -222,24 +228,30 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             d.addCallbacks(self.__cbJobDone, self.__ebJobFailed)
             return result
         
-        self._fireStatusChanged(TranscoderStatusEnum.working)
-        d = component.BaseComponent.do_start(self)
-        d.addCallback(transcoder_start)
-        d.addErrback(self.__ebErrorFilter, "component startup")
-        return d
+        try:
+            self._fireStatusChanged(TranscoderStatusEnum.working)
+            d = component.BaseComponent.do_start(self)
+            d.addCallback(transcoder_start)
+            d.addErrback(self.__ebErrorFilter, "component startup")
+            return d
+        except:
+            self.__unexpectedError(task="component startup")
             
     def do_stop(self, *args, **kwargs):
         
         def component_stop(result):
             return component.BaseComponent.do_stop(self)
 
-        if self._job:
-            d = self._job.stop()
-        else:
-            d = defer.succeed(defer._nothing)
-        d.addCallback(component_stop)
-        d.addErrback(self.__ebStopErrorFilter)
-        return d
+        try:
+            if self._job:
+                d = self._job.stop()
+            else:
+                d = defer.succeed(defer._nothing)
+            d.addCallback(component_stop)
+            d.addErrback(self.__ebStopErrorFilter)
+            return d
+        except:
+            self.__unexpectedError(task="component stopping")
     
     ## Overriden Methods ##
     

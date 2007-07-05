@@ -1,5 +1,14 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.transcoder_checks, FileTranscoder.transcoder_setup,
+	  FileTranscoder.transcoder_start, FileTranscoder.do_stop,
+	  FileTranscoder.component_stop, FileTranscoder.__transcodingError,
+	  FileTranscoder.__unexpectedError):
+	  Added global exception catching and logging during check/setup/startup.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitorMedium.remote_moveFiles, FileMonitor.moveFiles,
 	  FileMonitor.monitor_checks, FileMonitor.monitor_setup,
