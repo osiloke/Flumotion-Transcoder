@@ -111,11 +111,15 @@ MonitorFileStateEnum = enum.EnumClass('MonitorFileStateEnum',
                                       ('pending', 
                                        'downloading', 
                                        'transcoding',
-                                       'queued'), 
+                                       'queued',
+                                       'done',
+                                       'failed'), 
                                       ('Pending', 
                                        'Downloading', 
                                        'Transcoding',
-                                       'Queued'))
+                                       'Queued',
+                                       'Done',
+                                       'Failed'))
 
 AudioVideoToleranceEnum = enum.EnumClass('AudioVideoToleranceEnum',
                                          ('strict', 

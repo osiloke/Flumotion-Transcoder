@@ -1,5 +1,10 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/enums.py:
+	Added the monitor file states failed and done.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py (TranscoderJob._setJobState):
 	Now wait the current call chain to finish before changing the job state.
 
