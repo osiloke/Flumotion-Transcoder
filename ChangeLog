@@ -1,5 +1,23 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py (ISchedulerListener,
+	  ISchedulerListener.onProfileQueued,
+	  ISchedulerListener.onTranscodingStarted,
+	  ISchedulerListener.onTranscodingFail,
+	  ISchedulerListener.onTranscodingDone, SchedulerListener,
+	  SchedulerListener.onProfileQueued,
+	  SchedulerListener.onTranscodingStarted,
+	  SchedulerListener.onTranscodingFail,
+	  SchedulerListener.onTranscodingDone, Scheduler, Scheduler.__init__,
+	  Scheduler.initialize, Scheduler.addProfile, Scheduler.removeProfile,
+	  Scheduler.onTranscodingFailed, Scheduler.onTranscodingDone,
+	  Scheduler.onTranscodingTerminated, Scheduler._doSyncListener,
+	  Scheduler.__startupTasks):
+	Now the sheduler do not depend on monitoring.
+	Added scheduling state events.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/enums.py:
 	Added the monitor file states failed and done.
 

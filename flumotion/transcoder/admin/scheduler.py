@@ -17,17 +17,9 @@ from flumotion.transcoder import log
 
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.eventsource import EventSource
-from flumotion.transcoder.admin.monitoring import MonitoringListener
 from flumotion.transcoder.admin.transcoding import TranscodingListener
 from flumotion.transcoder.admin.transtask import TranscodingTask
 from flumotion.transcoder.admin.transtask import TranscodingTaskListener
-from flumotion.transcoder.admin.montask import MonitoringTask
-from flumotion.transcoder.admin.montask import MonitoringTaskListener
-
-from flumotion.transcoder.admin.montask import IMonitoringTaskListener
-from flumotion.transcoder.admin.monitoring import IMonitoringListener
-from flumotion.transcoder.admin.transcoding import ITranscodingListener
-from flumotion.transcoder.admin.transtask import ITranscodingTaskListener
 
 #TODO: Implement a faire scheduler and prevent the possibility
 #      of the profile priority making the overhaul customer priority
@@ -36,28 +28,47 @@ from flumotion.transcoder.admin.transtask import ITranscodingTaskListener
 
 
 class ISchedulerListener(Interface):
-    pass
-
     
+    def onProfileQueued(self, scheduler, profileContext):
+        pass
+    
+    def onTranscodingStarted(self, scheduler, task):
+        pass
+    
+    def onTranscodingFail(self, sheduler, task):
+        pass
+    
+    def onTranscodingDone(self, sheduler, task):
+        pass
+        
+
 class SchedulerListener(object):
     
     implements(ISchedulerListener)
+    
+    def onProfileQueued(self, scheduler, profileContext):
+        pass
+    
+    def onTranscodingStarted(self, scheduler, profileContext):
+        pass
+    
+    def onTranscodingFail(self, sheduler, profileContext):
+        pass
+    
+    def onTranscodingDone(self, sheduler, profileContext):
+        pass
 
 
 class Scheduler(log.Loggable, 
                 EventSource, 
-                MonitoringListener, 
-                MonitoringTaskListener, 
                 TranscodingListener, 
                 TranscodingTaskListener):
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, store, monitoring, transcoding):
+    def __init__(self, store, transcoding):
         EventSource.__init__(self, ISchedulerListener)
-        MonitoringTaskListener.__init__(self)
         self._store = store
-        self._monitoring = monitoring
         self._transcoding = transcoding
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
@@ -69,10 +80,8 @@ class Scheduler(log.Loggable,
         
     def initialize(self):
         #self._store.addListener(self)
-        self._monitoring.addListener(self)
         self._transcoding.addListener(self)
         self._transcoding.syncListener(self)
-        self._monitoring.syncListener(self)
         return defer.succeed(self)
     
     def waitIdle(self, timeout=None):
@@ -95,51 +104,31 @@ class Scheduler(log.Loggable,
             self.__startup()
         return defer.succeed(self)
         
-    
-    ## IMonitoringLister Overriden Methods ##
-    
-    def onMonitoringTaskAdded(self, takser, task):
-        self.debug("Monitoring task '%s' added", task.getLabel())
-        task.addListener(self)
-        task.syncListener(self)
-    
-    def onMonitoringTaskRemoved(self, tasker, task):
-        self.debug("Monitoring task '%s' removed", task.getLabel())
-        task.removeListener(self)
-
-
-    ## IMonitoringTaskLister Overriden Methods ##
-    
-    def onMonitoredFileAdded(self, task, profileContext):
+    def addProfile(self, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
         if self.__isProfileQueued(profileContext):
-            self.debug("Already queued file '%s' added by "
-                       "monitoring task '%s'", inputPath, task.getLabel())
+            self.debug("Added an already queued profile '%s'", inputPath)
         elif self._transcoding.getTask(identifier):
-            self.debug("Already transcoding file '%s' added by "
-                       "monitoring task '%s'", inputPath, task.getLabel())
+            self.debug("Added an already transcoding profile '%s'", inputPath)
         else:
-            self.debug("Queued file '%s' added by monitoring task '%s'", 
-                       inputPath, task.getLabel())
+            self.debug("Queued profile '%s'", inputPath)
             self.__queueProfile(profileContext)
             self.__startupTasksIfPossible()
+            self._fireEvent(profileContext, "ProfileQueued")
     
-    def onMonitoredFileRemoved(self, montask, profileContext):
+    def removeProfile(self, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
         if self.__isProfileQueued(profileContext):
-            self.debug("Unqueue file '%s' removed by "
-                       "monitoring task '%s'", inputPath, montask.getLabel())
+            self.debug("Unqueue profile '%s'", inputPath)
             self.__unqueuProfile(profileContext)
         trantask = self._transcoding.getTask(identifier, None)
         if trantask and not trantask.isAcknowledging():
-            self.debug("Cancel transcoding of file '%s' removed by "
-                       "monitoring task '%s'", inputPath, 
-                       montask.getLabel())
+            self.debug("Cancel transcoding of profile '%s'", inputPath)
             self._transcoding.removeTask(trantask)
-
-
+    
+    
     ## ITranscodingLister Overriden Methods ##
     
     def onTranscodingTaskAdded(self, takser, task):
@@ -158,17 +147,11 @@ class Scheduler(log.Loggable,
 
     ## ITranscodingTaskLister Overriden Methods ##
     
-    def onTranscoderSelected(self, task, transcoder):
-        pass
-    
-    def onTranscoderReleased(self, task, transcoder):
-        pass
-    
     def onTranscodingFailed(self, task, transcoder):
-        pass
+        self._fireEvent(task, "TranscodingFail")
     
     def onTranscodingDone(self, task, transcoder):
-        pass
+        self._fireEvent(task, "TranscodingDone")
 
     def onTranscodingTerminated(self, task, succeed):
         self.log("Transcoding task '%s' %s", task.getLabel(), 
@@ -176,6 +159,16 @@ class Scheduler(log.Loggable,
         ctx = task.getProfileContext()
         self._transcoding.removeTask(ctx.getIdentifier())
         
+        
+    ## EventSource Overriden Methods ##
+    
+    def _doSyncListener(self, listener):
+        for ctx in self._queue.itervalues():
+            self._fireEventTo(ctx, listener, "ProfileQueued")
+        for task in self._transcoding.iterTasks():
+            ctx = task.getProfileContext()
+            self._fireEnvetTo(ctx, listener, "TranscodingStarted")
+
         
     ## Private Methods ##
     
@@ -198,6 +191,7 @@ class Scheduler(log.Loggable,
             identifier = profCtx.getIdentifier()
             task = TranscodingTask(self._transcoding, profCtx)
             self._transcoding.addTask(identifier, task)
+            self._fireEvent(task, "TranscodingStarted")
             count -= 1
 
     def __isProfileQueued(self, profCtx):
