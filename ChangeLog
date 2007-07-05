@@ -1,5 +1,12 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.isAcknowledged,
+	  TranscodingTask.__ebAcknowledgeFailed):
+	Added the method isAcknowledged.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/proxies/monitorproxy.py
 	  (MonitorProxy.setFileState, MonitorProxy.moveFiles,

@@ -89,6 +89,9 @@ class TranscodingTask(AdminTask, TranscoderListener):
     def isAcknowledging(self):
         return self._acknowledging
 
+    def isAcknowledged(self):
+        transcoder = self.getActiveComponent()
+        return (transcoder != None) and transcoder.isAcknowledged()
 
     ## IComponentListener Overrided Methods ##
     
@@ -325,7 +328,8 @@ class TranscodingTask(AdminTask, TranscoderListener):
         self.warning("Failed to acknowledge task '%s' transcoder '%s': %s", 
                      self.getLabel(), transcoder.getName(), 
                      log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Acknowledge failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transcoder)
