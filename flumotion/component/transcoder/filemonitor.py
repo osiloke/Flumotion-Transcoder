@@ -40,8 +40,8 @@ class FileMonitorMedium(component.BaseComponentMedium):
     def remote_setFileState(self, virtBase, relFile, status):
         self.comp.setFileState(virtBase, relFile, status)
         
-    def remote_moveFile(self, virtSrcBase, virtDestBase, relFile):
-        self.comp.moveFile(virtSrcBase, virtDestBase, relFile)
+    def remote_moveFiles(self, virtSrcBase, virtDestBase, relFiles):
+        self.comp.moveFiles(virtSrcBase, virtDestBase, relFiles)
         
 
 class FileMonitor(component.BaseComponent):
@@ -55,28 +55,28 @@ class FileMonitor(component.BaseComponent):
 
     ## Public Methods ##
 
-    def moveFile(self, virtSrcBase, virtDestBase, relFile):
+    def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         if not self._local:
             raise TranscoderError("Component not properly setup yet")
-        locSrcPath = virtSrcBase.append(relFile).localize(self._local)
-        locDestPath = virtDestBase.append(relFile).localize(self._local)
-        locSrcPath = os.path.realpath(locSrcPath)
-        locDestPath = os.path.realpath(locDestPath)
-        locDestDir = os.path.dirname(locDestPath)
         if not (virtSrcBase in self._directories):
-            self.warning("Forbidden to move file '%s' to '%s'",
-                         locSrcPath, locDestPath)
-            raise TranscoderError("Forbidden to move a file from other "
-                                  "directories than the monitored ones")
-        self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
-        try:
-            common.ensureDir(locDestDir, "input file destination")
-            shutil.move(locSrcPath, locDestPath)
-        except Exception, e:
-            msg = ("Fail to move file '%s' to '%s': %s" 
-                   % (locSrcPath, locDestPath, log.getExceptionMessage(e)))
-            self.warning("%s", msg)
-            error = TranscoderError(msg, cause=e)
+                self.warning("Forbidden to move files from '%s'", virtSrcBase)
+                raise TranscoderError("Forbidden to move a file from other "
+                                      "directories than the monitored ones")
+        for relFile in relFiles:
+            locSrcPath = virtSrcBase.append(relFile).localize(self._local)
+            locDestPath = virtDestBase.append(relFile).localize(self._local)
+            locSrcPath = os.path.realpath(locSrcPath)
+            locDestPath = os.path.realpath(locDestPath)
+            locDestDir = os.path.dirname(locDestPath)
+            self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
+            try:
+                common.ensureDir(locDestDir, "input file destination")
+                shutil.move(locSrcPath, locDestPath)
+            except Exception, e:
+                msg = ("Fail to move file '%s' to '%s': %s" 
+                       % (locSrcPath, locDestPath, log.getExceptionMessage(e)))
+                self.warning("%s", msg)
+                raise TranscoderError(msg, cause=e)
 
     
     ## Overriden Methods ##
@@ -97,10 +97,13 @@ class FileMonitor(component.BaseComponent):
             self._local = Local.createFromComponentProperties(props)
             return result
         
-        d = component.BaseComponent.do_check(self)
-        d.addCallback(monitor_checks)
-        d.addErrback(self.__ebErrorFilter, "component checking")
-        return d
+        try:
+            d = component.BaseComponent.do_check(self)
+            d.addCallback(monitor_checks)
+            d.addErrback(self.__ebErrorFilter, "component checking")
+            return d
+        except:
+            self.__unexpectedError(task="component checking")
 
     def do_setup(self):
         
@@ -115,10 +118,13 @@ class FileMonitor(component.BaseComponent):
                 common.ensureDir(localDir, "monitored")
             return result
     
-        d = component.BaseComponent.do_setup(self)
-        d.addCallback(monitor_setup)
-        d.addErrback(self.__ebErrorFilter, "component setup")
-        return d
+        try:
+            d = component.BaseComponent.do_setup(self)
+            d.addCallback(monitor_setup)
+            d.addErrback(self.__ebErrorFilter, "component setup")
+            return d
+        except:
+            self.__unexpectedError(task="component setup")
 
     def do_start(self, *args, **kwargs):
         
@@ -136,7 +142,7 @@ class FileMonitor(component.BaseComponent):
                 watcher.start()
                 self.watchers.append(watcher)
             return result
-        file
+
         d = component.BaseComponent.do_start(self)
         d.addCallback(monitor_startup)
         d.addErrback(self.__ebErrorFilter, "component startup")

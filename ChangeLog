@@ -1,3 +1,13 @@
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitorMedium.remote_moveFiles, FileMonitor.moveFiles,
+	  FileMonitor.monitor_checks, FileMonitor.monitor_setup,
+	  FileMonitor.monitor_startup):
+	Changed the remote method move File to moveFiles, now it can move
+	more than one file at the same time.
+	Added global exception catching and logging during check/setup/startup.
+
 2007-07-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py
