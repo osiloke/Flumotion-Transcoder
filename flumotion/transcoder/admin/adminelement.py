@@ -331,7 +331,8 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
                 self.warning("Failure waiting for element '%s' "
                              "become idle: %s", self.getLabel(),
                              log.getFailureMessage(result))
-                self.debug("%s", log.getFailureTraceback(result))
+                self.debug("Wait idle failure traceback:\n%s",
+                           log.getFailureTraceback(result))
         return newResult
     
     def __cbInitializationSucceed(self, result):

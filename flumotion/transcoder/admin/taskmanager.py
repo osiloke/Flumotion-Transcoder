@@ -86,7 +86,10 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         return self._tasks.values()
 
     def getTask(self, identifier, default=None):
-        return self._tasks.get(identifier, default)
+        props = self._identifiers.get(identifier, None)
+        if not props:
+            return default
+        return self._tasks.get(props, default)
 
     def iterTasks(self):
         return self._tasks.itervalues()
@@ -287,7 +290,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         msg = ("Task manager '%s' fail to retrieve component '%s' properties."
                % (self.getLabel(), component.getName()))
         self.warning("%s", msg)
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Properties retrieval failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
         self.__apartTasklessComponent(component)
         self._pending -= 1
         self._tryStarting()
@@ -306,30 +310,35 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def __ebStopFailed(self, failure, name):
         self.warning("Task manager '%s' failed to stop component '%s': %s",
                      self.getLabel(), name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Component stop failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
 
     def __ebDeleteFailed(self, failure, name):
         self.warning("Task manager '%s' failed to delete component '%s': %s",
                      self.getLabel(), name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Component delete failure tracebak:\n%s",
+                   log.getFailureTraceback(failure))
 
     def __ebStartupFailed(self, failure):
         self._started = False
         self.warning("Task Manager '%s' failed to startup: %s",
                      self.getLabel(), log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Startup failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
         
     def __ebResumeFailed(self, failure):
         self._pause = True
         self.warning("Task Manager '%s' failed to resume: %s",
                      self.getLabel(), log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Resuming failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
         
     def __ebPauseFailed(self, failure):
         self._pause = False
         self.warning("Task Manager '%s' failed to pause: %s",
                      self.getLabel(), log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Pausing failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
 
     def __cbWaitSynchronized(self, result):
         defs = []

@@ -1,5 +1,32 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement.__cbLogFailures):
+	* flumotion/transcoder/admin/admintask.py
+	  (AdminTask.__cbMultiDeleteResults, AdminTask.__bbTaskTerminated,
+	  AdminTask.__bbSelectPotentialComponent,
+	  AdminTask.__ebPotentialComponentFailure,
+	  AdminTask.__ebComponentLoadFailed, AdminTask.__ebComponentNotHappy,
+	  AdminTask.__ebUIStateFailed, AdminTask.__ebComponentStopFailed,
+	  AdminTask.__ebComponentDeleteFailed, AdminTask.__ebNoValidWorker):
+	* flumotion/transcoder/admin/monitoring.py
+	  (Monitoring.__cbMonitorSetGoesIdle, Monitoring.__ebStartingFailure,
+	  Monitoring.__ebAddComponentFailed,
+	  Monitoring.__ebRemoveComponentFailed):
+	* flumotion/transcoder/admin/proxies/componentset.py
+	  (ComponentSetSkeleton.__ebAcceptFailure):
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.getTask,
+	  TaskManager.__ebGetPropertiesFailed, TaskManager.__ebStopFailed,
+	  TaskManager.__ebDeleteFailed, TaskManager.__ebStartupFailed,
+	  TaskManager.__ebResumeFailed, TaskManager.__ebPauseFailed):
+	* flumotion/transcoder/admin/transcoding.py
+	  (Transcoding.__cbTranscoderSetGoesIdle,
+	  Transcoding.__ebStartingFailure, Transcoding.__ebAddComponentFailed,
+	  Transcoding.__ebRemoveComponentFailed):
+	Changed traceback logging to include a description of the tb origine.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
 	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
 	  TranscoderAdmin.onAttached, TranscoderAdmin.onTargetRemoved,

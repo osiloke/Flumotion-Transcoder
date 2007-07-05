@@ -161,7 +161,8 @@ class Transcoding(TaskManager, WorkerSetListener,
             self.warning("Failure during waiting transcoder set "
                          "to become idle: %s",
                          log.getFailureMessage(result))
-            self.debug("%s", log.getFailureTraceback(result))
+            self.debug("Idle transcoder failure traceback:\n%s",
+                       log.getFailureTraceback(result))
         self.log("Starting/Resuming transcoding")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -179,16 +180,19 @@ class Transcoding(TaskManager, WorkerSetListener,
     def __ebStartingFailure(self, failure):
         self.warning("Failure during transcoding starting/resuming: %s",
                      log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Start/Resume failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
 
     def __ebAddComponentFailed(self, failure, name):
         self.warning("Failed to add transcoder '%s' "
                      "to transcoding manager: %s", 
                      name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Add component failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
     
     def __ebRemoveComponentFailed(self, failure, name):
         self.warning("Failed to remove transcoder '%s' "
                      "from transcoding manager: %s",
                      name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Remove component failure traceback:\n%s",
+                   log.getFailureTraceback(failure))

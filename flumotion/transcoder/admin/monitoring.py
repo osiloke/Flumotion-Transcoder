@@ -145,7 +145,8 @@ class Monitoring(TaskManager, WorkerSetListener,
             self.warning("Failure during waiting monitor set "
                          "to become idle: %s",
                          log.getFailureMessage(result))
-            self.debug("%s", log.getFailureTraceback(result))
+            self.debug("Monitor idle failure traceback:\n%s",
+                       log.getFailureTraceback(result))
         self.log("Starting/Resuming monitoring")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -163,16 +164,19 @@ class Monitoring(TaskManager, WorkerSetListener,
     def __ebStartingFailure(self, failure):
         self.warning("Failure during monitoring starting/resuming: %s",
                      log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Startup failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
 
     def __ebAddComponentFailed(self, failure, name):
         self.warning("Failed to add monitor '%s' "
                      "to monitoring manager: %s", 
                      name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Add monitor failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
     
     def __ebRemoveComponentFailed(self, failure, name):
         self.warning("Failed to remove monitor '%s' "
                      "from monitoring manager: %s",
                      name, log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Remove component failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
