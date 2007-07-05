@@ -1,5 +1,10 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py (TranscoderJob._setJobState):
+	Now wait the current call chain to finish before changing the job state.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py
 	  (FileTranscoder.transcoder_checks, FileTranscoder.transcoder_setup,
 	  FileTranscoder.transcoder_start, FileTranscoder.do_stop,

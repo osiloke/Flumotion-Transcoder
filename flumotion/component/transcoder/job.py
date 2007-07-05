@@ -291,7 +291,8 @@ class TranscoderJob(log.LoggerProxy):
         #FIXME: Don't reference the global context
         reporter = self._context.reporter
         reporter.report.state = state
-        self._fireJobStateChanged(state)
+        # The state is changed after the current processing chain terminate.
+        reactor.callLater(0, self._fireJobStateChanged, state)
         
     def _setTargetState(self, targetCtx, state):
         targetCtx.reporter.report.state = state
