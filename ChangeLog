@@ -1,5 +1,18 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py (MonitoringTask.__init__,
+	  MonitoringTask.setFileState, MonitoringTask.moveFiles,
+	  MonitoringTask.onMonitorFileAdded,
+	  MonitoringTask._onComponentElected, MonitoringTask.__file2profile,
+	  MonitoringTask.__asyncMovePendingFiles,
+	  MonitoringTask.__ebSetFileStateFailed, MonitoringTask.__cbFileMoved,
+	  MonitoringTask.__ebMoveFilesFailed):
+	Add the methods setFileState and moveFiles.
+	Keep a buffer of the files to be moved, and wait for a 
+	valid monitor to be connected to ask it to move the files.
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py
 	  (TranscodingTask.isAcknowledged,
 	  TranscodingTask.__ebAcknowledgeFailed):

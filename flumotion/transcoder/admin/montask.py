@@ -74,6 +74,30 @@ class MonitoringTask(AdminTask, MonitorListener):
                            MonitorProperties.createFromContext(customerCtx),
                            IMonitoringTaskListener)
         self._customerCtx = customerCtx
+        self._pendingMoves = [] # [VirtualPath, VirutalPath, [str]]
+        self._movingFiles = False
+
+    
+    ## Public Methods ##
+    
+    def setFileState(self, virtBase, relPath, state):
+        monitor = self.getActiveComponent()
+        if not monitor:
+            self.warning("Monitoring task '%s' file '%s' state changed to %s "
+                         "without active monitor", self.getLabel(),
+                         virtBase.append(relPath), state.name)
+            return
+        self.log("Monitoring task '%s' file '%s' state changed to %s",
+                 self.getLabel(), virtBase.append(relPath), state.name)
+        args = virtBase, relPath, state
+        d = monitor.setFileState(*args)
+        d.addErrback(self.__ebSetFileStateFailed, *args)
+        
+    def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
+        args = virtSrcBase, virtDestBase, relFiles
+        self._pendingMoves.append(args)
+        if not self._movingFiles:
+            self.__asyncMovePendingFiles()        
     
 
     ## IComponentListener Overrided Methods ##
@@ -122,9 +146,8 @@ class MonitoringTask(AdminTask, MonitorListener):
             return
         self._fireEvent(profile, "MonitoredFileRemoved")
     
-    def onMonitorFileChanged(self, monitor, virtDir, file, state):
+    def onMonitorFileAdded(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
-        if (state != MonitorFileStateEnum.pending): return
         profile = self.__file2profile(virtDir, file)
         if not profile:
             self.warning("File '%s' added but no corresponding profile "
@@ -146,6 +169,7 @@ class MonitoringTask(AdminTask, MonitorListener):
     def _onComponentElected(self, component):
         self._fireEvent(component, "MonitoringActivated")
         component.syncListener(self)
+        
 
     def _onComponentRelieved(self, component):
         self._fireEvent(component, "MonitoringDeactivated")
@@ -194,3 +218,49 @@ class MonitoringTask(AdminTask, MonitorListener):
             if p.getInputPath() == virtPath:
                 return p
         return None
+
+    def __asyncMovePendingFiles(self):
+        if not self._pendingMoves:
+            self._movingFiles = False
+            return
+        args = self._pendingMoves.pop()
+        monitor = self.getActiveComponent()
+        if not monitor:
+            self.warning("No monitor found to move files '%s' to '%s'",
+                         args[0], args[1])
+            # Stop moving files
+            self._movingFiles = False
+            return
+        self.debug("Ask monitor '%s' to move files form '%s' to '%s'",
+                   monitor.getName(), args[0], args[1])
+        d = monitor.moveFiles(*args)
+        d.addCallbacks(self.__cbFileMoved, self.__ebMoveFilesFailed, 
+                       callbackArgs=args, errbackArgs=args)
+
+    def __ebSetFileStateFailed(self, failure, monitor, 
+                                virtBase, relFile, state):
+        self.warning("Monitoring task '%s' monitor '%s' Fail to change "
+                     "file '%s' state to %s: %s", self.getLabel(),
+                     monitor.getName(), virtBase.append(relFile), state.name,
+                     log.getFailureMessage(failure))
+        self.debug("Set file state failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
+    
+    def __cbFileMoved(self, virtSrcBase, virtDestBase, relFiles):
+        for relFile in relFiles:
+            self.log("File '%s' moved to '%s'",
+                      virtSrcBase.append(relFile),
+                      virtDestBase.append(relFile))
+        # Continue moving files
+        self.__asyncMovePendingFiles()
+        
+    def __ebMoveFilesFailed(self, failure, monitor,
+                            virtSrcBase, virtDestBase, relFiles):
+        self.warning("Monitoring task '%s' monitor '%s' fail to move files "
+                     "from '%s' to '%s': %s", self.getLabel(),
+                     monitor.getName(), virtSrcBase, virtDestBase,
+                     log.getFailureMessage(failure))
+        self.debug("Move files failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
+        # Continue moving files anyway
+        self.__asyncMovePendingFiles()
