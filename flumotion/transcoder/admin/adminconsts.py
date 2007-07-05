@@ -19,6 +19,8 @@ MONITORING_LOG_CATEGORY = "monitoring"
 TRANSCODING_LOG_CATEGORY = "transcoding"
 SCHEDULER_LOG_CATEGORY = "scheduler"
 
+# The generic timeout used for remote method call
+REMOTE_CALL_TIMEOUT = 60
 
 # The time to let the workers to log back in the manager before resuming
 RESUME_DELAY = 20

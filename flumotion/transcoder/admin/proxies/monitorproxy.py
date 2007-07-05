@@ -14,8 +14,10 @@ import os
 
 from zope.interface import implements
 
+from flumotion.transcoder import utils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
@@ -77,6 +79,17 @@ class MonitorProxy(ComponentProxy):
         d.addCallback(self.__cbRetrieveFiles)
         return d
             
+    def setFileState(self, virtBase, relFile, state):
+        d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
+                                  self._callRemote, "setFileState",
+                                  virtBase, relFile, state)
+        return d
+    
+    def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
+        d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
+                                  self._callRemote, "moveFiles",
+                                  virtSrcBase, virtDestBase, relFiles)
+        return d
     
     ## Overriden Methods ##
     
@@ -85,7 +98,8 @@ class MonitorProxy(ComponentProxy):
         if pending:
             for file, statenum in pending.iteritems():
                 virtBase, relFile = file
-                self._onMonitorSetFile(virtBase, relFile, statenum)
+                self._fireEvent((virtBase, relFile, statenum),
+                                "MonitorFileAdded")
     
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
@@ -124,8 +138,7 @@ class MonitorProxy(ComponentProxy):
             self._fireEvent(args, "MonitorFileChanged")
         else:
             self._alreadyAdded[ident] = None
-            self._fireEvent(args, "MonitorFileAdded")            
-            self._callRemote("test")
+            self._fireEvent(args, "MonitorFileAdded")
             
     def _onMonitorDelFile(self, virtBase, relFile, state):
         ident = (virtBase, relFile)
