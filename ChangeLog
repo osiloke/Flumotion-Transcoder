@@ -1,5 +1,24 @@
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
+	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
+	  TranscoderAdmin.onAttached, TranscoderAdmin.onTargetRemoved,
+	  TranscoderAdmin.onMonitoringTaskAdded,
+	  TranscoderAdmin.onMonitoringTaskRemoved,
+	  TranscoderAdmin.onMonitoringActivated,
+	  TranscoderAdmin.onMonitoredFileAdded,
+	  TranscoderAdmin.onMonitoredFileRemoved,
+	  TranscoderAdmin.onProfileQueued,
+	  TranscoderAdmin.onTranscodingStarted,
+	  TranscoderAdmin.onTranscodingFail, TranscoderAdmin.onTranscodingDone,
+	  TranscoderAdmin.__moveFailedInputFiles,
+	  TranscoderAdmin.__setInputFileState,
+	  TranscoderAdmin.__ebSartupFailed):
+	Listen monitoring task events and add the profiles to the scheduler.
+	Listen scheduler events and update monitor files state.	
+
+2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py (MonitoringTask.__init__,
 	  MonitoringTask.setFileState, MonitoringTask.moveFiles,
 	  MonitoringTask.onMonitorFileAdded,

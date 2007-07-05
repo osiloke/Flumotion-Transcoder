@@ -16,6 +16,7 @@ from twisted.internet import reactor, defer
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
@@ -23,19 +24,20 @@ from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSet
 from flumotion.transcoder.admin.proxies.workerset import WorkerSet
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
 from flumotion.transcoder.admin.proxies.monitorset import MonitorSet
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 from flumotion.transcoder.admin.datastore.adminstore import AdminStore, AdminStoreListener
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore, CustomerStoreListener
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, ProfileStoreListener
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
-from flumotion.transcoder.admin.monitoring import Monitoring
-from flumotion.transcoder.admin.montask import MonitoringTask
+from flumotion.transcoder.admin.monitoring import Monitoring, MonitoringListener
+from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.transcoding import Transcoding
-from flumotion.transcoder.admin.scheduler import Scheduler
+from flumotion.transcoder.admin.scheduler import Scheduler, SchedulerListener
 
 class TranscoderAdmin(log.Loggable,
                       ManagerSetListener,
-                      MonitorListener,
+                      MonitoringListener,
+                      MonitoringTaskListener,
+                      SchedulerListener,
                       AdminStoreListener,
                       CustomerStoreListener,
                       ProfileStoreListener):
@@ -53,8 +55,7 @@ class TranscoderAdmin(log.Loggable,
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
-        self._scheduler = Scheduler(self._store, self._monitoring, 
-                                    self._transcoding)
+        self._scheduler = Scheduler(self._store, self._transcoding)
         self._started = False
 
     
@@ -77,8 +78,12 @@ class TranscoderAdmin(log.Loggable,
         # Register listeners
         self._store.addListener(self)
         self._managers.addListener(self)
+        self._scheduler.addListener(self)
+        self._monitoring.addListener(self)
         self._store.syncListener(self)
         self._managers.syncListener(self)
+        self._scheduler.syncListener(self)
+        self._monitoring.syncListener(self)
         # fire the initialization
         d.callback(defer._nothing)
         return d
@@ -149,8 +154,91 @@ class TranscoderAdmin(log.Loggable,
     def onTargetRemoved(self, profile, target):
         self.info("Target '%s' Removed", target.getLabel())
 
+
+    ## IMonitoringLister Overriden Methods ##
+    
+    def onMonitoringTaskAdded(self, takser, task):
+        self.debug("Monitoring task '%s' added", task.getLabel())
+        task.addListener(self)
+        task.syncListener(self)
+    
+    def onMonitoringTaskRemoved(self, tasker, task):
+        self.debug("Monitoring task '%s' removed", task.getLabel())
+        task.removeListener(self)
+
+
+    ## IMonitoringTaskLister Overriden Methods ##
+    
+    def onMonitoringActivated(self, task, monitor):
+        # Resync the scheduler to update the state
+        # of the new monitor files
+        self._scheduler.syncListener(self)
+    
+    def onMonitoredFileAdded(self, montask, profileContext):
+        self.log("Monitoring task '%s' added profile '%s'",
+                 montask.getLabel(), profileContext.getInputPath())
+        self._scheduler.addProfile(profileContext)
+    
+    def onMonitoredFileRemoved(self, montask, profileContext):
+        self.log("Monitoring task '%s' removed profile '%s'",
+                 montask.getLabel(), profileContext.getInputPath())
+        self._scheduler.removeProfile(profileContext)
+
+    
+    ## ISchedulerListener Overriden Methods ##
+    
+    def onProfileQueued(self, scheduler, profileContext):
+        self.__setInputFileState(profileContext,
+                                 MonitorFileStateEnum.queued)
+        
+    def onTranscodingStarted(self, scheduler, task):
+        self.__setInputFileState(task.getProfileContext(),
+                                 MonitorFileStateEnum.transcoding)
+    
+    def onTranscodingFail(self, sheduler, task):
+        self.__setInputFileState(task.getProfileContext(),
+                                 MonitorFileStateEnum.failed)
+        if not task.isAcknowledged():
+            # If a transcoding fail without acknowledgment,
+            # it propably segfault or has been killed.
+            # So we have to move the input file to the
+            # "fail" directory ourself.
+            ctx = task.getProfileContext()
+            self.debug("Transcoding task for '%s' segfaulted "
+                       "or has been kill", ctx.getInputPath())
+            self.__moveFailedInputFiles(ctx)
+    
+    def onTranscodingDone(self, sheduler, task):
+        self.__setInputFileState(task.getProfileContext(),
+                                 MonitorFileStateEnum.done)
+
     
     ## Private Methods ##
+    
+    def __moveFailedInputFiles(self, profCtx):
+        custCtx = profCtx.customer
+        inputBase = profCtx.getInputBase()
+        failedBase = profCtx.getFailedBase()
+        relPath = profCtx.getInputRelPath()
+        task = self._monitoring.getTask(custCtx.getIdentifier())
+        if not task:
+            self.warning("No monitoring task found for customer '%s'; "
+                         "cannot move files from '%s' to '%s'",
+                         custCtx.store.getLabel(), inputBase, failedBase)
+            return
+        task.moveFiles(inputBase, failedBase, [relPath])
+    
+    def __setInputFileState(self, profCtx, state):
+        custCtx = profCtx.customer
+        inputBase = profCtx.getInputBase()
+        task = self._monitoring.getTask(custCtx.getIdentifier())
+        if not task:
+            self.warning("No monitoring task found for customer '%s'; "
+                         "cannot set file '%s' state to %s",
+                         custCtx.store.getLabel(), inputBase, state.name)
+            return
+        relPath = profCtx.getInputRelPath()        
+        task.setFileState(inputBase, relPath, state)
     
     def __startup(self):
         self.debug("Starting up transcoder admin")
@@ -184,4 +272,5 @@ class TranscoderAdmin(log.Loggable,
     def __ebSartupFailed(self, failure):
         self.warning("Failed to startup administration: %s",
                      log.getFailureMessage(failure))
-        self.debug("%s", log.getFailureTraceback(failure))
+        self.debug("Startup failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
