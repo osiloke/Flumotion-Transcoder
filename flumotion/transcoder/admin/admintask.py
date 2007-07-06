@@ -18,7 +18,11 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log, utils
 from flumotion.transcoder.log import LoggerProxy
+from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.enums import TaskStateEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.waiters import AssignWaiters
+from flumotion.transcoder.admin.waiters import PassiveWaiters
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 
@@ -28,7 +32,7 @@ class IAdminTask(Interface):
     def getLabel(self):
         pass
     
-    def isActive(self):
+    def isStarted(self):
         pass
     
     def hasTerminated(self):
@@ -49,18 +53,26 @@ class IAdminTask(Interface):
     def getWorker(self):
         pass
     
-    def start(self, paused=False):
-        pass
-    
-    def pause(self):
-        pass
-    
-    def resume(self):
-        pass
-    
-    def stop(self):
+    def start(self, paused=False, timeout=None):
         """
-        Returns the list of components previously managed by this task.
+        Return a Deferred.
+        """
+    
+    def pause(self, timeout=None):
+        """
+        Return a Deferred.
+        """
+    
+    def resume(self, timeout=None):
+        """
+        Return a Deferred.
+        """
+    
+    def stop(self, timeout=None):
+        """
+        Returns a Deferred.
+        It's result will be the list of components 
+        previously managed by this task.
         """
     
     def abort(self):
@@ -69,13 +81,23 @@ class IAdminTask(Interface):
     def suggestWorker(self, worker):
         pass
     
-    def waitValidWorker(self, timeout=None):
-        pass
+    def waitPotentialWorker(self, timeout=None):
+        """
+        Return a Deferred.
+        """
 
-    def waitSynchronized(self, timeout=None):
-        pass
+    def waitIdle(self, timeout=None):
+        """
+        Return a Deferred.
+        Wait for the task to be in a stable idle state.
+        """
+        
+    def waitActive(self, timeout=None):
+        """
+        Return a Deferred called when a component has been elected.
+        """
 
-    
+
 class AdminTask(LoggerProxy, EventSource):
     
     implements(IAdminTask)
@@ -93,13 +115,12 @@ class AdminTask(LoggerProxy, EventSource):
         LoggerProxy.__init__(self, logger)
         EventSource.__init__(self, interface)
         self._worker = None # WorkerProxy
-        self._started = False
-        self._paused = False
-        self._terminated = False
+        self._state = TaskStateEnum.stopped
+        self._startWaiters = PassiveWaiters()
         self._pendingName = None
         self._delayed = None # IDelayedCall
-        self._elected = None # MonitorProxy
-        self._components = {} # {MonitorProxy: None}
+        self._elected = AssignWaiters(None) # ComponentProxy
+        self._components = {} # {ComponentProxy: None}
         self._label = label
         self._properties = properties
         self._retry = 0
@@ -114,14 +135,14 @@ class AdminTask(LoggerProxy, EventSource):
     def getProperties(self):
         return self._properties
 
-    def isActive(self):
-        return (not self._terminated) and self._started and (not self._paused)
+    def isStarted(self):
+        return self._state == TaskStateEnum.started
 
     def hasTerminated(self):
-        return self._terminated
+        return self._state == TaskStateEnum.terminated
 
     def getActiveComponent(self):
-        return self._elected
+        return self._elected.getValue()
     
     def getWorker(self):
         return self._worker
@@ -147,57 +168,85 @@ class AdminTask(LoggerProxy, EventSource):
                  component.getName(), self.getLabel())
         del self._components[component]
         self._onComponentRemoved(component)
-        if component == self._elected:
+        if component == self.getActiveComponent():
             self.__relieveComponent()
     
-    def start(self, paused=False):
-        if self._started: return
-        self.log("Starting admin task '%s'", self.getLabel())
-        self._started = True
-        if paused:
-            self.pause()
-        else:
-            self._paused = False
+    def start(self, paused=False, timeout=None):
+        if not (self._state in [TaskStateEnum.stopped, 
+                                TaskStateEnum.starting]):
+            return defer.fail(TranscoderError("Cannot start %s task '%s'"
+                                              % (self._state.name,
+                                                 self.getLabel())))
+        if self._state == TaskStateEnum.stopped:
+            if paused:
+                self.log("Starting already paused admin task '%s'",
+                         self.getLabel())
+                self._state = TaskStateEnum.paused
+                return defer.succeed(self)
+            else:
+                self.log("Ready to start admin task '%s'", self.getLabel())
+                self._state = TaskStateEnum.starting
+                self.__startup()
+        return self._startWaiters.wait(timeout)
+    
+    def pause(self, timeout=None):
+        if not (self._state in [TaskStateEnum.started]):
+            return defer.fail(TranscoderError("Cannot pause %s task '%s'"
+                                              % (self._state.name,
+                                                 self.getLabel())))
+        self.log("Pausing admin task '%s'", self.getLabel())
+        self._state = TaskStateEnum.paused
+        # No longer started
+        self._startWaiters.reset()
+        return defer.succeed(self)
+    
+    def resume(self, timeout=None):
+        if not (self._state in [TaskStateEnum.paused, 
+                                TaskStateEnum.resuming]):
+            return defer.fail(TranscoderError("Cannot resume %s task '%s'"
+                                              % (self._state.name,
+                                                 self.getLabel())))
+        if self._state == TaskStateEnum.paused:
+            self.log("Ready to resume admin task '%s'", self.getLabel())
+            self._state = TaskStateEnum.resuming
             self.__startup()
+        # Resuming and starting is the same for now
+        return self._startWaiters.wait(timeout)
     
-    def pause(self):
-        if self._started and (not self._paused):
-            self.log("Pausing admin task '%s'", self.getLabel())
-            self._paused = True
-    
-    def resume(self):
-        if self._started and self._paused:
-            self.log("Resuming componenting task '%s'", self.getLabel())
-            self._paused = False
-            self.__startup()
-                    
-    
-    def stop(self):
+    def stop(self, timeout=None):
         """
-        Relieve the selected component, and return
-        all the components for the caller to take responsability.
+        Relieve the selected component, and return a deferred that
+        will be callback with the list of all the components 
+        for the caller to take responsability of.
         After this, no component will/should be added or removed.
         """
+        if self._state in [TaskStateEnum.stopped]:
+            return defer.fail(TranscoderError("Cannot stop %s task '%s'"
+                                              % (self._state.name,
+                                                 self.getLabel())))
         self.log("Stopping admin task '%s'", self.getLabel())
-        self._terminated = True
+        self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         for c in self._components:
             self._onComponentRemoved(c)
         result = self._components.keys()
         self._components.clear()
-        return result
+        return defer.succeed(result)
     
     def abort(self):
         """
         After this, no components will/should be added or removed.
         """
+        if self._state in [TaskStateEnum.terminated]:
+            # Silently return because abort should always succeed
+            return
         self.log("Aborting admin task '%s'", self.getLabel())
-        self._terminated = True
+        self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         for c in self._components:
             self._onComponentRemoved(c)
         self._components.clear()
-        
+        return
 
     def suggestWorker(self, worker):
         self.log("Worker '%s' suggested to admin task '%s'", 
@@ -217,23 +266,28 @@ class AdminTask(LoggerProxy, EventSource):
             return self._worker
         return None
 
-    def waitSynchronized(self, timeout=None):
-        if self._elected:
+    def waitIdle(self, timeout=None):
+        active = self.getActiveComponent()
+        if active:
             # Wait UI State to be sure the file events are fired
-            d = self._elected.waitUIState(timeout)
+            d = active.waitUIState(timeout)
             d.addCallback(utils.overrideResult, self)
         else:
             d = defer.succeed(self)
-        self._doChainWaitSynchronized(d)
+        self._doChainWaitIdle(d)
         return d
 
-    def waitValidWorker(self, timeout=None):
-        if self._elected:
-            return defer.succeed(self._elected.getWorker())
+    def waitPotentialWorker(self, timeout=None):
+        active = self.getActiveComponent()
+        if active:
+            return defer.succeed(active.getWorker())
         d = self.__waitPotentialComponent(timeout)
         d.addCallbacks(self.__cbGetValidWorker,
                        self.__ebNoValidWorker)
         return d
+    
+    def waitActive(self, timeout=None):
+        return self._elected.wait(timeout)
     
 
     ## Virtual Protected Methods ##
@@ -265,14 +319,16 @@ class AdminTask(LoggerProxy, EventSource):
     def _onComponentStartupCanceled(self, component):
         pass
     
-    def _doChainWaitSynchronized(self, chain):
+    def _doChainWaitIdle(self, chain):
         pass
     
     def _doChainWaitPotentialComponent(self, chain):
         pass
     
     def _doStartup(self):
-        pass
+        """
+        Can return a Deferred.
+        """
     
     def _doAcceptSuggestedWorker(self, worker):
         return True
@@ -300,7 +356,7 @@ class AdminTask(LoggerProxy, EventSource):
         """
         Terminate the task deleting all components.
         """
-        self._terminated = True        
+        self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         # Stop all components
         defs = []
@@ -338,10 +394,10 @@ class AdminTask(LoggerProxy, EventSource):
         return component.getName() == self._pendingName
         
     def _isElectedComponent(self, component):
-        return component == self._elected
+        return component == self.getActiveComponent()
     
     def _hasElectedComponent(self):
-        return self._elected != None
+        return self.getActiveComponent() != None
         
     def _resetRetryCounter(self):
         self.log("Reset task '%s' retry counter", self.getLabel())
@@ -361,11 +417,12 @@ class AdminTask(LoggerProxy, EventSource):
     def _cancelComponentHold(self):
         if self._holdTimeout == None:
             return
+        active = self.getActiveComponent()
         self.log("Admin task '%s' cancel the lost component '%s' hold",
-                 self.getLabel(), self._elected.getName())
+                 self.getLabel(), active.getName())
         utils.cancelTimeout(self._holdTimeout)
         self._holdTimeout = None
-        self._onComponentHoldCanceled(self._elected)
+        self._onComponentHoldCanceled(active)
     
     def _isHoldingLostComponent(self):
         return self._holdTimeout != None
@@ -403,11 +460,53 @@ class AdminTask(LoggerProxy, EventSource):
 
     ## Private Methods ##
     
+    def __setActiveComponent(self, component):
+        self._elected.setValue(component)
+    
     def __startup(self):
-        self.log("Startup admin task '%s'", self.getLabel())
-        self._doStartup()
-        self.__startComponent()  
+        self.log("Starting/Resuming admin task '%s'", self.getLabel())
+        assert self._state in [TaskStateEnum.starting,
+                               TaskStateEnum.resuming]
+        d = defer.Deferred()
+        d.addCallback(utils.dropResult, self._doStartup)
+        args = (self._state.name,)
+        d.addCallbacks(self.__cbStartupSucceed, self.__ebStartupFailed,
+                       callbackArgs=args, errbackArgs=args)
+        d.callback(defer._nothing)
         
+    def __stateChangedError(self, waiters, actionDesc):
+        error = TranscoderError("State changed to %s during "
+                                "%s of admin task '%s'"
+                                % (self._state.name,
+                                   actionDesc, 
+                                   self.getLabel()))
+        waiters.fireErrbacks(error)
+        
+    def __cbStartupSucceed(self, result, actionDesc):
+        self.debug("Admin task '%s' started/resumed successfully",
+                   self.getLabel())
+        if self._state in [TaskStateEnum.starting,
+                           TaskStateEnum.resuming]:
+            self._state = TaskStateEnum.started
+            self._startWaiters.fireCallbacks(result)
+            self.__startComponent()
+        else:
+            self.__stateChangedError(self._startWaiters, actionDesc)
+        
+    def __ebStartupFailed(self, failure, actionDesc):
+        self.warning("Admin task '%s' failed to startup/resume: %s",
+                     self.getLabel(), log.getFailureMessage(failure))
+        self.debug("Admin task startup/resume failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
+        if self._state == TaskStateEnum.starting:
+            self._state = TaskStateEnum.stopped
+            self._startWaiters.fireErrbacks(failure)
+        elif self._state == TaskStateEnum.resuming:
+            self._state = TaskStateEnum.paused
+            self._startWaiters.fireErrbacks(failure)
+        else:
+            self.__stateChangedError(self._startWaiters, actionDesc)
+
     def __cbMultiDeleteResults(self, results, newResult):
         for succeed, result in results:
             if not succeed:
@@ -430,24 +529,25 @@ class AdminTask(LoggerProxy, EventSource):
             self._doTerminated(resultOrFailure)
         
     def __relieveComponent(self):
-        if self._elected:
+        active = self.getActiveComponent()
+        if active:
             self.log("Component '%s' relieved by admin task '%s'",
-                     self._elected.getName(), self.getLabel())
+                     active.getName(), self.getLabel())
             self._cancelComponentHold()
-            self._onComponentRelieved(self._elected)
-            self._elected = None
+            self._onComponentRelieved(active)
+            self.__setActiveComponent(None)
             
     def __electComponent(self, component):
         assert component != None
-        if self._elected:
+        if self.getActiveComponent():
             self.__relieveComponent()
-        self._elected = component
+        self.__setActiveComponent(component)
         self.log("Component '%s' elected by admin task '%s'",
-                 self._elected.getName(), self.getLabel())
+                 component.getName(), self.getLabel())
         self._onComponentElected(component)
         # Stop all component other than the selected one
         for m in self._components:
-            if m != self._elected:
+            if m != component:
                 self._stopComponent(m)
 
     def __waitPotentialComponent(self, timeout=None):
@@ -520,7 +620,7 @@ class AdminTask(LoggerProxy, EventSource):
         self._delayed = utils.createTimeout(timeout, self.__startComponent)
 
     def __startComponent(self):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         utils.cancelTimeout(self._delayed)
         self._delayed = None
         if self._pendingName:
@@ -532,6 +632,13 @@ class AdminTask(LoggerProxy, EventSource):
             self.warning("Couldn't start component for task '%s', "
                          "no worker found", self.getLabel())
             return
+        active = self.getActiveComponent()
+        if active:
+            worker = active.getWorker()
+            if worker == self._worker:
+                self.debug("The valid component '%s' is already started",
+                           active.getName())
+                return
         # Set the pendingName right now to prevent other
         # transoder to be started
         self._pendingName = utils.genUniqueIdentifier()
@@ -556,8 +663,10 @@ class AdminTask(LoggerProxy, EventSource):
                      self.getLabel(), component.getName())            
             self._pendingName = None
             self.__electComponent(component)
-            return
-        self.__loadNewComponent()
+        else:
+            self.log("Admin task '%s' doesn't found potential component",
+                     self.getLabel())
+            self.__loadNewComponent()
 
     def __loadNewComponent(self):
         componentName = self._pendingName
@@ -679,7 +788,7 @@ class AdminTask(LoggerProxy, EventSource):
 
     def __asyncHoldTimeout(self, component):
         self._holdTimeout = None
-        if component != self._elected:
+        if component != self.getActiveComponent():
             self.log("Admin task '%s' hold component '%s' is not "
                      "currently elected", self.getLabel(), 
                      component.getName())

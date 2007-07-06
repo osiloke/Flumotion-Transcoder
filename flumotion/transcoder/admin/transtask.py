@@ -93,10 +93,11 @@ class TranscodingTask(AdminTask, TranscoderListener):
         transcoder = self.getActiveComponent()
         return (transcoder != None) and transcoder.isAcknowledged()
 
+
     ## IComponentListener Overrided Methods ##
     
     def onComponentOrphaned(self, transcoder, worker):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         if not self._isElectedComponent(transcoder): return
         # The component segfaulted or has been killed
         self.log("Transcoding task '%s' selected transcoder '%s' "
@@ -111,7 +112,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
             return
     
     def onComponentMoodChanged(self, transcoder, mood):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         self.log("Transcoding task '%s' transcoder '%s' goes %s", 
                  self.getLabel(), transcoder.getName(), mood.name)
         if self._isPendingComponent(transcoder):
@@ -158,7 +159,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
     ## ITranscoderListener Overrided Methods ##
 
     def onTranscoderStatusChanged(self, transcoder, status):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         if not self._isElectedComponent(transcoder): return
         self.log("Transcoding task '%s' transcoder '%s' "
                  "status change to %s", self.getLabel(), 
@@ -168,7 +169,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
             self.__cbJobTerminated(status, transcoder)
 
     def onTranscoderJobStateChanged(self, transcoder, jobState):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         if not self._isElectedComponent(transcoder): return
         self.log("Transcoding task '%s' transcoder '%s' "
                  "job state change to %s", self.getLabel(), 
@@ -197,15 +198,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
     def _onComponentRemoved(self, component):
         component.removeListener(self)
 
-    def _onComponentHold(self, component):
-        pass
-    
-    def _onComponentHoldCanceled(self, component):
-        pass
-    
-    def _onComponentLost(self, component):
-        pass
-    
     def _onComponentElected(self, component):
         self._fireEvent(component, "TranscoderSelected")
         component.syncListener(self)
@@ -214,9 +206,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
         utils.cancelTimeout(self._sadTimeout)
         self._fireEvent(component, "TranscoderReleased")
 
-    def _onComponentStartingUp(self, component):
-        pass
-
     def _onComponentStartupCanceled(self, component):
         # Because the monitor was pending to start, 
         # this event was ignored
@@ -224,12 +213,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
         mood = component.getMood()
         self.onComponentMoodChanged(component, mood)
 
-    def _doChainWaitSynchronized(self, chain):
-        pass
-    
-    def _doChainWaitPotentialComponent(self, chain):
-        pass
-    
     def _doStartup(self):
         for c in self.iterComponents():
             self.onComponentMoodChanged(c, c.getMood())
@@ -239,9 +222,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
         transcoder = self.getActiveComponent()
         # Change task's worker for None or if there is no active transcoder
         return (worker != current) and (not current or not transcoder)
-    
-    def _doChainTerminate(self, chain, result):
-        pass
     
     def _doTerminated(self, result):
         self._fireEvent(result, "TranscodingTerminated")

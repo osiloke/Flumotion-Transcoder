@@ -15,7 +15,7 @@ from twisted.internet import reactor, defer
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, utils
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask
@@ -38,10 +38,13 @@ class IMonitoringTaskListener(Interface):
     def onMonitoringDeactivated(self, task, monitor):
         pass
     
-    def onMonitoredFileAdded(self, task, profileContext):
+    def onMonitoredFileAdded(self, task, profileContext, state):
         pass
     
-    def onMonitoredFileRemoved(self, task, profileContext):
+    def onMonitoredFileStateChanged(self, task, profileContext, state):
+        pass
+    
+    def onMonitoredFileRemoved(self, task, profileContext, state):
         pass
 
     
@@ -59,6 +62,9 @@ class MonitoringTaskListener(object):
         pass
     
     def onMonitoredFileAdded(self, task, profileContext):
+        pass
+
+    def onMonitoredFileStateChanged(self, task, profileContext, state):
         pass
     
     def onMonitoredFileRemoved(self, task, profileContext):
@@ -103,7 +109,7 @@ class MonitoringTask(AdminTask, MonitorListener):
     ## IComponentListener Overrided Methods ##
     
     def onComponentMoodChanged(self, monitor, mood):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         self.log("Monitoring task '%s' monitor '%s' goes %s", 
                  self.getLabel(), monitor.getName(), mood.name)
         if self._isPendingComponent(monitor):
@@ -144,7 +150,7 @@ class MonitoringTask(AdminTask, MonitorListener):
                          "found for customer '%s'", virtDir + file,
                          self._customerCtx.store.getName())
             return
-        self._fireEvent(profile, "MonitoredFileRemoved")
+        self._fireEvent((profile, state), "MonitoredFileRemoved")
     
     def onMonitorFileAdded(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
@@ -154,7 +160,17 @@ class MonitoringTask(AdminTask, MonitorListener):
                          "found for customer '%s'", virtDir + file,
                          self._customerCtx.store.getName())
             return
-        self._fireEvent(profile, "MonitoredFileAdded")
+        self._fireEvent((profile, state), "MonitoredFileAdded")
+
+    def onMonitorFileChanged(self, monitor, virtDir, file, state):
+        if not self._isElectedComponent(monitor): return
+        profile = self.__file2profile(virtDir, file)
+        if not profile:
+            self.warning("File '%s' state changed but no corresponding "
+                         "profile found for customer '%s'", virtDir + file,
+                         self._customerCtx.store.getName())
+            return
+        self._fireEvent((profile, state), "MonitoredFileStateChanged")
 
 
     ## Virtual Methods Implementation ##
@@ -169,7 +185,6 @@ class MonitoringTask(AdminTask, MonitorListener):
     def _onComponentElected(self, component):
         self._fireEvent(component, "MonitoringActivated")
         component.syncListener(self)
-        
 
     def _onComponentRelieved(self, component):
         self._fireEvent(component, "MonitoringDeactivated")
@@ -194,10 +209,11 @@ class MonitoringTask(AdminTask, MonitorListener):
         self._fireEvent(self.getWorker(), "FailToRunOnWorker")
     
     def _doSelectPotentialComponent(self, components):
+        targetWorker = self.getWorker()
         for c in components:
-            # If it exists an happy monitor on the 
-            # wanted worker, just elect it
-            if ((c.getWorker() == self.getWorker()) 
+            # If it exists an happy monitor on the target worker, 
+            # or there not target worker set, just elect it
+            if ((not targetWorker or (c.getWorker() == targetWorker)) 
                 and (c.getMood() == moods.happy)):
                 return c
         return None

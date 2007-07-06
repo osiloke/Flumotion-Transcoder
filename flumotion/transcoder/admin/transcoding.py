@@ -84,13 +84,13 @@ class Transcoding(TaskManager, WorkerSetListener,
     ## Overrided Virtual Methods ##
 
     def _doStart(self):
-        self.log("Ready to start transcoding, waiting to idle")
+        self.log("Ready to start transcoding, waiting transcoders to become idle")
         d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbTranscoderSetGoesIdle)
         return d
     
     def _doResume(self):
-        self.log("Ready to resume transcoding, waiting to idle")
+        self.log("Ready to resume transcoding, waiting transcoder to become idle")
         d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbTranscoderSetGoesIdle)
         return d
@@ -100,13 +100,13 @@ class Transcoding(TaskManager, WorkerSetListener,
         self._balancer.clearTasks()
 
     def _onTaskAdded(self, task):
-        if self._started:
+        if self.isStarted():
             self._balancer.addTask(task)
             self._balancer.balance()
         self._fireEvent(task, "TranscodingTaskAdded")
     
     def _onTaskRemoved(self, task):
-        if self._started:
+        if self.isStarted():
             self._balancer.removeTask(task)
             self._balancer.balance()
         self._fireEvent(task, "TranscodingTaskRemoved")
@@ -146,7 +146,7 @@ class Transcoding(TaskManager, WorkerSetListener,
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
-        for t in self._tasks.itervalues():
+        for t in self.iterTasks():
             self._fireEventTo(t, listener, "TranscodingTaskAdded")
         available = self._balancer.getAvailableSlots()
         if available > 0:
@@ -166,13 +166,14 @@ class Transcoding(TaskManager, WorkerSetListener,
         self.log("Starting/Resuming transcoding")
         d = defer.Deferred()
         for task in self.iterTasks():
-            d.addCallback(self.__cbRetrieveActiveWorker, task)
+            d.addCallback(self.__cbRetrievePotentialWorker, task)
         d.addCallback(utils.dropResult, self._balancer.balance)
         d.addErrback(self.__ebStartingFailure)
         d.callback(defer._nothing)
 
-    def __cbRetrieveActiveWorker(self, _, task):
-        d = task.waitValidWorker(adminconsts.TRANSCODING_ACTIVE_WORKER_TIMEOUT)
+    def __cbRetrievePotentialWorker(self, _, task):
+        timeout = adminconsts.TRANSCODING_POTENTIAL_WORKER_TIMEOUT
+        d = task.waitPotentialWorker(timeout)
         # Call self._balancer.addTask(task, worker)
         d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
         return d

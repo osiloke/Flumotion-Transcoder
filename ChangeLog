@@ -1,3 +1,70 @@
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/admintask.py (IAdminTask.isStarted,
+	  IAdminTask.start, IAdminTask.pause, IAdminTask.resume,
+	  IAdminTask.stop, IAdminTask.waitPotentialWorker, IAdminTask.waitIdle,
+	  IAdminTask.waitActive, AdminTask.__init__, AdminTask.isStarted,
+	  AdminTask.hasTerminated, AdminTask.getActiveComponent,
+	  AdminTask.removeComponent, AdminTask.start, AdminTask.pause,
+	  AdminTask.resume, AdminTask.stop, AdminTask.abort,
+	  AdminTask.waitIdle, AdminTask.waitPotentialWorker,
+	  AdminTask.waitActive, AdminTask._doChainWaitIdle,
+	  AdminTask._doChainWaitPotentialComponent, AdminTask._doStartup,
+	  AdminTask._terminate, AdminTask._isElectedComponent,
+	  AdminTask._hasElectedComponent, AdminTask._cancelComponentHold,
+	  AdminTask.__setActiveComponent, AdminTask.__startup,
+	  AdminTask.__stateChangedError, AdminTask.__cbStartupSucceed,
+	  AdminTask.__ebStartupFailed, AdminTask.__relieveComponent,
+	  AdminTask.__electComponent, AdminTask.__startComponent,
+	  AdminTask.__cbGotPotentialComponent, AdminTask.__asyncHoldTimeout):
+	* flumotion/transcoder/admin/monitoring.py (Monitoring._doStart,
+	  Monitoring._doResume, Monitoring._onTaskAdded,
+	  Monitoring._onTaskRemoved, Monitoring.__cbMonitorSetGoesIdle,
+	  Monitoring.__cbRetrievePotentialWorker,
+	  Monitoring.__ebStartingFailure):
+	* flumotion/transcoder/admin/montask.py
+	  (IMonitoringTaskListener.onMonitoredFileAdded,
+	  IMonitoringTaskListener.onMonitoredFileStateChanged,
+	  IMonitoringTaskListener.onMonitoredFileRemoved,
+	  MonitoringTaskListener.onMonitoredFileAdded,
+	  MonitoringTaskListener.onMonitoredFileStateChanged,
+	  MonitoringTask.onComponentMoodChanged,
+	  MonitoringTask.onMonitorFileRemoved,
+	  MonitoringTask.onMonitorFileAdded,
+	  MonitoringTask.onMonitorFileChanged,
+	  MonitoringTask._doSelectPotentialComponent):
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.__init__,
+	  TaskManager.addTask, TaskManager.removeTask, TaskManager.isStarted,
+	  TaskManager.isPaused, TaskManager.start, TaskManager.pause,
+	  TaskManager.resume, TaskManager.abort, TaskManager.addComponent,
+	  TaskManager.removeComponent, TaskManager.waitIdle,
+	  TaskManager.waitActive, TaskManager._doChainWaitIdle,
+	  TaskManager._doChainWaitActive, TaskManager.onComponentMoodChanged,
+	  TaskManager._tryStartup, TaskManager.__pauseTaskManager,
+	  TaskManager.__cbStartup, TaskManager.__cbCallForAllTasks,
+	  TaskManager.__ebResolveCallFailure, TaskManager.__cbAddComponent,
+	  TaskManager.__ebGetPropertiesFailed,
+	  TaskManager.__ebComponentStopFailed,
+	  TaskManager.__ebComponentDeleteFailed,
+	  TaskManager.__stateChangedError, TaskManager.__cbStartupSucceed,
+	  TaskManager.__ebStartupFailed, TaskManager.__cbPauseSucceed,
+	  TaskManager.__ebPauseFailed, TaskManager.__waitIdle,
+	  TaskManager.__cbWaitActive, TaskManager.__cbAppartStopResults,
+	  TaskManager.__ebTaskStopFailed):
+	* flumotion/transcoder/admin/transcoding.py (Transcoding._doStart,
+	  Transcoding._doResume, Transcoding._onTaskAdded,
+	  Transcoding._onTaskRemoved, Transcoding._doSyncListener,
+	  Transcoding.__cbTranscoderSetGoesIdle,
+	  Transcoding.__cbRetrievePotentialWorker):
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.isAcknowledged, TranscodingTask.onComponentOrphaned,
+	  TranscodingTask.onComponentMoodChanged,
+	  TranscodingTask.onTranscoderStatusChanged,
+	  TranscodingTask.onTranscoderJobStateChanged):
+	* flumotion/transcoder/enums.py:
+	Cleaned and standardized the task managment classes.
+
 2007-07-05  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/adminelement.py

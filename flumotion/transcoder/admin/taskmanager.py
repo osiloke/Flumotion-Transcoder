@@ -18,9 +18,12 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
+from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.enums import TaskStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.waiters import AssignWaiters
+from flumotion.transcoder.admin.waiters import PassiveWaiters
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
@@ -36,10 +39,14 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self._identifiers = {} # {identifiers: ComponentProperties}
         self._tasks = {} # {ComponentProperties: IAdminTask}
         self._taskless = {} # {ComponentProxy: None}
-        self._ready = False
-        self._started = False
-        self._activeWaiters = AssignWaiters(False)
-        self._paused = False
+        #self._ready = False
+        #self._started = False
+        #self._activeWaiters = AssignWaiters(False)
+        #self._paused = False
+        self._state = TaskStateEnum.stopped
+        self._starting = False
+        self._startWaiters = PassiveWaiters()
+        self._pauseWaiters = PassiveWaiters()
         self._pending = 0
         reactor.addSystemEventTrigger("before", "shutdown", self.abort)
 
@@ -67,8 +74,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                 self.__releaseTasklessComponent(m)
                 task.addComponent(m)
         self._onTaskAdded(task)
-        if self._started:
-            task.start(self._paused)
+        if self.isStarted():
+            task.start(paused=self.isPaused())
     
     def removeTask(self, identifier):
         assert identifier in self._identifiers
@@ -79,8 +86,10 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         del self._identifiers[identifier]
         del self._tasks[props]
         self._onTaskRemoved(task)
-        for c in task.stop():
-            self.__apartTasklessComponent(c)
+        d = task.stop()
+        d.addCallbacks(self.__cbAppartStopResults, 
+                       self.__ebTaskStopFailed,
+                       errbackArgs=(task,))
 
     def getTasks(self):
         return self._tasks.values()
@@ -94,43 +103,58 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def iterTasks(self):
         return self._tasks.itervalues()
 
-    def isActive(self):
-        return self._started and (not self._paused)
+    def isStarted(self):
+        return self._state == TaskStateEnum.started
+    
+    def isPaused(self):
+        return self._state == TaskStateEnum.paused
 
     def start(self, timeout=None):
-        self.log("Ready to start task manager '%s'", 
-                 self.getLabel())
-        self._ready = True
-        self._tryStarting()
-        return self._activeWaiters.wait(timeout)
+        if not (self._state in [TaskStateEnum.stopped, 
+                                TaskStateEnum.starting]):
+            return defer.fail(TranscoderError("Cannot start %s if %s"
+                                              % (self.getLabel(), 
+                                                 self._state.name)))
+        if self._state == TaskStateEnum.stopped:
+            self.log("Ready to start task manager '%s'", self.getLabel())
+            self._state = TaskStateEnum.starting
+            self._pauseWaiters.reset()
+            self._tryStartup()
+        return self._startWaiters.wait(timeout)
 
-    def pause(self):
-        if self._started and (not self._paused):
-            self.log("Pausing task manager '%s'", 
-                     self.getLabel())
-            self._paused = True
-            self._activeWaiters.setValue(False)
-            d = defer.succeed(self)
-            d.addCallback(utils.dropResult, self._doPause)
-            d.addCallback(self.__cbCallForAllTasks, "pause")
-            d.addErrback(self.__ebPauseFailed)
+    def pause(self, timeout=None):
+        if not (self._state in [TaskStateEnum.started]):
+            return defer.fail(TranscoderError("Cannot pause %s if %s"
+                                              % (self.getLabel(), 
+                                                 self._state.name)))
+        if self._state == TaskStateEnum.started:
+            self.log("Pausing task manager '%s'", self.getLabel())
+            self._state = TaskStateEnum.pausing
+            # No longer started
+            self._startWaiters.reset()
+            self.__pauseTaskManager()
+        return self._pauseWaiters.wait(timeout)
 
     def resume(self, timeout=None):
-        if self._started and self._paused:
-            self.log("Resuming task manager '%s'", 
-                     self.getLabel())
-            self._paused = False
-            d = defer.succeed(self)
-            d.addCallback(utils.dropResult, self._doResume)
-            d.addCallback(self.__cbCallForAllTasks, "resume")
-            d.addCallback(self.__cbStartup)
-            d.addErrback(self.__ebResumeFailed)
-        return self._activeWaiters.wait(timeout)
+        if not (self._state in [TaskStateEnum.paused, 
+                                TaskStateEnum.resuming]):
+            return defer.fail(TranscoderError("Cannot resume %s if %s"
+                                              % (self.getLabel(), 
+                                                 self._state.name)))
+        if self._state == TaskStateEnum.paused:
+            self.log("Ready to resume task manager '%s'", self.getLabel())
+            self._state = TaskStateEnum.resuming
+            self._pauseWaiters.reset()
+            self._tryStartup()
+        return self._startWaiters.wait(timeout)
 
     def abort(self):
-        self.log("Aborting task manager '%s'", 
-                 self.getLabel())
-        for task in self._tasks.itervalues():
+        if self._state in [TaskStateEnum.terminated]:
+            # Silently return because abort should always succeed
+            return
+        self.log("Aborting task manager '%s'", self.getLabel())
+        self._state = TaskStateEnum.terminated
+        for task in self.iterTasks():
             task.abort()
         self._tasks.clear()
         self._doAbort()
@@ -138,7 +162,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def addComponent(self, component):
         assert isinstance(component, ComponentProxy)
         self.log("Component '%s' added to task manager '%s'", 
-                 component.getLabel(), self.getLabel())
+                 component.getName(), self.getLabel())
         self._pending += 1
         d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
         args = (component,)
@@ -150,21 +174,21 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def removeComponent(self, component):
         assert isinstance(component, ComponentProxy)
         self.log("Component '%s' removed from task manager '%s'", 
-                 component.getLabel(), self.getLabel())
+                 component.getName(), self.getLabel())
         d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
         d.addCallback(self.__cbRemoveComponent, component)
         return d
 
-    def waitSynchronized(self, timeout=None):
-        d = self._activeWaiters.wait(timeout)
-        d.addCallback(self.__cbWaitSynchronized)
-        return d
+    def waitIdle(self, timeout=None):
+        return self.__waitIdle(timeout)
 
+    def waitActive(self, timeout=None):
+        d = self._startWaiters.wait(timeout)
+        d.addCallback(self.__cbWaitActive, timeout)
+        return d
+        
 
     ## Virtual Protected Methods ##
-
-    def _waitStarting(self):
-        return defer.succeed(self)
 
     def _doStart(self):
         """
@@ -182,6 +206,12 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         """
         Can return a Deferred.
         """
+        pass
+    
+    def _doChainWaitIdle(self, chain):
+        pass
+    
+    def _doChainWaitActive(self, chain):
         pass
     
     def _doAbort(self):
@@ -203,54 +233,68 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     ## IComponentListener Overrided Methods ##
     
     def onComponentMoodChanged(self, component, mood):
-        if not self.isActive(): return
+        if not self.isStarted(): return
         self.log("Task manager '%s' taskless component '%s' goes %s",
                  self.getLabel(), component.getName(), mood.name)
         if mood == moods.sleeping:
             d = component.forceDelete()
-            d.addErrback(self.__ebDeleteFailed, component.getName())
+            d.addErrback(self.__ebComponentDeleteFailed, component.getName())
         elif mood != moods.sad:
             d = component.forceStop()
-            d.addErrback(self.__ebStopFailed, component.getName())
+            d.addErrback(self.__ebComponentStopFailed, component.getName())
 
     ## Protected Methods ##
     
-    def _tryStarting(self):
-        if ((not self._started) and self._ready 
-            and (self._pending == 0)):
-            self.log("Starting task manager '%s'", 
-                     self.getLabel())
-            self._started = True
-            self._pause = False
+    def _tryStartup(self):
+        if ((not self._starting)
+            and (self._pending == 0)
+            and (self._state in [TaskStateEnum.starting,
+                                 TaskStateEnum.resuming])):
+            self.debug("Starting/Resuming task manager '%s'",
+                       self.getLabel())
+            self._starting = True
             d = defer.succeed(self)
             d.addCallback(utils.dropResult, self._doStart)
-            d.addCallback(self.__cbCallForAllTasks, "start")
+            if self._state == TaskStateEnum.starting:
+                d.addCallback(self.__cbCallForAllTasks, "start")
+            else:
+                d.addCallback(self.__cbCallForAllTasks, "resume")
             d.addCallback(self.__cbStartup)
-            d.addErrback(self.__ebStartupFailed)
+            args = (self._state.name,)
+            d.addCallbacks(self.__cbStartupSucceed, self.__ebStartupFailed,
+                           callbackArgs=args, errbackArgs=args)
 
 
     ## Private Methods ##
     
+    def __pauseTaskManager(self):
+        d = defer.succeed(self)
+        d.addCallback(utils.dropResult, self._doPause)
+        d.addCallback(self.__cbCallForAllTasks, "pause")
+        d.addCallbacks(self.__cbPauseSucceed, self.__ebPauseFailed)
+    
     def __cbStartup(self, _):
         for c in self._taskless:
             self.onComponentMoodChanged(c, c.getMood())
-        defs = []
-        for task in self._tasks.itervalues():
-            d = task.waitSynchronized(adminconsts.TASKMANAGER_SYNCH_TIMEOUT)
-            defs.append(d)
-        dl = defer.DeferredList(defs,
-                                fireOnOneCallback=False,
-                                fireOnOneErrback=False,
-                                consumeErrors=True)
-        dl.addCallback(utils.dropResult, 
-                       self._activeWaiters.setValue,
-                       True)
+        return self.__waitIdle(adminconsts.TASKMANAGER_IDLE_TIMEOUT)
 
     def __cbCallForAllTasks(self, _, action):
-        assert action in ["start", "stop", "pause", "resume"]
+        assert action in ["start", "pause", "resume"]
+        d = defer.Deferred()
         for t in self._tasks.itervalues():
-            getattr(t, action)()
+            d.addCallback(utils.dropResult, getattr(t, action))
+            d.addErrback(self.__ebResolveCallFailure, t, action)
+        d.callback(defer._nothing)
+        return d
     
+    def __ebResolveCallFailure(self, failure, task, action):
+        assert action in ["start", "pause", "resume"]
+        self.warning("Task manager '%s' failed to %s task '%s': %s",
+                     self.getLabel(), action, task.getLabel(),
+                     log.getFailureMessage(failure))
+        self.debug("Calling %s failure traceback:\n%s", action,
+                   log.getFailureTraceback(failure))
+        
     def __getTasklessComponents(self):
         return self._taskless.keys()
     
@@ -283,7 +327,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.warning("%s", msg)
             self.__apartTasklessComponent(component)
         self._pending -= 1
-        self._tryStarting()
+        self._tryStartup()
         return component
     
     def __ebGetPropertiesFailed(self, failure, component):
@@ -294,7 +338,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                    log.getFailureTraceback(failure))
         self.__apartTasklessComponent(component)
         self._pending -= 1
-        self._tryStarting()
+        self._tryStartup()
         raise ComponentRejectedError(msg, cause=failure)
         
     def __cbRemoveComponent(self, props, component):
@@ -307,41 +351,101 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__releaseTasklessComponent(component)
         return component
 
-    def __ebStopFailed(self, failure, name):
+    def __ebComponentStopFailed(self, failure, name):
         self.warning("Task manager '%s' failed to stop component '%s': %s",
                      self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("Component stop failure traceback:\n%s",
                    log.getFailureTraceback(failure))
 
-    def __ebDeleteFailed(self, failure, name):
+    def __ebComponentDeleteFailed(self, failure, name):
         self.warning("Task manager '%s' failed to delete component '%s': %s",
                      self.getLabel(), name, log.getFailureMessage(failure))
         self.debug("Component delete failure tracebak:\n%s",
                    log.getFailureTraceback(failure))
 
-    def __ebStartupFailed(self, failure):
-        self._started = False
-        self.warning("Task Manager '%s' failed to startup: %s",
+    def __stateChangedError(self, waiters, actionDesc):
+        error = TranscoderError("State changed to %s during %s of '%s'"
+                                % (self._state.name, 
+                                   actionDesc, 
+                                   self.getLabel()))
+        waiters.fireErrbacks(error)
+
+    def __cbStartupSucceed(self, result, actionDesc):
+        self.debug("Task manager '%s' started", self.getLabel())
+        self._starting = False
+        if self._state in [TaskStateEnum.starting,
+                           TaskStateEnum.resuming]:
+            self._state = TaskStateEnum.started
+            self._startWaiters.fireCallbacks(result)
+        else:
+            self.__stateChangedError(self._startWaiters, actionDesc)
+
+    def __ebStartupFailed(self, failure, actionDesc):
+        self.warning("Task Manager '%s' failed to startup/resume: %s",
                      self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Startup failure traceback:\n%s",
+        self.debug("Startup/Resume failure traceback:\n%s",
                    log.getFailureTraceback(failure))
-        
-    def __ebResumeFailed(self, failure):
-        self._pause = True
-        self.warning("Task Manager '%s' failed to resume: %s",
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Resuming failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self._starting = False
+        if self._state == TaskStateEnum.starting:
+            self._state = TaskStateEnum.stopped
+            self._startWaiters.fireErrbacks(failure)
+        elif self._state == TaskStateEnum.resuming:
+            self._state = TaskStateEnum.paused
+            self._startWaiters.fireErrbacks(failure)
+        else:
+            self.__stateChangedError(self._startWaiters, actionDesc)
+
+    def __cbPauseSucceed(self, result):
+        if self._state == TaskStateEnum.pausing:
+            self._state = TaskStateEnum.paused
+            self._pauseWaiters.fireCallbacks(result)
+        else:
+            self.__stateChangedError(self._pauseWaiters, "pausing")
         
     def __ebPauseFailed(self, failure):
-        self._pause = False
         self.warning("Task Manager '%s' failed to pause: %s",
                      self.getLabel(), log.getFailureMessage(failure))
         self.debug("Pausing failure traceback:\n%s",
                    log.getFailureTraceback(failure))
+        if self._state == TaskStateEnum.pausing:
+            self._state = TaskStateEnum.started
+            self._pauseWaiters.fireErrbacks(failure)
+        else:
+            self.__stateChangedError(self._pauseWaiters, "pausing")
 
-    def __cbWaitSynchronized(self, result):
+    def __waitIdle(self, timeout):
         defs = []
-        for task in self._tasks:
-            defs.append(task.waitSynchronized())
-        dl = d
+        for task in self.iterTasks():
+            defs.append(task.waitIdle(timeout))
+        dl = defer.DeferredList(defs,
+                                fireOnOneCallback=False,
+                                fireOnOneErrback=False,
+                                consumeErrors=True)
+        dl.addCallback(utils.logFailures, self, self, 
+                       "task synchronization")
+        self._doChainWaitIdle(dl)
+        return dl
+    
+    def __cbWaitActive(self, result, timeout):
+        defs = []
+        for task in self.iterTasks():
+            defs.append(task.waitActive(timeout))
+        dl = defer.DeferredList(defs,
+                                fireOnOneCallback=False,
+                                fireOnOneErrback=False,
+                                consumeErrors=True)
+        dl.addCallback(utils.logFailures, self, self, 
+                       "task '%s' activation" % self.getLabel())
+        self._doChainWaitActive(dl)
+        return dl
+    
+    def __cbAppartStopResults(self, components):
+        for c in components:
+            self.__apartTasklessComponent(c)
+    
+    def __ebTaskStopFailed(self, failure, task):
+        self.warning("Task Manager '%s' failed to stop task '%s': %s",
+                     self.getLabel(), task.getLabel(),
+                     log.getFailureMessage(failure))
+        self.debug("Task stopping failure traceback:\n%s",
+                   log.getFailureTraceback(failure))
