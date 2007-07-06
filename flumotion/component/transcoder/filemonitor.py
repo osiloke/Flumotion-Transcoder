@@ -159,7 +159,9 @@ class FileMonitor(component.BaseComponent):
     ## Public Methods ##
                 
     def setFileState(self, virtBase, relFile, status):        
-        self.uiState.setitem('pending-files', (virtBase, relFile), status)
+        key = (virtBase, relFile)
+        if key in self.uiState.get('pending-files'):
+            self.uiState.setitem('pending-files', key, status)
 
 
     ## Signal Handler Methods ##
