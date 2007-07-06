@@ -13,10 +13,13 @@
 from zope.interface import implements
 from twisted.internet import reactor, defer
 
+from flumotion.common.enum import EnumClass
+
 from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.enums import TaskStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
@@ -32,6 +35,7 @@ from flumotion.transcoder.admin.monitoring import Monitoring, MonitoringListener
 from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.transcoding import Transcoding
 from flumotion.transcoder.admin.scheduler import Scheduler, SchedulerListener
+
 
 class TranscoderAdmin(log.Loggable,
                       ManagerSetListener,
@@ -56,13 +60,13 @@ class TranscoderAdmin(log.Loggable,
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
         self._scheduler = Scheduler(self._store, self._transcoding)
-        self._started = False
+        self._state = TaskStateEnum.stopped
 
     
     ## Public Methods ##
     
     def initialize(self):
-        self.log("Initializing Transcoder Administration")
+        self.info("Initializing Transcoder Administration")
         d = defer.Deferred()
         d.addCallback(lambda r: self._datasource.initialize())
         d.addCallback(lambda r: self._store.initialize())
@@ -92,29 +96,17 @@ class TranscoderAdmin(log.Loggable,
     ## IManagerSetListener Overriden Methods ##
     
     def onDetached(self, managerset):
-        self.debug("Transcoder admin has been detached, pausing transcoding")
-        self._scheduler.pause()
-        self._monitoring.pause()
-        self._transcoding.pause()
+        if self._state == TaskStateEnum.started:
+            self.debug("Transcoder admin has been detached, "
+                       "pausing transcoding")
+            self.__pause()
         
         
     def onAttached(self, managerset):
-        if not self._started:
-            # Not yet started, it's not a resume but a startup
-            return
-        self.debug("Transcoder admin attached, resuming transcoding")
-        d = defer.Deferred()
-        # Wait a moment to let the workers the oportunity 
-        # to log back to the manager.
-        d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
-        d.addCallback(utils.dropResult, self._scheduler.resume,
-                      adminconsts.SCHEDULER_START_TIMEOUT)
-        d.addCallback(utils.dropResult, self._monitoring.resume,
-                      adminconsts.MONITORING_START_TIMEOUT)
-        d.addCallback(utils.dropResult, self._transcoding.resume,
-                      adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addErrback(self.__ebResumeFailed)
-        d.callback(defer._nothing)
+        if self._state == TaskStateEnum.paused:
+            self.debug("Transcoder admin attached, "
+                       "resuming transcoding")
+            self.__resume()
 
 
     ## IAdminStoreListener Overriden Methods ##
@@ -137,22 +129,22 @@ class TranscoderAdmin(log.Loggable,
     ## ICustomerStoreListener Overriden Methods ##
     
     def onProfileAdded(self, customer, profile):
-        self.info("Profile '%s' Added", profile.getLabel())
+        self.debug("Profile '%s' Added", profile.getLabel())
         profile.addListener(self)
         profile.syncListener(self)
         
     def onProfileRemoved(self, customer, profile):
-        self.info("Profile '%s' Removed", profile.getLabel())
+        self.debug("Profile '%s' Removed", profile.getLabel())
         profile.removeListener(self)
         
     
     ## IProfileStoreListener Overriden Methods ##
     
     def onTargetAdded(self, profile, target):
-        self.info("Target '%s' Added", target.getLabel())
+        self.debug("Target '%s' Added", target.getLabel())
         
     def onTargetRemoved(self, profile, target):
-        self.info("Target '%s' Removed", target.getLabel())
+        self.debug("Target '%s' Removed", target.getLabel())
 
 
     ## IMonitoringLister Overriden Methods ##
@@ -169,17 +161,18 @@ class TranscoderAdmin(log.Loggable,
 
     ## IMonitoringTaskLister Overriden Methods ##
     
-    def onMonitoringActivated(self, task, monitor):
-        # Resync the scheduler to update the state
-        # of the new monitor files
-        self._scheduler.syncListener(self)
-    
-    def onMonitoredFileAdded(self, montask, profileContext):
+    def onMonitoredFileAdded(self, montask, profileContext, state):
         self.log("Monitoring task '%s' added profile '%s'",
                  montask.getLabel(), profileContext.getInputPath())
-        self._scheduler.addProfile(profileContext)
+        self.__fileStateChanged(montask, profileContext, state)
+        
+    def onMonitoredFileStateChanged(self, montask, profileContext, state):
+        self.log("Monitoring task '%s' profile '%s' state "
+                 "changed to %s", montask.getLabel(), 
+                 profileContext.getInputPath(), state.name)
+        self.__fileStateChanged(montask, profileContext, state)
     
-    def onMonitoredFileRemoved(self, montask, profileContext):
+    def onMonitoredFileRemoved(self, montask, profileContext, state):
         self.log("Monitoring task '%s' removed profile '%s'",
                  montask.getLabel(), profileContext.getInputPath())
         self._scheduler.removeProfile(profileContext)
@@ -215,6 +208,43 @@ class TranscoderAdmin(log.Loggable,
     
     ## Private Methods ##
     
+    def __fileStateChanged(self, montask, profCtx, state):
+        
+        def changeState(newState):
+            inputBase = profCtx.getInputBase()
+            relPath = profCtx.getInputRelPath()        
+            montask.setFileState(inputBase, relPath, newState)
+
+        # Schedule new file if not alreday scheduled
+        # and synchronize the file states
+        queued = self._scheduler.isProfileQueued(profCtx)
+        active = self._scheduler.isProfileActive(profCtx)
+        if state == MonitorFileStateEnum.pending:
+            if queued:
+                changeState(MonitorFileStateEnum.queued)
+                return
+            if active:
+                changeState(MonitorFileStateEnum.transcoding)
+                return
+            self._scheduler.addProfile(profCtx)
+            return
+        if state == MonitorFileStateEnum.queued:
+            if active:
+                changeState(MonitorFileStateEnum.transcoding)
+                return
+            if queued:
+                return
+            self._scheduler.addProfile(profCtx)
+            return
+        if state == MonitorFileStateEnum.transcoding:
+            if queued:
+                changeState(MonitorFileStateEnum.queued)
+                return
+            if active:
+                return
+            self._scheduler.addProfile(profCtx)
+            return
+    
     def __moveFailedInputFiles(self, profCtx):
         custCtx = profCtx.customer
         inputBase = profCtx.getInputBase()
@@ -241,36 +271,144 @@ class TranscoderAdmin(log.Loggable,
         task.setFileState(inputBase, relPath, state)
     
     def __startup(self):
-        self.debug("Starting up transcoder admin")
-        self._started = True
+        if not (self._state == TaskStateEnum.stopped):
+            raise TranscoderError("Cannot start transcoder admin when %s"
+                                   % self._state.name)
+        self.info("Starting Transcoder Administration")
+        self._state = TaskStateEnum.starting
         d = defer.Deferred()
-        d.addCallback(utils.dropResult, self._scheduler.start,
-                      adminconsts.SCHEDULER_START_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Starting monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
+        # Wait monitor components to be activated before continuing
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting for monitoring to become active")
+        d.addCallback(utils.dropResult, self._monitoring.waitActive,
+                      adminconsts.MONITORING_ACTIVATION_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Starting transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.start,
                       adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addErrback(self.__ebSartupFailed)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Starting scheduler manager")
+        d.addCallback(utils.dropResult, self._scheduler.start,
+                      adminconsts.SCHEDULER_START_TIMEOUT)
+        d.addErrback(self.__cbSartupSucceed, self.__ebSartupFailed)
+        d.callback(defer._nothing)
+        
+    def __resume(self):
+        if not (self._state == TaskStateEnum.paused):
+            raise TranscoderError("Cannot resume transcoder admin when %s"
+                                  % self._state.name)
+        self.info("Resuming Transcoder Administration")
+        self._state = TaskStateEnum.resuming
+        d = defer.Deferred()
+        # Wait a moment to let the workers the oportunity 
+        # to log back to the manager.
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting for workers to log back")
+        d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Resuming monitoring manager")
+        d.addCallback(utils.dropResult, self._monitoring.resume,
+                      adminconsts.MONITORING_RESUME_TIMEOUT)
+        # Wait monitor components to be activated before continuing
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting for monitoring to become active")
+        d.addCallback(utils.dropResult, self._monitoring.waitActive,
+                      adminconsts.MONITORING_ACTIVATION_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Resuming transcoding manager")
+        d.addCallback(utils.dropResult, self._transcoding.resume,
+                      adminconsts.TRANSCODING_RESUME_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Resuming scheduler")
+        d.addCallback(utils.dropResult, self._scheduler.resume,
+                      adminconsts.SCHEDULER_RESUME_TIMEOUT)
+        d.addErrback(self.__cbResumingSucceed, self.__ebResumingFailed)
+        d.callback(defer._nothing)
+        
+    def __pause(self):
+        if not (self._state == TaskStateEnum.started):
+            raise TranscoderError("Cannot pause transcoder admin when %s"
+                                   % self._state.name)
+        self.info("Pausing Transcoder Administration")
+        d = defer.Deferred()
+        d.addBoth(utils.silentCall, self.debug,
+                  "Pausing scheduler")
+        d.addCallback(utils.dropResult, self._scheduler.pause,
+                      adminconsts.SCHEDULER_PAUSE_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Pausing transcoding manager")
+        d.addCallback(utils.dropResult, self._transcoding.pause,
+                      adminconsts.TRANSCODING_PAUSE_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Pausing monitoring manager")
+        d.addCallback(utils.dropResult, self._monitoring.pause,
+                      adminconsts.MONITORING_PAUSE_TIMEOUT)
+        d.addErrback(self.__cbPausingSucceed, self.__ebPausingFailed)
         d.callback(defer._nothing)
         
     def __cbAdminInitialized(self, result):
+        self.info("Waiting Transcoder Administration to become Idle")
+        self.debug("Waiting store to become idle")
         # First wait for the store to become idle
         d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        # And then for the managers/workers/components
+        # And then for the managers/workers/components        
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting managers to become idle")
         d.addBoth(utils.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.dropResult, self._scheduler.waitIdle, 
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting monitoring manager to become idle")
+        d.addBoth(utils.dropResult, self._monitoring.waitIdle,
+                  adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting transcoding manager to become idle")
+        d.addBoth(utils.dropResult, self._transcoding.waitIdle,
+                  adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(utils.silentCall, self.debug,
+                  "Waiting scheduler to become idle")
+        d.addBoth(utils.dropResult, self._scheduler.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(utils.dropResult, self.__startup)
         return self
     
     def __ebAdminInitializationFailed(self, failure):
         reactor.stop()
-        self.error("Transcoder Admin initialization failed: %s",
+        self.error("Transcoder Administration Initialization Failed: %s",
                    log.getFailureMessage(failure))
+
+    def __cbSartupSucceed(self, result):
+        self.info("Transcoder Administration Successfully Started")
+        self._state = TaskStateEnum.started
 
     def __ebSartupFailed(self, failure):
         self.warning("Failed to startup administration: %s",
                      log.getFailureMessage(failure))
         self.debug("Startup failure traceback:\n%s", 
                    log.getFailureTraceback(failure))
+        self._state = TaskStateEnum.stopped
+
+    def __cbResumingSucceed(self, result):
+        self.info("Transcoder Administration Successfully Resumed")
+        self._state = TaskStateEnum.started
+
+    def __ebResumingFailed(self, failure):
+        self.warning("Failed to resume administration: %s",
+                     log.getFailureMessage(failure))
+        self.debug("Resuming failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
+        self._state = TaskStateEnum.paused
+        
+    def __cbPausingSucceed(self, result):
+        self.info("Transcoder Administration Successfully Paused")
+        self._state = TaskStateEnum.paused
+
+    def __ebPausingFailed(self, failure):
+        self.warning("Failed to pause administration: %s",
+                     log.getFailureMessage(failure))
+        self.debug("Pausing failure traceback:\n%s", 
+                   log.getFailureTraceback(failure))
+        self._state = TaskStateEnum.started

@@ -1,5 +1,28 @@
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
+	  TranscoderAdmin.initialize, TranscoderAdmin.onDetached,
+	  TranscoderAdmin.onAttached, TranscoderAdmin.onProfileAdded,
+	  TranscoderAdmin.onProfileRemoved, TranscoderAdmin.onTargetAdded,
+	  TranscoderAdmin.onTargetRemoved,
+	  TranscoderAdmin.onMonitoredFileAdded,
+	  TranscoderAdmin.onMonitoredFileStateChanged,
+	  TranscoderAdmin.onMonitoredFileRemoved,
+	  TranscoderAdmin.__fileStateChanged, TranscoderAdmin.changeState,
+	  TranscoderAdmin.__startup, TranscoderAdmin.__resume,
+	  TranscoderAdmin.__pause, TranscoderAdmin.__cbAdminInitialized,
+	  TranscoderAdmin.__ebAdminInitializationFailed,
+	  TranscoderAdmin.__cbSartupSucceed, TranscoderAdmin.__ebSartupFailed,
+	  TranscoderAdmin.__cbResumingSucceed,
+	  TranscoderAdmin.__ebResumingFailed,
+	  TranscoderAdmin.__cbPausingSucceed,
+	  TranscoderAdmin.__ebPausingFailed):
+	Standardized start/resume/pause handling.
+	Synchronize the monitors files state.
+	More logging.
+
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/waiters.py (BaseWaiters._wait,
 	  PassiveWaiters.__init__, PassiveWaiters.reset,
 	  PassiveWaiters.fireCallbacks, PassiveWaiters.fireErrbacks,
