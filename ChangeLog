@@ -1,5 +1,17 @@
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py
+	  (SchedulerListener.onTranscodingStarted,
+	  SchedulerListener.onTranscodingFail,
+	  SchedulerListener.onTranscodingDone, Scheduler.pause,
+	  Scheduler.resume, Scheduler.addProfile, Scheduler.removeProfile,
+	  Scheduler.isProfileQueued, Scheduler.isProfileActive,
+	  Scheduler.waitIdle, Scheduler._doSyncListener):
+	Standardized start/pause/resume methods.
+	Added methods to know the state of a profile.
+
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py
 	  (AdminElement.__cbParentActivated, AdminElement.__ebParentAborted):
 	Can call waitActive anytime.

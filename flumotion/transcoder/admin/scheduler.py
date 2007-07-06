@@ -13,8 +13,9 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
-from flumotion.transcoder import log
+from flumotion.common.enum import EnumClass
 
+from flumotion.transcoder import log
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.transcoding import TranscodingListener
@@ -49,13 +50,13 @@ class SchedulerListener(object):
     def onProfileQueued(self, scheduler, profileContext):
         pass
     
-    def onTranscodingStarted(self, scheduler, profileContext):
+    def onTranscodingStarted(self, scheduler, task):
         pass
     
-    def onTranscodingFail(self, sheduler, profileContext):
+    def onTranscodingFail(self, sheduler, task):
         pass
     
-    def onTranscodingDone(self, sheduler, profileContext):
+    def onTranscodingDone(self, sheduler, task):
         pass
 
 
@@ -84,9 +85,6 @@ class Scheduler(log.Loggable,
         self._transcoding.syncListener(self)
         return defer.succeed(self)
     
-    def waitIdle(self, timeout=None):
-        return defer.succeed(self)
-    
     def start(self, timeout=None):
         if not self._started:
             self._started = True
@@ -94,11 +92,12 @@ class Scheduler(log.Loggable,
             self.__startup()
         return defer.succeed(self)
     
-    def pause(self):
+    def pause(self, timeout=None):
         if not self._paused:
             self._paused = True
+        return defer.succeed(self)
     
-    def resume(self):
+    def resume(self, timeout=None):
         if self._started and self._paused:
             self._paused = False
             self.__startup()
@@ -107,10 +106,10 @@ class Scheduler(log.Loggable,
     def addProfile(self, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
-        if self.__isProfileQueued(profileContext):
-            self.debug("Added an already queued profile '%s'", inputPath)
+        if self.isProfileQueued(profileContext):
+            self.log("Added an already queued profile '%s'", inputPath)
         elif self._transcoding.getTask(identifier):
-            self.debug("Added an already transcoding profile '%s'", inputPath)
+            self.log("Added an already transcoding profile '%s'", inputPath)
         else:
             self.debug("Queued profile '%s'", inputPath)
             self.__queueProfile(profileContext)
@@ -120,13 +119,24 @@ class Scheduler(log.Loggable,
     def removeProfile(self, profileContext):
         inputPath = profileContext.getInputPath()
         identifier = profileContext.getIdentifier()
-        if self.__isProfileQueued(profileContext):
+        if self.isProfileQueued(profileContext):
             self.debug("Unqueue profile '%s'", inputPath)
             self.__unqueuProfile(profileContext)
         trantask = self._transcoding.getTask(identifier, None)
         if trantask and not trantask.isAcknowledging():
             self.debug("Cancel transcoding of profile '%s'", inputPath)
-            self._transcoding.removeTask(trantask)
+            self._transcoding.removeTask(identifier)
+    
+    def isProfileQueued(self, profCtx):
+        return profCtx.getIdentifier() in self._queue
+    
+    def isProfileActive(self, profCtx):
+        identifier = profCtx.getIdentifier()
+        trantask = self._transcoding.getTask(identifier, None)
+        return trantask != None
+    
+    def waitIdle(self, timeout=None):
+        return defer.succeed(self)
     
     
     ## ITranscodingLister Overriden Methods ##
@@ -166,8 +176,7 @@ class Scheduler(log.Loggable,
         for ctx in self._queue.itervalues():
             self._fireEventTo(ctx, listener, "ProfileQueued")
         for task in self._transcoding.iterTasks():
-            ctx = task.getProfileContext()
-            self._fireEnvetTo(ctx, listener, "TranscodingStarted")
+            self._fireEventTo(task, listener, "TranscodingStarted")
 
         
     ## Private Methods ##
@@ -194,9 +203,6 @@ class Scheduler(log.Loggable,
             self._fireEvent(task, "TranscodingStarted")
             count -= 1
 
-    def __isProfileQueued(self, profCtx):
-        return profCtx.getIdentifier() in self._queue
-            
     def __getProfilePriority(self, profCtx):
         custPri = profCtx.customer.store.getCustomerPriority()
         profPri = profCtx.store.getTranscodingPriority()
