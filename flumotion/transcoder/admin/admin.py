@@ -277,20 +277,20 @@ class TranscoderAdmin(log.Loggable,
         self.info("Starting Transcoder Administration")
         self._state = TaskStateEnum.starting
         d = defer.Deferred()
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Starting monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting for monitoring to become active")
         d.addCallback(utils.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Starting transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.start,
                       adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Starting scheduler manager")
         d.addCallback(utils.dropResult, self._scheduler.start,
                       adminconsts.SCHEDULER_START_TIMEOUT)
@@ -306,23 +306,23 @@ class TranscoderAdmin(log.Loggable,
         d = defer.Deferred()
         # Wait a moment to let the workers the oportunity 
         # to log back to the manager.
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting for workers to log back")
         d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Resuming monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.resume,
                       adminconsts.MONITORING_RESUME_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting for monitoring to become active")
         d.addCallback(utils.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Resuming transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.resume,
                       adminconsts.TRANSCODING_RESUME_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Resuming scheduler")
         d.addCallback(utils.dropResult, self._scheduler.resume,
                       adminconsts.SCHEDULER_RESUME_TIMEOUT)
@@ -335,15 +335,15 @@ class TranscoderAdmin(log.Loggable,
                                    % self._state.name)
         self.info("Pausing Transcoder Administration")
         d = defer.Deferred()
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Pausing scheduler")
         d.addCallback(utils.dropResult, self._scheduler.pause,
                       adminconsts.SCHEDULER_PAUSE_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Pausing transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.pause,
                       adminconsts.TRANSCODING_PAUSE_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Pausing monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.pause,
                       adminconsts.MONITORING_PAUSE_TIMEOUT)
@@ -356,19 +356,19 @@ class TranscoderAdmin(log.Loggable,
         # First wait for the store to become idle
         d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         # And then for the managers/workers/components        
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting managers to become idle")
         d.addBoth(utils.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting monitoring manager to become idle")
         d.addBoth(utils.dropResult, self._monitoring.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting transcoding manager to become idle")
         d.addBoth(utils.dropResult, self._transcoding.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.silentCall, self.debug,
+        d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting scheduler to become idle")
         d.addBoth(utils.dropResult, self._scheduler.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)

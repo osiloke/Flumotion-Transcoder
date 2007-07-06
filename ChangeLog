@@ -1,5 +1,15 @@
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__startup,
+	  TranscoderAdmin.__resume, TranscoderAdmin.__pause,
+	  TranscoderAdmin.__cbAdminInitialized):
+	* flumotion/transcoder/utils.py (bridgeResult, shiftResult,
+	  logFailures, deferredPrint):
+	Added a bridgeResult that call a given method but 
+	keep and propagate the previous result.
+
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py
 	  (SchedulerListener.onTranscodingStarted,
 	  SchedulerListener.onTranscodingFail,

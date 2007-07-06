@@ -248,6 +248,14 @@ def dropResult(result, callable, *args, **kwargs):
     """
     return callable(*args, **kwargs)
 
+def bridgeResult(result, callable, *args, **kwargs):
+    """
+    Simply call the given callable, ignore it's result
+    and return the old callback result.
+    """
+    callable(*args, **kwargs)
+    return result
+
 def resolveFailure(failure, result, *args):
     """
     Resolve an errorback.
@@ -268,3 +276,12 @@ def shiftResult(result, callable, index, *args, **kwargs):
     new = list(args)
     new.insert(index, result)
     return callable(*new, **kwargs)
+
+def logFailures(result, logger, newResult, taskDesc):
+    for succeed, failure in result:
+        if not succeed:
+            logger.warning("Failure during %s: %s",
+                           taskDesc, log.getFailureMessage(failure))
+            logger.debug("%s failure traceback:\n%s",
+                         taskDesc, log.getFailureTraceback(failure))
+    return newResult
