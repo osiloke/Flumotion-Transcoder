@@ -41,7 +41,7 @@ class BaseWaiters(object):
         
     ## Protected Methods ##
         
-    def wait(self, timeout=None):
+    def _wait(self, timeout=None):
         d = defer.Deferred()
         to = utils.createTimeout(timeout, self.__asyncWaitTimeout, d)
         self._waiters[d] = to
@@ -76,8 +76,29 @@ class PassiveWaiters(BaseWaiters):
     
     def __init__(self, message=None):
         BaseWaiters.__init__(self, message)
-        self.fireCallbacks = self._fireCallbacks
-        self.fireErrbacks = self._fireErrbacks
+        self._result = None
+        
+    def reset(self):
+        self._result = None
+        
+    def fireCallbacks(self, result=None):
+        assert not self._result
+        self._result = (True, result)
+        self._fireCallbacks(result)
+        
+    def fireErrbacks(self, error):
+        assert not self._result
+        self._result = (False, error)
+        self._fireErrbacks(error)
+        
+    def wait(self, timeout=None):
+        if self._result:
+            succeed, result = self._result
+            if succeed:
+                return defer.succeed(result)
+            else:
+                return defer.fail(result)
+        return self._wait(timeout)
     
 
 class AssignWaiters(BaseWaiters):
@@ -98,10 +119,12 @@ class AssignWaiters(BaseWaiters):
         
     def wait(self, timeout=None):
         if self.isWaiting():
-            return BaseWaiters.wait(self, timeout)
+            return self._wait(timeout)
         return defer.succeed(self._value)
     
     def setValue(self, value):
+        if value == self._value:
+            return
         self._value = value
         if self._value:
             self._fireCallbacks(value)
@@ -132,7 +155,7 @@ class CounterWaiters(BaseWaiters):
         
     def wait(self, timeout=None):
         if self.isWaiting():
-            return BaseWaiters.wait(self, timeout)
+            return self._wait(timeout)
         return defer.succeed(self._result)
     
     def inc(self):

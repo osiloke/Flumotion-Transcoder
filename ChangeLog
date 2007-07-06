@@ -1,5 +1,14 @@
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/waiters.py (BaseWaiters._wait,
+	  PassiveWaiters.__init__, PassiveWaiters.reset,
+	  PassiveWaiters.fireCallbacks, PassiveWaiters.fireErrbacks,
+	  PassiveWaiters.wait, AssignWaiters.wait, AssignWaiters.setValue,
+	  CounterWaiters.wait):
+	Changed PassiveWiaters to remember it's callback state.
+
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitor.setFileState):
 	Corrected a bug where changing the state of a removed file
