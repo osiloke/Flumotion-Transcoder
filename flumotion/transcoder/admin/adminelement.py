@@ -112,7 +112,6 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             return defer.succeed(self)
         if self._failure:
             return defer.fail(self._failure)        
-        assert self._activeWaiters != None
         return self._activeWaiters.wait(timeout)
 
     
@@ -295,7 +294,6 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             return defer.succeed(self)
         if self._failure:
             return defer.fail(self._failure)        
-        assert self._activeChildWaiters != None
         return self._activeChildWaiters.wait(timeout)
     
     def _unexpectedError(self, failure):
@@ -357,31 +355,23 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
 
     def __cbParentActivated(self, parent):
         self._doFinishActivation()
-        waiters = self._activeWaiters
-        childWaiters = self._activeChildWaiters
-        self._activeWaiters = None
-        self._activeChildWaiters = None
         self._failure= None
         self.log("%s successfully activated", self.__class__.__name__)
         self._active = True
-        waiters.fireCallbacks(self)
+        self._activeWaiters.fireCallbacks(self)
         self._onActivated()
-        childWaiters.fireCallbacks(self)
+        self._activeChildWaiters.fireCallbacks(self)
         if self._parent:
             self._parent._childElementActivated()
                 
     def __ebParentAborted(self, failure):
-        waiters = self._activeWaiters
-        childWaiters = self._activeChildWaiters
-        self._activeWaiters = None
-        self._activeChildWaiters = None
         self._failure = failure
         self._active = False
         self.log("%s activation failed: %s",
                  self.__class__.__name__,
                  log.getFailureMessage(failure))
-        waiters.fireErrbacks(failure)
+        self._activeWaiters.fireErrbacks(failure)
         self._onAborted(failure)
-        childWaiters.fireErrbacks(failure)
+        self._activeChildWaiters.fireErrbacks(failure)
         if self._parent:
             self._parent._childElementAborted()

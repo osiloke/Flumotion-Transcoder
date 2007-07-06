@@ -1,5 +1,11 @@
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement.__cbParentActivated, AdminElement.__ebParentAborted):
+	Can call waitActive anytime.
+
+2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
 	  TranscoderAdmin.initialize, TranscoderAdmin.onDetached,
 	  TranscoderAdmin.onAttached, TranscoderAdmin.onProfileAdded,
