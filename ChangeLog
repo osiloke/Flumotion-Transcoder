@@ -1,5 +1,15 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
+	  Scheduler.isStarted, Scheduler.pause, Scheduler.addProfile,
+	  Scheduler.onSlotsAvailable, Scheduler.__startup,
+	  Scheduler.__startupTasks, Scheduler.__cancelTasksStartup,
+	  Scheduler.__asyncStartTask, Scheduler.__popNextProfile,
+	  Scheduler.__clearQueue):
+	Start the tasks one by one and asynchronously.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/taskmanager.py (TaskManager.__init__,
 	  TaskManager._tryStartup, TaskManager.__cbStartupSucceed,
 	  TaskManager.__cbPauseSucceed, TaskManager.__waitIdle,

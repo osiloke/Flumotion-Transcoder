@@ -75,6 +75,7 @@ class Scheduler(log.Loggable,
         self._queue = {} # {identifier: ProfileContext}
         self._started = False
         self._paused = False
+        self._startDelay = None
         
         
     ## Public Methods ##
@@ -84,6 +85,9 @@ class Scheduler(log.Loggable,
         self._transcoding.addListener(self)
         self._transcoding.syncListener(self)
         return defer.succeed(self)
+    
+    def isStarted(self):
+        return self._started and not self._paused
     
     def start(self, timeout=None):
         if not self._started:
@@ -95,6 +99,8 @@ class Scheduler(log.Loggable,
     def pause(self, timeout=None):
         if not self._paused:
             self._paused = True
+            self.__clearQueue()
+            self.__cancelTasksStartup()
         return defer.succeed(self)
     
     def resume(self, timeout=None):
@@ -113,7 +119,7 @@ class Scheduler(log.Loggable,
         else:
             self.debug("Queued profile '%s'", inputPath)
             self.__queueProfile(profileContext)
-            self.__startupTasksIfPossible()
+            self.__startupTasks()
             self._fireEvent(profileContext, "ProfileQueued")
     
     def removeProfile(self, profileContext):
@@ -152,7 +158,7 @@ class Scheduler(log.Loggable,
 
     def onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)
-        self.__startupTasks(count)
+        self.__startupTasks()
 
 
     ## ITranscodingTaskLister Overriden Methods ##
@@ -184,24 +190,33 @@ class Scheduler(log.Loggable,
     def __startup(self):
         available = self._transcoding.getAvailableSlots()
         self.debug("Starting/Resuming transcoding scheduler (%d slots)", available)
-        self.__startupTasks(available)
+        self.__startupTasks()
     
-    def __startupTasksIfPossible(self):
+    def __startupTasks(self):
+        if self.isStarted() and not self._startDelay:
+            self._startDelay = reactor.callLater(0, self.__asyncStartTask)
+    
+    def __cancelTasksStartup(self):
+        if self._startDelay:
+            self._startDelay.cancel()
+            self._startDelay = None
+    
+    def __asyncStartTask(self):
         available = self._transcoding.getAvailableSlots()
-        if available > 0:
-            self.__startupTasks(available)
-    
-    def __startupTasks(self, count):
-        while count > 0:
-            profCtx = self.__popNextProfile()
-            if not profCtx: return
-            self.log("Creating transcoding task for file '%s'", 
-                     profCtx.getInputPath())
-            identifier = profCtx.getIdentifier()
-            task = TranscodingTask(self._transcoding, profCtx)
-            self._transcoding.addTask(identifier, task)
-            self._fireEvent(task, "TranscodingStarted")
-            count -= 1
+        if available <= 0:
+            self._startDelay = None
+            return
+        profCtx = self.__popNextProfile()
+        if not profCtx: 
+            self._startDelay = None
+            return
+        self.log("Creating transcoding task for file '%s'", 
+                 profCtx.getInputPath())
+        identifier = profCtx.getIdentifier()
+        task = TranscodingTask(self._transcoding, profCtx)
+        self._transcoding.addTask(identifier, task)
+        self._fireEvent(task, "TranscodingStarted")
+        self._startDelay = reactor.callLater(0, self.__asyncStartTask)
 
     def __getProfilePriority(self, profCtx):
         custPri = profCtx.customer.store.getCustomerPriority()
@@ -230,3 +245,7 @@ class Scheduler(log.Loggable,
         identifier = self._order.pop()
         profCtx = self._queue.pop(identifier)
         return profCtx
+    
+    def __clearQueue(self):
+        self._queue.clear()
+        del self._order[:]
