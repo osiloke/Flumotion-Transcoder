@@ -44,15 +44,15 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         assert (parent == None) or isinstance(parent, AdminElement)
         eventsource.EventSource.__init__(self, interfaces)
         LoggerProxy.__init__(self, logger)
-        self._activeWaiters = PassiveWaiters()
-        self._activeChildWaiters = PassiveWaiters()
+        self._activeWaiters = PassiveWaiters("Element Activation")
+        self._activeChildWaiters = PassiveWaiters("Element Child Activation")
         self._triggered = False
         self._active = False
         self._failure = None
         self._parent = parent
         self._obsolete = False
         self._beingRemoved = False
-        self._idleWaiters = CounterWaiters(0, 0, self)
+        self._idleWaiters = CounterWaiters("Element Idle", 0, 0, self)
 
 
     ## Public Methods ##
@@ -71,7 +71,6 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Wait for all pending elements to be activated or aborted,
         and then all child elements to become idle too.
         """
-        
         if self.isIdle():
             d = defer.succeed(self)
         else:
@@ -185,7 +184,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     def _setIdleTarget(self, value):
         self._idleWaiters.setTarget(value)
     
-    def _inIdlTarget(self):
+    def _incIdlTarget(self):
         self._idleWaiters.incTarget()
         
     def _decIdlTarget(self):
@@ -193,6 +192,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     
     def _childElementActivated(self):
         self._idleWaiters.inc()
+        
+    def _childElementRemoved(self):
+        self._idleWaiters.dec()
 
     def _childElementAborted(self):
         self._idleWaiters.decTarget()
@@ -219,6 +221,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         """
         self._beingRemoved = True
         self._onRemoved()
+        if self._parent:
+            self._parent._childElementRemoved()
+        
         
     def _discard(self):
         """

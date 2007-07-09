@@ -1,5 +1,13 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py (AdminElement.__init__,
+	  AdminElement._incIdlTarget, AdminElement._childElementActivated,
+	  AdminElement._childElementRemoved, AdminElement._removed):
+	Added waiters description.
+	Properly decrement the idle counter when a child element is removed.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admintask.py (AdminTask.__init__,
 	  AdminTask.getActiveComponent, AdminTask.pause, AdminTask.resume,
 	  AdminTask.suggestWorker, AdminTask.waitActive, AdminTask._onStarted,
