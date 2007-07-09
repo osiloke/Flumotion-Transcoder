@@ -1,5 +1,14 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/monitoring.py (Monitoring._doStart,
+	  Monitoring._doResume, Monitoring._doPause,
+	  Monitoring.__cbStartResumeMonitoring, Monitoring.__cbAddBalancedTask,
+	  Monitoring.__ebStartupResumingFailure):
+	Renamed some methods.
+	Properly remove the tasks from the balancer when paused.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py
 	  (MonitoringTask._onComponentStartupCanceled,
 	  MonitoringTask._onStarted, MonitoringTask._doAcceptSuggestedWorker,
@@ -16,7 +25,7 @@
 	  Transcoding.__cbAddBalancedTask,
 	  Transcoding.__ebStartupResumingFailure):
 	Renamed some methods.
-	Properly remove the task from the balancer when paused.
+	Properly remove the tasks from the balancer when paused.
 
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 

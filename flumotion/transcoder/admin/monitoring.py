@@ -78,14 +78,19 @@ class Monitoring(TaskManager, WorkerSetListener,
     def _doStart(self):
         self.log("Ready to start monitoring, waiting monitors to become idle")
         d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbMonitorSetGoesIdle)
+        d.addBoth(self.__cbStartResumeMonitoring)
         return d
     
     def _doResume(self):
         self.log("Ready to resume monitoring, waiting monitors to become idle")
         d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbMonitorSetGoesIdle)
+        d.addBoth(self.__cbStartResumeMonitoring)
         return d
+    
+    def _doPause(self):
+        self.log("Pausing monitoring manager")
+        for task in self.iterTasks():
+            self._balancer.removeTask(task)
     
     def _doAbort(self):
         self.log("Aborting monitoring")
@@ -139,34 +144,34 @@ class Monitoring(TaskManager, WorkerSetListener,
 
     ## Private Methods ##
     
-    def __cbMonitorSetGoesIdle(self, result):
+    def __cbStartResumeMonitoring(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.warning("Failure during waiting monitor set "
+            self.warning("Failure waiting monitor set "
                          "to become idle: %s",
                          log.getFailureMessage(result))
             self.debug("Monitor idle failure traceback:\n%s",
                        log.getFailureTraceback(result))
-        self.log("Free to continue monitoring starting/resuming")
+        self.log("Free to continue monitoring startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
-            d.addCallback(self.__cbRetrievePotentialWorker, task)
+            d.addCallback(self.__cbAddBalancedTask, task)
         d.addCallback(utils.dropResult, self._balancer.balance)
-        d.addErrback(self.__ebStartingFailure)
+        d.addErrback(self.__ebStartupResumingFailure)
         d.callback(defer._nothing)
         return d
-
-    def __cbRetrievePotentialWorker(self, _, task):
+    
+    def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.MONITORING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
         # Call self._balancer.addTask(task, worker)
         d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
         return d
-
-    def __ebStartingFailure(self, failure):
-        self.warning("Failure during monitoring starting/resuming: %s",
+    
+    def __ebStartupResumingFailure(self, failure):
+        self.warning("Failure during monitoring startup/resuming: %s",
                      log.getFailureMessage(failure))
-        self.debug("Startup failure traceback:\n%s",
+        self.debug("Startup/Resuming failure traceback:\n%s",
                    log.getFailureTraceback(failure))
         return failure
 
