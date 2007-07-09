@@ -60,6 +60,7 @@ class TranscoderProxy(ComponentProxy):
     def loadTo(cls, worker, name, label, properties, timeout=None):
         manager = worker.getParent()
         atmosphere = manager.getAtmosphere()
+        assert atmosphere != None
         return atmosphere._loadComponent('file-transcoder', 
                                          name,  label, worker, 
                                          properties, timeout)

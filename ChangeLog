@@ -1,5 +1,11 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.loadTo):
+	Assert the atmosphere exists.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transbalancer.py
 	  (TranscoderBalancer.getAvailableSlots):
 	Do not return negative slot availability.
