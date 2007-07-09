@@ -47,7 +47,7 @@ class TranscoderBalancer(object):
     ## Public Methods ##
         
     def getAvailableSlots(self):
-        return self._maximum - self._current
+        return max(self._maximum - self._current, 0)
         
     def clearTasks(self):
         self._current = 0

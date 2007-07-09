@@ -1,5 +1,11 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transbalancer.py
+	  (TranscoderBalancer.getAvailableSlots):
+	Do not return negative slot availability.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/waiters.py (BaseWaiters.__init__,
 	  BaseWaiters.__asyncWaitTimeout, PassiveWaiters,
 	  PassiveWaiters.__init__, AssignWaiters.__init__,
