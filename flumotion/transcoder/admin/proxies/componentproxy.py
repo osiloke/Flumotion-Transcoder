@@ -91,11 +91,11 @@ class BaseComponentProxy(FlumotionProxy):
         self._domain = domain
         self._componentState = componentState
         self._retrievingUIState = False
-        self._uiState = AssignWaiters()
+        self._uiState = AssignWaiters("Component UIState")
         self._requestedWorkerName = None
         self._worker = None
-        self._mood = ValueWaiters()
-        self._properties = AssignWaiters()
+        self._mood = ValueWaiters("Component Mood")
+        self._properties = AssignWaiters("Component Properties")
         
 
     def addListener(self, listener):

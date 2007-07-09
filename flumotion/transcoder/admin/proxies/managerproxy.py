@@ -80,8 +80,8 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._context = managerContext
         self._admin = admin
         self._planetState = planetState
-        self._workers = ItemWaiters() # ItemWaiters of {identifier: Worker}
-        self._atmosphere = AssignWaiters(None)
+        self._workers = ItemWaiters("Manager Workers") # {identifier: Worker}
+        self._atmosphere = AssignWaiters("Manager Atmosphere")
         self._flows = {} # {identifier: Flow}
         self.__updateIdleTarget()
     
@@ -269,6 +269,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         self._removeProxyState("_workers", self.__getWorkerUniqueId,
                               "WorkerRemoved", self, 
                               workerContext, workerState)
+        self.__updateIdleTarget()
 
     def __atmosphereSetState(self, atmosphereState):
         name = atmosphereState.get('name')
@@ -291,4 +292,4 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         flowContext = self._context.getFlowContext(name)
         self._removeProxyState("_flows", self.__getFlowUniqueId,
                               "FlowRemoved", self, flowContext, flowState)
-        #FIXME: handle properly aborted flow
+        self.__updateIdleTarget()

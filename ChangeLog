@@ -1,5 +1,16 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.__init__):
+	* flumotion/transcoder/admin/proxies/managerproxy.py
+	  (ManagerProxy.__init__, ManagerProxy.__workerStateRemoved,
+	  ManagerProxy.__flowStateRemoved):
+	* flumotion/transcoder/admin/proxies/managerset.py
+	  (ManagerSet.__init__):
+	Added waiters decription.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/groupproxy.py
 	  (ComponentGroupProxy.__componentStateRemoved):
 	Properly update the child target when a state is removed.

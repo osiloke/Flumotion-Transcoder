@@ -72,7 +72,7 @@ class ManagerSet(RootFlumotionProxy):
         self._context = adminContext
         self._multi = multi.MultiAdminModel()
         self._multi.addListener(self)
-        self._managers = AssignWaiters({})
+        self._managers = AssignWaiters("Manager Set Assignment", {})
         self._setIdleTarget(1)
         
         
