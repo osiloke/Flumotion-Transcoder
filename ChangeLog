@@ -1,3 +1,13 @@
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/waiters.py (BaseWaiters.__init__,
+	  BaseWaiters.__asyncWaitTimeout, PassiveWaiters,
+	  PassiveWaiters.__init__, AssignWaiters.__init__,
+	  CounterWaiters.__init__, CounterWaiters.isWaiting,
+	  ValueWaiters.__init__, ValueWaiters.__asyncWaitTimeout,
+	  ItemWaiters.__init__, ItemWaiters.__asyncWaitTimeout):
+	Added a description to be able to easily track timeouts.
+
 2007-07-06  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__startup,

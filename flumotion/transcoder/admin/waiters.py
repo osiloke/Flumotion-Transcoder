@@ -35,9 +35,9 @@ class IWaiters(Interface):
 
 class BaseWaiters(object):
     
-    def __init__(self, message=None):
+    def __init__(self, desc):
         self._waiters = {} # {Deferred: IDelayedCall}
-        self._timeoutMessage = message
+        self._desc = desc
         
     ## Protected Methods ##
         
@@ -67,15 +67,15 @@ class BaseWaiters(object):
     
     def __asyncWaitTimeout(self, d):
         self._waiters.pop(d)
-        message = self._timeoutMessage or "Waiter Timeout"
+        message = "%s Waiter Timeout" % self._desc
         err = OperationTimedOutError(message)
         d.errback(err)
 
 
 class PassiveWaiters(BaseWaiters):
     
-    def __init__(self, message=None):
-        BaseWaiters.__init__(self, message)
+    def __init__(self, desc):
+        BaseWaiters.__init__(self, desc)
         self._result = None
         
     def reset(self):
@@ -108,8 +108,8 @@ class AssignWaiters(BaseWaiters):
     
     implements(IWaiters)
 
-    def __init__(self, value=None, message=None):
-        BaseWaiters.__init__(self, message)
+    def __init__(self, desc, value=None):
+        BaseWaiters.__init__(self, desc)
         self._value = value
         
     def isWaiting(self):
@@ -144,13 +144,14 @@ class CounterWaiters(BaseWaiters):
     
     implements(IWaiters)
     
-    def __init__(self, target=0, counter=0, result=None, message=None):
-        BaseWaiters.__init__(self, message)
+    def __init__(self, desc, target=0, counter=0, result=None):
+        BaseWaiters.__init__(self, desc)
         self._target = target
         self._counter = counter
         self._result = result
         
     def isWaiting(self):
+        from flumotion.transcoder import log
         return self._target != self._counter
         
     def wait(self, timeout=None):
@@ -208,8 +209,9 @@ class ValueWaiters(object):
     
     implements(IWaiters)
     
-    def __init__(self, value=None):
+    def __init__(self, desc, value=None):
         self._value = value
+        self._desc = desc
         self._any = {} # {Deferred: (IDelayedCall, [goodValues], [wrongValues])}
         self._good = {} # {value: {Deferred: (IDelayedCall, [goodValues], [wrongValues])}}
         self._bad = {} # {value: {Deferred: (IDelayedCall, [goodValues], [wrongValues])}}
@@ -287,7 +289,8 @@ class ValueWaiters(object):
 
     def __asyncWaitTimeout(self, d, goodValues, wrongValues):
         self.__removeWaiter(d, None, goodValues, wrongValues)
-        d.errback(OperationTimedOutError("Waiter Timeout"))
+        message = "%s Waiter Timeout" % self._desc
+        d.errback(OperationTimedOutError(message))
 
 
 class ItemWaiters(object):
@@ -298,9 +301,10 @@ class ItemWaiters(object):
     
     implements(IWaiters)
     
-    def __init__(self, value=None):
+    def __init__(self, desc, value=None):
         self._waiters = {} # {key: {Deffered: IDelayedCall}}
         self._value = value or dict()
+        self._desc = desc
         
     def isWaiting(self):
         return True
@@ -343,7 +347,8 @@ class ItemWaiters(object):
             defs.pop(d)
             if not defs:
                 del self._waiters[key]
-            err = OperationTimedOutError("Waiter Timeout")
+            msg = "%s Waiter Timeout" % self._desc
+            err = OperationTimedOutError(msg)
             d.errback(err)
     
     def __fireCallbacks(self, key):
