@@ -39,14 +39,10 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self._identifiers = {} # {identifiers: ComponentProperties}
         self._tasks = {} # {ComponentProperties: IAdminTask}
         self._taskless = {} # {ComponentProxy: None}
-        #self._ready = False
-        #self._started = False
-        #self._activeWaiters = AssignWaiters(False)
-        #self._paused = False
         self._state = TaskStateEnum.stopped
         self._starting = False
-        self._startWaiters = PassiveWaiters()
-        self._pauseWaiters = PassiveWaiters()
+        self._startWaiters = PassiveWaiters("Task Manager Startup")
+        self._pauseWaiters = PassiveWaiters("Task Manager Paused")
         self._pending = 0
         reactor.addSystemEventTrigger("before", "shutdown", self.abort)
 
@@ -254,10 +250,11 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                        self.getLabel())
             self._starting = True
             d = defer.succeed(self)
-            d.addCallback(utils.dropResult, self._doStart)
             if self._state == TaskStateEnum.starting:
+                d.addCallback(utils.dropResult, self._doStart)
                 d.addCallback(self.__cbCallForAllTasks, "start")
             else:
+                d.addCallback(utils.dropResult, self._doResume)
                 d.addCallback(self.__cbCallForAllTasks, "resume")
             d.addCallback(self.__cbStartup)
             args = (self._state.name,)
@@ -274,8 +271,6 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         d.addCallbacks(self.__cbPauseSucceed, self.__ebPauseFailed)
     
     def __cbStartup(self, _):
-        for c in self._taskless:
-            self.onComponentMoodChanged(c, c.getMood())
         return self.__waitIdle(adminconsts.TASKMANAGER_IDLE_TIMEOUT)
 
     def __cbCallForAllTasks(self, _, action):
@@ -371,14 +366,18 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         waiters.fireErrbacks(error)
 
     def __cbStartupSucceed(self, result, actionDesc):
-        self.debug("Task manager '%s' started", self.getLabel())
+        self.debug("Task manager '%s' started/resumed successfully", 
+                   self.getLabel())
         self._starting = False
-        if self._state in [TaskStateEnum.starting,
-                           TaskStateEnum.resuming]:
-            self._state = TaskStateEnum.started
-            self._startWaiters.fireCallbacks(result)
-        else:
+        if not (self._state in [TaskStateEnum.starting,
+                                TaskStateEnum.resuming]):
             self.__stateChangedError(self._startWaiters, actionDesc)
+            return
+        self._state = TaskStateEnum.started
+        self._startWaiters.fireCallbacks(result)
+        # Now we can manage the taskless components
+        for c in self._taskless:
+            self.onComponentMoodChanged(c, c.getMood())
 
     def __ebStartupFailed(self, failure, actionDesc):
         self.warning("Task Manager '%s' failed to startup/resume: %s",
@@ -396,6 +395,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__stateChangedError(self._startWaiters, actionDesc)
 
     def __cbPauseSucceed(self, result):
+        self.debug("Task manager '%s' paused successfully", self.getLabel())
         if self._state == TaskStateEnum.pausing:
             self._state = TaskStateEnum.paused
             self._pauseWaiters.fireCallbacks(result)
@@ -414,9 +414,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__stateChangedError(self._pauseWaiters, "pausing")
 
     def __waitIdle(self, timeout):
-        defs = []
-        for task in self.iterTasks():
-            defs.append(task.waitIdle(timeout))
+        defs = [t.waitIdle(timeout) for t in self.iterTasks()]
         dl = defer.DeferredList(defs,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
@@ -427,9 +425,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         return dl
     
     def __cbWaitActive(self, result, timeout):
-        defs = []
-        for task in self.iterTasks():
-            defs.append(task.waitActive(timeout))
+        defs = [t.waitActive(timeout) for t in self.iterTasks()]
         dl = defer.DeferredList(defs,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,

@@ -1,5 +1,16 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager.__init__,
+	  TaskManager._tryStartup, TaskManager.__cbStartupSucceed,
+	  TaskManager.__cbPauseSucceed, TaskManager.__waitIdle,
+	  TaskManager.__cbWaitActive):
+	Added description to the waiters.
+	Properly call _doResume when resuming.
+	Update components moods after startup.
+	Use list comprehension to build deferred lists.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transtask.py (TranscodingTask._onStarted):
 	Update the components mood after startup and not during startup.
 
