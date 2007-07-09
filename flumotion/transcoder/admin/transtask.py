@@ -213,7 +213,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         mood = component.getMood()
         self.onComponentMoodChanged(component, mood)
 
-    def _doStartup(self):
+    def _onStarted(self):
         for c in self.iterComponents():
             self.onComponentMoodChanged(c, c.getMood())
     

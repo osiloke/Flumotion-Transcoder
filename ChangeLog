@@ -1,5 +1,10 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transtask.py (TranscodingTask._onStarted):
+	Update the components mood after startup and not during startup.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/transcoderproxy.py
 	  (TranscoderProxy.loadTo):
 	Assert the atmosphere exists.
