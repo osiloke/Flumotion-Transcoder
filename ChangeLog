@@ -1,5 +1,11 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/groupproxy.py
+	  (ComponentGroupProxy.__componentStateRemoved):
+	Properly update the child target when a state is removed.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
 	  TranscoderAdmin.__startup, TranscoderAdmin.__resume,
 	  TranscoderAdmin.__pause, TranscoderAdmin.__abort):

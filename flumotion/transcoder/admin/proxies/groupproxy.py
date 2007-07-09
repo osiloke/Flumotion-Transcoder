@@ -174,6 +174,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
                                self._componentRemovedEvent, self._manager,
                                componentContext, componentState, 
                                self._componentDomain)
+        self.__updateIdleTarget()
 
     def __cbComponentLoaded(self, componentState, identifier, initDef, resultDef, to):
         utils.cancelTimeout(to)
