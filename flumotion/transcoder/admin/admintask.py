@@ -116,10 +116,10 @@ class AdminTask(LoggerProxy, EventSource):
         EventSource.__init__(self, interface)
         self._worker = None # WorkerProxy
         self._state = TaskStateEnum.stopped
-        self._startWaiters = PassiveWaiters()
+        self._startWaiters = PassiveWaiters("Admin Task Startup/Resuming")
         self._pendingName = None
         self._delayed = None # IDelayedCall
-        self._elected = AssignWaiters(None) # ComponentProxy
+        self._active = AssignWaiters("Admin Task Active Component")
         self._components = {} # {ComponentProxy: None}
         self._label = label
         self._properties = properties
@@ -142,7 +142,7 @@ class AdminTask(LoggerProxy, EventSource):
         return self._state == TaskStateEnum.terminated
 
     def getActiveComponent(self):
-        return self._elected.getValue()
+        return self._active.getValue()
     
     def getWorker(self):
         return self._worker
@@ -190,17 +190,25 @@ class AdminTask(LoggerProxy, EventSource):
         return self._startWaiters.wait(timeout)
     
     def pause(self, timeout=None):
+        if self._state == TaskStateEnum.terminated:
+            # If terminated, a task can be paused and resume silently
+            return defer.succeed(self)
         if not (self._state in [TaskStateEnum.started]):
             return defer.fail(TranscoderError("Cannot pause %s task '%s'"
                                               % (self._state.name,
                                                  self.getLabel())))
         self.log("Pausing admin task '%s'", self.getLabel())
         self._state = TaskStateEnum.paused
+        # No longer have associated worker
+        self._worker = None
         # No longer started
         self._startWaiters.reset()
         return defer.succeed(self)
     
     def resume(self, timeout=None):
+        if self._state == TaskStateEnum.terminated:
+            # If terminated, a task can be rpaused and resume silently
+            return defer.succeed(self)
         if not (self._state in [TaskStateEnum.paused, 
                                 TaskStateEnum.resuming]):
             return defer.fail(TranscoderError("Cannot resume %s task '%s'"
@@ -252,6 +260,8 @@ class AdminTask(LoggerProxy, EventSource):
         self.log("Worker '%s' suggested to admin task '%s'", 
                  worker and worker.getLabel(), self.getLabel())
         if self._doAcceptSuggestedWorker(worker):
+            # Cancel pending components if any
+            self._pendingName = None
             # If we change the worker, reset the retry counter
             self._resetRetryCounter()
             self._worker = worker
@@ -287,7 +297,7 @@ class AdminTask(LoggerProxy, EventSource):
         return d
     
     def waitActive(self, timeout=None):
-        return self._elected.wait(timeout)
+        return self._active.wait(timeout)
     
 
     ## Virtual Protected Methods ##
@@ -325,6 +335,9 @@ class AdminTask(LoggerProxy, EventSource):
     def _doChainWaitPotentialComponent(self, chain):
         pass
     
+    def _onStarted(self):
+        pass
+    
     def _doStartup(self):
         """
         Can return a Deferred.
@@ -359,9 +372,7 @@ class AdminTask(LoggerProxy, EventSource):
         self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         # Stop all components
-        defs = []
-        for c in self._components:
-            defs.append(self._waitDeleteComponent(c))
+        defs = [self._waitDeleteComponent(c) for c in self._components]
         dl = defer.DeferredList(defs,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
@@ -461,7 +472,7 @@ class AdminTask(LoggerProxy, EventSource):
     ## Private Methods ##
     
     def __setActiveComponent(self, component):
-        self._elected.setValue(component)
+        self._active.setValue(component)
     
     def __startup(self):
         self.log("Starting/Resuming admin task '%s'", self.getLabel())
@@ -485,13 +496,15 @@ class AdminTask(LoggerProxy, EventSource):
     def __cbStartupSucceed(self, result, actionDesc):
         self.debug("Admin task '%s' started/resumed successfully",
                    self.getLabel())
-        if self._state in [TaskStateEnum.starting,
-                           TaskStateEnum.resuming]:
-            self._state = TaskStateEnum.started
-            self._startWaiters.fireCallbacks(result)
-            self.__startComponent()
-        else:
+        if not (self._state in [TaskStateEnum.starting,
+                                TaskStateEnum.resuming]):
             self.__stateChangedError(self._startWaiters, actionDesc)
+            return
+        self._state = TaskStateEnum.started
+        self._startWaiters.fireCallbacks(result)
+        self._onStarted()
+        self.__startComponent()        
+            
         
     def __ebStartupFailed(self, failure, actionDesc):
         self.warning("Admin task '%s' failed to startup/resume: %s",
@@ -551,11 +564,8 @@ class AdminTask(LoggerProxy, EventSource):
                 self._stopComponent(m)
 
     def __waitPotentialComponent(self, timeout=None):
-        defs = []
-        for c in self._components:
-            if c.isRunning():
-                d = c.waitUIState(self.UISTATE_TIMEOUT)
-                defs.append(d)
+        to = self.UISTATE_TIMEOUT
+        defs = [c.waitUIState(to) for c in self._components if c.isRunning()]
         dl = defer.DeferredList(defs, fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)

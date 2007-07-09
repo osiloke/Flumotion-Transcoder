@@ -1,5 +1,17 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py (AdminTask.__init__,
+	  AdminTask.getActiveComponent, AdminTask.pause, AdminTask.resume,
+	  AdminTask.suggestWorker, AdminTask.waitActive, AdminTask._onStarted,
+	  AdminTask._terminate, AdminTask.__setActiveComponent,
+	  AdminTask.__cbStartupSucceed, AdminTask.__waitPotentialComponent):
+	Some renaming.
+	Added description to waiters.
+	Clean the worker reference when paused.
+	Allow the terminated tasks to be paused and resume silently.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/monitoring.py (Monitoring._doStart,
 	  Monitoring._doResume, Monitoring._doPause,
 	  Monitoring.__cbStartResumeMonitoring, Monitoring.__cbAddBalancedTask,
