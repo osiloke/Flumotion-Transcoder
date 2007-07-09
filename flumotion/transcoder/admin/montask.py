@@ -195,16 +195,16 @@ class MonitoringTask(AdminTask, MonitorListener):
         # So resend the mood changing event
         mood = component.getMood()
         self.onComponentMoodChanged(component, mood)
+
+    def _onStarted(self):
+        for c in self.iterComponents():
+            self.onComponentMoodChanged(c, c.getMood())
     
     def _doAcceptSuggestedWorker(self, worker):
         current = self.getWorker()
         monitor = self.getActiveComponent()
         return (worker != current) or (not monitor)
 
-    def _doStartup(self):
-        for c in self.iterComponents():
-            self.onComponentMoodChanged(c, c.getMood())
-    
     def _doAborted(self):
         self._fireEvent(self.getWorker(), "FailToRunOnWorker")
     
@@ -239,17 +239,18 @@ class MonitoringTask(AdminTask, MonitorListener):
         if not self._pendingMoves:
             self._movingFiles = False
             return
-        args = self._pendingMoves.pop()
+        virtSrcBase, virtDestBase, relFiles = self._pendingMoves.pop()
         monitor = self.getActiveComponent()
         if not monitor:
             self.warning("No monitor found to move files '%s' to '%s'",
-                         args[0], args[1])
+                         virtSrcBase, virtDestBase)
             # Stop moving files
             self._movingFiles = False
             return
         self.debug("Ask monitor '%s' to move files form '%s' to '%s'",
-                   monitor.getName(), args[0], args[1])
-        d = monitor.moveFiles(*args)
+                   monitor.getName(), virtSrcBase, virtDestBase)
+        d = monitor.moveFiles(virtSrcBase, virtDestBase, relFiles)
+        args = (monitor, virtSrcBase, virtDestBase, relFiles)
         d.addCallbacks(self.__cbFileMoved, self.__ebMoveFilesFailed, 
                        callbackArgs=args, errbackArgs=args)
 
@@ -262,7 +263,8 @@ class MonitoringTask(AdminTask, MonitorListener):
         self.debug("Set file state failure traceback:\n%s", 
                    log.getFailureTraceback(failure))
     
-    def __cbFileMoved(self, virtSrcBase, virtDestBase, relFiles):
+    def __cbFileMoved(self, result, monitor, 
+                      virtSrcBase, virtDestBase, relFiles):
         for relFile in relFiles:
             self.log("File '%s' moved to '%s'",
                       virtSrcBase.append(relFile),

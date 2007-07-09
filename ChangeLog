@@ -1,5 +1,15 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask._onComponentStartupCanceled,
+	  MonitoringTask._onStarted, MonitoringTask._doAcceptSuggestedWorker,
+	  MonitoringTask.__asyncMovePendingFiles,
+	  MonitoringTask.__cbFileMoved):
+	Update the components mood after startup.
+	The monitor wasn't passed as callback argument when moving files.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transcoding.py (Transcoding._doStart,
 	  Transcoding._doResume, Transcoding._doPause,
 	  Transcoding.__cbStartResumeTranscoding,
@@ -7,8 +17,6 @@
 	  Transcoding.__ebStartupResumingFailure):
 	Renamed some methods.
 	Properly remove the task from the balancer when paused.
-	
-	
 
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
