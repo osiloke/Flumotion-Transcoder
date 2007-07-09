@@ -86,14 +86,19 @@ class Transcoding(TaskManager, WorkerSetListener,
     def _doStart(self):
         self.log("Ready to start transcoding, waiting transcoders to become idle")
         d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbTranscoderSetGoesIdle)
+        d.addBoth(self.__cbStartResumeTranscoding)
         return d
     
     def _doResume(self):
         self.log("Ready to resume transcoding, waiting transcoder to become idle")
         d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(self.__cbTranscoderSetGoesIdle)
+        d.addBoth(self.__cbStartResumeTranscoding)
         return d
+    
+    def _doPause(self):
+        self.log("Pausing transcoding manager")
+        for task in self.iterTasks():
+            self._balancer.removeTask(task)
     
     def _doAbort(self):
         self.log("Aborting transcoding")
@@ -155,33 +160,34 @@ class Transcoding(TaskManager, WorkerSetListener,
 
     ## Private Methods ##
     
-    def __cbTranscoderSetGoesIdle(self, result):
+    def __cbStartResumeTranscoding(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.warning("Failure during waiting transcoder set "
+            self.warning("Failure waiting transcoder set "
                          "to become idle: %s",
                          log.getFailureMessage(result))
             self.debug("Idle transcoder failure traceback:\n%s",
                        log.getFailureTraceback(result))
-        self.log("Starting/Resuming transcoding")
+        self.log("Free to continue transcoding startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
-            d.addCallback(self.__cbRetrievePotentialWorker, task)
+            d.addCallback(self.__cbAddBalancedTask, task)
         d.addCallback(utils.dropResult, self._balancer.balance)
-        d.addErrback(self.__ebStartingFailure)
+        d.addErrback(self.__ebStartupResumingFailure)
         d.callback(defer._nothing)
+        return d
 
-    def __cbRetrievePotentialWorker(self, _, task):
+    def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.TRANSCODING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
         # Call self._balancer.addTask(task, worker)
         d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
         return d
 
-    def __ebStartingFailure(self, failure):
-        self.warning("Failure during transcoding starting/resuming: %s",
+    def __ebStartupResumingFailure(self, failure):
+        self.warning("Failure during transcoding startup/resuming: %s",
                      log.getFailureMessage(failure))
-        self.debug("Start/Resume failure traceback:\n%s",
+        self.debug("Startup/Resuming failure traceback:\n%s",
                    log.getFailureTraceback(failure))
 
     def __ebAddComponentFailed(self, failure, name):

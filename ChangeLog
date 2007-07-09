@@ -1,5 +1,17 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transcoding.py (Transcoding._doStart,
+	  Transcoding._doResume, Transcoding._doPause,
+	  Transcoding.__cbStartResumeTranscoding,
+	  Transcoding.__cbAddBalancedTask,
+	  Transcoding.__ebStartupResumingFailure):
+	Renamed some methods.
+	Properly remove the task from the balancer when paused.
+	
+	
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
 	  Scheduler.isStarted, Scheduler.pause, Scheduler.addProfile,
 	  Scheduler.onSlotsAvailable, Scheduler.__startup,
