@@ -61,6 +61,7 @@ class TranscoderAdmin(log.Loggable,
         self._transcoding = Transcoding(self._workers, self._transcoders)
         self._scheduler = Scheduler(self._store, self._transcoding)
         self._state = TaskStateEnum.stopped
+        reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 
     
     ## Public Methods ##
@@ -277,24 +278,24 @@ class TranscoderAdmin(log.Loggable,
         self.info("Starting Transcoder Administration")
         self._state = TaskStateEnum.starting
         d = defer.Deferred()
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Starting monitoring manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Starting monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Waiting for monitoring to become active")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Waiting for monitoring to become active")
         d.addCallback(utils.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Starting transcoding manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Starting transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.start,
                       adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Starting scheduler manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Starting scheduler manager")
         d.addCallback(utils.dropResult, self._scheduler.start,
                       adminconsts.SCHEDULER_START_TIMEOUT)
-        d.addErrback(self.__cbSartupSucceed, self.__ebSartupFailed)
+        d.addCallbacks(self.__cbSartupSucceed, self.__ebSartupFailed)
         d.callback(defer._nothing)
         
     def __resume(self):
@@ -306,27 +307,27 @@ class TranscoderAdmin(log.Loggable,
         d = defer.Deferred()
         # Wait a moment to let the workers the oportunity 
         # to log back to the manager.
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Waiting for workers to log back")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Waiting for workers to log back")
         d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Resuming monitoring manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Resuming monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.resume,
                       adminconsts.MONITORING_RESUME_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Waiting for monitoring to become active")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Waiting for monitoring to become active")
         d.addCallback(utils.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Resuming transcoding manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Resuming transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.resume,
                       adminconsts.TRANSCODING_RESUME_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Resuming scheduler")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Resuming scheduler")
         d.addCallback(utils.dropResult, self._scheduler.resume,
                       adminconsts.SCHEDULER_RESUME_TIMEOUT)
-        d.addErrback(self.__cbResumingSucceed, self.__ebResumingFailed)
+        d.addCallbacks(self.__cbResumingSucceed, self.__ebResumingFailed)
         d.callback(defer._nothing)
         
     def __pause(self):
@@ -335,20 +336,25 @@ class TranscoderAdmin(log.Loggable,
                                    % self._state.name)
         self.info("Pausing Transcoder Administration")
         d = defer.Deferred()
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Pausing scheduler")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Pausing scheduler")
         d.addCallback(utils.dropResult, self._scheduler.pause,
                       adminconsts.SCHEDULER_PAUSE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Pausing transcoding manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Pausing transcoding manager")
         d.addCallback(utils.dropResult, self._transcoding.pause,
                       adminconsts.TRANSCODING_PAUSE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
-                  "Pausing monitoring manager")
+        d.addCallback(utils.bridgeResult, self.debug,
+                      "Pausing monitoring manager")
         d.addCallback(utils.dropResult, self._monitoring.pause,
                       adminconsts.MONITORING_PAUSE_TIMEOUT)
-        d.addErrback(self.__cbPausingSucceed, self.__ebPausingFailed)
+        d.addCallbacks(self.__cbPausingSucceed, self.__ebPausingFailed)
         d.callback(defer._nothing)
+        
+    def __abort(self):
+        if self._state == TaskStateEnum.terminated:
+            return
+        self._state = TaskStateEnum.terminated
         
     def __cbAdminInitialized(self, result):
         self.info("Waiting Transcoder Administration to become Idle")

@@ -1,5 +1,16 @@
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
+	  TranscoderAdmin.__startup, TranscoderAdmin.__resume,
+	  TranscoderAdmin.__pause, TranscoderAdmin.__abort):
+	Added a shudown handler to set the admin state to terminated.
+	Only add callback when starting and resuming the admin,
+	if one fail the next ones should not be executed.
+	Still use addBoth for idle waiting because if one timeout,
+	we still want to wait the others.
+
+2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py (AdminElement.__init__,
 	  AdminElement._incIdlTarget, AdminElement._childElementActivated,
 	  AdminElement._childElementRemoved, AdminElement._removed):
