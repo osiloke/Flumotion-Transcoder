@@ -10,14 +10,19 @@
 
 # Headers in this file shall remain intact.
 
+import datetime
+
 from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
 from flumotion.transcoder import constants, log
+from flumotion.transcoder.enums import ActivityTypeEnum
+from flumotion.transcoder.enums import ActivityStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
+from flumotion.transcoder.admin.datastore.activitystore import Activity
 
 
 class StoreLogger(log.Loggable):
@@ -104,11 +109,46 @@ class AdminStore(BaseStore):
     def __getitem__(self, customerName):
         return self._customers[customerName]
     
+    def getCustomer(self, customerName, default=None):
+        return self._customers.get(customerName, default)
+    
     def __iter__(self):
         return iter(self._customers)
     
     def iterCustomers(self):
         self._customers.itervalues()
+    
+    def getActivities(self, type, states):
+        assert isinstance(type, ActivityTypeEnum)
+        d = self._dataSource.retrieveActivities(type, states)
+        d.addCallback(self.__cbWrapActivities)
+        return d
+    
+    def newActivity(self, type, state, label, startTime=None):
+        assert isinstance(type, ActivityTypeEnum)
+        assert isinstance(state, ActivityStateEnum)
+        assert isinstance(label, str)
+        assert (startTime == None) or isinstance(startTime, datetime.datetime)
+        a = self._dataSource.newActivity(type)
+        a.state = state
+        a.label = label
+        a.startTime = startTime or datetime.datetime.now()
+        return Activity(self, a, True)
+    
+    
+    ## Protected Methods ##
+    
+    def _storeActivity(self, activity, new):
+        data = activity._getData()
+        return self._dataSource.store(data)
+    
+    def _resetActivity(self, activity):
+        data = activity._getData()
+        return self._dataSource.reset(data)
+
+    def _deleteActivity(self, activity):
+        data = activity._getData()
+        return self._dataSource.delete(data)
     
     
     ## Overridden Methods ##
@@ -204,3 +244,6 @@ class AdminStore(BaseStore):
                      log.getFailureMessage(failure))
         #Propagate failures
         return failure
+
+    def __cbWrapActivities(self, dataList):
+        return [Activity(self, d, False) for d in dataList]

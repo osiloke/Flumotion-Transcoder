@@ -1,5 +1,15 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.getCustomer, AdminStore.__iter__,
+	  AdminStore.iterCustomers, AdminStore.getActivities,
+	  AdminStore.newActivity, AdminStore._storeActivity,
+	  AdminStore._resetActivity, AdminStore._deleteActivity,
+	  AdminStore.__ebRetrievalFailed, AdminStore.__cbWrapActivities):
+	Very simple wrapper of the datasource activities.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datasource/dataprops.py (AdminData,
 	  ActivityData, TranscodingActivityData, ActivitiesData):
 	* flumotion/transcoder/admin/datasource/filesource.py (DataWrapper,
