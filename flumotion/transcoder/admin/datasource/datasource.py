@@ -53,8 +53,9 @@ class IDataSource(Interface):
     """
     The data source allow the retrieval, creation, insertion and deletion
     of "container" objects in an abstract source.
-    The given container are unspecified, apart for there fields
-    and the equality operator.
+    The given container are unspecified, apart for there fields,
+    the equality operator, and an identifier fields that uniquely
+    and persistently identify a "record" and that is None when not stored.
     The equality operator compare if the objects represent the same
     element in the source, not that they have the same field values.
     Two new element that has not been stored in the source are never equal.
@@ -283,6 +284,34 @@ class IDataSource(Interface):
             maxCount (int)
             format (ThumbOutputTypeEnum)
         """
+        
+    def retrieveActivities(self, type, states=None):
+        """
+        Returns a deferred.
+        The result on success is a list of the activities
+        with the specified type and state in the specified 
+        list states (if not None or empty)
+        as "container" objects with the following fields:
+           type (ActivityTypeEnum)
+           state (ActivityStateEnum)
+           startTime (datetime)
+           lastTime (dateTime)
+        For type == transcoding, reference is a data container:
+           customerName (str)
+           profileName (str)
+           inputRelPath (str)
+        For type == notification:
+           data (dict) : notification's type specific data (url, emails...)
+           variables (dict)
+           retryCount (int)
+           maxRetryCount (int)
+           nextRetryTime (datetime)
+        """
+
+    def newActivity(self, type):
+        """
+        Creates a new activity container of a specified type.
+        """
 
     def newCustomer(self, cusomerId):
         """
@@ -348,6 +377,15 @@ class IDataSource(Interface):
         store support it.
         """
     
+    def reset(self, *data):
+        """
+        Returns a deferred.
+        Reset the values of the specified container objects
+        to there original value from the data source.
+        If a specified container was never stored,
+        its values are not changed.
+        """
+    
     def delete(self, *data):
         """
         Return a deferred.
@@ -355,4 +393,6 @@ class IDataSource(Interface):
         The objects must have been created by the store.
         All the objecte are deleted atomically if the
         store support it.
+        Deletion is not an operation that could be
+        reversed by calling reset.
         """

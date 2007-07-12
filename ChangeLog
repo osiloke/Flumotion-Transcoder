@@ -1,5 +1,13 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/admin/datasource/datasource.py (IDataSource,
+	  IDataSource.retrieveTargetConfig, IDataSource.retrieveActivities,
+	  IDataSource.newActivity, IDataSource.reset, IDataSource.delete):
+	Updated the datrasource interface to add activiy creation and retrieval.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/transcontext.py
 	  (TranscodingContext.iterCustomerContexts,
 	  TranscodingContext.getUnboundProfileContext,

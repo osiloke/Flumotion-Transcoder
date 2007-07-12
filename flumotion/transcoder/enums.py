@@ -146,3 +146,23 @@ TaskStateEnum = EnumClass("TaskStateEnum",
                            "Resuming",
                            "Terminating",
                            "Terminated"))
+
+ActivityStateEnum = EnumClass("ActivityStateEnum",
+                              ("unknown",
+                               "stopped",
+                               "started",
+                               "paused",
+                               "done",
+                               "failed"),
+                              ("Unknown",
+                               "Stopped",
+                               "Started",
+                               "Paused",
+                               "Done",
+                               "Failed"))
+
+ActivityTypeEnum =  EnumClass("ActivityTypeEnum",
+                              ("transcoding",
+                               "notification"),
+                              ("Transcoding",
+                               "Notification"))
