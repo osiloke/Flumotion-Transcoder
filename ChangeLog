@@ -1,5 +1,13 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/transcontext.py
+	  (TranscodingContext.iterCustomerContexts,
+	  TranscodingContext.getUnboundProfileContext,
+	  TranscodingContext.getProfileContext):
+	Added shortcut methods to retrieve a profile context directly.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/test/test_utils.py (TestUtils.testStripEscaped,
 	  TestUtils.check, TestUtils.testSplitEscaped, TestUtils.check,
 	  TestUtils.testSplitCommandFields, TestUtils.check,

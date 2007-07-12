@@ -12,6 +12,9 @@
 
 from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.context.customercontext import CustomerContext
+from flumotion.transcoder.admin.context.profilecontext import ProfileContext
+from flumotion.transcoder.admin.context.profilecontext import UnboundProfileContext
+
 
     
 class TranscodingContext(object):
@@ -32,3 +35,11 @@ class TranscodingContext(object):
         return LazyEncapsulationIterator(CustomerContext, 
                                          self.store.iterCustomers(), self)
     
+    # Shortcuts
+    def getUnboundProfileContext(self, profile):
+        custCtx = self.getCustomerContext(profile.getParent())
+        return UnboundProfileContext(profile, custCtx)
+    
+    def getProfileContext(self, profile, relPath):
+        custCtx = self.getCustomerContext(profile.getParent())
+        return ProfileContext(profile, custCtx, relPath)
