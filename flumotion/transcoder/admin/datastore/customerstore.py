@@ -98,6 +98,9 @@ class CustomerStore(BaseStore):
     def getProfiles(self):
         return self._profiles.values()
     
+    def getProfile(self, profileName, default=None):
+        return self._profiles.get(profileName, default)    
+    
     def __getitem__(self, profileName):
         return self._profiles[profileName]
     
