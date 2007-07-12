@@ -319,7 +319,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             msg = ("Task manager '%s' ask to add component '%s' "
                    "without matching task" 
                    % (self.getLabel(), component.getName()))
-            self.warning("%s", msg)
+            self.debug("%s", msg)
             self.__apartTasklessComponent(component)
         self._pending -= 1
         self._tryStartup()
