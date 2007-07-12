@@ -1,5 +1,20 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	* flumotion/transcoder/admin/datastore/activitystore.py (BaseActivity,
+	  BaseActivity.__init__, BaseActivity.store, BaseActivity.reset,
+	  BaseActivity.delete, BaseActivity.getLabel, BaseActivity.getType,
+	  BaseActivity.getState, BaseActivity.setState,
+	  BaseActivity.getStartTime, BaseActivity.getLastTime,
+	  BaseActivity._touche, BaseActivity._getData, TranscodingActivity,
+	  TranscodingActivity.__init__, TranscodingActivity.getInputRelPath,
+	  TranscodingActivity.setInputRelPath, TranscodingActivity.getCustomer,
+	  TranscodingActivity.getProfile, TranscodingActivity.setProfile,
+	  Activity):
+	Added the simple activity data wrapper file.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/inifile.py (IniFile.saveToFile):
 	Added a HEADER class variable that will be saved in the 
 	generated file as a comment
