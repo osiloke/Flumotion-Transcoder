@@ -1,5 +1,11 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/basestore.py
+	  (BaseStore._doPrepareActivation):
+    Removed artificial delay to test asynchronous initialization.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-admin.ini:
 	* flumotion/transcoder/admin/adminconfig.py (DataSourceConfig,
 	  AdminConfig, ClusterConfig):

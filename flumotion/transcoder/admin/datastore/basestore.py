@@ -91,13 +91,7 @@ class BaseStore(adminelement.AdminElement):
         chain.addErrback(self.__ebDataSourceError)
 
     def _doPrepareActivation(self, chain):
-        #FIXME: Remove this, its only for testing
-        from twisted.internet import reactor, defer
-        def async(result):
-            d = defer.Deferred()
-            reactor.callLater(0.2, d.callback, result)
-            return d
-        chain.addCallback(async)
+        pass
             
 
     ## Private Methods ##
