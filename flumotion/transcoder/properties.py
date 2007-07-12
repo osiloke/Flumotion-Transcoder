@@ -832,10 +832,12 @@ class ChildList(BaseChildProperty):
     
     def checkItem(self, obj, item):
         if not isinstance(item, self.bagClass):
-            raise PropertyError(("Cannot use class %s with "
-                                 + "list attribute '%s'")
-                                 % (item.__class__.__name__, self.attr),
-                                 obj.getLocator(), self.descriptor)
+            raise PropertyError("Cannot use class %s with "
+                                "list attribute '%s', only %s "
+                                "and subclasses"
+                                % (item.__class__.__name__, self.attr,
+                                   self.bagClass.__name__),
+                                obj.getLocator())
     
     def createItem(self, parent):        
         item = self.bagClass(*self.bagArgs, **self.bagKWArgs)
@@ -883,10 +885,12 @@ class ChildDict(BaseChildProperty):
     
     def checkItem(self, obj, item):
         if not isinstance(item, self.bagClass):
-            raise PropertyError(("Cannot use class %s with "
-                                 + "dict attribute '%s'")
-                                 % (item.__class__.__name__, self.attr),
-                                 obj.getLocator(), self.descriptor)
+            raise PropertyError("Cannot use class %s with "
+                                "dict attribute '%s', only %s "
+                                "and subclasses"
+                                % (item.__class__.__name__, self.attr,
+                                   self.bagClass.__name__),
+                                obj.getLocator())
     
     def createItem(self, parent):        
         item = self.bagClass(*self.bagArgs, **self.bagKWArgs)

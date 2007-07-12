@@ -1,4 +1,10 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/properties.py (ChildList.checkItem):
+	Corrected a bug in ChildList and ChildDict, changed the
+	error message to be more descriptive.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/taskmanager.py
 	  (TaskManager.__cbAddComponent):
