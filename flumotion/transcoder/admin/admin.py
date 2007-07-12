@@ -59,7 +59,8 @@ class TranscoderAdmin(log.Loggable,
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
-        self._scheduler = Scheduler(self._store, self._transcoding)
+        self._scheduler = Scheduler(self._transCtx, self._store, 
+                                    self._transcoding)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 

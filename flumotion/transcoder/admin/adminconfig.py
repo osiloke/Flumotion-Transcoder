@@ -31,13 +31,17 @@ class WorkerConfig(properties.PropertyBag):
 
 
 class DataSourceConfig(properties.PropertyBag):
-    file = properties.String('file', None, True)
+    dataFile = properties.String('data-file', None, True)
+    activityFile = properties.String('activity-file', None, True)
 
 class AdminConfig(properties.PropertyBag):
     datasource = properties.Child("data-source", DataSourceConfig)
     roots = properties.Dict(properties.String('roots'))
 
 class ClusterConfig(properties.RootPropertyBag):
+    
+    VERSION = (1, 0)
+    
     debug = properties.String("debug")
     admin = properties.Child("admin", AdminConfig)
     manager = properties.Child("manager", ManagerConfig)
@@ -47,4 +51,6 @@ class ClusterConfig(properties.RootPropertyBag):
                                                 adminconsts.TRANSCODER_LABEL_TEMPLATE)
     monitorLabelTemplate = properties.String("monitor-label-template",
                                              adminconsts.MONITOR_LABEL_TEMPLATE)
+    activityLabelTemplate = properties.String("activity-label-template",
+                                             adminconsts.ACTIVITY_LABEL_TEMPLATE)
     

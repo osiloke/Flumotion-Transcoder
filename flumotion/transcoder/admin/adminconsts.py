@@ -31,7 +31,8 @@ COMPONENT_WAIT_TO_KILL = 30
 # The time between each monitor components set adjustments
 MONITORSET_TUNE_PERIOD = 10
 
-# Componenet label template
+# Label templates
+ACTIVITY_LABEL_TEMPLATE = "%(customerName)s/%(profileName)s:%(sourcePath)s"
 TRANSCODER_LABEL_TEMPLATE = "%(customerName)s/%(profileName)s:%(sourcePath)s"
 MONITOR_LABEL_TEMPLATE = "Monitor for %(customerName)s"
 

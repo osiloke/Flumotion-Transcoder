@@ -23,8 +23,7 @@ class AdminContext(object):
         self._vars = None
 
     def getDataSource(self):
-        file = self.config.admin.datasource.file
-        return filesource.FileDataSource(file)
+        return filesource.FileDataSource(self.config.admin.datasource)
         
     def getLocal(self):
         return Local("admin", self.config.admin.roots)

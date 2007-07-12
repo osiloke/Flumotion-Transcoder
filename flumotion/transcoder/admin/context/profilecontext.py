@@ -239,8 +239,13 @@ class ProfileContext(UnboundProfileContext):
         return utils.cleanupPath(path)
     
     def getTranscoderLabel(self):
+        #FIXME: Dependency too deep 
         tmpl = self.customer.transcoding.admin.config.transcoderLabelTemplate
         return self._vars.substitute(tmpl)
 
+    def getActivityLabel(self):
+        #FIXME: Dependency too deep 
+        tmpl = self.customer.transcoding.admin.config.activityLabelTemplate
+        return self._vars.substitute(tmpl)
     
     
