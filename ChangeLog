@@ -1,5 +1,34 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/dataprops.py (AdminData,
+	  ActivityData, TranscodingActivityData, ActivitiesData):
+	* flumotion/transcoder/admin/datasource/filesource.py (DataWrapper,
+	  DataWrapper.__init__, DataWrapper.__getattr__,
+	  DataWrapper.__setattr__, DataWrapper._getData, MutableWrapper,
+	  MutableWrapper.__init__, MutableWrapper._reset,
+	  MutableWrapper._store, MutableWrapper._delete, MutableWrapper._clone,
+	  MutableWrapper.__getattr__, MutableWrapper.__setattr__,
+	  FileDataSource, FileDataSource.__init__, FileDataSource.initialize,
+	  FileDataSource.waitReady, FileDataSource.retrieveDefaults,
+	  FileDataSource.retrieveCustomers,
+	  FileDataSource.retrieveCustomerInfo, FileDataSource.retrieveProfiles,
+	  FileDataSource.retrieveTargets, FileDataSource.retrieveTargetConfig,
+	  FileDataSource.retrieveActivities, FileDataSource.newActivity,
+	  FileDataSource.store, FileDataSource.reset, FileDataSource.delete,
+	  FileDataSource.__loadAdminData, FileDataSource.__cbInitAdminData,
+	  FileDataSource.__loadActivityData,
+	  FileDataSource.__cbInitActivityData,
+	  FileDataSource.__ebInitializationFailed,
+	  FileDataSource.__storeActivities, FileDataSource.__cbActivitiesSaved,
+	  FileDataSource.__ebActivitiesSaveFailed):
+	Implemented the activity retrieval and storing.
+	Due to the current limitations, the activities already terminated
+	(state 'done' or 'failed') are not saved to file. If they was already
+	saved the activities are removed from the file.
+	Removed artificial delay to test asynchronous initialization.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/enums.py:
 	* flumotion/transcoder/admin/datasource/datasource.py (IDataSource,
 	  IDataSource.retrieveTargetConfig, IDataSource.retrieveActivities,
