@@ -1,4 +1,10 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/inifile.py (IniFile.saveToFile):
+	Added a HEADER class variable that will be saved in the 
+	generated file as a comment
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/transcoder/properties.py (ChildList.checkItem):
 	Corrected a bug in ChildList and ChildDict, changed the

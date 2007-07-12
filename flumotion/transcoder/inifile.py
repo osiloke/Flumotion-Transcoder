@@ -122,6 +122,11 @@ class IniFile(object):
                 #The ConfigParser doesn't write the sections and properties ordered
                 #so I have to do it myself for the file to be more readable
                 #parser.write(f)
+                header = getattr(propBag, "HEADER", None)
+                if header:
+                    for line in header.split('\n'):
+                        f.write("# %s\n" % line)
+                    f.write("\n")
                 version = getattr(propBag, "VERSION", None)
                 if version:
                     f.write("[HEADER]\n")
