@@ -1,5 +1,17 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
+	  Scheduler.initialize, Scheduler.onTranscodingFailed,
+	  Scheduler.onTranscodingDone, Scheduler.onTranscodingTerminated,
+	  Scheduler.__cbRestoreTasks, Scheduler.__ebInitializationFailed,
+	  Scheduler.__asyncStartTask, Scheduler.__startTranscodingTask,
+	  Scheduler.__clearQueue, Scheduler.__ebActivityStoreFailed,
+	  Scheduler.__ebActivityDeleteFailed):
+	Now retrieve the transcoding activities during initialisation,
+	and create transcoding tasks to be able to resume transcoding job.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/montask.py (MonitoringTask.setFileState):
 	Corrected a bug where an errback argument was missing.
 
