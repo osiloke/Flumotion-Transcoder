@@ -95,9 +95,9 @@ class MonitoringTask(AdminTask, MonitorListener):
             return
         self.log("Monitoring task '%s' file '%s' state changed to %s",
                  self.getLabel(), virtBase.append(relPath), state.name)
-        args = virtBase, relPath, state
-        d = monitor.setFileState(*args)
-        d.addErrback(self.__ebSetFileStateFailed, *args)
+        d = monitor.setFileState(virtBase, relPath, state)
+        d.addErrback(self.__ebSetFileStateFailed, monitor, 
+                     virtBase, relPath, state)
         
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         args = virtSrcBase, virtDestBase, relFiles

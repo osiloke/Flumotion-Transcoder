@@ -1,5 +1,10 @@
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/montask.py (MonitoringTask.setFileState):
+	Corrected a bug where an errback argument was missing.
+
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/customerstore.py
 	  (CustomerStore.getProfile):
 	Added a getter to retrieve a profile by name with default value.
