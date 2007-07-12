@@ -1,3 +1,15 @@
+2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/test/test_utils.py (TestUtils.testStripEscaped,
+	  TestUtils.check, TestUtils.testSplitEscaped, TestUtils.check,
+	  TestUtils.testSplitCommandFields, TestUtils.check,
+	  TestUtils.testJoinCommandFields, TestUtils.check,
+	  TestUtils.testJoinSplitCommandFields, TestUtils.check):
+	* flumotion/transcoder/process.py (Process.__init__, Process.execute):
+	* flumotion/transcoder/utils.py (splitEscaped, stripEscaped,
+	  splitCommandFields, escapeField, joinCommandFields, deepCopy):
+	Better command line splitting and joining, more tests
+
 2007-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxies/componentproxy.py

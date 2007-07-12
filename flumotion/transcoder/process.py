@@ -39,13 +39,14 @@ class Process(worker.ProcessProtocol, log.Loggable):
         self._logger = logger or self
         worker.ProcessProtocol.__init__(self, self._logger, type,
                                         type, socket.gethostname())
-        self.logName = re.split('(?<!\\\\) ', command)[0]
+        self.command = utils.splitCommandFields(command)
+        self.logName = self.command[0]
         self.logCategory = type
         self.output = None
         self.terminated = None
         self._aborted = None
         self.timeout = None
-        self.command = command
+        
 
     def execute(self, params=None, path=None, env=None, timeout=None):
         if self.pid:
@@ -53,14 +54,12 @@ class Process(worker.ProcessProtocol, log.Loggable):
         self.output = ''
         self.terminated = defer.Deferred()
         self.timeout = None
-        escaped = {}
         if params:
-            for n, p in params.iteritems():
-                escaped[n] = str(p).replace(' ', '\ ')
-        command = self.command % escaped
-        argv = re.split('(?<!\\\\) ', command)
-        for i, a in enumerate(argv):
-            argv[i] = a.replace('\ ', ' ')
+            argv = []
+            for part in self.command:
+                argv.append(part % params)
+        else:
+            argv = self.command
         self._logger.debug('%s command: %s', self.processType,
                           '"' + '" "'.join(argv) + '"')
         childFDs = {0: 0, 1: 'r', 2: 2}

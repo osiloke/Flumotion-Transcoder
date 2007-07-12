@@ -210,4 +210,140 @@ class TestUtils(unittest.TestCase):
         check("///test/spame/file.txt", "test/spame/file.txt/")    
         check("///test/spame/file.txt/", "test/spame/file.txt/")    
         
+    def testStripEscaped(self):
+        
+        def check(value, expected):
+            result = utils.stripEscaped(value)
+            self.assertEqual(result, expected)
+        
+        check('AAA', 'AAA')
+        check(' AAA ', 'AAA')
+        check('  AAA    ', 'AAA')
+        check('\\ AAA', '\\ AAA')
+        check('AAA\\ ', 'AAA\\ ')
+        check('\\   AAA', '\\   AAA')
+        check('AAA  \\ ', 'AAA  \\ ')
+        check('  \\ AAA', '\\ AAA')
+        
+    def testSplitEscaped(self):
+        
+        def check(value, expected):
+            result = utils.splitEscaped('X', value)
+            self.assertEqual(result, expected)
+    
+        check('', [''])
+        check('XX', ['', '', ''])
+        check('XBX', ['', 'B', ''])
+        check('\\XBX', ['\\XB', ''])
+        check('\\\\XBX', ['\\\\', 'B', ''])
+        check('AXBXC', ['A', 'B', 'C'])
+        check('A\\XBXC', ['A\\XB', 'C'])
+        check('AXB\\XC', ['A', 'B\\XC'])
+        check('\\\\AXBXC', ['\\\\A', 'B', 'C'])
+        check('A\\\\XBXC', ['A\\\\', 'B', 'C'])
+        check('AX\\\\BXC', ['A', '\\\\B', 'C'])
+        check('AXB\\\\XC', ['A', 'B\\\\', 'C'])
+        check('AXBX\\\\C', ['A', 'B', '\\\\C'])
+        check('AXBXC\\\\', ['A', 'B', 'C\\\\'])
+        check('\\\\XBX', ['\\\\', 'B', ''])
+        check('X\\\\BX', ['', '\\\\B', ''])
+        check('XB\\\\X', ['', 'B\\\\', ''])
+        check('XBX\\\\', ['', 'B', '\\\\'])        
+        check('A\\\\\\XBXC', ['A\\\\\\XB', 'C'])
+        check('AXB\\\\\\XC', ['A', 'B\\\\\\XC'])
+        
+        
+    def testSplitCommandFields(self):
+        
+        def check(value, expected):
+            result = utils.splitCommandFields(value)
+            self.assertEqual(result, expected)
+            
+        check('', [])
+        check(' ', [])
+        check('         ', [])
+        
+        check('""', [''])
+        check('   ""    ', [''])
+        check('   ""    ""', ['',''])
+        
+        check('1', ['1'])
+        check('    1', ['1'])
+        check('1    ', ['1'])
+        check('    1    ', ['1'])
+        check('1 2', ['1', '2'])
+        check('1 2   3', ['1', '2', '3'])
+        check('1   2   3', ['1', '2', '3'])
+        
+        check('"1"', ['1'])
+        check('1 "2"', ['1', '2'])
+        check('1 "2"   3', ['1', '2', '3'])
+        check('1 2   "3"', ['1', '2', '3'])
+        check('1 2 "  3"', ['1', '2', '  3'])
+        check('1 2 "  3"  ', ['1', '2', '  3'])
+        
+        check('123 1\\\\23 123', ['123', '1\\23', '123'])
+        check('123 "1\\\\23" 123', ['123', '1\\23', '123'])
+        check('123 "1\\"23" 123', ['123', '1"23', '123'])
+        check('123 1\\\\23 "123"', ['123', '1\\23', '123'])
+        check('123 1\\"23 "123"', ['123', '1"23', '123'])
+        check('\\\\123 \\\\123\\\\ 123\\\\', ['\\123', '\\123\\', '123\\'])
+        check('\\"123 \\"123\\" 123\\"', ['"123', '"123"', '123"'])
+        
+        check('12\\ 3 123 123', ['12 3', '123', '123'])
+        check('12\\ 3 "12 3" 123', ['12 3', '12 3', '123'])
+        check('\\ 123 12\\ 3 1\\ 23', [' 123', '12 3', '1 23'])
+        check('\\ 123 "12\\ 3" 1\\ 23', [' 123', '12\\ 3', '1 23'])
+        check('\\ 123 \\ 123\\  123\\ ', [' 123', ' 123 ', '123 '])
+        
+        
+    def testJoinCommandFields(self):
+        
+        def check(value, expected):
+            result = utils.joinCommandFields(value)
+            self.assertEqual(result, expected)
+            
+        check([], '')
+        
+        check([''], '""')
+        check(['','',''], '"" "" ""')
+        
+        check(['AAA'], 'AAA')
+        check(['AAA', 'BBB', 'CCC'], 'AAA BBB CCC')
+        check(['AAA ', 'BBB', 'CCC'], '"AAA " BBB CCC')
+        check(['AAA', 'BB B', 'CCC'], 'AAA "BB B" CCC')
+        
+        check(['A\\AA', 'BBB', 'CCC'], 'A\\\\AA BBB CCC')
+        check(['AAA', 'BBB', 'CCC\\'], 'AAA BBB CCC\\\\')
+
+        check(['"AAA"', 'BBB', 'CCC'], '"\\"AAA\\"" BBB CCC')
+        check(['"AAA"', 'BB"B', '"CCC'], '"\\"AAA\\"" "BB\\"B" "\\"CCC"')
+        
+        
+    def testJoinSplitCommandFields(self):
+        
+        def check(value):
+            temp = utils.joinCommandFields(value)
+            result = utils.splitCommandFields(temp)
+            self.assertEqual(result, value)
+            
+        check([])
+        check([''])
+        check(['','',''])
+        
+        check(['AAA','','CCC'])
+        check(['AAA','BBB','CCC'])
+        
+        check(['AA\\A','\\BBB','CCC\\'])
+        check(['AAA','\\BBB\\','CCC'])
+        
+        check(['AA"A','"BBB','CCC"'])
+        check(['AAA','"BBB"','CCC'])
+        
+        check(['  AAA','B  BB','CCC  '])
+        check(['  AAA  ','BBB','  CCC  '])
+        check(['AAA  ','  BBB  ','  CCC'])
+        
+        
+        
         

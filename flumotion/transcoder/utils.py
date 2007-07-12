@@ -16,8 +16,11 @@ import re
 import md5
 import time
 import random
+import datetime
 
 from twisted.internet import defer, reactor
+
+from flumotion.common import enum
 
 from flumotion.transcoder import log
 from flumotion.transcoder.errors import OperationTimedOutError
@@ -178,6 +181,98 @@ def str2path(value):
 def joinPath(*parts):
     return cleanupPath("/".join(parts))
 
+def splitEscaped(regex, s):
+    """
+    It should be a faaaar better way to do it...
+    See test_utils.py
+    """
+    result = []
+    temp = []
+    regex = '(?<!\\\\)' + regex
+    parts = s.split("\\\\")
+    for p in parts:
+        sub = re.split(regex, p)
+        temp.append(sub[0])
+        if len(sub) == 1:
+            continue
+        result.append('\\\\'.join(temp))
+        del temp[:]
+        if len(sub) > 2:
+            result.extend(sub[1:-1])
+        temp.append(sub[-1])
+    result.append('\\\\'.join(temp))
+    return result
+
+def stripEscaped(s):
+    """
+    See test_utils.py
+    """
+    j = 0
+    for j, c in enumerate(reversed(s)):
+        if c != ' ':
+            if c == '\\':
+                j -= 1
+            break
+    return s[:len(s)-j].lstrip()
+
+def splitCommandFields(s):
+    """
+    See test_utils.py
+    """
+    result = []
+    quoted = splitEscaped('["\']', s)
+    for odd, chunk in enumerate(quoted):
+        if (odd % 2) == 0:
+            spaced = splitEscaped(' ', chunk)
+            for part in spaced:
+                part = stripEscaped(part)
+                if not part: continue
+                part = part.replace('\\ ', ' ')
+                part = part.replace('\\"', '"')
+                part = part.replace('\\\'', '\'')
+                part = part.replace('\\\\', '\\')
+                result.append(part)
+        else:
+            chunk = chunk.replace('\\"', '"')
+            chunk = chunk.replace('\\\'', '\'')
+            chunk = chunk.replace('\\\\', '\\')
+            result.append(chunk)
+    return result
+
+def escapeField(s):
+    e = s.replace('\\', '\\\\')
+    if not s:
+        return '""'
+    if (' ' in s) or ('"' in s):
+        return '"' + e.replace('"', '\\"') + '"'
+    return e
+
+def joinCommandFields(l):
+    """
+    See test_utils.py
+    """
+    return ' '.join([escapeField(str(s)) for s in l])
+
+
+## Structures Utility Functions ##
+
+def deepCopy(value):
+    """
+    Do a light deep copy of the specified value.
+    Do not mess up the enums.
+    Only work for the basic types:
+        str, int, float, long, dict, list and enums.
+    """
+    if value == None:
+        return None
+    if isinstance(value, (str, int, float, long, enum.Enum, datetime.datetime)):
+        return value
+    if isinstance(value, dict):
+        return dict([(deepCopy(k), deepCopy(v)) for k, v in value.items()])
+    if isinstance(value, list):
+        return [deepCopy(v) for v in value]
+    raise TypeError("Invalid type for deepCopy of '%s' (%s)" 
+                    % (str(value), value.__class__.__name__))
 
 ## Deferred Utility Functions ##
 
