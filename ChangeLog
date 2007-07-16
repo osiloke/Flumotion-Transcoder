@@ -1,5 +1,10 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-data.ini:
+	Added the notifications entry.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* AUTHORS:
 	* HACKING:
 	* README:
