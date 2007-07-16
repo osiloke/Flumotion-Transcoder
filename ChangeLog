@@ -1,5 +1,10 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/utils.py (deepCopy):
+	Added a safe deep copy function that doesn't mess with enums.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/enums.py:
 	Added notification-related enumerations.
 

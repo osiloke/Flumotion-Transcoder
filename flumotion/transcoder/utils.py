@@ -258,7 +258,7 @@ def joinCommandFields(l):
 
 def deepCopy(value):
     """
-    Do a light deep copy of the specified value.
+    Do a safe deep copy of the specified value.
     Do not mess up the enums.
     Only work for the basic types:
         str, int, float, long, dict, list and enums.
@@ -271,6 +271,8 @@ def deepCopy(value):
         return dict([(deepCopy(k), deepCopy(v)) for k, v in value.items()])
     if isinstance(value, list):
         return [deepCopy(v) for v in value]
+    if isinstance(value, set):
+        return set([deepCopy(v) for v in value])
     raise TypeError("Invalid type for deepCopy of '%s' (%s)" 
                     % (str(value), value.__class__.__name__))
 
