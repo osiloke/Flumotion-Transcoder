@@ -1,3 +1,11 @@
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
+	* AUTHORS:
+	* HACKING:
+	* README:
+	* TODO:
+	Updated the root information files.
+
 2007-07-12  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datastore/Makefile.am:

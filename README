@@ -7,16 +7,4 @@ This is Fluendo's transcoder, a part of Flumotion Advanced.
 How
 ---
 
-There is a transcoder daemon that watches a directory for incoming media
-files. When a file is completely written to that directory[0], the
-transcoder forks a job to perform transcoding.
-
-The transcoding job first checks if GStreamer understands the input
-file, using the python discoverer. Then it simultaneously transcodes the
-input to all specified output formats. At the end it runs the discoverer
-again on the output files. It can optionally notify a remote web site
-when the output files are done using a HTTP GET request, passing details
-about the output files.
-
-[0] This condition is currently signalled if a file's size does not
-change in a configurable period of time.
+TODO

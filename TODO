@@ -1,6 +1,44 @@
-- Add the result of the "file" command in the report
-- Add the file header (hexdump) in the report
-- Make each transcoding log in separate files to be able to add it in the error report
-- Make the file monitor build a configuration for each file with htaccess-like files
-- Add a parameter to acknowledge to say if and where the source file should be moved
-  to be able to make inplace transcoding (without moving the sourcefile).
+Bugs:
+- The pre-processing should be made safe by copying the input file (#1058)
+
+Documentation:
+- Complete the README
+- Update (write from scratch?) the documentation
+
+Features:
+- Add the result of the "file" command in the report (#797)
+- Add the file header (hexdump) in the report (#797)
+- Make the file monitor build a configuration for each file 
+  with htaccess-like files (#882)
+- Add multi-pass encoding support (#783)
+- Add a size/duration limitation for the output targets (#798)
+- Add an option to set the output with and heigh multiple (#1067)
+- Add an identity target that only copy the incoming file (#1059)
+- Add an option to force the group and rights of the generated files (#1060)
+- Compare the duration of the source file and target file if possible (#1061)
+- Add a substitution variable with the duraion of any duration disponible.
+  The duration of the source or the duration of the target (#1062)
+- Change the scheduler to use a faire queuing algorithm (#1063)
+- Add input file filtering (#1065)
+- Add input file rejection (#1066)
+- Create an SQL datasource (#1068)
+- Create an API for customer/profile/targets modification at runtime (#1069)
+- Categorize transcoding errors (#1078)
+- Monitor symlinks and reproduce the symlinks for the outgoing files (#1079)
+- Write temporary reports in a different directory (#1081)
+- Add socket to the file-transcoder to be able to plug processing steps (#1130)
+- Make each transcoding log in separate files to be able to add it 
+  in the error report
+- Add a parameter to acknowledge to say if and where the source file 
+  should be moved to be able to make inplace transcoding 
+  (without moving the sourcefile).
+- Add configuration/report files versioning and automatique upgrading.
+
+Tests:
+- Write manual test procedures (like for FSP)
+- More test suites, more test suites, more test suites.
+
+Refactoring:
+- workout a solution to remove the deep references in contexts and stores.
+- Review the activities to allow for diffrent types of notifications.
+- Better filesource that handle properly lots of activities.
