@@ -1,5 +1,13 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/notifier.py (notifyEmergency, notifyDebug,
+	  INotifierListener, NotifierListener, Notifier, Notifier.__init__,
+	  Notifier.addNotifications):
+	Added notification module skeleton.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* TODO:
 	There is more to do.
 
