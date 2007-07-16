@@ -1,4 +1,10 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._getAvatarId):
+	Use self.getParent() insteed of self._parent
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datastore/configstore.py
 	  (ThumbnailsConfig.getFormat, TargetConfigFactory):

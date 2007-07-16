@@ -349,7 +349,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._uiState.setValue(uistate)
 
     def _getAvatarId(self):
-        return common.componentId(self._parent.getName(), self.getName())
+        return common.componentId(self.getParent().getName(), self.getName())
         
     def _callRemote(self, methodName, *args, **kwargs):
         assert self._componentState, "Component has been removed"
