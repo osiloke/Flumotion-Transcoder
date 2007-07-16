@@ -166,3 +166,29 @@ ActivityTypeEnum =  EnumClass("ActivityTypeEnum",
                                "notification"),
                               ("Transcoding",
                                "Notification"))
+
+NotificationTypeEnum =  EnumClass("NotificationTypeEnum",
+                                  ("get_request",
+                                   "email"),
+                                   ("GET Request",
+                                   "EMail"))
+
+NotificationTriggerEnum =  EnumClass("NotificationTriggerEnum",
+                                     ("done",
+                                      "failed"),
+                                      ("Done",
+                                       "Failed"))
+
+MailAttachmentEnum = EnumClass("MailAttachmentEnum",
+                               ("report",
+                                "log"),
+                               ("Report",
+                                "Log"))
+
+MailAddressTypeEnum = EnumClass("MailAddressTypeEnum",
+                                ("to",
+                                 "cc",
+                                 "bcc"),
+                                ("TO",
+                                 "CC",
+                                 "BCC"))

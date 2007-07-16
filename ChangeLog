@@ -1,5 +1,10 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/enums.py:
+	Added notification-related enumerations.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
 	  Scheduler.initialize, Scheduler.__cbRestoreTasks,
 	  Scheduler.__startTranscodingTask):
