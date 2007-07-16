@@ -1,4 +1,36 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datasource/dataprops.py (TargetData,
+	  ProfileData, AdminData, TranscodingActivityData,
+	  NotificationActivityData, ActivitiesData):
+	* flumotion/transcoder/admin/datasource/datasource.py
+	  (IDataSource.waitReady, IDataSource.retrieveGlobalNotifications,
+	  IDataSource.retrieveCustomerNotifications,
+	  IDataSource.retrieveProfileNotifications,
+	  IDataSource.retrieveTargetNotifications,
+	  IDataSource.retrieveActivities):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (ImmutableWrapper, ImmutableWrapper.__init__,
+	  ImmutableWrapper.__getattr__, ImmutableWrapper.__setattr__,
+	  ImmutableDataWrapper, ImmutableDataWrapper.__setattr__,
+	  ImmutableDataWrapper._getData, MutableDataWrapper,
+	  MutableDataWrapper._store, MutableDataWrapper._delete,
+	  MutableDataWrapper.__setattr__, _createReqNotif, _createMailNotif,
+	  FileDataSource.waitReady, FileDataSource.retrieveDefaults,
+	  FileDataSource.retrieveCustomers,
+	  FileDataSource.retrieveCustomerInfo, FileDataSource.retrieveProfiles,
+	  FileDataSource.retrieveGlobalNotifications,
+	  FileDataSource.retrieveCustomerNotifications,
+	  FileDataSource.retrieveProfileNotifications,
+	  FileDataSource.retrieveTargetNotifications,
+	  FileDataSource.retrieveTargets, FileDataSource.retrieveTargetConfig,
+	  FileDataSource.retrieveActivities, FileDataSource.newActivity,
+	  FileDataSource.store, FileDataSource.reset, FileDataSource.delete):
+	Added a timeout to the waitReady method.
+	Separated retrievals of global, customers, profiles 
+	and targets notifications.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/datastore/notificationstore.py

@@ -70,11 +70,11 @@ class IDataSource(Interface):
         Initialize the data source.
         """
 
-    def waitReady(self):
+    def waitReady(self, timeout=None):
         """
         Returns a deferred that is called when the source
-        is ready to provide data, or if the source fail
-        to initialize
+        is ready to provide data, if the source fail to initialize
+        or if the specified timeout is reached.
         """
 
     def retrieveDefaults(self):
@@ -198,41 +198,6 @@ class IDataSource(Interface):
            monitoringPeriod (int) can be None
         """
         
-    def retrieveNotifications(self, withGlobal, customerData, 
-                              profileData, targetData):
-        """
-        Returns a deferred.
-        The returned list contains all the notification 
-        that apply to the specified parameteres:
-            if withGlobal is True, the result contains
-                the global notifications.
-            if customerData is not None, the result contains
-                the customer specific notifications.
-            if profileData is not None, the result contains
-                the profile specific notifications.
-            if targetData is not None, the result contains
-                the target specific notifications.
-        In any cases, the specified data must be related,
-        in other words, if a profile and a customer are specified
-        the profile must be of the customer.
-        The result on success is a list of "container" objects
-        with the following fields depending on the notification type:
-            For all:
-                type (enum of ['email', 'get']
-                triggers (set) with element in enum ['done', 'failed']
-            For type == 'email':
-                subjectTemplate (str) can be None
-                bodyTemplate (str) can be None
-                attachments (set) with element in enum ['report']
-                addresses dict with keys enum ('to', cc', bcc')
-                    of list of tuple with (name, email)
-            For type == 'get':
-                requestTemplate (str)
-                timeout (int) can be None
-                retryCount (int) can be None
-                retrySleep (int) can be None
-        """
-        
     def retrieveTargets(self, profileData):
         """
         Returns a deferred.
@@ -285,6 +250,50 @@ class IDataSource(Interface):
             format (ThumbOutputTypeEnum)
         """
         
+    def retrieveGlobalNotifications(self):
+        """
+        Returns a deferred.
+        The returned list contains all global notifications.
+        The result on success is a list of "container" objects
+        with the following fields depending on the notification type:
+            For all:
+                type (NotificationTypeEnum)
+                triggers (set of NotificationTriggerEnum)
+            For type == NotificationTypeEnum.email:
+                subjectTemplate (str) can be None
+                bodyTemplate (str) can be None
+                attachments (set of MailAttachmentEnum)
+                addresses dict with MailAddressTypeEnum as keys
+                    of list of tuple with (name, email)
+                    where name can be None
+            For type == NotificationTypeEnum.get_request:
+                requestTemplate (str)
+                timeout (int) can be None
+                retryCount (int) can be None
+                retrySleep (int) can be None
+        """
+        
+    def retrieveCustomerNotifications(self, customerData):
+        """
+        Returns a deferred.
+        The returned list contains all customers' notifications.
+        See retrieveGlobalNotifications for result specifications.
+        """
+
+    def retrieveProfileNotifications(self, profileData):
+        """
+        Returns a deferred.
+        The returned list contains all profiles' notifications.
+        See retrieveGlobalNotifications for result specifications.
+        """
+
+    def retrieveTargetNotifications(self, targetData):
+        """
+        Returns a deferred.
+        The returned list contains all targets' notifications.
+        See retrieveGlobalNotifications for result specifications.
+        """
+        
     def retrieveActivities(self, type, states=None):
         """
         Returns a deferred.
@@ -301,11 +310,10 @@ class IDataSource(Interface):
            profileName (str)
            inputRelPath (str)
         For type == notification:
-           data (dict) : notification's type specific data (url, emails...)
-           variables (dict)
+           requestURL (str)
            retryCount (int)
-           maxRetryCount (int)
-           nextRetryTime (datetime)
+           retryMax (int)
+           retryNextTime (datetime)
         """
 
     def newActivity(self, type):

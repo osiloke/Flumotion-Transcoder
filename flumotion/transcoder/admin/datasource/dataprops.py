@@ -82,12 +82,13 @@ class TargetData(properties.PropertyBag):
     enableLinkFiles = properties.Boolean('link-files-enabled', None)
     postprocessCommand = properties.String('post-process-command', None)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
+    notifyDoneRequest = properties.String('notify-done-request', None)
+    notifyFailedRequest = properties.String('notify-failed-request', None)
     config = properties.DynEnumChild('config', 'type', 
                                      {TargetTypeEnum.audio: AudioData,
                                       TargetTypeEnum.video: VideoData,
                                       TargetTypeEnum.audiovideo: AudioVideoData,
                                       TargetTypeEnum.thumbnails: ThumbnailsData})
-
 
 class ProfileData(properties.PropertyBag):
 
@@ -120,8 +121,11 @@ class ProfileData(properties.PropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    notifyDoneRequest = properties.String('notify-done-request', None)
+    notifyFailedRequest = properties.String('notify-failed-request', None)
+    notifyFailedEMail = properties.String('notify-failed-email', None)
     targets = properties.ChildList('targets', TargetData)
-
+    
 
 class CustomerInfoData(properties.PropertyBag):
     
@@ -187,6 +191,7 @@ class AdminData(properties.RootPropertyBag):
     GETRequestTimeout = properties.Integer('get-request-timeout', None, False, True)
     GETRequestRetryCount = properties.Integer('get-request-retry-count', None, False, True)
     GETRequestRetrySleep = properties.Integer('get-request-retry-sleep', None, False, True)
+    notifyFailedEMail = properties.String('notify-failed-email', None)
     customers = properties.ChildList('customers', CustomerData)
 
 
@@ -200,10 +205,18 @@ class ActivityData(properties.PropertyBag):
 
 
 class TranscodingActivityData(ActivityData):
-    
+
     customerName = properties.String('customer-name', None)
-    profileName = properties.String('profile-name', None)
+    profileName = properties.String('profile-name', None)    
     inputRelPath = properties.String('input-rel-path', None)
+
+
+class NotificationActivityData(ActivityData):
+    
+    requestURL = properties.String('request-url', None)
+    retryCount = properties.Integer('retry-count', None, False, True)
+    retryMax = properties.Integer('retry-max', None, False, True)
+    retryNextTime = properties.DateTime("retry-next-time")
 
 
 class ActivitiesData(properties.RootPropertyBag):
@@ -214,5 +227,7 @@ class ActivitiesData(properties.RootPropertyBag):
            
     transcodings = properties.ChildDict("transcodings",
                                         TranscodingActivityData)
+    notifications = properties.ChildDict("notifications",
+                                         NotificationActivityData)
 
     

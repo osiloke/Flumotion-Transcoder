@@ -21,13 +21,34 @@ from twisted.internet import defer
 from flumotion.transcoder import log, inifile, utils
 from flumotion.transcoder.enums import ActivityTypeEnum
 from flumotion.transcoder.enums import ActivityStateEnum
+from flumotion.transcoder.enums import NotificationTypeEnum
+from flumotion.transcoder.enums import NotificationTriggerEnum
+from flumotion.transcoder.enums import MailAddressTypeEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 from flumotion.transcoder.admin.datasource.datasource import InitializationError
 
 
-class DataWrapper(object):
+class ImmutableWrapper(object):
+    
+    def __init__(self, identifier, fields):
+        self.__dict__['_identifier'] = identifier
+        self.__dict__['_fields'] = fields
+        
+    def __getattr__(self, attr):
+        if attr == 'identifier':
+            return self.__dict__['_identifier']
+        fields = self.__dict__['_fields']
+        if not (attr in fields):
+            raise AttributeError, attr
+        return fields[attr]
+    
+    def __setattr__(self, attr, value):
+        raise AttributeError, attr
+
+
+class ImmutableDataWrapper(object):
     
     def __init__(self, data, identifier, hidden=[], readonly=[]):
         self.__dict__['_identifier'] = identifier
@@ -46,18 +67,12 @@ class DataWrapper(object):
     
     def __setattr__(self, attr, value):
         raise AttributeError, attr
-        #hidden = self.__dict__['_hidden']
-        #readonly = self.__dict__['_readonly']
-        #if (attr in hidden) or (attr in readonly):
-        #    raise AttributeError, attr
-        #data = self.__dict__['_data']
-        #setattr(data, attr, value)
         
     def _getData(self):
         return self.__dict__['_data']
 
 
-class MutableWrapper(object):
+class MutableDataWrapper(object):
     
     def __init__(self, parent, template, identifier=None, 
                  data=None, fields=None):
@@ -72,7 +87,6 @@ class MutableWrapper(object):
         else:
             self._fields = utils.deepCopy(template["defaults"])
         
-        
     def _reset(self):
         if not self._data: return
         data = self._data
@@ -83,10 +97,8 @@ class MutableWrapper(object):
         self._fields = fields
 
     def _store(self):
-        print "S"*80
         if self.state in set([ActivityStateEnum.done,
                               ActivityStateEnum.failed]):
-            print "T"*80
             # Do not store 'done' and 'failed' activities,
             if self._data:
                 # Delete if the activity is terminated
@@ -95,22 +107,18 @@ class MutableWrapper(object):
             self._identifier = utils.genUniqueIdentifier()
             return False
         if not self._data:
-            print "+"*80
             data = self._template['class']()
             key = utils.genUniqueIdentifier()
             self._parent[key] = data
             self._identifier = key
             self._data = data
         assert self._identifier in self._parent
-        print ">"*80
         for attr, value in self._fields.items():
             setattr(self._data, attr, utils.deepCopy(value))
         return True
     
     def _delete(self):
-        print "d"*80
         if self._data:
-            print "D"*80
             assert self._identifier in self._parent
             del self._parent[self._identifier]
             self._data = None
@@ -149,17 +157,70 @@ class MutableWrapper(object):
         fields[attr] = value
 
 
-TRANS_TMPL = {'class': dataprops.TranscodingActivityData,
-              'defaults': {'type': ActivityTypeEnum.transcoding,
-                           'state': ActivityStateEnum.unknown,
-                           'label': "Unknown",
-                           'startTime': None,
-                           'lastTime': None,
-                           'customerName': None,
-                           'profileName': None,
-                           'inputRelPath': None},
-              'hidden': set([]),
-              'readonly': set(['type'])}
+TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
+                  'defaults': {'type': ActivityTypeEnum.transcoding,
+                               'state': ActivityStateEnum.unknown,
+                               'label': "Unknown",
+                               'startTime': None,
+                               'lastTime': None,
+                               'customerName': None,
+                               'profileName': None,
+                               'inputRelPath': None},
+                  'hidden': set([]),
+                  'readonly': set(['type'])}
+
+NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
+                  'defaults': {'type': ActivityTypeEnum.transcoding,
+                               'state': ActivityStateEnum.unknown,
+                               'label': "Unknown",
+                               'startTime': None,
+                               'lastTime': None,
+                               'requestURL': None,
+                               'retryCount': None,
+                               'retryMax': None,
+                               'retryNextTime': None},
+                  'hidden': set([]),
+                  'readonly': set(['type'])}
+
+
+EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
+                  'triggers': set([]),
+                  'subjectTemplate': None,
+                  'bodyTemplate': None,
+                  'attachments': set([]),
+                  'addresses': {}}
+
+
+REQ_NOT_TMPL = {'type': NotificationTypeEnum.get_request,
+                'triggers': set([]),
+                'requestTemplate': None,
+                'timeout': None,
+                'retryCount': None,
+                'retrySleep': None}
+
+
+def _createReqNotif(wrapper, succeed, reqTmpl):
+    if succeed:
+        trigger = NotificationTriggerEnum.done
+    else:
+        trigger = NotificationTriggerEnum.failed
+    fields = utils.deepCopy(REQ_NOT_TMPL)
+    fields['requestTemplate'] = reqTmpl
+    fields['triggers'] = set([trigger])
+    ident = (wrapper.identifier, trigger, "req")
+    return ImmutableWrapper(ident, fields)
+
+def _createMailNotif(wrapper, succeed, address):
+    if succeed:
+        trigger = NotificationTriggerEnum.done
+    else:
+        trigger = NotificationTriggerEnum.failed
+    fields = utils.deepCopy(EMAIL_NOT_TMPL)
+    fields['triggers'] = set([trigger])
+    t = MailAddressTypeEnum.to
+    fields['addresses'][t] = [address]
+    ident = (wrapper.identifier, trigger, "email")
+    return ImmutableWrapper(ident, fields)
 
 
 class FileDataSource(log.Loggable):
@@ -187,12 +248,13 @@ class FileDataSource(log.Loggable):
         d.callback(None)
         return d
 
-    def waitReady(self):
+    def waitReady(self, timeout=None):
         return defer.succeed(self)
 
     def retrieveDefaults(self):
         try:
-            result = DataWrapper(self._adminData, "defaults", ['customers'])
+            result = ImmutableDataWrapper(self._adminData, 
+                                      "defaults", ['customers'])
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve default data"
@@ -202,7 +264,7 @@ class FileDataSource(log.Loggable):
         
     def retrieveCustomers(self):
         try:
-            result = [DataWrapper(c, c.name, ['info', 'profiles']) 
+            result = [ImmutableDataWrapper(c, c.name, ['info', 'profiles'])
                       for c in self._adminData.customers
                       if c != None]
             return defer.succeed(result)
@@ -214,9 +276,9 @@ class FileDataSource(log.Loggable):
         
     def retrieveCustomerInfo(self, customerData):
         try:
-            assert isinstance(customerData, DataWrapper)
+            assert isinstance(customerData, ImmutableDataWrapper)
             data = customerData._getData()
-            result = DataWrapper(data.info, (data.name, "info"))
+            result = ImmutableDataWrapper(data.info, (data.name, "info"))
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve customer info data"
@@ -226,8 +288,8 @@ class FileDataSource(log.Loggable):
         
     def retrieveProfiles(self, customerData):
         try:
-            assert isinstance(customerData, DataWrapper)
-            result = [DataWrapper(p, p.name, ['targets']) 
+            assert isinstance(customerData, ImmutableDataWrapper)
+            result = [ImmutableDataWrapper(p, p.name, ['targets']) 
                       for p in customerData._getData().profiles
                       if p != None]
             return defer.succeed(result)
@@ -237,14 +299,57 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
         
-    def retrieveNotifications(self, withGlobal, customerData, 
-                              profileData, targetData):
-        raise NotImplementedError()
+    def retrieveGlobalNotifications(self):
+        return defer.succeed([])
         
+    def retrieveCustomerNotifications(self, customerData):
+        return defer.succeed([])
+        
+    def retrieveProfileNotifications(self, profileData):
+        try:
+            assert isinstance(profileData, ImmutableDataWrapper)
+            d = profileData._getData()
+            assert isinstance(d, dataprops.ProfileData)
+            result = []
+            req = d.notifyFailedRequest
+            if req:
+                result.append(_createReqNotif(profileData, False, req))
+            req = d.notifyDoneRequest
+            if req:
+                result.append(_createReqNotif(profileData, True, req))
+            mail = d.notifyFailedEMail
+            if mail:
+                result.append(_createMailNotif(profileData, False, mail))
+            return defer.succeed(result)
+        except Exception, e:
+            msg = "Failed to retrieve profile notifications data"
+            ex = datasource.RetrievalError(msg, cause=e)
+            f = failure.Failure(ex)
+            return defer.fail(f)
+        
+    def retrieveTargetNotifications(self, targetData):
+        try:
+            assert isinstance(targetData, ImmutableDataWrapper)
+            d = targetData._getData()
+            assert isinstance(d, dataprops.TargetData)
+            result = []
+            req = d.notifyFailedRequest
+            if req:
+                result.append(_createReqNotif(targetData, False, req))
+            req = d.notifyDoneRequest
+            if req:
+                result.append(_createReqNotif(targetData, True, req))
+            return defer.succeed(result)
+        except Exception, e:
+            msg = "Failed to retrieve target notifications data"
+            ex = datasource.RetrievalError(msg, cause=e)
+            f = failure.Failure(ex)
+            return defer.fail(f)
+
     def retrieveTargets(self, profileData):
         try:
-            assert isinstance(profileData, DataWrapper)
-            result = [DataWrapper(t, t.name, ['config', 'type']) 
+            assert isinstance(profileData, ImmutableDataWrapper)
+            result = [ImmutableDataWrapper(t, t.name, ['config', 'type'])
                       for t in profileData._getData().targets
                       if t != None]
             return defer.succeed(result)
@@ -256,10 +361,10 @@ class FileDataSource(log.Loggable):
        
     def retrieveTargetConfig(self, targetData):
         try:
-            assert isinstance(targetData, DataWrapper)
+            assert isinstance(targetData, ImmutableDataWrapper)
             data = targetData._getData()
-            result = DataWrapper(data.config, (data.name, "config"), 
-                                 [], ['type'])
+            result = ImmutableDataWrapper(data.config, (data.name, "config"),
+                                      [], ['type'])
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve target config data"
@@ -269,14 +374,20 @@ class FileDataSource(log.Loggable):
 
     def retrieveActivities(self, type, states=None):
         try:
-            parent = self._activityData.transcodings
             states = states and set(states)
-            result = []
             if type == ActivityTypeEnum.transcoding:
-                result = [MutableWrapper(parent, TRANS_TMPL, i, d)
+                parent = self._activityData.transcodings
+                result = [MutableDataWrapper(parent, TRANS_ACT_TMPL, i, d)
                           for i, d in parent.iteritems()
                           if ((states == None) or (d.state in states))]
-            return defer.succeed(result)
+                return defer.succeed(result)
+            if type == ActivityTypeEnum.notification:
+                parent = self._activityData.notifications
+                result = [MutableDataWrapper(parent, NOT_ACT_TMPL, i, d)
+                          for i, d in parent.iteritems()
+                          if ((states == None) or (d.state in states))]
+                return defer.succeed(result)
+            return defer.succeed([])
         except Exception, e:
             msg = "Failed to retrieve activities data"
             ex = datasource.RetrievalError(msg, cause=e)
@@ -286,7 +397,8 @@ class FileDataSource(log.Loggable):
     def newActivity(self, type):
         assert isinstance(type, ActivityTypeEnum)
         if type == ActivityTypeEnum.transcoding:
-            return MutableWrapper(self._activityData.transcodings, TRANS_TMPL)
+            return MutableDataWrapper(self._activityData.transcodings, 
+                                      TRANS_ACT_TMPL)
         else:
             raise NotImplementedError()
 
@@ -317,7 +429,7 @@ class FileDataSource(log.Loggable):
     def store(self, *data):
         changed = False
         for mutable in data:
-            if not isinstance(mutable, MutableWrapper):
+            if not isinstance(mutable, MutableDataWrapper):
                 raise NotImplementedError()
             changed = changed or mutable._store()
         if not changed:
@@ -329,7 +441,7 @@ class FileDataSource(log.Loggable):
         
     def reset(self, *data):
         for mutable in data:
-            if not isinstance(mutable, MutableWrapper):
+            if not isinstance(mutable, MutableDataWrapper):
                 raise NotImplementedError()
             mutable._reset()
         return defer.succeed(self)
@@ -337,7 +449,7 @@ class FileDataSource(log.Loggable):
     def delete(self, *data):
         changed = False
         for mutable in data:
-            if not isinstance(mutable, MutableWrapper):
+            if not isinstance(mutable, MutableDataWrapper):
                 raise NotImplementedError()
             changed = changed or mutable._delete() 
         if not changed:
