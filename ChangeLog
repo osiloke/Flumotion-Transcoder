@@ -1,5 +1,10 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* TODO:
+	There is more to do.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-admin.ini:
 	* flumotion/transcoder/admin/adminconfig.py (NotifierConfig,
 	  AdminConfig):

@@ -33,6 +33,8 @@ Features:
   should be moved to be able to make inplace transcoding 
   (without moving the sourcefile).
 - Add configuration/report files versioning and automatique upgrading.
+- Send a debug notification (by mail) on warnings with traceback.
+- Send a debug notification when a deferred end with an unresolved failure.
 
 Tests:
 - Write manual test procedures (like for FSP)
