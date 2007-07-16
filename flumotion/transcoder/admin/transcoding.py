@@ -163,11 +163,8 @@ class Transcoding(TaskManager, WorkerSetListener,
     def __cbStartResumeTranscoding(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.warning("Failure waiting transcoder set "
-                         "to become idle: %s",
-                         log.getFailureMessage(result))
-            self.debug("Idle transcoder failure traceback:\n%s",
-                       log.getFailureTraceback(result))
+            self.logFailure(result, "Failure waiting transcoder set "
+                            "to become idle")
         self.log("Free to continue transcoding startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -185,21 +182,12 @@ class Transcoding(TaskManager, WorkerSetListener,
         return d
 
     def __ebStartupResumingFailure(self, failure):
-        self.warning("Failure during transcoding startup/resuming: %s",
-                     log.getFailureMessage(failure))
-        self.debug("Startup/Resuming failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failure during transcoding startup/resuming")
 
     def __ebAddComponentFailed(self, failure, name):
-        self.warning("Failed to add transcoder '%s' "
-                     "to transcoding manager: %s", 
-                     name, log.getFailureMessage(failure))
-        self.debug("Add component failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failed to add transcoder '%s' "
+                        "to transcoding manager", name)
     
     def __ebRemoveComponentFailed(self, failure, name):
-        self.warning("Failed to remove transcoder '%s' "
-                     "from transcoding manager: %s",
-                     name, log.getFailureMessage(failure))
-        self.debug("Remove component failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failed to remove transcoder '%s' "
+                        "from transcoding manager", name)

@@ -155,20 +155,14 @@ class BaseActivity(object):
     ## Private Methods ##
     
     def __ebActivityStoreFailed(self, failure):
-        self.warning("Fail to store %s activity '%s': %s",
-                     self._data and self._data.type and self._data.type.nick,
-                     self._data and self._data.label,
-                     log.getFailureMessage(failure))
-        self.debug("Activity storing traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Fail to store %s activity '%s'",
+                        self._data and self._data.type and self._data.type.nick,
+                        self._data and self._data.label)
         
     def __ebActivityDeleteFailed(self, failure):
-        self.warning("Fail to delete %s activity '%s': %s",
-                     self._data and self._data.type and self._data.type.nick,
-                     self._data and self._data.label,
-                     log.getFailureMessage(failure))
-        self.debug("Activity deletion traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Fail to delete %s activity '%s'",
+                        self._data and self._data.type and self._data.type.nick,
+                        self._data and self._data.label)
 
 
 class TranscodingActivity(BaseActivity):

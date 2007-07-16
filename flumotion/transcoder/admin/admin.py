@@ -392,10 +392,7 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.started
 
     def __ebSartupFailed(self, failure):
-        self.warning("Failed to startup administration: %s",
-                     log.getFailureMessage(failure))
-        self.debug("Startup failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logfailure(failure, "Failed to startup administration")
         self._state = TaskStateEnum.stopped
 
     def __cbResumingSucceed(self, result):
@@ -403,10 +400,7 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.started
 
     def __ebResumingFailed(self, failure):
-        self.warning("Failed to resume administration: %s",
-                     log.getFailureMessage(failure))
-        self.debug("Resuming failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logfailure(failure, "Failed to resume administration")
         self._state = TaskStateEnum.paused
         
     def __cbPausingSucceed(self, result):
@@ -414,8 +408,5 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.paused
 
     def __ebPausingFailed(self, failure):
-        self.warning("Failed to pause administration: %s",
-                     log.getFailureMessage(failure))
-        self.debug("Pausing failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logfailure(failure, "Failed to pause administration")
         self._state = TaskStateEnum.started

@@ -541,9 +541,6 @@ class FileDataSource(log.Loggable):
         return self
         
     def __ebActivitiesSaveFailed(self, failure):
-        self.warning("Fail to save activities: %s", 
-                     log.getFailureMessage(failure))
-        self.debug("Activities saving traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Fail to save activities")
         return failure
 

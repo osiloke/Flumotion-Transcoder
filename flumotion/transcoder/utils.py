@@ -377,8 +377,5 @@ def shiftResult(result, callable, index, *args, **kwargs):
 def logFailures(result, logger, newResult, taskDesc):
     for succeed, failure in result:
         if not succeed:
-            logger.warning("Failure during %s: %s",
-                           taskDesc, log.getFailureMessage(failure))
-            logger.debug("%s failure traceback:\n%s",
-                         taskDesc, log.getFailureTraceback(failure))
+            logger.logFailure(failure, "Failure during %s", taskDesc)
     return newResult

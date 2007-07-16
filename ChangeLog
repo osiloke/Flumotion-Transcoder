@@ -1,5 +1,71 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitor.__monitorError, FileMonitor.__unexpectedError):
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__transcodingError, FileTranscoder.__unexpectedError,
+	  FileTranscoder.__ebDiagnoseAcknowledgeFail):
+	* flumotion/transcoder/admin/admin.py
+	  (TranscoderAdmin.__ebSartupFailed,
+	  TranscoderAdmin.__ebResumingFailed,
+	  TranscoderAdmin.__ebPausingFailed):
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement._unexpectedError, AdminElement.__cbLogFailures):
+	* flumotion/transcoder/admin/admintask.py (AdminTask.__ebStartupFailed,
+	  AdminTask.__cbMultiDeleteResults, AdminTask.__bbTaskTerminated,
+	  AdminTask.__cbMultiUIStateResults,
+	  AdminTask.__bbSelectPotentialComponent,
+	  AdminTask.__ebPotentialComponentFailure,
+	  AdminTask.__ebComponentLoadFailed, AdminTask.__ebComponentNotHappy,
+	  AdminTask.__ebUIStateFailed, AdminTask.__ebComponentStopFailed,
+	  AdminTask.__ebComponentDeleteFailed, AdminTask.__ebNoValidWorker):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (FileDataSource.__ebActivitiesSaveFailed):
+	* flumotion/transcoder/admin/datastore/activitystore.py
+	  (BaseActivity.__ebActivityStoreFailed,
+	  BaseActivity.__ebActivityDeleteFailed):
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.__ebCustomerInitFailed):
+	* flumotion/transcoder/admin/datastore/basestore.py
+	  (BaseStore._retrievalFailed, BaseStore.__ebDataSourceError):
+	* flumotion/transcoder/admin/datastore/customerstore.py
+	  (CustomerStore.__ebProfileInitFailed):
+	* flumotion/transcoder/admin/datastore/profilestore.py
+	  (ProfileStore.__ebTargetInitFailed):
+	* flumotion/transcoder/admin/monitoring.py
+	  (Monitoring.__cbStartResumeMonitoring,
+	  Monitoring.__ebStartupResumingFailure,
+	  Monitoring.__ebAddComponentFailed,
+	  Monitoring.__ebRemoveComponentFailed):
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask.__ebSetFileStateFailed,
+	  MonitoringTask.__ebMoveFilesFailed):
+	* flumotion/transcoder/admin/proxies/componentset.py
+	  (ComponentSetSkeleton.__ebAcceptFailure):
+	* flumotion/transcoder/admin/proxies/fluproxy.py
+	  (BaseFlumotionProxy.__ebDictElementInitFailed,
+	  BaseFlumotionProxy.__ebElementInitFailed):
+	* flumotion/transcoder/admin/taskmanager.py
+	  (TaskManager.__ebResolveCallFailure,
+	  TaskManager.__ebGetPropertiesFailed,
+	  TaskManager.__ebComponentStopFailed,
+	  TaskManager.__ebComponentDeleteFailed, TaskManager.__ebStartupFailed,
+	  TaskManager.__ebPauseFailed, TaskManager.__ebTaskStopFailed):
+	* flumotion/transcoder/admin/transcoding.py
+	  (Transcoding.__cbStartResumeTranscoding,
+	  Transcoding.__ebStartupResumingFailure,
+	  Transcoding.__ebAddComponentFailed,
+	  Transcoding.__ebRemoveComponentFailed):
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.__ebAcknowledgeFailed):
+	* flumotion/transcoder/log.py (setNotifier, setDefaultCategory,
+	  Loggable, Loggable.logFailure, LoggerProxy.logFailure, log, debug,
+	  info, warning, error):
+	* flumotion/transcoder/utils.py (logFailures):
+	Centralized failure logging to be able to send notifications.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/notifier.py (notifyEmergency, notifyDebug,
 	  INotifierListener, NotifierListener, Notifier, Notifier.__init__,

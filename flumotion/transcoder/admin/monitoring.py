@@ -147,11 +147,8 @@ class Monitoring(TaskManager, WorkerSetListener,
     def __cbStartResumeMonitoring(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.warning("Failure waiting monitor set "
-                         "to become idle: %s",
-                         log.getFailureMessage(result))
-            self.debug("Monitor idle failure traceback:\n%s",
-                       log.getFailureTraceback(result))
+            self.logFailure(result, "Failure waiting monitor set "
+                            "to become idle")
         self.log("Free to continue monitoring startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -169,22 +166,13 @@ class Monitoring(TaskManager, WorkerSetListener,
         return d
     
     def __ebStartupResumingFailure(self, failure):
-        self.warning("Failure during monitoring startup/resuming: %s",
-                     log.getFailureMessage(failure))
-        self.debug("Startup/Resuming failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failure during monitoring startup/resuming")
         return failure
 
     def __ebAddComponentFailed(self, failure, name):
-        self.warning("Failed to add monitor '%s' "
-                     "to monitoring manager: %s", 
-                     name, log.getFailureMessage(failure))
-        self.debug("Add monitor failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failed to add monitor '%s' "
+                        "to monitoring manager", name)
     
     def __ebRemoveComponentFailed(self, failure, name):
-        self.warning("Failed to remove monitor '%s' "
-                     "from monitoring manager: %s",
-                     name, log.getFailureMessage(failure))
-        self.debug("Remove component failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failed to remove monitor '%s' "
+                        "from monitoring manager", name)

@@ -507,10 +507,8 @@ class AdminTask(LoggerProxy, EventSource):
             
         
     def __ebStartupFailed(self, failure, actionDesc):
-        self.warning("Admin task '%s' failed to startup/resume: %s",
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Admin task startup/resume failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' failed to startup/resume",
+                        self.getLabel())
         if self._state == TaskStateEnum.starting:
             self._state = TaskStateEnum.stopped
             self._startWaiters.fireErrbacks(failure)
@@ -523,20 +521,14 @@ class AdminTask(LoggerProxy, EventSource):
     def __cbMultiDeleteResults(self, results, newResult):
         for succeed, result in results:
             if not succeed:
-                self.warning("Failure waiting admin task '%s' "
-                             "components beeing deleted: %s", 
-                             self.getLabel(), log.getFailureMessage(result))
-                self.debug("Delete failure traceback:\n%s",
-                           log.getFailureTraceback(result))
+                self.logFailure(result, "Failure waiting admin task '%s' "
+                                "components beeing deleted", self.getLabel())
         return newResult        
         
     def __bbTaskTerminated(self, resultOrFailure, result):
         if isinstance(resultOrFailure, Failure):
-            self.warning("Failure terminating admin task '%s': %s",
-                         self.getLabel(), 
-                         log.getFailureMessage(resultOrFailure))
-            self.debug("Termination failure traceback:\n%s",
-                       log.getFailureTraceback(resultOrFailure))
+            self.logFailure(resultOrFailure, "Failure terminating "
+                            "admin task '%s'", self.getLabel())
             self._doTerminated(result)
         else:
             self._doTerminated(resultOrFailure)
@@ -581,19 +573,15 @@ class AdminTask(LoggerProxy, EventSource):
                 if result != None:
                     newResult.append(result)
             else:
-                self.warning("Failure waiting admin task '%s' "
-                             "components UI State: %s", 
-                             self.getLabel(), log.getFailureMessage(result))
-                self.debug("%s", log.getFailureTraceback(result))
+                self.logFailure(result, "Failure waiting admin task '%s' "
+                                "components UI State", self.getLabel())
         return newResult        
         
     def __bbSelectPotentialComponent(self, resultOrFailure):
         if isinstance(resultOrFailure, Failure):
-            self.warning("Failure in admin task '%s' during potential "
-                         "component selection: %s", self.getLabel(), 
-                         log.getFailureMessage(resultOrFailure))
-            self.debug("Task selection failure traceback:\n%s",
-                       log.getFailureTraceback(resultOrFailure))
+            self.logFailure(resultOrFailure, "Failure in admin task '%s' "
+                            "during potential component selection",
+                            self.getLabel())
             components = []
         else:
             components = resultOrFailure
@@ -660,11 +648,8 @@ class AdminTask(LoggerProxy, EventSource):
                        self.__ebPotentialComponentFailure)
         
     def __ebPotentialComponentFailure(self, failure):
-        self.warning("Failure looking for a potential component "
-                     "for admin task '%s': %s", self.getLabel(), 
-                     log.getFailureMessage(failure))
-        self.debug("Task lookup failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failure looking for a potential component "
+                        "for admin task '%s'", self.getLabel())
         self.__loadNewComponent()
         
     def __cbGotPotentialComponent(self, component):
@@ -718,11 +703,9 @@ class AdminTask(LoggerProxy, EventSource):
         self.__cancelComponentStartup(result)
         
     def __ebComponentLoadFailed(self, failure, componentName, workerName):
-        self.warning("Admin task '%s' fail to load component '%s' "
-                     "on worker '%s': %s", self.getLabel(), componentName,
-                     workerName, log.getFailureMessage(failure))
-        self.debug("Component loading failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' fail to load "
+                        "component '%s' on worker '%s'", self.getLabel(), 
+                        componentName, workerName)
         self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, component, workerName):
@@ -738,12 +721,9 @@ class AdminTask(LoggerProxy, EventSource):
         self.__cancelComponentStartup(component)
     
     def __ebComponentNotHappy(self, failure, component, workerName):
-        self.warning("Admin task '%s' component '%s' "
-                     "fail to become happy on worker '%s': %s", 
-                     self.getLabel(), component.getName(), workerName,
-                     log.getFailureMessage(failure))
-        self.debug("Component not happy traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' component '%s' "
+                        "fail to become happy on worker '%s'", 
+                        self.getLabel(), component.getName(), workerName)
         self.__abortComponentStartup(component)
 
     def  __cbGotUIState(self, _, component, workerName):
@@ -756,27 +736,19 @@ class AdminTask(LoggerProxy, EventSource):
             self.__cancelComponentStartup(component)
             
     def __ebUIStateFailed(self, failure, component, workerName):
-        self.warning("Admin task '%s' failed to retrieve "
-                     "component '%s' UI state: %s",
-                     self.getLabel(), component.getName(), 
-                     log.getFailureMessage(failure))
-        self.debug("UIState retrieval failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' failed to retrieve "
+                        "component '%s' UI state",
+                        self.getLabel(), component.getName())
         self.__abortComponentStartup(component)
         
     def __ebComponentStopFailed(self, failure, name):
-        self.warning("Admin task '%s' failed to stop component '%s': %s",
-                     self.getLabel(), name, log.getFailureMessage(failure))
-        self.debug("Component stop failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' failed to stop "
+                        "component '%s'", self.getLabel(), name)
         return failure
         
     def __ebComponentDeleteFailed(self, failure, name):
-        self.warning("Admin task '%s' failed to delete component '%s': %s",
-                     self.getLabel(), name, 
-                     log.getFailureMessage(failure))
-        self.debug("Component delete failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Admin task '%s' failed to delete "
+                        "component '%s'", self.getLabel(), name)
         return failure
 
     def __cbGetValidWorker(self, component):
@@ -788,11 +760,8 @@ class AdminTask(LoggerProxy, EventSource):
         return None
     
     def __ebNoValidWorker(self, failure):
-        self.warning("Failure looking for a valid worker "
-                     "for admin task '%s': %s", self.getLabel(), 
-                     log.getFailureMessage(failure))
-        self.debug("Worker lookup failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failure looking for a valid worker "
+                        "for admin task '%s'", self.getLabel())
         return None
         
 

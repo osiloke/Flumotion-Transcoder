@@ -305,11 +305,8 @@ class TranscodingTask(AdminTask, TranscoderListener):
     
     def __ebAcknowledgeFailed(self, failure, transcoder):
         if not self._isElectedComponent(transcoder): return
-        self.warning("Failed to acknowledge task '%s' transcoder '%s': %s", 
-                     self.getLabel(), transcoder.getName(), 
-                     log.getFailureMessage(failure))
-        self.debug("Acknowledge failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Failed to acknowledge task '%s' transcoder "
+                        "'%s'", self.getLabel(), transcoder.getName())
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transcoder)

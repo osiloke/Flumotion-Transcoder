@@ -212,11 +212,9 @@ class CustomerStore(BaseStore):
     
     def __ebProfileInitFailed(self, failure, profile):
         #FIXME: Better Error Handling ?
-        self.warning("Profile '%s' of customer %s failed to initialize; "
-                     + "dropping it: %s", profile.getLabel(),
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Traceback of profile '%s' failure:\n%s",
-                   profile.getLabel(), log.getFailureTraceback(failure))
+        self.logFailure(failure, "Profile '%s' of customer '%s' failed "
+                        "to initialize; dropping it",
+                        profile.getLabel(), self.getLabel())
         profile._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return

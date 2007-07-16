@@ -256,12 +256,10 @@ class MonitoringTask(AdminTask, MonitorListener):
 
     def __ebSetFileStateFailed(self, failure, monitor, 
                                 virtBase, relFile, state):
-        self.warning("Monitoring task '%s' monitor '%s' Fail to change "
-                     "file '%s' state to %s: %s", self.getLabel(),
-                     monitor.getName(), virtBase.append(relFile), state.name,
-                     log.getFailureMessage(failure))
-        self.debug("Set file state failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Monitoring task '%s' monitor '%s' Fail "
+                        "to change file '%s' state to %s", 
+                        self.getLabel(), monitor.getName(), 
+                        virtBase.append(relFile), state.name)
     
     def __cbFileMoved(self, result, monitor, 
                       virtSrcBase, virtDestBase, relFiles):
@@ -274,11 +272,8 @@ class MonitoringTask(AdminTask, MonitorListener):
         
     def __ebMoveFilesFailed(self, failure, monitor,
                             virtSrcBase, virtDestBase, relFiles):
-        self.warning("Monitoring task '%s' monitor '%s' fail to move files "
-                     "from '%s' to '%s': %s", self.getLabel(),
-                     monitor.getName(), virtSrcBase, virtDestBase,
-                     log.getFailureMessage(failure))
-        self.debug("Move files failure traceback:\n%s", 
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Monitoring task '%s' monitor '%s' fail "
+                        "to move files from '%s' to '%s'", self.getLabel(),
+                        monitor.getName(), virtSrcBase, virtDestBase)
         # Continue moving files anyway
         self.__asyncMovePendingFiles()

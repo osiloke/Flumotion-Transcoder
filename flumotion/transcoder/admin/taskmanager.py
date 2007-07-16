@@ -284,11 +284,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     
     def __ebResolveCallFailure(self, failure, task, action):
         assert action in ["start", "pause", "resume"]
-        self.warning("Task manager '%s' failed to %s task '%s': %s",
-                     self.getLabel(), action, task.getLabel(),
-                     log.getFailureMessage(failure))
-        self.debug("Calling %s failure traceback:\n%s", action,
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task manager '%s' failed to %s task '%s'",
+                        self.getLabel(), action, task.getLabel())
         
     def __getTasklessComponents(self):
         return self._taskless.keys()
@@ -328,9 +325,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def __ebGetPropertiesFailed(self, failure, component):
         msg = ("Task manager '%s' fail to retrieve component '%s' properties."
                % (self.getLabel(), component.getName()))
-        self.warning("%s", msg)
-        self.debug("Properties retrieval failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "%s", msg)
         self.__apartTasklessComponent(component)
         self._pending -= 1
         self._tryStartup()
@@ -347,16 +342,12 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         return component
 
     def __ebComponentStopFailed(self, failure, name):
-        self.warning("Task manager '%s' failed to stop component '%s': %s",
-                     self.getLabel(), name, log.getFailureMessage(failure))
-        self.debug("Component stop failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task manager '%s' failed to stop "
+                        "component '%s'", self.getLabel(), name)
 
     def __ebComponentDeleteFailed(self, failure, name):
-        self.warning("Task manager '%s' failed to delete component '%s': %s",
-                     self.getLabel(), name, log.getFailureMessage(failure))
-        self.debug("Component delete failure tracebak:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task manager '%s' failed to delete "
+                        "component '%s'", self.getLabel(), name)
 
     def __stateChangedError(self, waiters, actionDesc):
         error = TranscoderError("State changed to %s during %s of '%s'"
@@ -380,10 +371,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.onComponentMoodChanged(c, c.getMood())
 
     def __ebStartupFailed(self, failure, actionDesc):
-        self.warning("Task Manager '%s' failed to startup/resume: %s",
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Startup/Resume failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task Manager '%s' failed to startup/resume",
+                        self.getLabel())
         self._starting = False
         if self._state == TaskStateEnum.starting:
             self._state = TaskStateEnum.stopped
@@ -403,10 +392,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__stateChangedError(self._pauseWaiters, "pausing")
         
     def __ebPauseFailed(self, failure):
-        self.warning("Task Manager '%s' failed to pause: %s",
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Pausing failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task Manager '%s' failed to pause",
+                        self.getLabel())
         if self._state == TaskStateEnum.pausing:
             self._state = TaskStateEnum.started
             self._pauseWaiters.fireErrbacks(failure)
@@ -440,8 +427,5 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__apartTasklessComponent(c)
     
     def __ebTaskStopFailed(self, failure, task):
-        self.warning("Task Manager '%s' failed to stop task '%s': %s",
-                     self.getLabel(), task.getLabel(),
-                     log.getFailureMessage(failure))
-        self.debug("Task stopping failure traceback:\n%s",
-                   log.getFailureTraceback(failure))
+        self.logFailure(failure, "Task Manager '%s' failed to stop task '%s'",
+                        self.getLabel(), task.getLabel())

@@ -21,8 +21,6 @@ from flumotion.transcoder.errors import TranscoderError
 
 
 # Proxy some flumotion.comon.log class, functions and constants
-Loggable = flog.Loggable
-
 setFluDebug = flog.setFluDebug
 getCategoryLevel = flog.getCategoryLevel
 
@@ -33,10 +31,36 @@ WARN = flog.WARN
 ERROR = flog.ERROR
 
 
-_DEFAULT_CATEGORY = ""
+## Global parameters setters ##
+
+_default_log_category = ""
+_notifier = None
+
+def setNotifier(notifier):
+    global _notifier
+    _notifier = notifier
 
 def setDefaultCategory(category):
-    _DEFAULT_CATEGORY = category
+    global _default_log_category
+    _default_log_category = category
+
+
+## Transcoder's Loggable ##
+
+class Loggable(flog.Loggable):
+    
+    def logFailure(self, failure, template, *args, **kwargs):
+        global _notifier
+        msg = log.getFailureMessage(failure)
+        if getCategoryLevel() in [LOG, DEBUG]:
+            cleanup = kwargs.get("cleanTraceback", False)
+            tb = log.getFailureTraceback(failure, cleanup)
+            self.warning(template + ": %s\n%s", *(args + (msg, tb)))
+        else:
+            self.warning(template + ": %s", *(args + (msg,)))
+        if _notifier:
+           _notifier(template % args, failure)
+
 
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)
@@ -135,6 +159,10 @@ class LoggerProxy(object):
             raise AttributeError, attr
         return self.__dict__[attr]
     
+    def logFailure(self, *args, **kwargs):
+        args, kwargs = self._updateArgs(args, kwargs)
+        self._logger.logFailure(*args, **kwargs)
+    
     def log(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
         self._logger.log(*args, **kwargs)
@@ -159,17 +187,22 @@ class LoggerProxy(object):
 ### Helper functions to log without logger ##
 
 def log(*args, **kwargs):
-    flog.log(_DEFAULT_CATEGORY, *args, **kwargs)
+    global _default_log_category
+    flog.log(_default_log_category, *args, **kwargs)
 
 def debug(*args, **kwargs):
-    flog.debug(_DEFAULT_CATEGORY, *args, **kwargs)
+    global _default_log_category
+    flog.debug(_default_log_category, *args, **kwargs)
 
 def info(*args, **kwargs):
-    flog.info(_DEFAULT_CATEGORY, *args, **kwargs)
+    global _default_log_category
+    flog.info(_default_log_category, *args, **kwargs)
 
 def warning(*args, **kwargs):
-    flog.warning(_DEFAULT_CATEGORY, *args, **kwargs)
+    global _default_log_category
+    flog.warning(_default_log_category, *args, **kwargs)
 
 def error(*args, **kwargs):
-    flog.error(_DEFAULT_CATEGORY, *args, **kwargs)
+    global _default_log_category
+    flog.error(_default_log_category, *args, **kwargs)
 

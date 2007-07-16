@@ -332,11 +332,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if not failure:
             failure = Failure()
         self.onJobError(failure.getErrorMessage())
-        self.warning("Transocding error%s: %s", 
-                     (task and " during %s" % task) or "",
-                     log.getFailureMessage(failure))
-        self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.getFailureTraceback(failure, True))
+        self.logFailure(failure, "Transocding error%s",
+                        (task and " during %s" % task) or "", 
+                        cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
@@ -345,11 +343,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if not failure:
             failure = Failure()
         self.onJobError(failure.getErrorMessage())
-        self.warning("Unexpected error%s: %s", 
-                     (task and " during %s" % task) or "",
-                     log.getFailureMessage(failure))
-        self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.getFailureTraceback(failure, True))
+        log.logFailure(self, failure, "Unexpected error%s",
+                       (task and " during %s" % task) or "", 
+                       cleanTraceback=True)
         m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
@@ -451,9 +447,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         d.addErrback(self.__ebDiagnoseAcknowledgeFail)
         
     def __ebDiagnoseAcknowledgeFail(self, failure):
-        self.warning("Acknowledgment fail: %s",
-                     log.getFailureMessage(failure))
-        self.debug(log.getFailureTraceback(failure, True))
+        self.logFailure(failure, "Acknowledgment failed",
+                        cleanTraceback=True)
         reactor.callLater(0, reactor.stop)
         
     def __finalizeStandardMode(self, report, succeed):

@@ -191,11 +191,9 @@ class ProfileStore(BaseStore):
     
     def __ebTargetInitFailed(self, failure, target):
         #FIXME: Better Error Handling ?
-        self.warning("target '%s' of profile '%s' failed to initialize; "
-                     + "dropping it: %s", target.getLabel(),
-                     self.getLabel(), log.getFailureMessage(failure))
-        self.debug("Traceback of target '%s' failure:\n%s",
-                   target.getLabel(), log.getFailureTraceback(failure))
+        self.logFailure(failure, "Target '%s' of profile '%s' failed "
+                        "to initialize; dropping it", 
+                        target.getLabel(), self.getLabel())
         target._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return

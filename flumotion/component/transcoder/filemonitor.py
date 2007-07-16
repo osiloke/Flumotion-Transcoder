@@ -194,22 +194,18 @@ class FileMonitor(component.BaseComponent):
     def __monitorError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        self.warning("Monitoring error%s: %s", 
-                     (task and " during %s" % task) or "",
-                     log.getFailureMessage(failure))
-        self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.getFailureTraceback(failure, True))
+        self.logFailure(failure, "Monitoring error%s",
+                        (task and " during %s" % task) or "",
+                        cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
     def __unexpectedError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        self.warning("Unexpected error%s: %s", 
-                     (task and " during %s" % task) or "",
-                     log.getFailureMessage(failure))
-        self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.getFailureTraceback(failure, True))
+        self.logFailure(failure, "Unexpected error%s",
+                        (task and " during %s" % task) or "",
+                        cleanTraceback=True)
         m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
