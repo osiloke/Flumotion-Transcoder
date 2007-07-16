@@ -1,4 +1,36 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__):	
+	* flumotion/transcoder/admin/datastore/activitystore.py (ActivityStore,
+	  ActivityStore.__init__, ActivityStore.getLabel,
+	  ActivityStore.getTranscodings, ActivityStore.getNotifications,
+	  ActivityStore.newTranscoding, ActivityStore.newNotification,
+	  ActivityStore._storeActivity, ActivityStore._resetActivity,
+	  ActivityStore._deleteActivity, ActivityStore.__getActivities,
+	  ActivityStore.__newActivity, ActivityStore.__cbWrapActivities,
+	  BaseActivity.store, BaseActivity.reset, BaseActivity.delete,
+	  BaseActivity._getAdminStore, BaseActivity._getData,
+	  BaseActivity.__ebActivityStoreFailed,
+	  BaseActivity.__ebActivityResetFailed,
+	  BaseActivity.__ebActivityDeleteFailed,
+	  TranscodingActivity.getCustomer, TranscodingActivity.getProfile,
+	  TranscodingActivity._setProfile,
+	  TranscodingActivity._setInputRelPath, NotificationActivity,
+	  NotificationActivity.__init__, NotificationActivity.getRequestURL,
+	  NotificationActivity.getRetryCount, NotificationActivity.getRetryMax,
+	  NotificationActivity.getRetryNextTime,
+	  NotificationActivity.setRetryCount, NotificationActivity.setRetryMax,
+	  NotificationActivity.setRetryNextTime,
+	  NotificationActivity._setRequestURL,
+	  NotificationActivity._setNotification, ActivityFactory):
+	Some refactoring.
+	The store is now responsible of store and delete operation,
+	so the delete and store method do not return deferred, and 
+	the success of the operation is assumed. If something append
+	to fail during these operation it will be the store that
+	would be responsible to resolve the problem (retry?)
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datasource/dataprops.py (TargetData,
 	  ProfileData, AdminData, TranscodingActivityData,
