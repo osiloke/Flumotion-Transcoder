@@ -12,7 +12,7 @@
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder.enums import ComponentDomainEnum
+from flumotion.transcoder.admin.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.proxies import groupproxy
 
 

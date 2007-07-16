@@ -13,10 +13,6 @@
 from flumotion.common.enum import EnumClass
 
 
-ComponentDomainEnum = EnumClass('ComponentDomainEnum',
-                                ('atmosphere', 
-                                 'flow'))
-
 TargetTypeEnum = EnumClass('TargetTypeEnum',
                            ('audio', 
                             'video', 
@@ -128,67 +124,3 @@ AudioVideoToleranceEnum = EnumClass('AudioVideoToleranceEnum',
                                     ('Strict', 
                                      'Allow without audio', 
                                      'Allow without video'))
-
-TaskStateEnum = EnumClass("TaskStateEnum",
-                          ("stopped",
-                           "starting",
-                           "started",
-                           "pausing",
-                           "paused",
-                           "resuming",
-                           "terminating",
-                           "terminated"),
-                          ("Stopped",
-                           "Starting",
-                           "Started",
-                           "Pausing",
-                           "Paused",
-                           "Resuming",
-                           "Terminating",
-                           "Terminated"))
-
-ActivityStateEnum = EnumClass("ActivityStateEnum",
-                              ("unknown",
-                               "stopped",
-                               "started",
-                               "paused",
-                               "done",
-                               "failed"),
-                              ("Unknown",
-                               "Stopped",
-                               "Started",
-                               "Paused",
-                               "Done",
-                               "Failed"))
-
-ActivityTypeEnum =  EnumClass("ActivityTypeEnum",
-                              ("transcoding",
-                               "notification"),
-                              ("Transcoding",
-                               "Notification"))
-
-NotificationTypeEnum =  EnumClass("NotificationTypeEnum",
-                                  ("get_request",
-                                   "email"),
-                                   ("GET Request",
-                                   "EMail"))
-
-NotificationTriggerEnum =  EnumClass("NotificationTriggerEnum",
-                                     ("done",
-                                      "failed"),
-                                      ("Done",
-                                       "Failed"))
-
-MailAttachmentEnum = EnumClass("MailAttachmentEnum",
-                               ("report",
-                                "log"),
-                               ("Report",
-                                "Log"))
-
-MailAddressTypeEnum = EnumClass("MailAddressTypeEnum",
-                                ("to",
-                                 "cc",
-                                 "bcc"),
-                                ("TO",
-                                 "CC",
-                                 "BCC"))

@@ -1,4 +1,24 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__):
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/activitystore.py:
+	* flumotion/transcoder/admin/datastore/adminstore.py:
+	* flumotion/transcoder/admin/datastore/basestore.py (BaseStore,
+	  BaseStore.__init__):
+	* flumotion/transcoder/admin/datastore/notificationstore.py:
+	* flumotion/transcoder/admin/enums.py:
+	* flumotion/transcoder/admin/proxies/atmosphereproxy.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/admin/proxies/flowproxy.py:
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__):
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/enums.py:
+	Moved all admin-specific enumerations to f.t.admin.enums
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/transcoder/utils.py (deepCopy):
 	Added a safe deep copy function that doesn't mess with enums.

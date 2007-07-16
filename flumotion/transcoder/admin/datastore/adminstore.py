@@ -16,9 +16,9 @@ from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
 from flumotion.transcoder import constants, log
-from flumotion.transcoder.enums import ActivityTypeEnum
-from flumotion.transcoder.enums import ActivityStateEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import ActivityTypeEnum
+from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore

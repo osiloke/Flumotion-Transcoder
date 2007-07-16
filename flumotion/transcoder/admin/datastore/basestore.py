@@ -13,8 +13,9 @@
 from twisted.internet import defer
 
 from flumotion.transcoder import log, utils
-from flumotion.transcoder.enums import NotificationTriggerEnum
-from flumotion.transcoder.admin import adminconsts, adminelement
+from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin.adminelement import AdminElement
 from flumotion.transcoder.admin.waiters import CounterWaiters
 from flumotion.transcoder.admin.datasource import datasource
 
@@ -65,13 +66,13 @@ class MetaStore(type):
                 setattr(cls, getterName, getter)
 
 
-class BaseStore(adminelement.AdminElement):
+class BaseStore(AdminElement):
     
     __metaclass__ = MetaStore
     
     def __init__(self, logger, parent, dataSource, data, listenerInterface):
         assert datasource.IDataSource.providedBy(dataSource)
-        adminelement.AdminElement.__init__(self, logger, parent, 
+        AdminElement.__init__(self, logger, parent, 
                                            listenerInterface)
         self._data = data
         self._dataSource = dataSource

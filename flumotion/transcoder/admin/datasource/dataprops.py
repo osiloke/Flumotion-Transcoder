@@ -15,8 +15,8 @@ from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
-from flumotion.transcoder.enums import ActivityTypeEnum
-from flumotion.transcoder.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import ActivityTypeEnum
+from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.datasource import datasource
 
 

@@ -19,8 +19,8 @@ from flumotion.common.planet import moods
 from flumotion.transcoder import log, utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.enums import TaskStateEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.waiters import PassiveWaiters
 from flumotion.transcoder.admin.eventsource import EventSource

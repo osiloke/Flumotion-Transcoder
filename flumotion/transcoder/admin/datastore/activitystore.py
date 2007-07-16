@@ -14,8 +14,8 @@ import datetime
 
 from flumotion.transcoder import log
 
-from flumotion.transcoder.enums import ActivityTypeEnum
-from flumotion.transcoder.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import ActivityTypeEnum
+from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
 from flumotion.transcoder.admin.datastore.notificationstore import BaseNotification
 

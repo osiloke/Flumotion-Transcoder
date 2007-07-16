@@ -19,8 +19,8 @@ from flumotion.transcoder import log
 from flumotion.transcoder import utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
-from flumotion.transcoder.enums import TaskStateEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
@@ -59,9 +59,8 @@ class TranscoderAdmin(log.Loggable,
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
-        self._scheduler = Scheduler(self._transCtx,
-                                    self._store.getActivityStore(),
-                                    self._transcoding)
+        self._scheduler = Scheduler(self._store.getActivityStore(),
+                                    self._transCtx, self._transcoding)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 

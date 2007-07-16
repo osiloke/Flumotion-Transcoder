@@ -13,12 +13,10 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 
-from flumotion.common.enum import EnumClass
-
 from flumotion.transcoder import log
-from flumotion.transcoder.enums import ActivityTypeEnum
-from flumotion.transcoder.enums import ActivityStateEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import ActivityTypeEnum
+from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.transcoding import TranscodingListener
 from flumotion.transcoder.admin.transtask import TranscodingTask
@@ -69,7 +67,7 @@ class Scheduler(log.Loggable,
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, transCtx, activityStore, transcoding):
+    def __init__(self, activityStore, transCtx, transcoding):
         EventSource.__init__(self, ISchedulerListener)
         self._transCtx = transCtx
         self._store = activityStore

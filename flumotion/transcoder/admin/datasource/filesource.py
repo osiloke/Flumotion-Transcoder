@@ -19,12 +19,12 @@ from twisted.python import failure
 from twisted.internet import defer
 
 from flumotion.transcoder import log, inifile, utils
-from flumotion.transcoder.enums import ActivityTypeEnum
-from flumotion.transcoder.enums import ActivityStateEnum
-from flumotion.transcoder.enums import NotificationTypeEnum
-from flumotion.transcoder.enums import NotificationTriggerEnum
-from flumotion.transcoder.enums import MailAddressTypeEnum
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.enums import ActivityTypeEnum
+from flumotion.transcoder.admin.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import NotificationTypeEnum
+from flumotion.transcoder.admin.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin.enums import MailAddressTypeEnum
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 from flumotion.transcoder.admin.datasource.datasource import InitializationError

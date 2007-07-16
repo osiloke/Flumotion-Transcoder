@@ -12,7 +12,7 @@
 
 from flumotion.transcoder import log
 
-from flumotion.transcoder.enums import NotificationTypeEnum
+from flumotion.transcoder.admin.enums import NotificationTypeEnum
 
 
 class BaseNotification(object):
