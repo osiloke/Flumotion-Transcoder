@@ -1,5 +1,11 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	Added new files to the makefiles.
+	
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__):
 	* flumotion/transcoder/admin/admintask.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:
