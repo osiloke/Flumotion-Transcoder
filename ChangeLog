@@ -1,5 +1,15 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__cbJobDone, FileTranscoder.__ebJobFailed,
+	  FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError):
+	* flumotion/transcoder/log.py (Loggable.logException,
+	  getExceptionTraceback):
+	Centralized exception logging to be able to send notifications.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitor.__monitorError, FileMonitor.__unexpectedError):
 	* flumotion/component/transcoder/filetranscoder.py

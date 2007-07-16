@@ -15,7 +15,8 @@ import sys
 import traceback
 import StringIO
 
-from twisted.python import failure
+from twisted.python.failure import Failure
+
 from flumotion.common import log as flog
 from flumotion.transcoder.errors import TranscoderError
 
@@ -61,6 +62,18 @@ class Loggable(flog.Loggable):
         if _notifier:
            _notifier(template % args, failure)
 
+    def logException(self, exception, template, *args, **kwargs):
+        global _notifier
+        msg = log.getExceptionMessage(exception)
+        if getCategoryLevel() in [LOG, DEBUG]:
+            cleanup = kwargs.get("cleanTraceback", False)
+            tb = log.getExceptionTraceback(exception, cleanup)
+            self.warning(template + ": %s\n%s", *(args + (msg, tb)))
+        else:
+            self.warning(template + ": %s", *(args + (msg,)))
+        if _notifier:
+           _notifier(template % args, Failure(exception))
+
 
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)
@@ -81,7 +94,7 @@ def getFailureMessage(failure):
 
 def getExceptionTraceback(exception=None, cleanup=False):
     #FIXME: Only work if the exception was raised in the current context
-    f = failure.Failure()
+    f = Failure()
     if exception and (f.value != exception):
         return "Not Traceback information available"
     io = StringIO.StringIO()

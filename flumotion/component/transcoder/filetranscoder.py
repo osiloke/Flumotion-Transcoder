@@ -303,10 +303,6 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             return virtPath
         return None
 
-    def _logCurrentException(self):
-        self.debug("Traceback with filenames cleaned up:\n%s", 
-                   log.getExceptionTraceback(None, True))
-    
     def _fireStatusChanged(self, status):
         self._status = status
         self.uiState.setitem('job-data', "status", status)
@@ -363,8 +359,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
-            self.warning("Unexpected exception: %s", str(e))
-            self._logCurrentException()
+            self.logException(e, "Unexpected exception", cleanTraceback=True)
             self.__unexpectedError()
         
     
@@ -383,8 +378,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:
-            self.warning("Unexpected exception: %s", str(e))
-            self._logCurrentException()
+            self.logException(e, "Unexpected exception", cleanTraceback=True)
             self.__unexpectedError()
 
     def __cbJobTerminated(self, result):
@@ -394,8 +388,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             # Acknowledge return the transcoding status
             return self._status
         except Exception, e:
-            self.warning("Unexpected exception: %s", str(e))
-            self._logCurrentException()
+            self.logException(e, "Unexpected exception", cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
@@ -415,8 +408,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.__terminate(self._report, self._status)
             return failure
         except Exception, e:
-            self.warning("Unexpected exception: %s", str(e))
-            self._logCurrentException()
+            self.logException(e, "Unexpected exception", cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
