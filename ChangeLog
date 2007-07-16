@@ -1,5 +1,15 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-data.ini:
+	* flumotion/transcoder/admin/datasource/dataprops.py (TargetData,
+	  ProfileData):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (FileDataSource.retrieveProfileNotifications,
+	  FileDataSource.retrieveTargetNotifications):
+	Made the notifications lists to be able to specify more than one.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/datastore/Makefile.am:
 	Added new files to the makefiles.

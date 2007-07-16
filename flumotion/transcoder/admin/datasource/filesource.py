@@ -311,15 +311,15 @@ class FileDataSource(log.Loggable):
             d = profileData._getData()
             assert isinstance(d, dataprops.ProfileData)
             result = []
-            req = d.notifyFailedRequest
-            if req:
-                result.append(_createReqNotif(profileData, False, req))
-            req = d.notifyDoneRequest
-            if req:
-                result.append(_createReqNotif(profileData, True, req))
-            mail = d.notifyFailedEMail
-            if mail:
-                result.append(_createMailNotif(profileData, False, mail))
+            for req in d.notifyFailedRequests:
+                if req:
+                    result.append(_createReqNotif(profileData, False, req))
+            for req in d.notifyDoneRequests:
+                if req:
+                    result.append(_createReqNotif(profileData, True, req))
+            for mail in d.notifyFailedEMails:
+                if mail:
+                    result.append(_createMailNotif(profileData, False, mail))
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve profile notifications data"
@@ -333,12 +333,12 @@ class FileDataSource(log.Loggable):
             d = targetData._getData()
             assert isinstance(d, dataprops.TargetData)
             result = []
-            req = d.notifyFailedRequest
-            if req:
-                result.append(_createReqNotif(targetData, False, req))
-            req = d.notifyDoneRequest
-            if req:
-                result.append(_createReqNotif(targetData, True, req))
+            for req in d.notifyFailedRequests:
+                if req:
+                    result.append(_createReqNotif(targetData, False, req))
+            for req in d.notifyDoneRequests:
+                if req:
+                    result.append(_createReqNotif(targetData, True, req))
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve target notifications data"

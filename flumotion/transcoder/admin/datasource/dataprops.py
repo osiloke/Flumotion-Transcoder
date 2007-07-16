@@ -82,8 +82,8 @@ class TargetData(properties.PropertyBag):
     enableLinkFiles = properties.Boolean('link-files-enabled', None)
     postprocessCommand = properties.String('post-process-command', None)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
-    notifyDoneRequest = properties.String('notify-done-request', None)
-    notifyFailedRequest = properties.String('notify-failed-request', None)
+    notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
+    notifyFailedRequests = properties.List(properties.String('notify-failed-requests', None))
     config = properties.DynEnumChild('config', 'type', 
                                      {TargetTypeEnum.audio: AudioData,
                                       TargetTypeEnum.video: VideoData,
@@ -121,9 +121,9 @@ class ProfileData(properties.PropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
-    notifyDoneRequest = properties.String('notify-done-request', None)
-    notifyFailedRequest = properties.String('notify-failed-request', None)
-    notifyFailedEMail = properties.String('notify-failed-email', None)
+    notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
+    notifyFailedRequests = properties.List(properties.String('notify-failed-requests', None))
+    notifyFailedEMails = properties.List(properties.String('notify-failed-emails', None))
     targets = properties.ChildList('targets', TargetData)
     
 
