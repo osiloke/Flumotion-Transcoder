@@ -69,10 +69,10 @@ class Scheduler(log.Loggable,
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, transCtx, store, transcoding):
+    def __init__(self, transCtx, activityStore, transcoding):
         EventSource.__init__(self, ISchedulerListener)
         self._transCtx = transCtx
-        self._store = store
+        self._store = activityStore
         self._transcoding = transcoding
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
@@ -86,11 +86,10 @@ class Scheduler(log.Loggable,
         
     def initialize(self):
         self.debug("Retrieve transcoding activities")
-        d = self._store.getActivities(ActivityTypeEnum.transcoding,
-                                      [ActivityStateEnum.started])
+        states = [ActivityStateEnum.started]
+        d = self._store.getTranscodings(states)
         d.addCallback(self.__cbRestoreTasks)
         d.addErrback(self.__ebInitializationFailed)
-        #self._store.addListener(self)
         self._transcoding.addListener(self)
         self._transcoding.syncListener(self)
         return d
@@ -174,7 +173,6 @@ class Scheduler(log.Loggable,
     
     def onTranscodingFailed(self, task, transcoder):
         activity = self._activities[task]
-        print "F"*80
         activity.setState(ActivityStateEnum.failed)
         activity.store()
         self._fireEvent(task, "TranscodingFail")
@@ -182,7 +180,6 @@ class Scheduler(log.Loggable,
     
     def onTranscodingDone(self, task, transcoder):
         activity = self._activities[task]
-        print "D"*80
         activity.setState(ActivityStateEnum.done)
         activity.store()
         self._fireEvent(task, "TranscodingDone")
@@ -214,8 +211,7 @@ class Scheduler(log.Loggable,
             if not (prof and relPath):
                 self.warning("Activity without valid profile information (%s)",
                              activity.getLabel())
-                d = activity.delete()
-                d.addErrback(self.__ebActivityDeleteFailed, activity)
+                activity.delete()
                 continue
             profCtx = self._transCtx.getProfileContext(prof, relPath)
             if self.isProfileQueued(profCtx):
@@ -259,13 +255,11 @@ class Scheduler(log.Loggable,
         self._transcoding.addTask(identifier, task)
         self._fireEvent(task, "TranscodingStarted")
         if not activity:
-            activity = self._store.newActivity(ActivityTypeEnum.transcoding,
-                                               ActivityStateEnum.started,
-                                               profCtx.getActivityLabel())
-            activity.setProfile(profCtx.store)
-            activity.setInputRelPath(profCtx.getInputRelPath())
-            d = activity.store()
-            d.addErrback(self.__ebActivityStoreFailed, activity)
+            activity = self._store.newTranscoding(profCtx.getActivityLabel(),
+                                                  ActivityStateEnum.started,
+                                                  profCtx.store,
+                                                  profCtx.getInputRelPath())
+            activity.store()
         self._activities[task] = activity
 
     def __getProfilePriority(self, profCtx):
@@ -299,15 +293,3 @@ class Scheduler(log.Loggable,
     def __clearQueue(self):
         self._queue.clear()
         del self._order[:]
-
-    def __ebActivityStoreFailed(self, failure, activity):
-        self.warning("Fail to store transcoding activity '%s': %s",
-                     activity.getLabel(), log.getFailureMessage(failure))
-        self.debug("Activity storing traceback:\n%s",
-                   log.getFailureTraceback(failure))
-        
-    def __ebActivityDeleteFailed(self, failure, activity):
-        self.warning("Fail to delete transcoding activity '%s': %s",
-                     activity.getLabel(), log.getFailureMessage(failure))
-        self.debug("Activity deletion traceback:\n%s",
-                   log.getFailureTraceback(failure))

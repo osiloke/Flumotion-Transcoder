@@ -1,5 +1,13 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
+	  Scheduler.initialize, Scheduler.__cbRestoreTasks,
+	  Scheduler.__startTranscodingTask):
+	Use the ActivityStore.
+	Removed some debug print.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy._getAvatarId):
 	Use self.getParent() insteed of self._parent
