@@ -125,11 +125,11 @@ class ThumbnailsConfig(BaseConfig):
         return self._data.format
 
 
-_classLookup = {TargetTypeEnum.audio: AudioConfig,
-                TargetTypeEnum.video: VideoConfig,
-                TargetTypeEnum.audiovideo: AudioVideoConfig,
-                TargetTypeEnum.thumbnails: ThumbnailsConfig}
+_configLookup = {TargetTypeEnum.audio: AudioConfig,
+                 TargetTypeEnum.video: VideoConfig,
+                 TargetTypeEnum.audiovideo: AudioVideoConfig,
+                 TargetTypeEnum.thumbnails: ThumbnailsConfig}
 
-def TargetConfig(data):
-    assert data.type in _classLookup
-    return _classLookup[data.type](data)
+def TargetConfigFactory(data):
+    assert data.type in _configLookup
+    return _configLookup[data.type](data)
