@@ -12,8 +12,9 @@
 
 from twisted.internet import defer
 
-from flumotion.transcoder import log
-from flumotion.transcoder.admin import adminelement
+from flumotion.transcoder import log, utils
+from flumotion.transcoder.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin import adminconsts, adminelement
 from flumotion.transcoder.admin.waiters import CounterWaiters
 from flumotion.transcoder.admin.datasource import datasource
 
@@ -74,31 +75,91 @@ class BaseStore(adminelement.AdminElement):
                                            listenerInterface)
         self._data = data
         self._dataSource = dataSource
+        self._notifications = {} # {NotificationTriggerEnum: {identifier: BaseNotification}}
 
 
     ## Public Methods ##
+
+    def getNotifications(self, trigger):
+        assert isinstance(trigger, NotificationTriggerEnum)
+        return self._notifications[trigger].values()
+    
+    def iterNotifications(self, trigger):
+        assert isinstance(trigger, NotificationTriggerEnum)
+        return self._notifications[trigger].itervalues()
+
+    ## Protected Virtual Methods ##
+    
+    def _doRetrieveNotifications(self):
+        return defer.succeed([])
+    
+    def _doWrapNotification(self, notificationData):
+        raise NotImplementedError()
+
+
+    ## Protectyed Methods ##
+
+    def _retrievalFailed(self, failure):
+        """
+        Can be used by child class as retrieval errorback.
+        """
+        #FIXME: Better Error Handling ?
+        self.warning("Data retrieval failed for %s '%s': %s", 
+                     self.__class__.__name__, self.getLabel(), 
+                     log.getFailureMessage(failure))
+        self.debug("Data retrieval traceback:\n%s",
+                   log.getFailureTraceback(failure))
+        #Propagate failures
+        return failure
 
 
     ## Overriden Methods ##
     
     def _doPrepareInit(self, chain):
         def waitDatasource(result):
-            d = self._dataSource.waitReady
+            to = adminconsts.WAIT_DATASOURCE_TIMEOUT
+            d = self._dataSource.waitReady(to)
             # Keep the result value
-            d.addCallback(lambda r, v: v, result)
+            d.addCallback(utils.overrideResult, result)
             return d
         chain.addCallback(waitDatasource)
         chain.addErrback(self.__ebDataSourceError)
+        # Retrieve and initialize the notifications
+        chain.addCallback(self.__cbRetrieveNotifications)        
 
     def _doPrepareActivation(self, chain):
         pass
-            
+
 
     ## Private Methods ##
 
+    def __cbRetrieveNotifications(self, result):
+        d = self._doRetrieveNotifications()
+        d.addCallback(self.__cbWrapNotifications)
+        d.addCallbacks(self.__cbNotificationsReceived, 
+                       self._retrievalFailed,
+                       callbackArgs=(result,))
+        return d
+        
+    def __cbWrapNotifications(self, notifications):
+        return [self._doWrapNotification(n) for n in notifications]
+        
+    def __cbNotificationsReceived(self, notifications, oldResult):
+        self.log("Store %s '%s' received %d notifications",
+                 self.__class__.__name__, self.getLabel(), len(notifications))
+        bag = dict([(t, dict()) for t in NotificationTriggerEnum])
+        for n in notifications:
+            for t in n.getTriggers():
+                bag[t][n.getIdentifier()] = n
+        self._notifications = bag
+        return oldResult
+
     def __ebDataSourceError(self, failure):
         #FIXME: Error Handling
-        self.warning("Store data source error: %s",
+        self.warning("Store %s '%s' data source error: %s",
+                     self.__class__.__name__, self.getLabel(),
                      log.getFailureMessage(failure))
+        self.debug("Datasource traceback:\n%s",
+                   log.getFailureTraceback(failure))
         return failure
         

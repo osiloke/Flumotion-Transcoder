@@ -15,7 +15,8 @@ from twisted.internet import defer
 
 from flumotion.transcoder import log
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
-from flumotion.transcoder.admin.datastore import configstore
+from flumotion.transcoder.admin.datastore.configstore import TargetConfigFactory
+from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
 
 
 class ITargetStoreListener(Interface):    
@@ -57,6 +58,16 @@ class TargetStore(BaseStore):
     def getLabel(self):
         return self.getName()
     
+    def getAdmin(self):
+        return self.getParent().getAdmin()
+
+    def getCustomer(self):
+        return self.getParent().getCustomer()
+    
+    def getProfile(self):
+        return self.getParent()
+    
+    
     def getConfig(self):
         return self._config
 
@@ -64,13 +75,26 @@ class TargetStore(BaseStore):
     ## Overridden Methods ##
     
     def _doPrepareInit(self, chain):
+        BaseStore._doPrepareInit(self, chain)
+        # Retrieve target configuration
         chain.addCallback(self.__cbRetrieveConfig)
 
     def _onActivated(self):
+        BaseStore._onActivated(self)
         self.debug("Target '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
+        BaseStore._onAborted(self, failure)
         self.debug("Target '%s' aborted", self.getLabel())
+
+    def _doRetrieveNotifications(self):
+        return self._dataSource.retrieveTargetNotifications(self._data)
+
+    def _doWrapNotification(self, notificationData):
+        return NotificationFactory(notificationData, 
+                                   self.getAdmin(),
+                                   self.getCustomer(), 
+                                   self.getProfile(), self)
 
 
     ## Private Methods ##
@@ -78,17 +102,10 @@ class TargetStore(BaseStore):
     def __cbRetrieveConfig(self, result):
         d = self._dataSource.retrieveTargetConfig(self._data)
         d.addCallbacks(self.__cbConfigReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
 
     def __cbConfigReceived(self, configData, oldResult):
-        self._config = configstore.TargetConfig(configData)
+        self._config = TargetConfigFactory(configData)
         return oldResult
-
-    def __ebRetrievalFailed(self, failure):
-        #FIXME: Better Error Handling ?
-        self.warning("Data retrieval failed for target %s: %s", 
-                     self.getLabel(), log.getFailureMessage(failure))
-        #Propagate failures
-        return failure

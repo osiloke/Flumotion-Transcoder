@@ -1,4 +1,62 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/datastore/notificationstore.py
+	  (BaseNotification, BaseNotification.__init__,
+	  BaseNotification.getIdentifier, BaseNotification.getCustomer,
+	  BaseNotification.getProfile, BaseNotification.getTarget,
+	  BaseNotification.getType, BaseNotification.getTriggers,
+	  EMailNotification, EMailNotification.__init__,
+	  EMailNotification.getSubjectTemplate,
+	  EMailNotification.getBodyTemplate, EMailNotification.getAttachments,
+	  EMailNotification.getAddresses, GETRequestNotification,
+	  GETRequestNotification.__init__,
+	  GETRequestNotification.getRequestTemplate,
+	  GETRequestNotification.getRetryTimeout,
+	  GETRequestNotification.getRetryCount,
+	  GETRequestNotification.getRetrySleep, NotificationFactory):
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.__init__, AdminStore.getActivityStore,
+	  AdminStore._doGetChildElements, AdminStore._doSyncListener,
+	  AdminStore._doPrepareInit, AdminStore._doRetrieveNotifications,
+	  AdminStore._doWrapNotification, AdminStore.__cbRetrieveDefaults,
+	  AdminStore.__cbRetrieveCustomers):
+	* flumotion/transcoder/admin/datastore/basestore.py
+	  (BaseStore.__init__, BaseStore.getNotifications,
+	  BaseStore.iterNotifications, BaseStore._doRetrieveNotifications,
+	  BaseStore._doWrapNotification, BaseStore._retrievalFailed,
+	  BaseStore._doPrepareInit, BaseStore.waitDatasource,
+	  BaseStore._doPrepareActivation, BaseStore.__cbRetrieveNotifications,
+	  BaseStore.__cbWrapNotifications, BaseStore.__cbNotificationsReceived,
+	  BaseStore.__ebDataSourceError):
+	* flumotion/transcoder/admin/datastore/customerstore.py
+	  (CustomerStore.getAdmin, CustomerStore._doSyncListener,
+	  CustomerStore._doPrepareInit, CustomerStore._onActivated,
+	  CustomerStore._onAborted, CustomerStore._doRetrieveNotifications,
+	  CustomerStore._doWrapNotification, CustomerStore.__cbRetrieveInfo,
+	  CustomerStore.__cbRetrieveProfiles,
+	  CustomerStore.__cbProfileInitialized,
+	  CustomerStore.__ebProfileInitFailed):
+	* flumotion/transcoder/admin/datastore/profilestore.py
+	  (ProfileStore.getAdmin, ProfileStore.getCustomer,
+	  ProfileStore._doSyncListener, ProfileStore._doPrepareInit,
+	  ProfileStore._onActivated, ProfileStore._onAborted,
+	  ProfileStore._doRetrieveNotifications,
+	  ProfileStore._doWrapNotification, ProfileStore.__cbRetrieveTargets,
+	  ProfileStore.__cbTargetInitialized):
+	* flumotion/transcoder/admin/datastore/targetstore.py
+	  (TargetStore.getAdmin, TargetStore.getCustomer,
+	  TargetStore.getProfile, TargetStore._doPrepareInit,
+	  TargetStore._onActivated, TargetStore._onAborted,
+	  TargetStore._doRetrieveNotifications,
+	  TargetStore._doWrapNotification, TargetStore.__cbRetrieveConfig,
+	  TargetStore.__cbConfigReceived):
+	Added the notifications to the AdminStore (global notifications),
+	CustomerStore, ProfileStore and TargetStore.
+	Use a timeout when waiting for the datasource to be ready.
+	Properly call the BaseStore method when overriding.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/transcoder-data.ini:
 	Added the notifications entry.

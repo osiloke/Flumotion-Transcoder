@@ -17,6 +17,7 @@ from flumotion.transcoder import log
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore
+from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
 
 
 class IProfileStoreListener(Interface):    
@@ -88,6 +89,12 @@ class ProfileStore(BaseStore):
     def getLabel(self):
         return self.getName()    
     
+    def getAdmin(self):
+        return self.getParent().getAdmin()
+    
+    def getCustomer(self):
+        return self.getParent()
+    
     def getTargets(self):
         return self._targets.values()
 
@@ -107,19 +114,30 @@ class ProfileStore(BaseStore):
         return self.getTargets()    
     
     def _doSyncListener(self, listener):
+        BaseStore._doSyncListener(self, listener)
         for target in self._targets.itervalues():
             if target.isActive():
                 self._fireEventTo(listener, target, "TargetAdded")
             
     def _doPrepareInit(self, chain):
-        #Retrieve and initialize the targets
+        BaseStore._doPrepareInit(self, chain)
+        # Retrieve and initialize the targets
         chain.addCallback(self.__cbRetrieveTargets)
 
     def _onActivated(self):
+        BaseStore._onActivated(self)
         self.debug("Profile '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
+        BaseStore._onAborted(self, failure)
         self.debug("Profile '%s' aborted", self.getLabel())
+
+    def _doRetrieveNotifications(self):
+        return self._dataSource.retrieveProfileNotifications(self._data)
+        
+    def _doWrapNotification(self, notificationData):
+        return NotificationFactory(notificationData, self.getAdmin(),
+                                   self.getCustomer(), self, None)
         
         
     ## Private Methods ##
@@ -127,7 +145,7 @@ class ProfileStore(BaseStore):
     def __cbRetrieveTargets(self, result):
         d = self._dataSource.retrieveTargets(self._data)
         d.addCallbacks(self.__cbTargetsReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
     
@@ -158,7 +176,7 @@ class ProfileStore(BaseStore):
         if (target.getName() in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
                    "dropping the new one" 
-                   % (self.getParent().getName(), target.getName()))
+                   % (self.getProfile().getName(), target.getName()))
             self.warning(msg)
             error = StoreError(msg)
             target._abort(error)
@@ -181,10 +199,3 @@ class ProfileStore(BaseStore):
         target._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return
-        
-    def __ebRetrievalFailed(self, failure):
-        #FIXME: Better Error Handling ?
-        self.warning("Data retrieval failed for target %s: %s", 
-                     self.getLabel(), log.getFailureMessage(failure))
-        #Propagate failures
-        return failure

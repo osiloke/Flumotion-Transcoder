@@ -22,7 +22,8 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
-from flumotion.transcoder.admin.datastore.activitystore import Activity
+from flumotion.transcoder.admin.datastore.activitystore import ActivityStore
+from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
 
 
 class StoreLogger(log.Loggable):
@@ -96,6 +97,7 @@ class AdminStore(BaseStore):
         BaseStore.__init__(self, StoreLogger(), None, dataSource, None,
                            IAdminStoreListener) 
         self._customers = {}
+        self._activities = ActivityStore(self, dataSource)
 
         
     ## Public Methods ##
@@ -118,37 +120,8 @@ class AdminStore(BaseStore):
     def iterCustomers(self):
         self._customers.itervalues()
     
-    def getActivities(self, type, states):
-        assert isinstance(type, ActivityTypeEnum)
-        d = self._dataSource.retrieveActivities(type, states)
-        d.addCallback(self.__cbWrapActivities)
-        return d
-    
-    def newActivity(self, type, state, label, startTime=None):
-        assert isinstance(type, ActivityTypeEnum)
-        assert isinstance(state, ActivityStateEnum)
-        assert isinstance(label, str)
-        assert (startTime == None) or isinstance(startTime, datetime.datetime)
-        a = self._dataSource.newActivity(type)
-        a.state = state
-        a.label = label
-        a.startTime = startTime or datetime.datetime.now()
-        return Activity(self, a, True)
-    
-    
-    ## Protected Methods ##
-    
-    def _storeActivity(self, activity, new):
-        data = activity._getData()
-        return self._dataSource.store(data)
-    
-    def _resetActivity(self, activity):
-        data = activity._getData()
-        return self._dataSource.reset(data)
-
-    def _deleteActivity(self, activity):
-        data = activity._getData()
-        return self._dataSource.delete(data)
+    def getActivityStore(self):
+        return self._activities
     
     
     ## Overridden Methods ##
@@ -157,16 +130,25 @@ class AdminStore(BaseStore):
         return self.getCustomers()
         
     def _doSyncListener(self, listener):
+        BaseStore._doSyncListener(self, listener)
         for customer in self._customers.itervalues():
             if customer.isActive():
                 self._fireEventTo(listener, customer, "CustomerAdded")
         
     def _doPrepareInit(self, chain):
+        BaseStore._doPrepareInit(self, chain)
         #Ensure that the defaults are received
         #before customers initialization
         chain.addCallback(self.__cbRetrieveDefaults)
         #Retrieve and initialize the customers
         chain.addCallback(self.__cbRetrieveCustomers)
+
+    def _doRetrieveNotifications(self):
+        return self._dataSource.retrieveGlobalNotifications()
+        
+    def _doWrapNotification(self, notificationData):
+        return NotificationFactory(notificationData, self,
+                                   None, None, None)
         
         
     ## Private Methods ##
@@ -174,7 +156,7 @@ class AdminStore(BaseStore):
     def __cbRetrieveDefaults(self, result):
         d = self._dataSource.retrieveDefaults()
         d.addCallbacks(self.__cbDefaultsReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
         
@@ -185,7 +167,7 @@ class AdminStore(BaseStore):
     def __cbRetrieveCustomers(self, result):
         d = self._dataSource.retrieveCustomers()
         d.addCallbacks(self.__cbCustomersReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
     
@@ -237,13 +219,3 @@ class AdminStore(BaseStore):
         customer._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return
-    
-    def __ebRetrievalFailed(self, failure):
-        #FIXME: Better Error Handling ?
-        self.warning("Data retrieval failed for the admin store: %s", 
-                     log.getFailureMessage(failure))
-        #Propagate failures
-        return failure
-
-    def __cbWrapActivities(self, dataList):
-        return [Activity(self, d, False) for d in dataList]

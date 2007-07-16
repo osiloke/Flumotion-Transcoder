@@ -19,6 +19,7 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
+from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
 
 
 class ICustomerStoreListener(Interface):    
@@ -95,6 +96,9 @@ class CustomerStore(BaseStore):
     def getLabel(self):
         return self.getName()
     
+    def getAdmin(self):
+        return self.getParent()
+    
     def getProfiles(self):
         return self._profiles.values()
     
@@ -117,30 +121,41 @@ class CustomerStore(BaseStore):
         return self.getProfiles()
     
     def _doSyncListener(self, listener):
+        BaseStore._doSyncListener(self, listener)
         for profile in self._profiles.itervalues():
             if profile.isActive():
                 self._fireEventTo(listener, profile, "ProfileAdded")
         
     def _doPrepareInit(self, chain):
-        #Ensure that the customer info are received
-        #before profiles initialization
+        BaseStore._doPrepareInit(self, chain)
+        # Ensure that the customer info are received
+        # before profiles initialization
         chain.addCallback(self.__cbRetrieveInfo)
-        #Retrieve and initialize the profiles
+        # Retrieve and initialize the profiles
         chain.addCallback(self.__cbRetrieveProfiles)        
         
     def _onActivated(self):
+        BaseStore._onActivated(self)
         self.debug("Customer '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
+        BaseStore._onAborted(self, failure)
         self.debug("Customer '%s' aborted", self.getLabel())
         
+    def _doRetrieveNotifications(self):
+        return self._dataSource.retrieveCustomerNotifications(self._data)
+
+    def _doWrapNotification(self, notificationData):
+        return NotificationFactory(notificationData, self.getAdmin(),
+                                   self, None, None)
+
         
     ## Private Methods ##
     
     def __cbRetrieveInfo(self, result):
         d = self._dataSource.retrieveDefaults()
         d.addCallbacks(self.__cbInfoReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
         
@@ -151,7 +166,7 @@ class CustomerStore(BaseStore):
     def __cbRetrieveProfiles(self, result):
         d = self._dataSource.retrieveProfiles(self._data)
         d.addCallbacks(self.__cbProfilesReceived, 
-                       self.__ebRetrievalFailed,
+                       self._retrievalFailed,
                        callbackArgs=(result,))
         return d
     
@@ -182,7 +197,7 @@ class CustomerStore(BaseStore):
         if (profile.getName() in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
                    "dropping the new one" 
-                   % (self.getParent().getName(), profile.getName()))
+                   % (self.getCustomer().getName(), profile.getName()))
             self.warning(msg)
             error = StoreError(msg)
             profile._abort(error)
@@ -205,10 +220,4 @@ class CustomerStore(BaseStore):
         profile._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return
-        
-    def __ebRetrievalFailed(self, failure):
-        #FIXME: Better Error Handling ?
-        self.warning("Data retrieval failed for customer %s: %s", 
-                     self.getLabel(), log.getFailureMessage(failure))
-        #Propagate failures
-        return failure
+

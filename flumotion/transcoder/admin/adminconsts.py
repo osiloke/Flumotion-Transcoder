@@ -86,6 +86,9 @@ SCHEDULER_START_TIMEOUT = 30
 SCHEDULER_PAUSE_TIMEOUT = 30
 SCHEDULER_RESUME_TIMEOUT = 30
 
+# Maximum time to wait for a datasource to be ready
+WAIT_DATASOURCE_TIMEOUT = 60
+
 # Forced component deletion constants
 FORCED_DELETION_TIMEOUT = 10
 FORCED_DELETION_MAX_RETRY = 3
