@@ -1,5 +1,12 @@
 2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-admin.ini:
+	* flumotion/transcoder/admin/adminconfig.py (NotifierConfig,
+	  AdminConfig):
+	Added notifier configuration.
+
+2007-07-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder-data.ini:
 	* flumotion/transcoder/admin/datasource/dataprops.py (TargetData,
 	  ProfileData):

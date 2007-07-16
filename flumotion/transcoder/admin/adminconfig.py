@@ -34,8 +34,13 @@ class DataSourceConfig(properties.PropertyBag):
     dataFile = properties.String('data-file', None, True)
     activityFile = properties.String('activity-file', None, True)
 
+class NotifierConfig(properties.PropertyBag):
+    emergencyEMails = properties.List(properties.String('emergency-emails', None, True))
+    debugEMails = properties.List(properties.String('debug-emails', None, True))
+
 class AdminConfig(properties.PropertyBag):
     datasource = properties.Child("data-source", DataSourceConfig)
+    notifier = properties.Child("notifier", NotifierConfig)
     roots = properties.Dict(properties.String('roots'))
 
 class ClusterConfig(properties.RootPropertyBag):
