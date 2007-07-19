@@ -1,5 +1,16 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/notifystore.py
+	  (BaseNotification,
+	  BaseNotification._admin_overridable_getter_builder,
+	  BaseNotification.getter, BaseNotification.getTarget,
+	  EMailNotification, EMailNotification.__init__,
+	  GETRequestNotification, GETRequestNotification.__init__):
+	Now all notifications have timeout, retryMax, and retrySleep.
+	Now use MetaStore metaclass to generate the getters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/notificationstore.py:
 	Renamed to notifystore.py
 
