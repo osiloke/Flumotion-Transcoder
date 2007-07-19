@@ -1,4 +1,9 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/admin/adminconsts.py:
+	Added notifier-related constants.
+	
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/document.py (IDocument,
