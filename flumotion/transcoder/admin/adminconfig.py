@@ -35,8 +35,12 @@ class DataSourceConfig(properties.PropertyBag):
     activityFile = properties.String('activity-file', None, True)
 
 class NotifierConfig(properties.PropertyBag):
-    emergencyEMails = properties.List(properties.String('emergency-emails', None, True))
-    debugEMails = properties.List(properties.String('debug-emails', None, True))
+    smtpServer = properties.String('smtp-server', None, True)
+    smtpUsername = properties.String('smtp-username', None, False)
+    smtpPassword = properties.String('smtp-password', None, False)
+    mailSender = properties.String('mail-sender', None, True)
+    mailEmergencyRecipients = properties.String('mail-emergency-recipients', None, True)
+    mailDebugRecipients = properties.String('mail-debug-recipients', None, True)
 
 class AdminConfig(properties.PropertyBag):
     datasource = properties.Child("data-source", DataSourceConfig)
