@@ -1,4 +1,23 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/document.py (IDocument,
+	  IDocument.getLabel, IDocument.getType, IDocument.getMimeType,
+	  IDocument.__str__, IDocument.asString, IDocument.asFile,
+	  StringDocument, StringDocument.__init__, StringDocument.getLabel,
+	  StringDocument.getType, StringDocument.getMimeType,
+	  StringDocument.__str__, StringDocument.asString,
+	  StringDocument.asFile, FileDocument, FileDocument.__init__,
+	  FileDocument.getLabel, FileDocument.getType,
+	  FileDocument.getMimeType, FileDocument.__str__,
+	  FileDocument.asString, FileDocument.asFile):
+	Added a document wrapper to encapsulate the report, config and log files.
+	This way generic document can be passed to the notifier for it
+	to choose what to do with them. A document have a type 
+	(DocumentTypeEnum) a mime type, a label to identify it and 
+	can be retrieved as string or file.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/test/test_utils.py (TestUtils.test_joinMailRecipients,
 	  TestUtils.check, TestUtils.test_splitMailRecipients,
