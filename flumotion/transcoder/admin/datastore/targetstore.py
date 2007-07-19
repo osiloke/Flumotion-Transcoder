@@ -16,7 +16,7 @@ from twisted.internet import defer
 from flumotion.transcoder import log
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.configstore import TargetConfigFactory
-from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
+from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
 class ITargetStoreListener(Interface):    
@@ -30,21 +30,21 @@ class TargetStoreListener(object):
 
 class TargetStore(BaseStore):
 
-    # MetaStore metaclass will create getters/setters for these properties
-    __overridable_properties__ = ["outputMediaTemplate",
-                                  "outputThumbTemplate",
-                                  "linkFileTemplate",
-                                  "linkTemplate",
-                                  "linkURLPrefix",
-                                  "enablePostprocessing",
-                                  "enableLinkFiles",
-                                  "postprocessCommand"
-                                  "postprocessTimeout"]
-
-    # MetaStore metaclass will create getters/setters for these properties
-    __simple_properties__ = ["name",
-                             "subdir",
-                             "extension"]
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                       {"getName":      ("name", None),
+                        "getSubdir":    ("subdir", None),
+                        "getExtension": ("extension", None)},
+                   "parent_overridable":
+                       {"getOutputMediaTemplate":  ("outputMediaTemplate",),
+                        "getOutputThumbTemplate":  ("outputThumbTemplate",),
+                        "getLinkFileTemplate":     ("linkFileTemplate",),
+                        "getLinkTemplate":         ("linkTemplate",),
+                        "getLinkURLPrefix":        ("linkURLPrefix",),
+                        "getEnablePostprocessing": ("enablePostprocessing",),
+                        "getEnableLinkFiles":      ("enableLinkFiles",),
+                        "getPostprocessCommand":   ("postprocessCommand",),
+                        "getPostprocessTimeout":   ("postprocessTimeout",)}}
 
 
     def __init__(self, logger, parent, dataSource, targetData):
