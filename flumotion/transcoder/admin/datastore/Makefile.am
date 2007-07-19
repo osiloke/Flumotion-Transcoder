@@ -4,7 +4,7 @@ pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/datasource
 
 python_PYTHON = __init__.py basestore.py adminstore.py customerstore.py \
                 profilestore.py targetstore.py configstore.py activitystore.py \
-                notificationstore.py
+                notifystore.py
 python_DATA =
 
 clean-local:

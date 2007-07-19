@@ -1,5 +1,10 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	Renamed notificationstore.py to notifystore.py.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/datasource/datasource.py
 	  (IDataSource.retrieveDefaults, IDataSource.retrieveCustomers,
 	  IDataSource.retrieveGlobalNotifications,
