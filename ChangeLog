@@ -1,5 +1,10 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/notificationstore.py:
+	Renamed to notifystore.py
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/customerstore.py
 	  (CustomerStore):
 	Use the new version of MetaStore to generate the getters.
