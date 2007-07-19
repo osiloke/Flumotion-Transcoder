@@ -17,7 +17,7 @@ from flumotion.transcoder import log
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore
-from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
+from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
 class IProfileStoreListener(Interface):    
@@ -43,39 +43,39 @@ class ProfileStoreListener(object):
 
 
 class ProfileStore(BaseStore):
-
-    # MetaStore metaclass will create getters/setters for these properties
-    __overridable_properties__ = ["outputMediaTemplate",
-                                  "outputThumbTemplate",
-                                  "linkFileTemplate",
-                                  "configFileTemplate",
-                                  "reportFileTemplate",
-                                  "linkTemplate",
-                                  "linkURLPrefix",
-                                  "enablePostprocessing",
-                                  "enablePreprocessing",
-                                  "enableLinkFiles",
-                                  "transcodingPriority",
-                                  "processPriority",
-                                  "preprocessCommand",
-                                  "postprocessCommand",
-                                  "preprocessTimeout",
-                                  "postprocessTimeout",
-                                  "transcodingTimeout",
-                                  "monitoringPeriod"]
-
-    # MetaStore metaclass will create getters/setters for these properties
-    __simple_properties__ = ["name",
-                             "subdir",
-                             "inputDir",
-                             "outputDir",
-                             "failedDir",
-                             "doneDir",
-                             "linkDir",
-                             "workDir",
-                             "configDir",
-                             "failedRepDir",
-                             "doneRepDir"]
+    
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                      {"getName":         ("name", None),
+                       "getSubdir":       ("subdir", None),
+                       "getInputDir":     ("inputDir", None),
+                       "getOutputDir":    ("outputDir", None),
+                       "getFailedDir":    ("failedDir", None),
+                       "getDoneDir":      ("doneDir", None),
+                       "getLinkDir":      ("linkDir", None),
+                       "getWorkDir":      ("workDir", None),
+                       "getConfigDir":    ("configDir", None),
+                       "getFailedRepDir": ("failedRepDir", None),
+                       "getDoneRepDir":   ("doneRepDir", None)},
+                   "parent_overridable":
+                      {"getOutputMediaTemplate":  ("outputMediaTemplate",),
+                       "getOutputThumbTemplate":  ("outputThumbTemplate",),
+                       "getLinkFileTemplate":     ("linkFileTemplate",),
+                       "getConfigFileTemplate":   ("configFileTemplate",),
+                       "getReportFileTemplate":   ("reportFileTemplate",),
+                       "getLinkTemplate":         ("linkTemplate",),
+                       "getLinkURLPrefix":        ("linkURLPrefix",),
+                       "getEnablePostprocessing": ("enablePostprocessing",),
+                       "getEnablePreprocessing":  ("enablePreprocessing",),
+                       "getEnableLinkFiles":      ("enableLinkFiles",),
+                       "getTranscodingPriority":  ("transcodingPriority",),
+                       "getProcessPriority":      ("processPriority",),
+                       "getPreprocessCommand":    ("preprocessCommand",),
+                       "getPostprocessCommand":   ("postprocessCommand",),
+                       "getPreprocessTimeout":    ("preprocessTimeout",),
+                       "getPostprocessTimeout":   ("postprocessTimeout",),
+                       "getTranscodingTimeout":   ("transcodingTimeout",),
+                       "getMonitoringPeriod":     ("monitoringPeriod",)}}
 
 
     def __init__(self, logger, parent, dataSource, profileData):

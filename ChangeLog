@@ -1,5 +1,10 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/profilestore.py (ProfileStore):
+	Use the new version of MetaStore to generate the getters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/notifystore.py
 	  (BaseNotification,
 	  BaseNotification._admin_overridable_getter_builder,
