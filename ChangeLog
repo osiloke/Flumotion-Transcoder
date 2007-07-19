@@ -1,5 +1,11 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/customerstore.py
+	  (CustomerStore):
+	Use the new version of MetaStore to generate the getters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/configstore.py (BaseConfig,
 	  AudioConfig, AudioConfig.__init__, VideoConfig, VideoConfig.__init__,
 	  AudioVideoConfig, ThumbnailsConfig, ThumbnailsConfig.__init__):
