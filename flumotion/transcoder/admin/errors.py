@@ -42,7 +42,7 @@ class OrphanComponentError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 
-    
+
 class WaiterError(TranscoderError):
     """
     A wait operation couldn't be completed.
@@ -50,3 +50,18 @@ class WaiterError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 
+
+class NotificationError(TranscoderError):
+    """
+    A Notification couldn't be performed.
+    """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class DocumentError(TranscoderError):
+    """
+    A documetn related error.
+    """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)

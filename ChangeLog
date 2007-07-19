@@ -1,5 +1,12 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/errors.py (OrphanComponentError.__init__,
+	  WaiterError.__init__, NotificationError, NotificationError.__init__,
+	  DocumentError, DocumentError.__init__):
+	Added a NotifierError and DocumentError.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/enums.py:
 	Changed MailAttachmentEnum to DocumentTypeEnum to be more generical.
 	Will be used with IDocument to specify document to the notifier that
