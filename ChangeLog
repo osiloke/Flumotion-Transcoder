@@ -1,5 +1,16 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/admin/datasource/datasource.py
+	  (IDataSource.retrieveDefaults, IDataSource.retrieveCustomers,
+	  IDataSource.retrieveGlobalNotifications,
+	  IDataSource.retrieveActivities, IDataSource.newActivity,
+	  IDataSource.newNotification):
+	Now all notifications have timeout, retryMax, and retrySleep.
+	All activities have a subtype of type NotificationTypeEnum 
+	or TranscodingTypeEnum.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/adminconsts.py:
 	Added notifier-related constants.
 	

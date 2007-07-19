@@ -101,13 +101,19 @@ class IDataSource(Interface):
                 Gives the default template for the mail notifications subject.
             mailBodyTemplate (str) :
                 Gives the default template for the mail notifications body.
-            GETRequestTimeout (int) :
-                Gives the default timeout for GET request notifications.
-            GETRequestRetryCount (int) :
-                Gives the default retry count for GET request notifications.
-            GETRequestRetrySleep (int) :
+            mailTimeout (int) :
+                Gives the default timeout for mail notifications.
+            mailRetryCount (int) :
+                Gives the default retry count for mail notifications.
+            mailRetrySleep (int) :
+                Gives the default time between retry for mail notifications.                
+            HTTPRequestTimeout (int) :
+                Gives the default timeout for HTTP request notifications.
+            HTTPRequestRetryCount (int) :
+                Gives the default retry count for HTTP request notifications.
+            HTTPRequestRetrySleep (int) :
                 Gives the default time between retry 
-                for GET request notifications.
+                for HTTP request notifications.
         """
         
     def retrieveCustomers(self):
@@ -259,18 +265,18 @@ class IDataSource(Interface):
             For all:
                 type (NotificationTypeEnum)
                 triggers (set of NotificationTriggerEnum)
+                timeout (int) can be None
+                retryMax (int) can be None
+                retrySleep (int) can be None
             For type == NotificationTypeEnum.email:
                 subjectTemplate (str) can be None
                 bodyTemplate (str) can be None
-                attachments (set of MailAttachmentEnum)
-                addresses dict with MailAddressTypeEnum as keys
+                attachments (set of DocumentTypeEnum)
+                recipients dict with MailAddressTypeEnum as keys
                     of list of tuple with (name, email)
                     where name can be None
             For type == NotificationTypeEnum.get_request:
                 requestTemplate (str)
-                timeout (int) can be None
-                retryCount (int) can be None
-                retrySleep (int) can be None
         """
         
     def retrieveCustomerNotifications(self, customerData):
@@ -302,23 +308,27 @@ class IDataSource(Interface):
         list states (if not None or empty)
         as "container" objects with the following fields:
            type (ActivityTypeEnum)
+           subtype (TranscodingTypeEnum or NotificationTypeEnum)
            state (ActivityStateEnum)
            startTime (datetime)
            lastTime (dateTime)
-        For type == transcoding, reference is a data container:
            customerName (str)
            profileName (str)
+           targetName (str)
+        For type == transcoding, reference is a data container:
            inputRelPath (str)
         For type == notification:
-           requestURL (str)
+           trigger (NotificationTriggerEnum)
+           timeout (int)
            retryCount (int)
            retryMax (int)
-           retryNextTime (datetime)
+           retrySleep (int)
+           data (dict)
         """
 
-    def newActivity(self, type):
+    def newActivity(self, type, subtype):
         """
-        Creates a new activity container of a specified type.
+        Creates a new activity container of a specified type and subtype.
         """
 
     def newCustomer(self, cusomerId):
@@ -338,7 +348,7 @@ class IDataSource(Interface):
     def newNotification(self, type, data):
         """
         Creates a new notification container 
-        of the specified type in ('email', 'get').
+        of the specified type (NotificationTypeEnum).
         The specified data must be customer data, 
         profile data, target data or None.
             None: apply to all customers transcoding
