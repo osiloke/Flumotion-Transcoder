@@ -183,8 +183,8 @@ class Scheduler(log.Loggable,
         self._fireEvent(task, "TranscodingDone")
 
     def onTranscodingTerminated(self, task, succeed):
-        self.log("Transcoding task '%s' %s", task.getLabel(), 
-                 (succeed and "succeed") or "failed")
+        self.info("Transcoding task '%s' %s", task.getLabel(), 
+                  (succeed and "succeed") or "failed")
         ctx = task.getProfileContext()
         self._transcoding.removeTask(ctx.getIdentifier())
         self._activities.pop(task)
@@ -246,10 +246,10 @@ class Scheduler(log.Loggable,
         self._startDelay = reactor.callLater(0, self.__asyncStartTask)
         
     def __startTranscodingTask(self, profCtx, activity=None):
-        self.log("Creating transcoding task for file '%s'", 
-                 profCtx.getInputPath())
         identifier = profCtx.getIdentifier()
         task = TranscodingTask(self._transcoding, profCtx)
+        self.info("Starting transcoding task '%s'", 
+                  task.getLabel())
         self._transcoding.addTask(identifier, task)
         self._fireEvent(task, "TranscodingStarted")
         if not activity:

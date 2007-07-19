@@ -1,5 +1,12 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py
+	  (Scheduler.onTranscodingTerminated,
+	  Scheduler.__startTranscodingTask):
+	Some menor logging changes.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifier.py (notifyDebug,
 	  Notifier.__init__, Notifier.notify, Notifier._postMail,
 	  Notifier._performGetRequest, Notifier.__doPrepareGetRequest,
