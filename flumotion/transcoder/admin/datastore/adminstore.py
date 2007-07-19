@@ -23,7 +23,7 @@ from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
 from flumotion.transcoder.admin.datastore.activitystore import ActivityStore
-from flumotion.transcoder.admin.datastore.notificationstore import NotificationFactory
+from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
 class StoreLogger(log.Loggable):
@@ -57,39 +57,46 @@ class AdminStoreListener(object):
 
 class AdminStore(BaseStore):
     
-    # MetaStore metaclass will create getters/setters for these properties
-    __default_properties__ = {"outputMediaTemplate": 
-                                  adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE,
-                              "outputThumbTemplate": 
-                                  adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE,
-                              "linkFileTemplate": 
-                                  adminconsts.DEFAULT_LINK_FILE_TEMPLATE,
-                              "configFileTemplate": 
-                                  adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE,
-                              "reportFileTemplate": 
-                                  adminconsts.DEFAULT_REPORT_FILE_TEMPLATE,
-                              "linkTemplate":
-                                  constants.LINK_TEMPLATE,
-                              "monitoringPeriod": 
-                                  adminconsts.DEFAULT_MONITORING_PERIOD,
-                              "transcodingPriority": 
-                                  adminconsts.DEFAULT_TRANSCODING_PRIORITY,
-                              "transcodingTimeout": 
-                                  adminconsts.DEFAULT_TRANSCODING_TIMEOUT,
-                              "postprocessTimeout": 
-                                  adminconsts.DEFAULT_POSTPROCESS_TIMEOUT,
-                              "preprocessTimeout": 
-                                  adminconsts.DEFAULT_PREPROCESS_TIMEOUT,
-                              "mailSubjectTemplate": 
-                                  adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE,
-                              "mailBodyTemplate": 
-                                  adminconsts.DEFAULT_MAIL_BODY_TEMPLATE,
-                              "GETRequestTimeout": 
-                                  adminconsts.DEFAULT_GETREQUEST_TIMEOUT,
-                              "GETRequestRetryCount": 
-                                  adminconsts.DEFAULT_GETREQUEST_RETRY_COUNT,
-                              "GETRequestRetrySleep": 
-                                  adminconsts.DEFAULT_GETREQUEST_RETRY_SLEEP}
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic": 
+                       {"getOutputMediaTemplate": ("outputMediaTemplate",
+                           adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE),
+                        "getOutputThumbTemplate": ("outputThumbTemplate",
+                           adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE),
+                        "getLinkFileTemplate": ("linkFileTemplate",
+                           adminconsts.DEFAULT_LINK_FILE_TEMPLATE),
+                        "getConfigFileTemplate": ("configFileTemplate",
+                           adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE),
+                        "getReportFileTemplate": ("reportFileTemplate",
+                           adminconsts.DEFAULT_REPORT_FILE_TEMPLATE),
+                        "getLinkTemplate": ("linkTemplate",
+                           constants.LINK_TEMPLATE),
+                        "getMonitoringPeriod": ("monitoringPeriod",
+                           adminconsts.DEFAULT_MONITORING_PERIOD),
+                        "getTranscodingPriority": ("transcodingPriority",
+                           adminconsts.DEFAULT_TRANSCODING_PRIORITY),
+                        "getTranscodingTimeout": ("transcodingTimeout",
+                           adminconsts.DEFAULT_TRANSCODING_TIMEOUT),
+                        "getPostprocessTimeout": ("postprocessTimeout",
+                           adminconsts.DEFAULT_POSTPROCESS_TIMEOUT),
+                        "getPreprocessTimeout": ("preprocessTimeout",
+                           adminconsts.DEFAULT_PREPROCESS_TIMEOUT),
+                        "getMailSubjectTemplate": ("mailSubjectTemplate",
+                           adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE),
+                        "getMailBodyTemplate": ("mailBodyTemplate",
+                           adminconsts.DEFAULT_MAIL_BODY_TEMPLATE),
+                        "getMailTimeout": ("mailTimeout",
+                           adminconsts.DEFAULT_MAIL_TIMEOUT),
+                        "getMailRetryMax": ("mailRetryMax",
+                           adminconsts.DEFAULT_MAIL_RETRY_MAX),
+                        "getMailRetrySleep": ("mailRetrySleep",
+                           adminconsts.DEFAULT_MAIL_RETRY_SLEEP),
+                        "getHTTPRequestTimeout": ("HTTPRequestTimeout",
+                           adminconsts.DEFAULT_HTTPREQUEST_TIMEOUT),
+                        "getHTTPRequestRetryMax": ("HTTPRequestRetryMax",
+                           adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX),
+                        "getHTTPRequestRetrySleep": ("HTTPRequestRetrySleep",
+                           adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)}}
     
     
     def __init__(self, dataSource):

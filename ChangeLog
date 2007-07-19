@@ -1,5 +1,12 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/admin/datastore/adminstore.py (AdminStore):
+	Changed XXXGETRequestXXX for XXXHTTPRequestXXX with the idea of
+	supporting POST request in the future.
+	Use the new version of MetaStore to generate the getters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/datastore/activitystore.py
 	  (ActivityStore.getNotifications, ActivityStore.newTranscoding,
 	  ActivityStore.newNotification, ActivityStore.__newActivity,
