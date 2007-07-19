@@ -1,5 +1,26 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/notifier.py (notifyDebug,
+	  Notifier.__init__, Notifier.notify, Notifier._postMail,
+	  Notifier._performGetRequest, Notifier.__doPrepareGetRequest,
+	  Notifier.__doPrepareMailPost, Notifier.__doPerformGetRequest,
+	  Notifier.__cbGetPageSucceed, Notifier.__ebGetPageFailed,
+	  Notifier.__doPerformMailPost, Notifier.__cbPostMailSucceed,
+	  Notifier.__ebPostMailFailed, Notifier.__retryNotification,
+	  Notifier.__notificationSucceed, Notifier.__notificationFailed,
+	  Notifier.__notificationTerminated, Notifier.__cannotPrepare,
+	  Notifier.__cannotPerform, Notifier.__prepareNotification,
+	  Notifier.__performNotification):
+	Created the Notifier class that is able to notify by mail or by
+	GET requests. For each notification it create and store
+	an activitie instance.
+	It use twisted.web.client to do the GET request and twisted.smtp
+	to send the mails.
+	The mails are multipart mime, TO, CC, BCC headers 
+	and attachments are supported with IDocument.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/main.py (main):
 	Initialize the log notifier to be able to automaticaly
 	send debug mail when getting traceback (for example).
