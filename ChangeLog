@@ -1,4 +1,16 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (MutableDataWrapper.__setattr__, _createReqNotif, _createMailNotif,
+	  FileDataSource.retrieveProfileNotifications):	
+	* flumotion/transcoder/admin/datasource/dataprops.py (ProfileData,
+	  AdminData, ActivityData, TranscodingActivityData,
+	  NotificationActivityData):
+	* conf/transcoder-data.ini:
+	Update the mail properties from list to a standard
+	Name <name.email.com>, Name2 <name2.email.com> representation.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/transcoder-admin.ini:
 	* flumotion/transcoder/admin/adminconfig.py (NotifierConfig):

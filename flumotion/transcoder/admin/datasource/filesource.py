@@ -25,6 +25,7 @@ from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.enums import MailAddressTypeEnum
+from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 from flumotion.transcoder.admin.datasource.datasource import InitializationError
@@ -165,6 +166,8 @@ TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                                'lastTime': None,
                                'customerName': None,
                                'profileName': None,
+                               'targetName': None,
+                               'subtype': None,
                                'inputRelPath': None},
                   'hidden': set([]),
                   'readonly': set(['type'])}
@@ -172,31 +175,42 @@ TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
 NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'defaults': {'type': ActivityTypeEnum.transcoding,
                                'state': ActivityStateEnum.unknown,
-                               'label': "Unknown",
+                               'label': None,
                                'startTime': None,
                                'lastTime': None,
-                               'requestURL': None,
+                               'customerName': None,
+                               'profileName': None,
+                               'targetName': None,
+                               'subtype': None,
+                               'trigger': None,
+                               'timeout': None,
                                'retryCount': None,
                                'retryMax': None,
-                               'retryNextTime': None},
+                               'retrySleep': None,
+                               'data': None},
                   'hidden': set([]),
                   'readonly': set(['type'])}
 
 
 EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
                   'triggers': set([]),
+                  'timeout': None,
+                  'retryMax': None,
+                  'retrySleep': None,
                   'subjectTemplate': None,
                   'bodyTemplate': None,
-                  'attachments': set([]),
-                  'addresses': {}}
+                  'attachments': set([DocumentTypeEnum.trans_report,
+                                      DocumentTypeEnum.trans_config,
+                                      DocumentTypeEnum.trans_log]),
+                  'recipients': {}}
 
 
 REQ_NOT_TMPL = {'type': NotificationTypeEnum.get_request,
                 'triggers': set([]),
-                'requestTemplate': None,
                 'timeout': None,
-                'retryCount': None,
-                'retrySleep': None}
+                'retryMax': None,
+                'retrySleep': None,
+                'requestTemplate': None}
 
 
 def _createReqNotif(wrapper, succeed, reqTmpl):
@@ -205,12 +219,12 @@ def _createReqNotif(wrapper, succeed, reqTmpl):
     else:
         trigger = NotificationTriggerEnum.failed
     fields = utils.deepCopy(REQ_NOT_TMPL)
-    fields['requestTemplate'] = reqTmpl
     fields['triggers'] = set([trigger])
+    fields['requestTemplate'] = reqTmpl
     ident = (wrapper.identifier, trigger, "req")
     return ImmutableWrapper(ident, fields)
 
-def _createMailNotif(wrapper, succeed, address):
+def _createMailNotif(wrapper, succeed, recipients):
     if succeed:
         trigger = NotificationTriggerEnum.done
     else:
@@ -218,7 +232,7 @@ def _createMailNotif(wrapper, succeed, address):
     fields = utils.deepCopy(EMAIL_NOT_TMPL)
     fields['triggers'] = set([trigger])
     t = MailAddressTypeEnum.to
-    fields['addresses'][t] = [address]
+    fields['recipients'][t] = utils.deepCopy(recipients)
     ident = (wrapper.identifier, trigger, "email")
     return ImmutableWrapper(ident, fields)
 
@@ -317,9 +331,11 @@ class FileDataSource(log.Loggable):
             for req in d.notifyDoneRequests:
                 if req:
                     result.append(_createReqNotif(profileData, True, req))
-            for mail in d.notifyFailedEMails:
-                if mail:
-                    result.append(_createMailNotif(profileData, False, mail))
+            recipientsLine = d.notifyFailedMailRecipients
+            if recipientsLine:
+                recipients = utils.splitMailRecipients(recipientsLine)
+                notification = _createMailNotif(profileData, False, recipients)
+                result.append(notification)
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve profile notifications data"

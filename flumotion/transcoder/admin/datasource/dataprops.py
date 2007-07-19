@@ -17,6 +17,9 @@ from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin.enums import NotificationTypeEnum
+from flumotion.transcoder.admin.enums import TranscodingTypeEnum
 from flumotion.transcoder.admin.datasource import datasource
 
 
@@ -123,7 +126,7 @@ class ProfileData(properties.PropertyBag):
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
     notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
     notifyFailedRequests = properties.List(properties.String('notify-failed-requests', None))
-    notifyFailedEMails = properties.List(properties.String('notify-failed-emails', None))
+    notifyFailedMailRecipients = properties.String('notify-failed-mail-recipients', None)
     targets = properties.ChildList('targets', TargetData)
     
 
@@ -188,9 +191,12 @@ class AdminData(properties.RootPropertyBag):
     reportFileTemplate = properties.String('report-file-template', None)
     mailSubjectTemplate = properties.String('mail-subject-template', None)
     mailBodyTemplate = properties.String('mail-body-template', None)
-    GETRequestTimeout = properties.Integer('get-request-timeout', None, False, True)
-    GETRequestRetryCount = properties.Integer('get-request-retry-count', None, False, True)
-    GETRequestRetrySleep = properties.Integer('get-request-retry-sleep', None, False, True)
+    mailTimeout = properties.Integer('mail-timeout', None, False, True)
+    mailRetryCount = properties.Integer('mail-retry-count', None, False, True)
+    mailRetrySleep = properties.Integer('mail-retry-sleep', None, False, True)
+    HTTPRequestTimeout = properties.Integer('http-request-timeout', None, False, True)
+    HTTPRequestRetryCount = properties.Integer('http-request-retry-count', None, False, True)
+    HTTPRequestRetrySleep = properties.Integer('http-request-retry-sleep', None, False, True)
     notifyFailedEMail = properties.String('notify-failed-email', None)
     customers = properties.ChildList('customers', CustomerData)
 
@@ -202,21 +208,26 @@ class ActivityData(properties.PropertyBag):
                             ActivityStateEnum.unknown)
     startTime = properties.DateTime("start-time")
     lastTime = properties.DateTime("last-time")
+    customerName = properties.String('customer-name', None)
+    profileName = properties.String('profile-name', None)    
+    targetName = properties.String('target-name', None)    
 
 
 class TranscodingActivityData(ActivityData):
 
-    customerName = properties.String('customer-name', None)
-    profileName = properties.String('profile-name', None)    
+    subtype = properties.Enum('subtype', TranscodingTypeEnum)
     inputRelPath = properties.String('input-rel-path', None)
 
 
 class NotificationActivityData(ActivityData):
     
-    requestURL = properties.String('request-url', None)
+    subtype = properties.Enum('subtype', NotificationTypeEnum)
+    trigger = properties.Enum('trigger', NotificationTriggerEnum)
+    timeout = properties.Integer('timeout', None, False, True)
     retryCount = properties.Integer('retry-count', None, False, True)
     retryMax = properties.Integer('retry-max', None, False, True)
-    retryNextTime = properties.DateTime("retry-next-time")
+    retrySleep = properties.Integer('retry-sleep', None, False, True)
+    data = properties.Dict(properties.String("data"))
 
 
 class ActivitiesData(properties.RootPropertyBag):
