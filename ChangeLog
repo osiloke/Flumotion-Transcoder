@@ -1,5 +1,12 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/enums.py:
+	Changed MailAttachmentEnum to DocumentTypeEnum to be more generical.
+	Will be used with IDocument to specify document to the notifier that
+	will choose what to do with them.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/targetstore.py (TargetStore):
 	Use the new version of MetaStore to generate the getters.	
 
