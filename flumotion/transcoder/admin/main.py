@@ -23,7 +23,9 @@ from flumotion.common import common, errors
 from flumotion.configure import configure
 
 from flumotion.transcoder import inifile, log
-from flumotion.transcoder.admin import admin, adminconfig, adminconsts
+from flumotion.transcoder.admin import adminconfig, adminconsts
+from flumotion.transcoder.admin import admin, notifier
+
 
 def parse_options(args):
     usage = 'usage: flumotion-transcoder-admin [options] CONFIG-FILE'
@@ -99,6 +101,7 @@ def exorcize():
 
 def main(args):
     log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
+    log.setNotifier(notifier.notifyDebug)
     
     options, configPath = parse_options(args)
     

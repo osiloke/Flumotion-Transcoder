@@ -1,5 +1,11 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/main.py (main):
+	Initialize the log notifier to be able to automaticaly
+	send debug mail when getting traceback (for example).
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/errors.py (OrphanComponentError.__init__,
 	  WaiterError.__init__, NotificationError, NotificationError.__init__,
 	  DocumentError, DocumentError.__init__):
