@@ -11,13 +11,19 @@
 # Headers in this file shall remain intact.
 
 import datetime
+from cStringIO import StringIO
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, utils
 
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import TranscodingTypeEnum
+from flumotion.transcoder.admin.enums import NotificationTypeEnum
+from flumotion.transcoder.admin.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin.datastore.basestore import MetaStore
 from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
-from flumotion.transcoder.admin.datastore.notificationstore import BaseNotification
+from flumotion.transcoder.admin.datastore.notifystore import BaseNotification
+
 
 
 class ActivityStore(log.LoggerProxy):
@@ -35,21 +41,22 @@ class ActivityStore(log.LoggerProxy):
 
     def getNotifications(self, states):
         t = ActivityTypeEnum.notification
-        return self.__getActivities(t, states)
+        return self.__getActivities(t, None, states)
     
-    def newTranscoding(self, label, state, profile, inputRelPath, 
-                       startTime=None):
+    def newTranscoding(self, label, state, profile, 
+                       inputRelPath, startTime=None):
         t = ActivityTypeEnum.transcoding
-        a = self.__newActivity(t, label, state, startTime)
-        a._setProfile(profile)
-        a._setInputRelPath(inputRelPath)
+        a = self.__newActivity(t, TranscodingTypeEnum.normal,
+                               label, state, startTime)
+        a._setup(profile, inputRelPath)
         return a
     
-    def newNotification(self, label, state, notification, request,
-                        startTime=None):
+    def newNotification(self, subtype, label, state, notification,
+                        trigger, startTime=None):
+        assert isinstance(subtype, NotificationTypeEnum)
         t = ActivityTypeEnum.notification
-        a = self.__newActivity(t, label, state, startTime)
-        a._setNotification(notification)
+        a = self.__newActivity(t, subtype, label, state, startTime)
+        a._setup(notification, trigger)
         return a
 
     
@@ -75,11 +82,12 @@ class ActivityStore(log.LoggerProxy):
         d.addCallback(self.__cbWrapActivities)
         return d
     
-    def __newActivity(self, type, label, state, startTime=None):
+    def __newActivity(self, type, subtype, label, state, startTime=None):
+        assert isinstance(type, ActivityTypeEnum)
         assert isinstance(state, ActivityStateEnum)
         assert isinstance(label, str)
         assert (startTime == None) or isinstance(startTime, datetime.datetime)
-        a = self._dataSource.newActivity(type)
+        a = self._dataSource.newActivity(type, subtype)
         a.state = state
         a.label = label
         a.startTime = startTime or datetime.datetime.now()
@@ -88,8 +96,56 @@ class ActivityStore(log.LoggerProxy):
     def __cbWrapActivities(self, dataList):
         return [ActivityFactory(self, d, False) for d in dataList]
         
+        
+def _buildPropertyGetter(propertyName, default):
+    def getter(self):
+        assert not self._deleted
+        result = getattr(self._data, propertyName, default)
+        return utils.deepCopy(result)
+    return getter
 
+        
+        
 class BaseActivity(object):
+
+    __metaclass__ = MetaStore
+    
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                       {"getLabel":     ("label",     None),
+                        "getType":      ("type",      None),
+                        "getSubtype":   ("subtype",   None),
+                        "getStartTime": ("startTime", None),
+                        "getLastTime":  ("lastTime",  None),
+                        "getState":     ("state",     None)}}
+    
+    # MetaStore metaclass will create setters for these properties
+    __setters__ = {"basic":
+                       {"setState": ("state",)}}
+
+    @staticmethod
+    def _data_getter_builder(getterName, dataKey, default):
+        def getter(self):
+            result = self._data.data.get(dataKey, default)
+            return utils.deepCopy(result)
+        return getter
+
+    @staticmethod
+    def _basic_setter_builder(settername, propertyName):
+        def setter(self, value):
+            assert not self._deleted
+            setattr(self._data, propertyName, utils.deepCopy(value))
+            self._touche()
+        return setter
+    
+    @staticmethod
+    def _data_setter_builder(setterName, dataKey):
+        def setter(self, value):
+            assert not self._deleted
+            self._data.data[dataKey] = utils.deepCopy(value)
+            self._touche()
+        return setter
+
     
     def __init__(self, parent, data, isNew=True):
         self._parent = parent
@@ -113,32 +169,6 @@ class BaseActivity(object):
         assert not self._deleted
         return self._parent._resetActivity(self)
         
-    def getLabel(self):
-        assert not self._deleted
-        return self._data.label
-    
-    def getType(self):
-        assert not self._deleted
-        return self._data.type
-    
-    def getState(self):
-        assert not self._deleted
-        return self._data.state
-
-    def setState(self, state):
-        assert not self._deleted
-        assert isinstance(state, ActivityStateEnum)
-        self._data.state = state
-        self._touche()
-    
-    def getStartTime(self):
-        assert not self._deleted
-        return self._data.startTime
-    
-    def getLastTime(self):
-        assert not self._deleted
-        return self._data.lastTime
-            
 
     ## Protected Methods ##
     
@@ -167,92 +197,127 @@ class BaseActivity(object):
 
 class TranscodingActivity(BaseActivity):
     
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                       {"getInputRelPath": ("inputRelPath", None)}}
+    
     def __init__(self, parent, data, isNew=True):
         BaseActivity.__init__(self, parent, data, isNew)
         
-    def getInputRelPath(self):
-        assert not self._deleted
-        return self._data.inputRelPath
-    
-    def getCustomer(self):
-        assert not self._deleted
-        custName = self._data.customerName
-        return self._getAdminStore().getCustomer(custName, None)
-    
-    def getProfile(self):
-        assert not self._deleted
-        custName = self._data.customerName
-        cust = self._getAdminStore().getCustomer(custName, None)
-        if not cust:
-            return None
-        prof = cust.getProfile(self._data.profileName, None)
-        return prof
-
 
     ## Protected Methods ##
     
-    def _setProfile(self, profile):
+    def _setup(self, profile, relPath):
         assert isinstance(profile, ProfileStore)
+        assert (not relPath) or isinstance(relPath, str)
         self._data.customerName = profile.getCustomer().getName()
         self._data.profileName = profile.getName()
-
-    def _setInputRelPath(self, relPath):
-        assert not self._deleted
-        assert (not relPath) or isinstance(relPath, str)
-        self._data.inputRelPath = relPath
+        self._data.inputRelPath = relPath       
+        self._touche()
 
 
-class NotificationActivity(BaseActivity):
+class BaseNotifyActivity(BaseActivity):
+    
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                       {"getTrigger":    ("trigger",    None),
+                        "getTimeout":    ("timeout",    None),
+                        "getRetryCount": ("retryCount", None),
+                        "getRetryMax":   ("retryMax",   None)}}
     
     def __init__(self, parent, data, isNew=True):
         BaseActivity.__init__(self, parent, data, isNew)
 
-    def getRequestURL(self):
+    def incRetryCount(self):
         assert not self._deleted
-        return self._data.requestURL
+        self._data.retryCount += 1
+        self._touche()
     
-    def getRetryCount(self):
-        assert not self._deleted
-        return self._data.retryCount
-    
-    def getRetryMax(self):
-        assert not self._deleted
-        return self._data.retryMax
-    
-    def getRetryNextTime(self):
-        assert not self._deleted
-        return self._data.retryNextTime
-    
-    def setRetryCount(self, count):
-        assert not self._deleted
-        self._data.retryCount = count
-    
-    def setRetryMax(self, max):
-        assert not self._deleted
-        self._data.retryMax = max
-    
-    def setRetryNextTime(self, time):
-        assert not self._deleted
-        self._data.retryNextTime = time
-    
+
     ## Protected Methods ##
 
-    def _setRequestURL(self, url):
-        assert not self._deleted
-        self._data.requestURL = url
-    
-    def _setNotification(self, notification):
+    def _setup(self, notification, trigger):
         assert isinstance(notification, BaseNotification)
-        #cust = notification.getCustomer()
-        #prof = notification.getProfile()
-        #self._data.customerName = cust and cust.getName()
-        #self._data.profileName = prof and prof.getName()
+        assert isinstance(trigger, NotificationTriggerEnum)
+        self._data.trigger = trigger
+        self._data.timeout = notification.getTimeout()
+        self._data.retryMax = notification.getRetryMax()
+        self._data.retrySleep = notification.getRetrySleep()
+        customer = notification.getCustomer()
+        profile = notification.getProfile()
+        target = notification.getTarget()
+        self._data.customerName = customer and customer.getName()
+        self._data.profileName = profile and profile.getName()
+        self._data.targetName = target and target.getName()
+        self._data.retryCount = 0
+        self._touche()
     
     
-_activityLookup = {ActivityTypeEnum.transcoding: TranscodingActivity,
-                   ActivityTypeEnum.notification: NotificationActivity}
+class GETRequestNotifyActivity(BaseNotifyActivity):
+
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"data":
+                       {"getRequestURL": ("url", None)}}
+
+    # MetaStore metaclass will create setters for these properties
+    __setters__ = {"data":
+                       {"setRequestURL": ("url",)}}
+
+    def __init__(self, parent, data, isNew=True):
+        BaseNotifyActivity.__init__(self, parent, data, isNew)
+
+
+class MailNotifyActivity(BaseNotifyActivity):
+
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"data":
+                       {"getSenderAddr": ("sender",  None),
+                        "getSubject":    ("subject", None),
+                        "getBody":       ("body",    None)}}
+
+    # MetaStore metaclass will create setters for these properties
+    __setters__ = {"data":
+                       {"setSenderAddr": ("sender",),
+                        "setSubject":    ("subject",),
+                        "setBody":       ("body",)}}
+
+    def __init__(self, parent, data, isNew=True):
+        BaseNotifyActivity.__init__(self, parent, data, isNew)
+
+#    def getBody(self):
+#        """
+#        Not created by metaclass because it return a file-like.
+#        """
+#        return StringIO(self._data.data["body"])
+#    
+#    def setBody(self, bodyFile):
+#        """
+#        Not created by metaclass because it gives a file-like.
+#        """
+#        self._data.data["body"] = bodyFile.read()
+
+    def getRecipientsAddr(self):
+        """
+        Not created by metaclass because it convert from str to list
+        """
+        recipients = self._data.data.get("recipients", "")
+        return [e.strip() for e  in recipients.split(", ")]
+
+    def setRecipientsAddr(self, recipients):
+        """
+        Not created by metaclass because it convert from list to str
+        """
+        data = ", ".join([e.strip() for e in recipients])
+        self._data.data["recipients"] = data
+
+
+_activityLookup = {ActivityTypeEnum.transcoding: 
+                   {TranscodingTypeEnum.normal: TranscodingActivity},
+                   ActivityTypeEnum.notification: 
+                   {NotificationTypeEnum.get_request: GETRequestNotifyActivity,
+                    NotificationTypeEnum.email: MailNotifyActivity}}
 
 
 def ActivityFactory(parent, data, isNew=True):
     assert data.type in _activityLookup
-    return _activityLookup[data.type](parent, data, isNew)
+    return _activityLookup[data.type][data.subtype](parent, data, isNew)

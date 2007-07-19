@@ -1,5 +1,26 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/transcoder/admin/datastore/activitystore.py
+	  (ActivityStore.getNotifications, ActivityStore.newTranscoding,
+	  ActivityStore.newNotification, ActivityStore.__newActivity,
+	  ActivityStore.__cbWrapActivities, _buildPropertyGetter, getter,
+	  BaseActivity, BaseActivity._data_getter_builder, BaseActivity.getter,
+	  BaseActivity._basic_setter_builder, BaseActivity.setter,
+	  BaseActivity._data_setter_builder, BaseActivity.setter,
+	  BaseActivity.reset, TranscodingActivity,
+	  TranscodingActivity.__init__, TranscodingActivity._setup,
+	  BaseNotifyActivity, BaseNotifyActivity.__init__,
+	  BaseNotifyActivity.incRetryCount, BaseNotifyActivity._setup,
+	  GETRequestNotifyActivity, GETRequestNotifyActivity.__init__,
+	  MailNotifyActivity, MailNotifyActivity.__init__,
+	  MailNotifyActivity.getRecipientsAddr,
+	  MailNotifyActivity.setRecipientsAddr, ActivityFactory):
+	Added the activity subtype, and now have different activity
+	class for the different notification types.
+	Use the MetaStor metaclass to generate most of the getters/setters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/datastore/Makefile.am:
 	Renamed notificationstore.py to notifystore.py.
 
