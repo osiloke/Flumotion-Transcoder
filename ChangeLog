@@ -1,5 +1,13 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/log.py (Loggable.warnAndRaise,
+	  LoggerProxy.logFailure, LoggerProxy.logException,
+	  LoggerProxy.warnAndRaise):
+	Added a utility method to Loggable and LoggerProxy
+	to do a warning logging and raise an exception at the same time.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py
 	  (Scheduler.onTranscodingTerminated,
 	  Scheduler.__startTranscodingTask):

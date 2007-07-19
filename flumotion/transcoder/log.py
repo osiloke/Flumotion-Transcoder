@@ -74,6 +74,12 @@ class Loggable(flog.Loggable):
         if _notifier:
            _notifier(template % args, Failure(exception))
 
+    def warnAndRaise(self, error, template, *args, **kwargs):
+        assert isinstance(error, TranscoderError)
+        cause = kwargs.pop("cause", None)
+        self.warning(template, *args, **kwargs)
+        raise error(template % args, cause=cause)
+
 
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)
@@ -175,6 +181,14 @@ class LoggerProxy(object):
     def logFailure(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
         self._logger.logFailure(*args, **kwargs)
+        
+    def logException(self, *args, **kwargs):
+        args, kwargs = self._updateArgs(args, kwargs)
+        self._logger.logException(*args, **kwargs)
+    
+    def warnAndRaise(self, *args, **kwargs):
+        args, kwargs = self._updateArgs(args, kwargs)
+        self._logger.warnAndRaise(*args, **kwargs)
     
     def log(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
