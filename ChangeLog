@@ -1,5 +1,12 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/configstore.py (BaseConfig,
+	  AudioConfig, AudioConfig.__init__, VideoConfig, VideoConfig.__init__,
+	  AudioVideoConfig, ThumbnailsConfig, ThumbnailsConfig.__init__):
+	Now use MetaStore metaclass to generate the getters.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/basestore.py
 	  (_basic_getter_builder, getter, _parent_overridable_getter_builder,
 	  getter, MetaStore, MetaStore.__init__, MetaStore.createGetters,

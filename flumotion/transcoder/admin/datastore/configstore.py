@@ -11,9 +11,14 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder.enums import TargetTypeEnum
-
+from flumotion.transcoder.admin.datastore.basestore import MetaStore
 
 class BaseConfig(object):
+    
+    __metaclass__ = MetaStore
+    
+    __getters__ = {"basic": 
+                       {"Type": ("type", None)}}
     
     def __init__(self, data):
         self._data = data        
@@ -29,21 +34,17 @@ class AudioConfig(BaseConfig):
     audioRate (str) 
     audioChannels (str)
     """
+    
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic": 
+                      {"getMuxer":         ("muxer", None),
+                       "getAudioEncoder":  ("audioEncoder", None),
+                       "getAudioRate":     ("audioRate", None),
+                       "getAudioChannels": ("audioChannels", None)}}
+    
     def __init__(self, data):
         super(AudioConfig, self).__init__(data)
     
-    def getMuxer(self):
-        return self._data.muxer
-    
-    def getAudioEncoder(self):
-        return self._data.audioEncoder
-    
-    def getAudioRate(self):
-        return self._data.audioRate
-    
-    def getAudioChannels(self):
-        return self._data.audioChannels
-
 
 class VideoConfig(BaseConfig):
     """
@@ -56,38 +57,27 @@ class VideoConfig(BaseConfig):
     videoPAR (int[2])
     videoFramerate (int[2])
     """
+
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                      {"getMuxer":             ("muxer", None),
+                       "getVideoEncoder":      ("videoEncoder", None),
+                       "getVideoWidth":        ("videoWidth", None),
+                       "getVideoHeight":       ("videoHeight", None),
+                       "getVideoMaxWidth":     ("videoMaxWidth", None),
+                       "getVideoMaxHeight":    ("videoMaxHeight", None),
+                       "getVideoPAR":          ("videoPAR", None),
+                       "getVideoFramerate":    ("videoFramerate", None),
+                       "getVideoScaleMethod":  ("videoScaleMethod", None)}}
+    
     def __init__(self, data):
         super(VideoConfig, self).__init__(data)
 
-    def getMuxer(self):
-        return self._data.muxer
-    
-    def getVideoEncoder(self):
-        return self._data.videoEncoder
-    
-    def getVideoWidth(self):
-        return self._data.videoWidth
-    
-    def getVideoHeight(self):
-        return self._data.videoHeight
-    
-    def getVideoMaxWidth(self):
-        return self._data.videoMaxWidth
-    
-    def getVideoMaxHeight(self):
-        return self._data.videoMaxHeight
-    
-    def getVideoPAR(self):
-        return self._data.videoPAR
-    
-    def getVideoFramerate(self):
-        return self._data.videoFramerate
-    
-    def getVideoScaleMethod(self):
-        return self._data.videoScaleMethod
-
 
 class AudioVideoConfig(AudioConfig, VideoConfig):
+    
+    # MetaStore metaclass will create getters for these properties
+    __properties__ = {"Tolerance": ("tolerance", None)}
     
     def __init__(self, data):
         super(AudioVideoConfig, self).__init__(data)
@@ -103,26 +93,18 @@ class ThumbnailsConfig(BaseConfig):
     maxCount (int)
     format (str) in ['png', 'jpg']
     """    
+    
+    # MetaStore metaclass will create getters for these properties
+    __getters__ = {"basic":
+                      {"getThumbsWidth":  ("thumbsWidth", None),
+                       "getThumbsHeight": ("thumbsHeight", None),
+                       "getPeriodValue":  ("periodValue", None),
+                       "getPeriodUnit":   ("periodUnit", None),
+                       "getMaxCount":     ("maxCount", None),
+                       "getFormat":       ("format", None)}}
+    
     def __init__(self, data):
         super(ThumbnailsConfig, self).__init__(data)
-
-    def getThumbsWidth(self):
-        return self._data.thumbsWidth
-    
-    def getThumbsHeight(self):
-        return self._data.thumbsHeight
-    
-    def getPeriodValue(self):
-        return self._data.periodValue
-    
-    def getPeriodUnit(self):
-        return self._data.periodUnit
-    
-    def getMaxCount(self):
-        return self._data.maxCount
-    
-    def getFormat(self):
-        return self._data.format
 
 
 _configLookup = {TargetTypeEnum.audio: AudioConfig,
