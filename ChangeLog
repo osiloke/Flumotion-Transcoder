@@ -1,5 +1,15 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
+	* flumotion/test/test_utils.py (TestUtils.test_joinMailRecipients,
+	  TestUtils.check, TestUtils.test_splitMailRecipients,
+	  TestUtils.check):
+	* flumotion/transcoder/utils.py (joinCommandFields,
+	  splitMailRecipients, joinMailRecipients, splitMailAddress,
+	  joinMailAddress):
+	Added some basic mail address manipulation with tests.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+	
 	* flumotion/transcoder/admin/datasource/filesource.py
 	  (MutableDataWrapper.__setattr__, _createReqNotif, _createMailNotif,
 	  FileDataSource.retrieveProfileNotifications):	

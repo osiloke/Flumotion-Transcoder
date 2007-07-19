@@ -345,5 +345,56 @@ class TestUtils(unittest.TestCase):
         check(['AAA  ','  BBB  ','  CCC'])
         
         
+    def test_joinMailRecipients(self):
+        
+        def check(value, expected):
+            result = utils.joinMailRecipients(value)
+            self.assertEqual(result, expected)
+        
+        check([], "")
+        
+        check([(None, "test@mail.com")], "test@mail.com")
+        check([(None, "test@mail.com"), (None, "test2@mail.com")], 
+              "test@mail.com, test2@mail.com")
+        check([(None, "test@mail.com"), (None, "test2@mail.com"), (None, "test3@mail.com")], 
+              "test@mail.com, test2@mail.com, test3@mail.com")
+        
+        check([("", "test@mail.com")], "test@mail.com")
+        check([("", "test@mail.com"), ("", "test2@mail.com")], 
+              "test@mail.com, test2@mail.com")
+        check([("", "test@mail.com"), ("", "test2@mail.com"), ("", "test3@mail.com")], 
+              "test@mail.com, test2@mail.com, test3@mail.com")
+        
+        check([("Name", "test@mail.com")], "Name <test@mail.com>")
+        check([("Name", "test@mail.com"), ("With Space", "test2@mail.com")], 
+              "Name <test@mail.com>, With Space <test2@mail.com>")
+        check([("Name", "test@mail.com"), ("With Space", "test2@mail.com"), ("And More", "test3@mail.com")], 
+              "Name <test@mail.com>, With Space <test2@mail.com>, And More <test3@mail.com>")
+        
+        check([(None, "test@mail.com"), ("With Space", "test2@mail.com"), ("", "test3@mail.com")], 
+              "test@mail.com, With Space <test2@mail.com>, test3@mail.com")
+
+    def test_splitMailRecipients(self):
+        
+        def check(value, expected):
+            result = utils.splitMailRecipients(value)
+            self.assertEqual(result, expected)
+        
+        check("", [])
+        
+        check("test@mail.com", [("", "test@mail.com")])
+        check("test@mail.com, test2@mail.com", 
+              [("", "test@mail.com"), ("", "test2@mail.com")])
+        check("test@mail.com, test2@mail.com, test3@mail.com",
+              [("", "test@mail.com"), ("", "test2@mail.com"), ("", "test3@mail.com")])
+        
+        check("Name <test@mail.com>", [("Name", "test@mail.com")])
+        check("Name <test@mail.com>, With Space <test2@mail.com>", 
+              [("Name", "test@mail.com"), ("With Space", "test2@mail.com")])
+        check("Name <test@mail.com>, With Space <test2@mail.com>, And More <test3@mail.com>",
+              [("Name", "test@mail.com"), ("With Space", "test2@mail.com"), ("And More", "test3@mail.com")])
+        
+        check("test@mail.com, With Space <test2@mail.com>, test3@mail.com",
+              [("", "test@mail.com"), ("With Space", "test2@mail.com"), ("", "test3@mail.com")])
         
         

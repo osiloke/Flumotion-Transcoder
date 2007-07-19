@@ -17,6 +17,7 @@ import md5
 import time
 import random
 import datetime
+from email.Utils import parseaddr, formataddr
 
 from twisted.internet import defer, reactor
 
@@ -252,6 +253,30 @@ def joinCommandFields(l):
     See test_utils.py
     """
     return ' '.join([escapeField(str(s)) for s in l])
+
+
+## Mail Utilitiy Fiunctions ##
+
+def splitMailRecipients(line):
+    """
+    See test_utils.py
+    """
+    result = [parseaddr(f) for f in line.split(", ")]
+    if result == [('', '')]:
+        return []
+    return result
+
+def joinMailRecipients(recipients):
+    """
+    See test_utils.py
+    """
+    return ", ".join([formataddr(r) for r in recipients])
+
+def splitMailAddress(address):
+    return parseaddr(address)
+
+def joinMailAddress(fields):
+    return formataddr(fields)
 
 
 ## Structures Utility Functions ##
