@@ -1,4 +1,14 @@
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datastore/basestore.py
+	  (_basic_getter_builder, getter, _parent_overridable_getter_builder,
+	  getter, MetaStore, MetaStore.__init__, MetaStore.createGetters,
+	  MetaStore.createSetters):
+	Updated MetaStore to be more generic. Now the class that don't inherite
+	from BaseStore can use it too, and can create new types of 
+	getters/setters with custom builders.
+
+2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/transcoder/admin/datastore/adminstore.py (AdminStore):
 	Changed XXXGETRequestXXX for XXXHTTPRequestXXX with the idea of

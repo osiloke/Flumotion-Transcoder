@@ -20,50 +20,62 @@ from flumotion.transcoder.admin.waiters import CounterWaiters
 from flumotion.transcoder.admin.datasource import datasource
 
 
-def _buildOverridableGetter(getterName, propertyName):
+def _basic_getter_builder(getterName, propertyName, default):
+    def getter(self):
+        value = getattr(self._data, propertyName, default)
+        return utils.deepCopy(value)
+    return getter
+
+def _parent_overridable_getter_builder(getterName, propertyName, funcName=None):
     def getter(self):
         value = getattr(self._data, propertyName, None)
-        if value != None: return value
-        if hasattr(self._parent, getterName):
-            return getattr(self._parent, getterName)()
+        if value != None: return utils.deepCopy(value)
+        parentGetterName = funcName or getterName
+        if hasattr(self._parent, parentGetterName):
+            return getattr(self._parent, parentGetterName)()
         return None
     return getter
 
-def _buildDefaultGetter(propertyName, staticValue):
-    def getter(self):
-        value = getattr(self._data, propertyName, None)
-        if value != None: return value
-        return staticValue
-    return getter
+_getter_builders = {"basic": _basic_getter_builder,
+                    "parent_overridable": _parent_overridable_getter_builder}
 
-def _buildSimpleGetter(propertyName):
-    def getter(self):
-        return getattr(self._data, propertyName, None)
-    return getter
+_setter_builders = {}
 
 
 class MetaStore(type):
-    
+
     def __init__(cls, name, bases, dct):
+
+        def createGetters(tag, props):
+            getterBuilderName = "_%s_getter_builder" % tag
+            defaultGetterBuilder = _getter_builders.get(tag, None)
+            getterBuilder = getattr(cls, getterBuilderName, defaultGetterBuilder)
+            if getterBuilder:
+                for getterName, params in props.items():
+                    if not hasattr(cls, getterName) :
+                        getter = getterBuilder(getterName, *params)
+                        if getter:
+                            setattr(cls, getterName, getter)
+
+        def createSetters(tag, props):
+            setterBuilderName = "_%s_setter_builder" % tag
+            defaultSetterBuilder = _setter_builders.get(tag, None)
+            setterBuilder = getattr(cls, setterBuilderName, defaultSetterBuilder)
+            if setterBuilder:
+                for setterName, params in props.items():
+                    if not hasattr(cls, setterName) :
+                        setter = setterBuilder(setterName, *params)
+                        if setter:
+                            setattr(cls, setterName, setter)
+        
         super(MetaStore, cls).__init__(name, bases, dct)
-        props = getattr(cls, "__simple_properties__", [])
-        for propertyName in props:
-            getterName = "get" + propertyName[0].upper() + propertyName[1:]
-            if not hasattr(cls, getterName) :
-                getter = _buildSimpleGetter(propertyName)
-                setattr(cls, getterName, getter)
-        props = getattr(cls, "__overridable_properties__", [])
-        for propertyName in props:
-            getterName = "get" + propertyName[0].upper() + propertyName[1:]
-            if not hasattr(cls, getterName) :
-                getter = _buildOverridableGetter(getterName, propertyName)
-                setattr(cls, getterName, getter)
-        props = getattr(cls, "__default_properties__", {})
-        for propertyName, staticValue in props.iteritems():
-            getterName = "get" + propertyName[0].upper() + propertyName[1:]
-            if not hasattr(cls, getterName) :
-                getter = _buildDefaultGetter(propertyName, staticValue)
-                setattr(cls, getterName, getter)
+        
+        properties = getattr(cls, "__getters__", {})
+        for tag, definition in properties.items():
+            createGetters(tag, definition)
+        properties = getattr(cls, "__setters__", {})
+        for tag, definition in properties.items():
+            createSetters(tag, definition)
 
 
 class BaseStore(AdminElement):
