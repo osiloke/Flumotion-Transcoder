@@ -1,3 +1,22 @@
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
+	  TranscoderAdmin.initialize, TranscoderAdmin.__cbAdminInitialized):
+	Use Notifier.
+
+	* flumotion/transcoder/admin/context/Makefile.am:
+	* flumotion/transcoder/admin/context/notifiercontext.py
+	  (NotifierContext, NotifierContext.__init__):
+	* flumotion/transcoder/admin/context/admincontext.py
+	  (AdminContext.getDataSource, AdminContext.getNotifierContext,
+	  AdminContext.getWorkerContext):
+	Added a notifier context arounf the notifier configuration.
+	
+	* flumotion/transcoder/admin/notifier.py (Notifier.__init__,
+	  Notifier.initialize, Notifier.__doPrepareMailPost,
+	  Notifier.__doPerformMailPost):
+	Use the notifier context.
+
 2007-07-19  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/log.py (Loggable.warnAndRaise,

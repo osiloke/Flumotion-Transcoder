@@ -14,6 +14,7 @@ from flumotion.transcoder.local import Local
 from flumotion.transcoder.admin.context.managercontext import ManagerContext
 from flumotion.transcoder.admin.datasource import filesource
 from flumotion.transcoder.admin.context.workercontext import WorkerContext
+from flumotion.transcoder.admin.context.notifiercontext import NotifierContext
 
 
 class AdminContext(object):
@@ -24,6 +25,9 @@ class AdminContext(object):
 
     def getDataSource(self):
         return filesource.FileDataSource(self.config.admin.datasource)
+    
+    def getNotifierContext(self):
+        return NotifierContext(self.config.admin.notifier)
         
     def getLocal(self):
         return Local("admin", self.config.admin.roots)
@@ -35,4 +39,4 @@ class AdminContext(object):
         return WorkerContext(self, workername, 
                              self.config.workers.get(workername, None),
                              self.config.workerDefaults)
-    
+            

@@ -63,14 +63,17 @@ class Notifier(log.Loggable,
     
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
     
-    def __init__(self, notifierConfig, activityStore):
+    def __init__(self, notifierContext, activityStore):
         self._activities = activityStore
-        self._config = notifierConfig
+        self._context = notifierContext
         self._retries = {} # {BaseNotifyActivity: IDelayedCall}
         self._results = {} # {BaseNotifyActivity: Deferred}
 
 
     ## Public Methods ##
+    
+    def initialize(self):
+        return defer.succeed(self)
     
     def notify(self, label, trigger, notification, variables, documents):
         self.info("%s notification '%s' [%s] initiated", 
@@ -126,7 +129,7 @@ class Notifier(log.Loggable,
         activity = store.newNotification(NotificationTypeEnum.email,
                                          label, ActivityStateEnum.started,
                                          notif, trigger)
-        sender = self._config.mailSender
+        sender = self._context.config.mailSender
         senderAddr = utils.splitMailAddress(sender)[1]
         activity.setSenderAddr(senderAddr)
         recipients = notif.getRecipients()
@@ -195,10 +198,10 @@ class Notifier(log.Loggable,
         recipients = utils.splitMailRecipients(activity.getRecipients())
         self.log("Posting mail from %s to %s",
                  sender[1], ", ".join([r[1] for r in recipients]))
-        d = self._postMail(self._config.smtpServer,
-                           self._config.smtpUsername,
-                           self._config.smtpPassword,
-                           self._config.smtpServer,
+        d = self._postMail(self._context.config.smtpServer,
+                           self._context.config.smtpUsername,
+                           self._context.config.smtpPassword,
+                           self._context.config.smtpServer,
                            sender, recipients,
                            activity.getBody(),
                            activity.getTimeout())

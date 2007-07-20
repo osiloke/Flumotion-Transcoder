@@ -35,6 +35,7 @@ from flumotion.transcoder.admin.monitoring import Monitoring, MonitoringListener
 from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.transcoding import Transcoding
 from flumotion.transcoder.admin.scheduler import Scheduler, SchedulerListener
+from flumotion.transcoder.admin.notifier import Notifier
 
 
 class TranscoderAdmin(log.Loggable,
@@ -52,6 +53,8 @@ class TranscoderAdmin(log.Loggable,
         self._adminCtx = AdminContext(config)
         self._datasource = self._adminCtx.getDataSource()
         self._store = AdminStore(self._datasource)
+        self._notifier = Notifier(self._adminCtx.getNotifierContext(),
+                                  self._store.getActivityStore())
         self._transCtx = TranscodingContext(self._adminCtx, self._store)
         self._managers = ManagerSet(self._adminCtx)
         self._workers = WorkerSet(self._managers)
@@ -72,6 +75,7 @@ class TranscoderAdmin(log.Loggable,
         d = defer.Deferred()
         d.addCallback(lambda r: self._datasource.initialize())
         d.addCallback(lambda r: self._store.initialize())
+        d.addCallback(lambda r: self._notifier.initialize())
         d.addCallback(lambda r: self._managers.initialize())
         d.addCallback(lambda r: self._workers.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
@@ -360,9 +364,7 @@ class TranscoderAdmin(log.Loggable,
     def __cbAdminInitialized(self, result):
         self.info("Waiting Transcoder Administration to become Idle")
         self.debug("Waiting store to become idle")
-        # First wait for the store to become idle
         d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        # And then for the managers/workers/components        
         d.addBoth(utils.bridgeResult, self.debug,
                   "Waiting managers to become idle")
         d.addBoth(utils.dropResult, self._managers.waitIdle, 

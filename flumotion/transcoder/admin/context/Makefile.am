@@ -4,7 +4,7 @@ pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/contexts
 
 python_PYTHON = __init__.py admincontext.py managercontext.py workercontext.py \
                 customercontext.py profilecontext.py targetcontext.py \
-                transcontext.py
+                transcontext.py notifiercontext.py
 python_DATA =
 
 clean-local:
