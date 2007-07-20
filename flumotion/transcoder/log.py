@@ -18,11 +18,30 @@ import StringIO
 from twisted.python.failure import Failure
 
 from flumotion.common import log as flog
+
 from flumotion.transcoder.errors import TranscoderError
 
 
+## Global parameters setters ##
+
+_default_log_category = ""
+_notifier = None
+
+def setDebugNotifier(notifier):
+    global _notifier
+    _notifier = notifier
+
+def setDefaultCategory(category):
+    global _default_log_category
+    _default_log_category = category
+
+def setFluDebug(string):
+    flog.setFluDebug(string)
+    from flumotion.transcoder import defer
+    defer.setDebugging(getCategoryLevel("defer") in [LOG, DEBUG])
+        
+
 # Proxy some flumotion.comon.log class, functions and constants
-setFluDebug = flog.setFluDebug
 getCategoryLevel = flog.getCategoryLevel
 
 LOG = flog.LOG
@@ -32,53 +51,21 @@ WARN = flog.WARN
 ERROR = flog.ERROR
 
 
-## Global parameters setters ##
-
-_default_log_category = ""
-_notifier = None
-
-def setNotifier(notifier):
-    global _notifier
-    _notifier = notifier
-
-def setDefaultCategory(category):
-    global _default_log_category
-    _default_log_category = category
-
-
 ## Transcoder's Loggable ##
 
 class Loggable(flog.Loggable):
     
     def logFailure(self, failure, template, *args, **kwargs):
-        global _notifier
-        msg = log.getFailureMessage(failure)
-        if getCategoryLevel() in [LOG, DEBUG]:
-            cleanup = kwargs.get("cleanTraceback", False)
-            tb = log.getFailureTraceback(failure, cleanup)
-            self.warning(template + ": %s\n%s", *(args + (msg, tb)))
-        else:
-            self.warning(template + ": %s", *(args + (msg,)))
-        if _notifier:
-           _notifier(template % args, failure)
+        global logFailure
+        logFailure(self, failure, template, *args, **kwargs)
 
     def logException(self, exception, template, *args, **kwargs):
-        global _notifier
-        msg = log.getExceptionMessage(exception)
-        if getCategoryLevel() in [LOG, DEBUG]:
-            cleanup = kwargs.get("cleanTraceback", False)
-            tb = log.getExceptionTraceback(exception, cleanup)
-            self.warning(template + ": %s\n%s", *(args + (msg, tb)))
-        else:
-            self.warning(template + ": %s", *(args + (msg,)))
-        if _notifier:
-           _notifier(template % args, Failure(exception))
+        global logFailure
+        logException(self, exception, template, *args, **kwargs)
 
     def warnAndRaise(self, error, template, *args, **kwargs):
-        assert isinstance(error, TranscoderError)
-        cause = kwargs.pop("cause", None)
-        self.warning(template, *args, **kwargs)
-        raise error(template % args, cause=cause)
+        global warnAndRaise
+        warnAndRaise(self, error, template, *args, **kwargs)
 
 
 def getExceptionMessage(exception):
@@ -172,7 +159,7 @@ class LoggerProxy(object):
             self.__dict__[attr] = value
             
     def __getattr__(self, attr):
-        if attr in ("logName", "name"):
+        if attr in ("logName", "name", "logCategory"):
             return getattr(self._logger, attr)
         if not (attr in self.__dict__):
             raise AttributeError, attr
@@ -233,3 +220,32 @@ def error(*args, **kwargs):
     global _default_log_category
     flog.error(_default_log_category, *args, **kwargs)
 
+def logFailure(logger, failure, template, *args, **kwargs):
+    global _notifier
+    msg = getFailureMessage(failure)
+    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
+        cleanup = kwargs.get("cleanTraceback", False)
+        tb = getFailureTraceback(failure, cleanup)
+        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
+    else:
+        logger.warning(template + ": %s", *(args + (msg,)))
+    if _notifier:
+       _notifier(template % args, failure=failure)
+
+def logException(logger, exception, template, *args, **kwargs):
+    global _notifier
+    msg = getExceptionMessage(exception)
+    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
+        cleanup = kwargs.get("cleanTraceback", False)
+        tb = getExceptionTraceback(exception, cleanup)
+        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
+    else:
+        logger.warning(template + ": %s", *(args + (msg,)))
+    if _notifier:
+       _notifier(template % args, failure=Failure(exception))
+
+def warnAndRaise(logger, error, template, *args, **kwargs):
+    assert isinstance(error, TranscoderError)
+    cause = kwargs.pop("cause", None)
+    logger.warning(template, *args, **kwargs)
+    raise error(template % args, cause=cause)

@@ -1,5 +1,13 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/log.py (setDebugNotifier, setFluDebug, Loggable,
+	  Loggable.logFailure, Loggable.logException, Loggable.warnAndRaise,
+	  LoggerProxy.__getattr__, logFailure, logException, warnAndRaise):
+	Check the log category "defer" to set the Deferred debugging flag.
+	Made possible to use logFailure and logException as functions.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/taskmanager.py (TaskManager._tryStartup,
 	  TaskManager.__pauseTaskManager, TaskManager.__cbCallForAllTasks,
 	  TaskManager.__waitIdle, TaskManager.__cbWaitActive):
