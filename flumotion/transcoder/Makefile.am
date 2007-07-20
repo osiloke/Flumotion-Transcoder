@@ -6,7 +6,8 @@ python_PYTHON = __init__.py inifile.py properties.py \
                 transconfig.py transreport.py \
                 process.py pipelinecrawler.py \
                 log.py errors.py enums.py utils.py \
-                virtualpath.py local.py constants.py
+                virtualpath.py local.py constants.py \
+                defer.py
 python_DATA =
 
 clean-local:

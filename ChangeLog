@@ -1,5 +1,14 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+    * flumotion/transcoder/Makefile.am:
+    * flumotion/transcoder/defer.py:
+    Added a transcoder-specific version of twsited defer.py.
+    It allow to callback a notify function when a deferred
+    detect a lost failure.
+    Moved all utility callback from utils.py to defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.__init__,
 	  TranscoderAdmin.initialize, TranscoderAdmin.__cbAdminInitialized):
 	Use Notifier.
