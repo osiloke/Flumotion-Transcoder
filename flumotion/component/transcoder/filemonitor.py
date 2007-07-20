@@ -15,14 +15,14 @@
 import os
 import shutil
 
-from twisted.internet import reactor, error, defer
+from twisted.internet import reactor, error
 from twisted.python.failure import Failure
 
 from flumotion.common import common, messages
 from flumotion.component import component
 from flumotion.component.component import moods
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer, constants
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
@@ -83,6 +83,8 @@ class FileMonitor(component.BaseComponent):
 
     def init(self):
         log.setDefaultCategory(compconsts.MONITOR_LOG_CATEGORY)
+        log.setDebugNotifier(self.__notifyDebug)
+        defer.setDebugNotifier(self.__notifyDebug)
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []
@@ -186,6 +188,18 @@ class FileMonitor(component.BaseComponent):
     
     ## Private Methods ##
     
+    def __notifyDebug(self, msg, failure=None, traceback=None):
+        debug = []
+        if failure:
+            debug.append("Failure Message: %s\nFailure Traceback:\n%s"
+                         % (log.getFailureMessage(failure),
+                            log.getFailureTraceback(failure)))
+        if traceback:
+            debug.append("Additional Traceback:\n%s" % traceback)            
+        m = messages.Warning(T_("File Monitor Debug Notification: %s" % msg),
+                             debug="\n\n".join(debug))
+        self.addMessage(m)
+    
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(TranscoderError):
             return self.__transcodingError(failure, task)
@@ -194,18 +208,18 @@ class FileMonitor(component.BaseComponent):
     def __monitorError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        self.logFailure(failure, "Monitoring error%s",
-                        (task and " during %s" % task) or "",
-                        cleanTraceback=True)
+        log.logFailure(self, failure, "Monitoring error%s",
+                       (task and " during %s" % task) or "",
+                       cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
     def __unexpectedError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        self.logFailure(failure, "Unexpected error%s",
-                        (task and " during %s" % task) or "",
-                        cleanTraceback=True)
+        log.logFailure(self, failure, "Unexpected error%s",
+                       (task and " during %s" % task) or "",
+                       cleanTraceback=True)
         m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)

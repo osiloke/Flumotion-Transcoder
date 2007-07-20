@@ -1,5 +1,29 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py (FileMonitor.init,
+	  FileMonitor.__notifyDebug, FileMonitor.__monitorError,
+	  FileMonitor.__unexpectedError):
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.init, FileTranscoder.component_stop,
+	  FileTranscoder._getReportPath, FileTranscoder.__notifyDebug,
+	  FileTranscoder.__transcodingError, FileTranscoder.__cbJobDone,
+	  FileTranscoder.__ebJobFailed, FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError,
+	  FileTranscoder.__ebDiagnoseAcknowledgeFail):
+	Cannot use self.logException because components 
+	inherite from flumotion Loggable, so changed to log.logException.
+	Added a debugNotify that add a component message,
+	used by transcoder's log and defer modules when
+	a traceback is detected.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/base.xml:
+	Added the transcoder-specific defer.py
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
     * flumotion/transcoder/Makefile.am:
     * flumotion/transcoder/defer.py:
     Added a transcoder-specific version of twsited defer.py.

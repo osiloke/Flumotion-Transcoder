@@ -14,7 +14,7 @@
 
 import os
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from flumotion.component import component
@@ -23,7 +23,7 @@ from flumotion.common.common import ensureDir
 from flumotion.common import errors, messages
 
 from flumotion.component.transcoder import job, compconsts
-from flumotion.transcoder import properties, log
+from flumotion.transcoder import log, defer, constants, properties
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import TranscoderStatusEnum
@@ -74,6 +74,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
 
     def init(self):
         log.setDefaultCategory(compconsts.TRANSCODER_LOG_CATEGORY)
+        log.setDebugNotifier(self.__notifyDebug)
+        defer.setDebugNotifier(self.__notifyDebug)
         self.logName = None
         self._diagnoseMode = False
         self._waitAcknowledge = False
@@ -246,7 +248,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             if self._job:
                 d = self._job.stop()
             else:
-                d = defer.succeed(defer._nothing)
+                d = defer.succeed(None)
             d.addCallback(component_stop)
             d.addErrback(self.__ebStopErrorFilter)
             return d
@@ -299,7 +301,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
 
     def _getReportPath(self):
         if self._reportDefaultPath:
-            virtPath = VirtualPath.virtualize(self._reportDefaultPath, self._local)
+            virtPath = VirtualPath.virtualize(self._reportDefaultPath,
+                                              self._local)
             return virtPath
         return None
 
@@ -313,6 +316,18 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         
     
     ## Private Methods ##
+    
+    def __notifyDebug(self, msg, failure=None, traceback=None):
+        debug = []
+        if failure:
+            debug.append("Failure Message: %s\n\nFailure Traceback:\n%s"
+                         % (log.getFailureMessage(failure),
+                            log.getFailureTraceback(failure)))
+        if traceback:
+            debug.append("Additional Traceback:\n%s" % traceback)            
+        m = messages.Warning(T_("File Monitor Debug Notification: %s" % msg),
+                             debug="\n\n\n".join(debug))
+        self.addMessage(m)    
     
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(TranscoderError, PropertyError):
@@ -328,9 +343,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if not failure:
             failure = Failure()
         self.onJobError(failure.getErrorMessage())
-        self.logFailure(failure, "Transocding error%s",
-                        (task and " during %s" % task) or "", 
-                        cleanTraceback=True)
+        log.logFailure(self, failure, "Transocding error%s",
+                       (task and " during %s" % task) or "", 
+                       cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
@@ -359,7 +374,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
-            self.logException(e, "Unexpected exception", cleanTraceback=True)
+            log.logException(self, e, "Unexpected exception",
+                             cleanTraceback=True)
             self.__unexpectedError()
         
     
@@ -378,7 +394,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:
-            self.logException(e, "Unexpected exception", cleanTraceback=True)
+            log.logException(self, e, "Unexpected exception",
+                             cleanTraceback=True)
             self.__unexpectedError()
 
     def __cbJobTerminated(self, result):
@@ -388,7 +405,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             # Acknowledge return the transcoding status
             return self._status
         except Exception, e:
-            self.logException(e, "Unexpected exception", cleanTraceback=True)
+            log.logException(self, e, "Unexpected exception",
+                             cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
@@ -408,7 +426,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.__terminate(self._report, self._status)
             return failure
         except Exception, e:
-            self.logException(e, "Unexpected exception", cleanTraceback=True)
+            log.logException(self, e, "Unexpected exception", 
+                             cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
@@ -439,8 +458,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         d.addErrback(self.__ebDiagnoseAcknowledgeFail)
         
     def __ebDiagnoseAcknowledgeFail(self, failure):
-        self.logFailure(failure, "Acknowledgment failed",
-                        cleanTraceback=True)
+        log.logFailure(self, failure, "Acknowledgment failed",
+                       cleanTraceback=True)
         reactor.callLater(0, reactor.stop)
         
     def __finalizeStandardMode(self, report, succeed):
