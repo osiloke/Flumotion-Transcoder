@@ -10,9 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer
-
-from flumotion.transcoder import log, utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.adminelement import AdminElement
@@ -22,7 +20,8 @@ from flumotion.transcoder.admin.datasource import datasource
 
 def _basic_getter_builder(getterName, propertyName, default):
     def getter(self):
-        value = getattr(self._data, propertyName, default)
+        value = getattr(self._data, propertyName, None)
+        if value == None: value = default
         return utils.deepCopy(value)
     return getter
 
@@ -92,7 +91,7 @@ class BaseStore(AdminElement):
 
 
     ## Public Methods ##
-
+    
     def getNotifications(self, trigger):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].values()
@@ -130,7 +129,7 @@ class BaseStore(AdminElement):
             to = adminconsts.WAIT_DATASOURCE_TIMEOUT
             d = self._dataSource.waitReady(to)
             # Keep the result value
-            d.addCallback(utils.overrideResult, result)
+            d.addCallback(defer.overrideResult, result)
             return d
         chain.addCallback(waitDatasource)
         chain.addErrback(self.__ebDataSourceError)

@@ -1,5 +1,12 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/basestore.py (getter,
+	  BaseStore.__init__, BaseStore.waitDatasource):
+	Corrected a bug in the basic getter, the default value wasn't used.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/targetstore.py
 	  (TargetStore.getIdentifier):
 	* flumotion/transcoder/admin/datastore/profilestore.py
