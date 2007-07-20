@@ -11,9 +11,9 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import defer, utils
 from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import WaiterError
 

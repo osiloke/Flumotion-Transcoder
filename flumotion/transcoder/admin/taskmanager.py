@@ -11,13 +11,12 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import TaskStateEnum
@@ -251,10 +250,10 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self._starting = True
             d = defer.succeed(self)
             if self._state == TaskStateEnum.starting:
-                d.addCallback(utils.dropResult, self._doStart)
+                d.addCallback(defer.dropResult, self._doStart)
                 d.addCallback(self.__cbCallForAllTasks, "start")
             else:
-                d.addCallback(utils.dropResult, self._doResume)
+                d.addCallback(defer.dropResult, self._doResume)
                 d.addCallback(self.__cbCallForAllTasks, "resume")
             d.addCallback(self.__cbStartup)
             args = (self._state.name,)
@@ -266,7 +265,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     
     def __pauseTaskManager(self):
         d = defer.succeed(self)
-        d.addCallback(utils.dropResult, self._doPause)
+        d.addCallback(defer.dropResult, self._doPause)
         d.addCallback(self.__cbCallForAllTasks, "pause")
         d.addCallbacks(self.__cbPauseSucceed, self.__ebPauseFailed)
     
@@ -277,9 +276,9 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         assert action in ["start", "pause", "resume"]
         d = defer.Deferred()
         for t in self._tasks.itervalues():
-            d.addCallback(utils.dropResult, getattr(t, action))
+            d.addCallback(defer.dropResult, getattr(t, action))
             d.addErrback(self.__ebResolveCallFailure, t, action)
-        d.callback(defer._nothing)
+        d.callback(None)
         return d
     
     def __ebResolveCallFailure(self, failure, task, action):
@@ -406,7 +405,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        dl.addCallback(utils.logFailures, self, self, 
+        dl.addCallback(defer.logFailures, self, self, 
                        "task synchronization")
         self._doChainWaitIdle(dl)
         return dl
@@ -417,7 +416,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        dl.addCallback(utils.logFailures, self, self, 
+        dl.addCallback(defer.logFailures, self, self, 
                        "task '%s' activation" % self.getLabel())
         self._doChainWaitActive(dl)
         return dl

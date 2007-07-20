@@ -1,5 +1,21 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/taskmanager.py (TaskManager._tryStartup,
+	  TaskManager.__pauseTaskManager, TaskManager.__cbCallForAllTasks,
+	  TaskManager.__waitIdle, TaskManager.__cbWaitActive):
+	* flumotion/transcoder/admin/transcoding.py
+	  (Transcoding.__cbStartResumeTranscoding,
+	  Transcoding.__cbAddBalancedTask):
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.onTranscoderJobStateChanged):
+	* flumotion/transcoder/admin/waiters.py:
+	* flumotion/transcoder/defer.py (setDebugNotifier, setDebugging,
+	  DebugInfo, DebugInfo.__del__, Deferred, Deferred.__init__,
+	  delayedSuccess, delayedFailure, dropResult, bridgeResult,
+	  resolveFailure, overrideResult, shiftResult, logFailures):
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentset.py:
 	* flumotion/transcoder/admin/proxies/fluproxy.py
 	  (BaseFlumotionProxy._doPrepareInit,

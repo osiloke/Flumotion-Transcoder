@@ -11,12 +11,11 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.admin import adminconsts
@@ -177,7 +176,12 @@ class TranscodingTask(AdminTask, TranscoderListener):
         if jobState == JobStateEnum.waiting_ack:
             if not transcoder.isAcknowledged():
                 self._acknowledging = True
+                self.log("Acknowledging transcoding task '%s' transcoder '%s'",
+                         self.getLabel(), transcoder.getName())
                 d = transcoder.acknowledge(adminconsts.TRANSCODER_ACK_TIMEOUT)
+                d.addCallback(defer.bridgeResult, self.log,
+                              "Transcoding task '%s' transcoder '%s' Acknowledged",
+                              self.getLabel(), transcoder.getName())
                 args = (transcoder,)
                 d.addCallbacks(self.__cbJobTerminated,
                                self.__ebAcknowledgeFailed,
