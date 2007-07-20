@@ -1,5 +1,15 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (MutableDataWrapper.__init__, MutableDataWrapper.__setattr__,
+	  FileDataSource.initialize, FileDataSource.retrieveActivities,
+	  FileDataSource.newActivity):
+	Properly create notification activities.
+	Made the subtype value read-only.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admintask.py (AdminTask.waitIdle,
 	  AdminTask._stopComponent, AdminTask._deleteComponent,
 	  AdminTask.__startup):

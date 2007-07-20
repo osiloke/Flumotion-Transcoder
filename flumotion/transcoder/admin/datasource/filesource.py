@@ -16,9 +16,8 @@ import shutil
 
 from zope.interface import implements
 from twisted.python import failure
-from twisted.internet import defer
 
-from flumotion.transcoder import log, inifile, utils
+from flumotion.transcoder import log, defer, inifile, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
@@ -76,7 +75,7 @@ class ImmutableDataWrapper(object):
 class MutableDataWrapper(object):
     
     def __init__(self, parent, template, identifier=None, 
-                 data=None, fields=None):
+                 data=None, fields=None, **overrides):
         self._parent = parent
         self._template = template
         self._identifier = identifier
@@ -87,6 +86,8 @@ class MutableDataWrapper(object):
             self._reset()
         else:
             self._fields = utils.deepCopy(template["defaults"])
+        for k, v in overrides.items():
+            self._fields[k] = v
         
     def _reset(self):
         if not self._data: return
@@ -160,6 +161,7 @@ class MutableDataWrapper(object):
 
 TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'defaults': {'type': ActivityTypeEnum.transcoding,
+                               'subtype': None,
                                'state': ActivityStateEnum.unknown,
                                'label': "Unknown",
                                'startTime': None,
@@ -167,13 +169,13 @@ TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                                'customerName': None,
                                'profileName': None,
                                'targetName': None,
-                               'subtype': None,
                                'inputRelPath': None},
                   'hidden': set([]),
-                  'readonly': set(['type'])}
+                  'readonly': set(['type', 'subtype'])}
 
 NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'defaults': {'type': ActivityTypeEnum.transcoding,
+                               'subtype': None,
                                'state': ActivityStateEnum.unknown,
                                'label': None,
                                'startTime': None,
@@ -181,7 +183,6 @@ NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                                'customerName': None,
                                'profileName': None,
                                'targetName': None,
-                               'subtype': None,
                                'trigger': None,
                                'timeout': None,
                                'retryCount': None,
@@ -189,7 +190,7 @@ NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                                'retrySleep': None,
                                'data': None},
                   'hidden': set([]),
-                  'readonly': set(['type'])}
+                  'readonly': set(['type', 'subtype'])}
 
 
 EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
@@ -252,10 +253,10 @@ class FileDataSource(log.Loggable):
     def initialize(self):
         self.debug("Initializing File Data Source")
         d = defer.Deferred()
-        d.addCallback(utils.dropResult, self.__loadAdminData, 
+        d.addCallback(defer.dropResult, self.__loadAdminData,
                       self._adminDataFile)
         d.addCallback(self.__cbInitAdminData)
-        d.addCallback(utils.dropResult, self.__loadActivityData,
+        d.addCallback(defer.dropResult, self.__loadActivityData,
                       self._activityDataFile)
         d.addCallback(self.__cbInitActivityData)
         d.addErrback(self.__ebInitializationFailed)
@@ -410,13 +411,14 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
 
-    def newActivity(self, type):
+    _activityTemplateLookup = {ActivityTypeEnum.transcoding: TRANS_ACT_TMPL,
+                               ActivityTypeEnum.notification: NOT_ACT_TMPL}
+
+    def newActivity(self, type, subtype):
         assert isinstance(type, ActivityTypeEnum)
-        if type == ActivityTypeEnum.transcoding:
-            return MutableDataWrapper(self._activityData.transcodings, 
-                                      TRANS_ACT_TMPL)
-        else:
-            raise NotImplementedError()
+        tmpl = self._activityTemplateLookup[type]
+        return MutableDataWrapper(self._activityData.transcodings, 
+                                  tmpl, subtype=subtype)
 
     def newCustomer(self, cusomerId):
         raise NotImplementedError()
