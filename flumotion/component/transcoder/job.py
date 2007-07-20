@@ -18,7 +18,7 @@ import gobject
 gobject.threads_init()
 import gst
 
-from twisted.internet import reactor, error, defer
+from twisted.internet import reactor, error
 from twisted.python.failure import Failure
 
 #from gst.extend.discoverer import Discoverer
@@ -26,8 +26,7 @@ from twisted.python.failure import Failure
 from flumotion.common import common
 from flumotion.common import enum
 from flumotion.common.common import ensureDir
-from flumotion.transcoder import process, log
-from flumotion.transcoder import enums
+from flumotion.transcoder import process, log, defer, enums
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
@@ -209,7 +208,7 @@ class TranscoderJob(log.LoggerProxy):
             self._setTargetState(targetCtx, TargetStateEnum.pending)
         
         #start to work after the starting call chain terminate
-        reactor.callLater(0, d.callback, defer._nothing)
+        reactor.callLater(0, d.callback, None)
         self._runningState = RunningState.running
         return d
             
@@ -260,7 +259,7 @@ class TranscoderJob(log.LoggerProxy):
         self._runningState = RunningState.acknowledged
         self._context.info("Transcoding job acknowledged")
         self._context.reporter.time("acknowledge")
-        self._ack.callback(defer._nothing)
+        self._ack.callback(None)
         return self._ackList
         
         
@@ -598,7 +597,7 @@ class TranscoderJob(log.LoggerProxy):
         return failure
 
     ### Called by Deferreds ###
-    def __ebRecoverableFailure(self, failure, context, task, result=defer._nothing):
+    def __ebRecoverableFailure(self, failure, context, task, result=None):
         # If stopping don't do anything
         if self._isStopping(): return
         context = self.__lookupContext(context, failure)
@@ -723,7 +722,7 @@ class TranscoderJob(log.LoggerProxy):
         #Handle targets outcomes
         d.addCallback(self.__cbAllTargetsSucceed, context)
         d.addErrback(self.__ebSomeTargetsFailed, context)
-        d.callback(defer._nothing)
+        d.callback(None)
         return d
 
     ### Called by Deferreds ###
@@ -854,7 +853,7 @@ class TranscoderJob(log.LoggerProxy):
         return d
     
     ### Called by Deferreds ###
-    def __cbTargetIsAMedia(self, discoverer, targetCtx, result=defer._nothing):
+    def __cbTargetIsAMedia(self, discoverer, targetCtx, result=None):
         # If stopping don't do anything
         if self._isStopping(): return
         targetCtx.reporter.doAnalyse(discoverer)
