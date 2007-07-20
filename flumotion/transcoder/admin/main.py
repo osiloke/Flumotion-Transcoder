@@ -22,7 +22,7 @@ from twisted.internet import reactor
 from flumotion.common import common, errors
 from flumotion.configure import configure
 
-from flumotion.transcoder import inifile, log
+from flumotion.transcoder import inifile, log, defer, constants
 from flumotion.transcoder.admin import adminconfig, adminconsts
 from flumotion.transcoder.admin import admin, notifier
 
@@ -101,7 +101,8 @@ def exorcize():
 
 def main(args):
     log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
-    log.setNotifier(notifier.notifyDebug)
+    log.setDebugNotifier(notifier.notifyDebug)
+    defer.setDebugNotifier(notifier.notifyDebug)
     
     options, configPath = parse_options(args)
     

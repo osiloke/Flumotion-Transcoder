@@ -1,5 +1,10 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/main.py (main):
+	Setup the debug notifiers for transcoder's log and defer modules.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/customerstore.py (CustomerStore,
 	  CustomerStore.getIdentifier, CustomerStore.__cbProfileInitialized):
 	Corrected a bug in getters definition.
