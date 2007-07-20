@@ -11,12 +11,12 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
@@ -281,7 +281,7 @@ class AdminTask(LoggerProxy, EventSource):
         if active:
             # Wait UI State to be sure the file events are fired
             d = active.waitUIState(timeout)
-            d.addCallback(utils.overrideResult, self)
+            d.addCallback(defer.overrideResult, self)
         else:
             d = defer.succeed(self)
         self._doChainWaitIdle(d)
@@ -451,7 +451,7 @@ class AdminTask(LoggerProxy, EventSource):
 
     def _stopComponent(self, component):
         d = self._waitStopComponent(component)
-        d.addErrback(utils.resolveFailure, None)
+        d.addErrback(defer.resolveFailure, None)
 
     def _waitDeleteComponent(self, component):
         self.debug("Admin task '%s' is deleting component '%s'", 
@@ -466,7 +466,7 @@ class AdminTask(LoggerProxy, EventSource):
 
     def _deleteComponent(self, component):
         d = self._waitDeleteComponent(component)
-        d.addErrback(utils.resolveFailure, None)
+        d.addErrback(defer.resolveFailure, None)
 
 
     ## Private Methods ##
@@ -479,11 +479,11 @@ class AdminTask(LoggerProxy, EventSource):
         assert self._state in [TaskStateEnum.starting,
                                TaskStateEnum.resuming]
         d = defer.Deferred()
-        d.addCallback(utils.dropResult, self._doStartup)
+        d.addCallback(defer.dropResult, self._doStartup)
         args = (self._state.name,)
         d.addCallbacks(self.__cbStartupSucceed, self.__ebStartupFailed,
                        callbackArgs=args, errbackArgs=args)
-        d.callback(defer._nothing)
+        d.callback(None)
         
     def __stateChangedError(self, waiters, actionDesc):
         error = TranscoderError("State changed to %s during "

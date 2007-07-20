@@ -1,5 +1,13 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py (AdminTask.waitIdle,
+	  AdminTask._stopComponent, AdminTask._deleteComponent,
+	  AdminTask.__startup):
+	Changed to use transcoder's version of defer.py.
+	Do not use defer._nothing anymore, it's private. Use None insteed.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py
 	  (AdminElement.getIdentifier):
 	All admin element have now a getIdentifier method.
