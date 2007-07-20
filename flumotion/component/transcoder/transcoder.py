@@ -18,10 +18,10 @@ import gobject
 import gst
 from gst.extend.discoverer import Discoverer
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import FilesWatcher

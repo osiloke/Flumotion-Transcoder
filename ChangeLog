@@ -1,5 +1,15 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/gstutils.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin.initialize,
+	  TranscoderAdmin.__startup, TranscoderAdmin.__resume,
+	  TranscoderAdmin.__pause, TranscoderAdmin.__cbAdminInitialized):
+	Changed to use transcoder's version of defer.py.
+	Do not use defer._nothing anymore, it's private. Use None insteed.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py (FileMonitor.init,
 	  FileMonitor.__notifyDebug, FileMonitor.__monitorError,
 	  FileMonitor.__unexpectedError):

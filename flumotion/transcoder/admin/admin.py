@@ -11,12 +11,11 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import implements
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 
 from flumotion.common.enum import EnumClass
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
@@ -95,7 +94,7 @@ class TranscoderAdmin(log.Loggable,
         self._scheduler.syncListener(self)
         self._monitoring.syncListener(self)
         # fire the initialization
-        d.callback(defer._nothing)
+        d.callback(None)
         return d
 
 
@@ -283,25 +282,25 @@ class TranscoderAdmin(log.Loggable,
         self.info("Starting Transcoder Administration")
         self._state = TaskStateEnum.starting
         d = defer.Deferred()
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Starting monitoring manager")
-        d.addCallback(utils.dropResult, self._monitoring.start,
+        d.addCallback(defer.dropResult, self._monitoring.start,
                       adminconsts.MONITORING_START_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Waiting for monitoring to become active")
-        d.addCallback(utils.dropResult, self._monitoring.waitActive,
+        d.addCallback(defer.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Starting transcoding manager")
-        d.addCallback(utils.dropResult, self._transcoding.start,
+        d.addCallback(defer.dropResult, self._transcoding.start,
                       adminconsts.TRANSCODING_START_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Starting scheduler manager")
-        d.addCallback(utils.dropResult, self._scheduler.start,
+        d.addCallback(defer.dropResult, self._scheduler.start,
                       adminconsts.SCHEDULER_START_TIMEOUT)
         d.addCallbacks(self.__cbSartupSucceed, self.__ebSartupFailed)
-        d.callback(defer._nothing)
+        d.callback(None)
         
     def __resume(self):
         if not (self._state == TaskStateEnum.paused):
@@ -312,28 +311,28 @@ class TranscoderAdmin(log.Loggable,
         d = defer.Deferred()
         # Wait a moment to let the workers the oportunity 
         # to log back to the manager.
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Waiting for workers to log back")
-        d.addCallback(utils.delayedSuccess, adminconsts.RESUME_DELAY)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.delayedSuccess, adminconsts.RESUME_DELAY)
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Resuming monitoring manager")
-        d.addCallback(utils.dropResult, self._monitoring.resume,
+        d.addCallback(defer.dropResult, self._monitoring.resume,
                       adminconsts.MONITORING_RESUME_TIMEOUT)
         # Wait monitor components to be activated before continuing
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Waiting for monitoring to become active")
-        d.addCallback(utils.dropResult, self._monitoring.waitActive,
+        d.addCallback(defer.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Resuming transcoding manager")
-        d.addCallback(utils.dropResult, self._transcoding.resume,
+        d.addCallback(defer.dropResult, self._transcoding.resume,
                       adminconsts.TRANSCODING_RESUME_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Resuming scheduler")
-        d.addCallback(utils.dropResult, self._scheduler.resume,
+        d.addCallback(defer.dropResult, self._scheduler.resume,
                       adminconsts.SCHEDULER_RESUME_TIMEOUT)
         d.addCallbacks(self.__cbResumingSucceed, self.__ebResumingFailed)
-        d.callback(defer._nothing)
+        d.callback(None)
         
     def __pause(self):
         if not (self._state == TaskStateEnum.started):
@@ -341,20 +340,20 @@ class TranscoderAdmin(log.Loggable,
                                    % self._state.name)
         self.info("Pausing Transcoder Administration")
         d = defer.Deferred()
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Pausing scheduler")
-        d.addCallback(utils.dropResult, self._scheduler.pause,
+        d.addCallback(defer.dropResult, self._scheduler.pause,
                       adminconsts.SCHEDULER_PAUSE_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Pausing transcoding manager")
-        d.addCallback(utils.dropResult, self._transcoding.pause,
+        d.addCallback(defer.dropResult, self._transcoding.pause,
                       adminconsts.TRANSCODING_PAUSE_TIMEOUT)
-        d.addCallback(utils.bridgeResult, self.debug,
+        d.addCallback(defer.bridgeResult, self.debug,
                       "Pausing monitoring manager")
-        d.addCallback(utils.dropResult, self._monitoring.pause,
+        d.addCallback(defer.dropResult, self._monitoring.pause,
                       adminconsts.MONITORING_PAUSE_TIMEOUT)
         d.addCallbacks(self.__cbPausingSucceed, self.__ebPausingFailed)
-        d.callback(defer._nothing)
+        d.callback(None)
         
     def __abort(self):
         if self._state == TaskStateEnum.terminated:
@@ -365,23 +364,23 @@ class TranscoderAdmin(log.Loggable,
         self.info("Waiting Transcoder Administration to become Idle")
         self.debug("Waiting store to become idle")
         d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
+        d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting managers to become idle")
-        d.addBoth(utils.dropResult, self._managers.waitIdle, 
+        d.addBoth(defer.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
+        d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting monitoring manager to become idle")
-        d.addBoth(utils.dropResult, self._monitoring.waitIdle,
+        d.addBoth(defer.dropResult, self._monitoring.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
+        d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting transcoding manager to become idle")
-        d.addBoth(utils.dropResult, self._transcoding.waitIdle,
+        d.addBoth(defer.dropResult, self._transcoding.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.bridgeResult, self.debug,
+        d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting scheduler to become idle")
-        d.addBoth(utils.dropResult, self._scheduler.waitIdle,
+        d.addBoth(defer.dropResult, self._scheduler.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
-        d.addBoth(utils.dropResult, self.__startup)
+        d.addBoth(defer.dropResult, self.__startup)
         return self
     
     def __ebAdminInitializationFailed(self, failure):

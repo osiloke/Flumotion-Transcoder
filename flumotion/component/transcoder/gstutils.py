@@ -15,8 +15,7 @@
 import gst
 from gst.extend import discoverer
 
-from twisted.internet import defer
-
+from flumotion.transcoder import defer
 from flumotion.component.transcoder import compconsts, videosize
 
 
