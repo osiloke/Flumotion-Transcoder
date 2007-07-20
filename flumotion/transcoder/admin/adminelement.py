@@ -10,11 +10,10 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.log import LoggerProxy
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
@@ -58,6 +57,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     ## Public Methods ##
     
     def getLabel(self):
+        raise NotImplementedError()
+    
+    def getIdentifier(self):
         raise NotImplementedError()
     
     def getParent(self):

@@ -1,5 +1,12 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement.getIdentifier):
+	All admin element have now a getIdentifier method.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py (TranscoderJob.readyForAck,
 	  TranscoderJob.acknowledge, TranscoderJob.__ebRecoverableFailure,
 	  TranscoderJob.__cbProcessTargets, TranscoderJob.__cbTargetIsAMedia):
