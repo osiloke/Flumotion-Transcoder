@@ -1,5 +1,13 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/customerstore.py (CustomerStore,
+	  CustomerStore.getIdentifier, CustomerStore.__cbProfileInitialized):
+	Corrected a bug in getters definition.
+	Do not use defer._nothing anymore, it's private. Use None insteed.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/notifystore.py
 	  (BaseNotification):	
 	* flumotion/transcoder/admin/datastore/configstore.py (BaseConfig):

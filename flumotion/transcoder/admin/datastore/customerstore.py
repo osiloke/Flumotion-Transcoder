@@ -11,9 +11,8 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder import utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import StoreError
@@ -58,9 +57,9 @@ class CustomerStore(BaseStore):
                        "getWorkDir":          ("workDir", None),
                        "getConfigDir":        ("configDir", None),
                        "getFailedRepDir":     ("failedRepDir", None),
-                       "getDoneRepDir":       ("doneRepDir", None)},
+                       "getDoneRepDir":       ("doneRepDir", None),
                        "getCustomerPriority": ("customerPriority",
-                              adminconsts.DEFAULT_CUSTOMER_PRIORITY),
+                              adminconsts.DEFAULT_CUSTOMER_PRIORITY)},
                    "parent_overridable":
                       {"getOutputMediaTemplate" : ("outputMediaTemplate",),
                        "getOutputThumbTemplate":  ("outputThumbTemplate",),
@@ -92,6 +91,10 @@ class CustomerStore(BaseStore):
     ## Public Methods ##
     
     def getLabel(self):
+        return self.getName()
+    
+    def getIdentifier(self):
+        # For now the used identifier is the name, not the datasource one
         return self.getName()
     
     def getAdmin(self):
@@ -199,7 +202,7 @@ class CustomerStore(BaseStore):
             self.warning(msg)
             error = StoreError(msg)
             profile._abort(error)
-            return defer._nothing
+            return None
         self._profiles[profile.getName()] = profile
         #Send event when the profile has been activated
         self._fireEventWhenActive(profile, "ProfileAdded")
