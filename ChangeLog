@@ -1,5 +1,19 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy.waitUIState, BaseComponentProxy.start,
+	  BaseComponentProxy.stop, BaseComponentProxy.restart,
+	  BaseComponentProxy.delete, BaseComponentProxy.forceStop,
+	  BaseComponentProxy.forceDelete, BaseComponentProxy.kill,
+	  BaseComponentProxy.__asyncRetryKillIfNeeded,
+	  BaseComponentProxy.__asyncForceKillFailed,
+	  BaseComponentProxy.__asyncForceStopFailed,
+	  BaseComponentProxy.__asyncForceDeleteFailed):
+	Changed to use transcoder's version of defer.py.  
+	Do not use defer._nothing anymore, it's private. Use None insteed.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/monitoring.py
 	  (Monitoring.__cbStartResumeMonitoring,
 	  Monitoring.__cbAddBalancedTask):

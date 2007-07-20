@@ -13,7 +13,6 @@
 import signal
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 from twisted.spread.pb import PBConnectionLost
 
 from flumotion.common import common
@@ -23,8 +22,7 @@ from flumotion.common.errors import UnknownComponentError
 from flumotion.common.errors import ComponentError, BusyComponentError
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError, OperationAbortedError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
@@ -128,7 +126,7 @@ class BaseComponentProxy(FlumotionProxy):
             return defer.fail(error)
         self.__retrieveUIState(timeout)
         d = self._waitUIState(timeout)
-        d.addCallback(utils.overrideResult, self)
+        d.addCallback(defer.overrideResult, self)
         return d
     
     def isRunning(self):
@@ -170,7 +168,7 @@ class BaseComponentProxy(FlumotionProxy):
         self.log("Starting component '%s'", self.getLabel())
         d = self._manager._callRemote('componentStart', 
                                       self._componentState)
-        d.addCallback(utils.overrideResult, self)
+        d.addCallback(defer.overrideResult, self)
         return d
     
     def stop(self):
@@ -178,7 +176,7 @@ class BaseComponentProxy(FlumotionProxy):
         self.log("Stopping component '%s'", self.getLabel())
         d = self._manager._callRemote('componentStop', 
                                       self._componentState)
-        d.addCallback(utils.overrideResult, self)
+        d.addCallback(defer.overrideResult, self)
         return d
     
     def restart(self):
@@ -186,7 +184,7 @@ class BaseComponentProxy(FlumotionProxy):
         self.log("Restarting component '%s'", self.getLabel())
         d = self._manager._callRemote('componentRestart', 
                                       self._componentState)
-        d.addCallback(utils.overrideResult, self)
+        d.addCallback(defer.overrideResult, self)
         return d
     
     def delete(self):
@@ -194,7 +192,7 @@ class BaseComponentProxy(FlumotionProxy):
         self.log("Deleting component '%s'", self.getLabel())
         d = self._manager._callRemote('deleteComponent', 
                                       self._componentState)
-        d.addCallback(utils.overrideResult, self)
+        d.addCallback(defer.overrideResult, self)
         return d
 
     def forceStop(self):
@@ -211,7 +209,7 @@ class BaseComponentProxy(FlumotionProxy):
         else:
             d = defer.Deferred()
             status = {"can_delete": False}
-            self.__asyncForceStop(defer._nothing, status, self.getLabel(), d)
+            self.__asyncForceStop(None, status, self.getLabel(), d)
             return d
         
     def forceDelete(self):
@@ -223,7 +221,7 @@ class BaseComponentProxy(FlumotionProxy):
         assert self._componentState, "Component has been removed"
         self.log("Deleting (Forced) component '%s'", self.getLabel())
         d = defer.Deferred()
-        self.__stopOrDelete(defer._nothing, {}, self.getLabel(), d)
+        self.__stopOrDelete(None, {}, self.getLabel(), d)
         return d
 
     def kill(self):
@@ -231,14 +229,14 @@ class BaseComponentProxy(FlumotionProxy):
         # First try SIGTERM
         d = self.signal(signal.SIGTERM)
         # And wait for a while
-        d.addCallback(utils.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
+        d.addCallback(defer.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
         # Try SIGKILL if the component still exists on the worker
-        d.addCallback(utils.dropResult, self.signal, signal.SIGKILL)        
+        d.addCallback(defer.dropResult, self.signal, signal.SIGKILL)        
         # And wait for a while
-        d.addCallback(utils.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
+        d.addCallback(defer.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
         # If UnknownComponentError has not been raise try a last time
-        d.addCallback(utils.dropResult, self.signal, signal.SIGKILL)
-        d.addCallbacks(utils.overrideResult, utils.resolveFailure, 
+        d.addCallback(defer.dropResult, self.signal, signal.SIGKILL)
+        d.addCallbacks(defer.overrideResult, defer.resolveFailure, 
                        callbackArgs=(False,),
                        errbackArgs=(True, UnknownComponentError))
         return d
@@ -494,7 +492,7 @@ class BaseComponentProxy(FlumotionProxy):
             # stopped again. For this we reset the stop retries counter.
             status["stop-retries"] = 0
             status["already_killed"] = True
-            self.__asyncForceStop(defer._nothing, status, label, resultDef)
+            self.__asyncForceStop(None, status, label, resultDef)
             return
         status["kill-retries"] = status.setdefault("Kill-retries", 0) + 1
         if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
@@ -504,14 +502,14 @@ class BaseComponentProxy(FlumotionProxy):
             resultDef.errback(TranscoderError(msg))
             return
         # Failed to kill, try again to stop or delete
-        self.__stopOrDelete(defer._nothing, status, 
+        self.__stopOrDelete(None, status, 
                             label, resultDef)
         
     def __asyncForceKillFailed(self, failure, status, label, resultDef):
         if self.__isOperationTerminated(failure, status, resultDef): return
         if failure.check(OrphanComponentError):
             # The component don't have worker
-            self.__stopOrDelete(defer._nothing, status, 
+            self.__stopOrDelete(None, status, 
                                 label, resultDef)
             return
         self.warning("Component '%s' killing failed: %s",
@@ -548,14 +546,14 @@ class BaseComponentProxy(FlumotionProxy):
         if failure.check(ComponentError):
             #Maybe the component was already stopped ?
             if self.getMood() == moods.sleeping:
-                self.__asyncForceDelete(defer._nothing, status, 
+                self.__asyncForceDelete(None, status, 
                                         label, resultDef)
                 return
         # The component raised an error
         # so just log the error and try again
         self.warning("Fail to stop component '%s': %s",
                      label, log.getFailureMessage(failure))
-        self.__asyncForceStop(defer._nothing, status, label, resultDef)
+        self.__asyncForceStop(None, status, label, resultDef)
     
     def __asyncForceDeleteFailed(self, failure, status, label, resultDef):
         if self.__isOperationTerminated(failure, status, resultDef): return
@@ -571,7 +569,7 @@ class BaseComponentProxy(FlumotionProxy):
             self.warning("Fail to delete component '%s': %s",
                          label, log.getFailureMessage(failure))
         #FIXME: What about already deleted component ?
-        self.__asyncForceDelete(defer._nothing, status, label, resultDef)
+        self.__asyncForceDelete(None, status, label, resultDef)
 
 
 class DefaultComponentProxy(BaseComponentProxy):
