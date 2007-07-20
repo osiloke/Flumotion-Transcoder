@@ -11,9 +11,8 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import defer, utils
 from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.waiters import ItemWaiters
 from flumotion.transcoder.admin.proxies import fluproxy

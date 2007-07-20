@@ -9,11 +9,9 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer, reactor
-
 from flumotion.common import common
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import defer, utils
 from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxies import fluproxy

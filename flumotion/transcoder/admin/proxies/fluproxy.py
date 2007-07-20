@@ -10,10 +10,9 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
 from flumotion.transcoder.admin import adminelement
@@ -92,12 +91,12 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     def _doPrepareInit(self, chain):
         #FIXME: Remove this, its only for testing
         import random
-        chain.addCallback(utils.delayedSuccess, random.random())
+        chain.addCallback(defer.delayedSuccess, random.random())
         
     def _doPrepareActivation(self, chain):
         #FIXME: Remove this, its only for testing
         import random
-        chain.addCallback(utils.delayedSuccess, random.random())
+        chain.addCallback(defer.delayedSuccess, random.random())
 
 
     ## Protected Methods ##

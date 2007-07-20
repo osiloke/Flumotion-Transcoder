@@ -1,5 +1,16 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentset.py:
+	* flumotion/transcoder/admin/proxies/fluproxy.py
+	  (BaseFlumotionProxy._doPrepareInit,
+	  BaseFlumotionProxy._doPrepareActivation):
+	* flumotion/transcoder/admin/proxies/groupproxy.py:
+	* flumotion/transcoder/admin/proxies/managerproxy.py:
+	* flumotion/transcoder/admin/proxies/workerset.py:
+	Changed to use transcoder's version of defer.py.  
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (BaseComponentProxy.waitUIState, BaseComponentProxy.start,
 	  BaseComponentProxy.stop, BaseComponentProxy.restart,

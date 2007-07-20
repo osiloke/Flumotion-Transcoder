@@ -11,8 +11,8 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 
+from flumotion.transcoder import defer
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 from flumotion.transcoder.admin.proxies.workerproxy import WorkerProxy
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
