@@ -13,9 +13,9 @@
 import datetime
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 
-from flumotion.transcoder import constants, log
+from flumotion.transcoder import constants, log, defer
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
@@ -111,6 +111,9 @@ class AdminStore(BaseStore):
     
     def getLabel(self):
         return "Admin Store"
+    
+    def getIdentifier(self):
+        return self.getLabel()
     
     def getCustomers(self):
         return self._customers.values()
@@ -208,7 +211,7 @@ class AdminStore(BaseStore):
             self.warning("%s", msg)
             error = StoreError(msg)
             customer._abort(error)
-            return defer._nothing
+            return None
         self._customers[customer.getName()] = customer
         #Send event when the customer has been activated
         self._fireEventWhenActive(customer, "CustomerAdded")

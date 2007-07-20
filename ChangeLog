@@ -1,5 +1,16 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/targetstore.py
+	  (TargetStore.getIdentifier):
+	* flumotion/transcoder/admin/datastore/profilestore.py
+	  (ProfileStore.getIdentifier, ProfileStore.__cbTargetInitialized):	  
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.getIdentifier, AdminStore.__cbCustomerInitialized):
+	Added getIdentifier getters to the store and the activities.
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/activitystore.py
 	  (ActivityStore.getLabel, ActivityStore.getIdentifier, BaseActivity,
 	  BaseActivity.setter, BaseActivity.__init__,

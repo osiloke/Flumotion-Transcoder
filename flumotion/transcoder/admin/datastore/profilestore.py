@@ -11,9 +11,8 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.admin.errors import StoreError
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.targetstore import TargetStore
@@ -88,6 +87,10 @@ class ProfileStore(BaseStore):
     
     def getLabel(self):
         return self.getName()    
+    
+    def getIdentifier(self):
+        # For now the used identifier is the name, not the datasource one
+        return self.getName()
     
     def getAdmin(self):
         return self.getParent().getAdmin()
@@ -180,7 +183,7 @@ class ProfileStore(BaseStore):
             self.warning(msg)
             error = StoreError(msg)
             target._abort(error)
-            return defer._nothing
+            return None
         self._targets[target.getName()] = target
         #Send event when the target has been activated
         self._fireEventWhenActive(target, "TargetAdded")

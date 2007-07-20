@@ -11,9 +11,8 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.configstore import TargetConfigFactory
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
@@ -57,6 +56,10 @@ class TargetStore(BaseStore):
 
     def getLabel(self):
         return self.getName()
+    
+    def getIdentifier(self):
+        # For now the used identifier is the name, not the datasource one
+        return self.getName()    
     
     def getAdmin(self):
         return self.getParent().getAdmin()
