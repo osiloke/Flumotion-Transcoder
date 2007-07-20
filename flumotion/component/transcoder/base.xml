@@ -16,6 +16,7 @@
           <filename location="local.py" />
           <filename location="virtualpath.py" />
           <filename location="utils.py" />
+          <filename location="defer.py" />          
         </directory>
         <directory name="flumotion/component/transcoder">
           <filename location="__init__.py" />
