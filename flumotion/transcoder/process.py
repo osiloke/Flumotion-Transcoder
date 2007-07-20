@@ -17,14 +17,14 @@ import re
 import socket
 import signal
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 
 from flumotion.common import worker, messages
 
 from flumotion.common.messages import N_
 T_ = messages.gettexter('flumotion-transcoder')
 
-from flumotion.transcoder import utils, log
+from flumotion.transcoder import log, defer, utils
 
 KILL_TIMEOUT = 10
 
