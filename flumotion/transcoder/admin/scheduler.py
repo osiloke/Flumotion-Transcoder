@@ -11,9 +11,9 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum

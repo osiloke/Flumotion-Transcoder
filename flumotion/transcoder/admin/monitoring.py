@@ -11,13 +11,12 @@
 # Headers in this file shall remain intact.
 
 from zope.interface import Interface, implements
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log
-from flumotion.transcoder import utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import OperationTimedOutError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.taskmanager import TaskManager
@@ -153,16 +152,16 @@ class Monitoring(TaskManager, WorkerSetListener,
         d = defer.Deferred()
         for task in self.iterTasks():
             d.addCallback(self.__cbAddBalancedTask, task)
-        d.addCallback(utils.dropResult, self._balancer.balance)
+        d.addCallback(defer.dropResult, self._balancer.balance)
         d.addErrback(self.__ebStartupResumingFailure)
-        d.callback(defer._nothing)
+        d.callback(None)
         return d
     
     def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.MONITORING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
         # Call self._balancer.addTask(task, worker)
-        d.addCallback(utils.shiftResult, self._balancer.addTask, 1, task)
+        d.addCallback(defer.shiftResult, self._balancer.addTask, 1, task)
         return d
     
     def __ebStartupResumingFailure(self, failure):

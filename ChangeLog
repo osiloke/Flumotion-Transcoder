@@ -1,5 +1,16 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/monitoring.py
+	  (Monitoring.__cbStartResumeMonitoring,
+	  Monitoring.__cbAddBalancedTask):
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/notifier.py (notifyEmergency,
+	  notifyDebug):
+	* flumotion/transcoder/admin/scheduler.py:	  
+	Changed to use transcoder's version of defer.py.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/main.py (main):
 	Setup the debug notifiers for transcoder's log and defer modules.
 

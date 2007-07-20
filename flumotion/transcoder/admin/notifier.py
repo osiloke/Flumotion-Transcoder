@@ -15,11 +15,11 @@ import mimetypes
 
 from zope.interface import Interface, implements
 from twisted.python.failure import Failure
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.web import client
 from twisted.mail.smtp import ESMTPSenderFactory
 
-from flumotion.transcoder import log, utils
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import NotificationError
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
@@ -39,15 +39,16 @@ def notifyEmergency(msg, failure=None):
     This function can be used from anywere to notify
     emergency situations when no Notifier reference
     is available.
+    Do not raise any exception.
     """
 
-def notifyDebug(msg, failure=None):
+def notifyDebug(msg, failure=None, traceback=None):
     """
     This function can be used from anywere to notify
     debug information (like traceback) when no 
     Notifier reference is available.
+    Do not raise any exception.
     """
-
 
 class INotifierListener(Interface):
     pass
