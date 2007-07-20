@@ -34,6 +34,9 @@ class ActivityStore(log.LoggerProxy):
         
     def getLabel(self):
         return "Activity Store"
+    
+    def getIdentifier(self):
+        return self.getLabel()
         
     def getTranscodings(self, states):
         t = ActivityTypeEnum.transcoding
@@ -112,12 +115,13 @@ class BaseActivity(object):
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":
-                       {"getLabel":     ("label",     None),
-                        "getType":      ("type",      None),
-                        "getSubtype":   ("subtype",   None),
-                        "getStartTime": ("startTime", None),
-                        "getLastTime":  ("lastTime",  None),
-                        "getState":     ("state",     None)}}
+                       {"getLabel":      ("label",      None),
+                        "getIdentifier": ("identifier", None),
+                        "getType":       ("type",       None),
+                        "getSubtype":    ("subtype",    None),
+                        "getStartTime":  ("startTime",  None),
+                        "getLastTime":   ("lastTime",   None),
+                        "getState":      ("state",      None)}}
     
     # MetaStore metaclass will create setters for these properties
     __setters__ = {"basic":
@@ -204,6 +208,19 @@ class TranscodingActivity(BaseActivity):
     def __init__(self, parent, data, isNew=True):
         BaseActivity.__init__(self, parent, data, isNew)
         
+    def getCustomer(self):
+        assert not self._deleted
+        custName = self._data.customerName
+        return self._getAdminStore().getCustomer(custName, None)
+    
+    def getProfile(self):
+        assert not self._deleted
+        custName = self._data.customerName
+        cust = self._getAdminStore().getCustomer(custName, None)
+        if not cust:
+            return None
+        prof = cust.getProfile(self._data.profileName, None)
+        return prof
 
     ## Protected Methods ##
     
