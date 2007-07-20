@@ -19,11 +19,11 @@ import random
 import datetime
 from email.Utils import parseaddr, formataddr
 
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 
 from flumotion.common import enum
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.errors import OperationTimedOutError
 
 
@@ -293,15 +293,15 @@ def deepCopy(value):
     if isinstance(value, (str, int, float, long, enum.Enum, datetime.datetime)):
         return value
     if isinstance(value, dict):
-        return dict([(deepCopy(k), deepCopy(v)) for k, v in value.items()])
-    if isinstance(value, list):
-        return [deepCopy(v) for v in value]
-    if isinstance(value, set):
-        return set([deepCopy(v) for v in value])
-    raise TypeError("Invalid type for deepCopy of '%s' (%s)" 
+        return value.__class__([(deepCopy(k), deepCopy(v)) 
+                                for k, v in value.items()])
+    if isinstance(value, (list, tuple, set)):
+        return value.__class__([deepCopy(v) for v in value])
+    raise TypeError("Value type unsuported by deepCopy: \"%s\" (%s)" 
                     % (str(value), value.__class__.__name__))
 
-## Deferred Utility Functions ##
+
+## Timeout Utility Functions ##
 
 def callWithTimeout(timeout, callable, *args, **kwargs):
     d = callable(*args, **kwargs)
@@ -344,63 +344,3 @@ def cancelTimeout(timeout):
 
 def hasTimedOut(timeout):
     return timeout and not timeout.active()
-
-def delayedSuccess(result, delay):
-    """
-    Return a deferred wich callback will be called after a specified
-    time in second with the specified result.
-    """
-    d = defer.Deferred()
-    reactor.callLater(delay, d.callback, result)
-    return d
-
-def delayedFailure(failure, delay):
-    """
-    Return a deferred wich errback that will be called after a specified
-    time in second with the specified result.
-    """
-    d = defer.Deferred()
-    reactor.callLater(delay, d.errback, failure)
-    return d
-
-def dropResult(result, callable, *args, **kwargs):
-    """
-    Simply call a specified callback with specified
-    arguments ignoring the received result.
-    """
-    return callable(*args, **kwargs)
-
-def bridgeResult(result, callable, *args, **kwargs):
-    """
-    Simply call the given callable, ignore it's result
-    and return the old callback result.
-    """
-    callable(*args, **kwargs)
-    return result
-
-def resolveFailure(failure, result, *args):
-    """
-    Resolve an errorback.
-    If the failure's error type is in the specified
-    arguments, the specified result is returned,
-    otherwise the received failure is passed down. 
-    If no error type are specified, all failure 
-    will be resolved.
-    """
-    if (not args) or failure.check(args):
-        return result
-    return failure
-
-def overrideResult(result, newResult):
-    return newResult
-
-def shiftResult(result, callable, index, *args, **kwargs):
-    new = list(args)
-    new.insert(index, result)
-    return callable(*new, **kwargs)
-
-def logFailures(result, logger, newResult, taskDesc):
-    for succeed, failure in result:
-        if not succeed:
-            logger.logFailure(failure, "Failure during %s", taskDesc)
-    return newResult

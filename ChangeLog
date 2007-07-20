@@ -1,5 +1,11 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/utils.py (deepCopy):
+	Moved all deferred utility callbacks to defer.py.
+	Changed to use transcoder's version of defer.py. 
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/process.py:
 	Changed to use transcoder's version of defer.py.  
 
