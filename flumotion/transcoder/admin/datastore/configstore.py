@@ -18,7 +18,8 @@ class BaseConfig(object):
     __metaclass__ = MetaStore
     
     __getters__ = {"basic": 
-                       {"Type": ("type", None)}}
+                       {"getType":       ("type", None),
+                        "getIdentifier": ("identifier", None)}}
     
     def __init__(self, data):
         self._data = data        

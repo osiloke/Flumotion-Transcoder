@@ -1,5 +1,12 @@
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/notifystore.py
+	  (BaseNotification):	
+	* flumotion/transcoder/admin/datastore/configstore.py (BaseConfig):
+	Added getIdentifier getters to the store and the activities.
+
+2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/basestore.py (getter,
 	  BaseStore.__init__, BaseStore.waitDatasource):
 	Corrected a bug in the basic getter, the default value wasn't used.

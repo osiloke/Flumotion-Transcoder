@@ -20,7 +20,7 @@ class BaseNotification(object):
     __metaclass__ = MetaStore
     
     __getters__ = {"basic":
-                       {"getIndentifier": ("identifier", None),
+                       {"getIdentifier": ("identifier", None),
                         "getType":        ("type", None),
                         "getTriggers":    ("triggers", None)}}
                         
