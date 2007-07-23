@@ -94,7 +94,7 @@ class ActivityStore(log.LoggerProxy):
         a.state = state
         a.label = label
         a.startTime = startTime or datetime.datetime.now()
-        return ActivityFactory(self, a, True)
+        return ActivityFactory(self, self, a, True)
 
     def __cbWrapActivities(self, dataList):
         return [ActivityFactory(self, d, False) for d in dataList]
@@ -109,7 +109,7 @@ def _buildPropertyGetter(propertyName, default):
 
         
         
-class BaseActivity(object):
+class BaseActivity(log.LoggerProxy):
 
     __metaclass__ = MetaStore
     
@@ -151,7 +151,8 @@ class BaseActivity(object):
         return setter
 
     
-    def __init__(self, parent, data, isNew=True):
+    def __init__(self, logger, parent, data, isNew=True):
+        log.LoggerProxy.__init__(logger)
         self._parent = parent
         self._data = data
         self._deleted = False
@@ -205,8 +206,8 @@ class TranscodingActivity(BaseActivity):
     __getters__ = {"basic":
                        {"getInputRelPath": ("inputRelPath", None)}}
     
-    def __init__(self, parent, data, isNew=True):
-        BaseActivity.__init__(self, parent, data, isNew)
+    def __init__(self, logger, parent, data, isNew=True):
+        BaseActivity.__init__(self, logger, parent, data, isNew)
         
     def getCustomer(self):
         assert not self._deleted
@@ -242,8 +243,8 @@ class BaseNotifyActivity(BaseActivity):
                         "getRetryCount": ("retryCount", None),
                         "getRetryMax":   ("retryMax",   None)}}
     
-    def __init__(self, parent, data, isNew=True):
-        BaseActivity.__init__(self, parent, data, isNew)
+    def __init__(self, logger, parent, data, isNew=True):
+        BaseActivity.__init__(self, logger, parent, data, isNew)
 
     def incRetryCount(self):
         assert not self._deleted
@@ -280,8 +281,8 @@ class GETRequestNotifyActivity(BaseNotifyActivity):
     __setters__ = {"data":
                        {"setRequestURL": ("url",)}}
 
-    def __init__(self, parent, data, isNew=True):
-        BaseNotifyActivity.__init__(self, parent, data, isNew)
+    def __init__(self, logger, parent, data, isNew=True):
+        BaseNotifyActivity.__init__(self, logger, parent, data, isNew)
 
 
 class MailNotifyActivity(BaseNotifyActivity):
@@ -298,8 +299,8 @@ class MailNotifyActivity(BaseNotifyActivity):
                         "setSubject":    ("subject",),
                         "setBody":       ("body",)}}
 
-    def __init__(self, parent, data, isNew=True):
-        BaseNotifyActivity.__init__(self, parent, data, isNew)
+    def __init__(self, logger, parent, data, isNew=True):
+        BaseNotifyActivity.__init__(self, logger, parent, data, isNew)
 
 #    def getBody(self):
 #        """

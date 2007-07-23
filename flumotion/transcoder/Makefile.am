@@ -1,5 +1,7 @@
 include $(top_srcdir)/common/python.mk
 
+SUBDIRS = admin manager
+
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder
 
 python_PYTHON = __init__.py inifile.py properties.py \

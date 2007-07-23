@@ -16,11 +16,12 @@ from flumotion.transcoder import log
 
 from flumotion.transcoder.admin.datasource import datasource
 
+
 class SQLDataSource(log.Loggable):
     
     implements(datasource.IDataSource)
     
-    def __ini__(self, uri):
+    def __init__(self, uri):
         self._uri = uri
         
     

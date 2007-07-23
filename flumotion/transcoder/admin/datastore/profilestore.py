@@ -179,7 +179,7 @@ class ProfileStore(BaseStore):
         if (target.getName() in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
                    "dropping the new one" 
-                   % (self.getProfile().getName(), target.getName()))
+                   % (self.getName(), target.getName()))
             self.warning(msg)
             error = StoreError(msg)
             target._abort(error)

@@ -18,6 +18,7 @@ from flumotion.transcoder import log
 class EventSource(object):
     """
     Manage listeners to events.
+    Assume the child classes implement ILogger.
     """
     
     def __init__(self, interfaces):        

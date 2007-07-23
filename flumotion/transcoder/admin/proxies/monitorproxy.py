@@ -10,8 +10,6 @@
 
 # Headers in this file shall remain intact.
 
-import os
-
 from zope.interface import implements
 
 from flumotion.transcoder import utils

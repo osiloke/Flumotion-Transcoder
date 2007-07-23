@@ -11,7 +11,6 @@
 # Headers in this file shall remain intact.
 
 import email
-import mimetypes
 
 from zope.interface import Interface, implements
 from twisted.python.failure import Failure
@@ -231,7 +230,7 @@ class Notifier(log.Loggable,
             return
         activity.store()
         dc = reactor.callLater(activity.getRetrySleep(),
-                               self.__doPerformNotification,
+                               self.__performNotification,
                                activity)
         self._retries[activity] = dc
         

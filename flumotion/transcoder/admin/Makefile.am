@@ -1,5 +1,7 @@
 include $(top_srcdir)/common/python.mk
 
+SUBDIRS = context datasource datastore proxies
+
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin
 
 python_PYTHON = __init__.py main.py admin.py adminconfig.py adminelement.py \

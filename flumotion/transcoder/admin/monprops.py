@@ -12,8 +12,6 @@
 
 # Headers in this file shall remain intact.
 
-import copy
-
 from zope.interface import implements
 
 from flumotion.common import log

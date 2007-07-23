@@ -151,7 +151,6 @@ class CounterWaiters(BaseWaiters):
         self._result = result
         
     def isWaiting(self):
-        from flumotion.transcoder import log
         return self._target != self._counter
         
     def wait(self, timeout=None):

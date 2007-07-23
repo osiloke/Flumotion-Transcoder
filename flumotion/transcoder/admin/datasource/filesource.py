@@ -11,7 +11,6 @@
 # Headers in this file shall remain intact.
 
 import os
-import random
 import shutil
 
 from zope.interface import implements
@@ -73,6 +72,9 @@ class ImmutableDataWrapper(object):
 
 
 class MutableDataWrapper(object):
+    """
+    Right now this class make the assumption it's used for activities.
+    """
     
     def __init__(self, parent, template, identifier=None, 
                  data=None, fields=None, **overrides):
@@ -128,9 +130,7 @@ class MutableDataWrapper(object):
         return False
 
     def _clone(self):
-        new = self.__class__(self._template, self._data, self._fields)
-        new.__dict__["_changed"] = self._changed
-        return new
+        return self.__class__(self._template, self._data, self._fields)
     
     def __getattr__(self, attr):
         if attr.startswith('_'):

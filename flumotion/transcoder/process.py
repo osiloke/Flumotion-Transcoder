@@ -13,7 +13,6 @@
 # Headers in this file shall remain intact.
 
 import os
-import re
 import socket
 import signal
 

@@ -14,7 +14,6 @@
 
 import os
 import ConfigParser
-import codecs
 
 from flumotion.transcoder import properties
 

@@ -198,7 +198,7 @@ class CustomerStore(BaseStore):
         if (profile.getName() in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
                    "dropping the new one" 
-                   % (self.getCustomer().getName(), profile.getName()))
+                   % (self.getName(), profile.getName()))
             self.warning(msg)
             error = StoreError(msg)
             profile._abort(error)

@@ -296,13 +296,6 @@ class TranscodingTask(AdminTask, TranscoderListener):
                          "goes to error status", self.getLabel(), 
                          transcoder.getName())
             self.__transcodingFailed(transcoder)
-        elif status == TranscoderStatusEnum.aborted:
-            self.info("Transcoding task '%s' aborted", self.getLabel())
-            # Handled by the __cbCheckForAbortedTranscoder set in 
-            # onComponentMoodChanged
-            # Not done here because components could abort before
-            # beeing able to send UI State events.
-            # It's assumed that the components go sad after aborting.
         else:
             self.warning("Unexpected transcoder status/state combination.")
             self._abort()

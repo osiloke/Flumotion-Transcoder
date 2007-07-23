@@ -11,14 +11,13 @@
 # Headers in this file shall remain intact.
 
 import re
-import sys
-import traceback
 import StringIO
+
+from zope.interface import Interface, implements
 
 from twisted.python.failure import Failure
 
 from flumotion.common import log as flog
-
 from flumotion.transcoder.errors import TranscoderError
 
 
@@ -51,9 +50,38 @@ WARN = flog.WARN
 ERROR = flog.ERROR
 
 
+class ILogger(Interface):
+    
+    def logFailure(self, *args, **kwargs):
+        pass
+        
+    def logException(self, *args, **kwargs):
+        pass
+    
+    def warnAndRaise(self, *args, **kwargs):
+        pass
+    
+    def log(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def warning(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+
 ## Transcoder's Loggable ##
 
 class Loggable(flog.Loggable):
+    
+    implements(ILogger)
     
     def logFailure(self, failure, template, *args, **kwargs):
         global logFailure
@@ -134,6 +162,8 @@ def cleanTraceback(tb):
 
 
 class LoggerProxy(object):
+
+    implements(ILogger)
 
     def __init__(self, logger, **kwargs):
         self.setLogger(logger, **kwargs)

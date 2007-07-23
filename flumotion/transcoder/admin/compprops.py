@@ -41,6 +41,9 @@ class ComponentPropertiesMixin(object):
     def __ne__(self, props):
         return not self.__eq__(props)
 
+    def getDigest(self):
+        pass
+
 
 class GenericComponentProperties(ComponentPropertiesMixin):
     

@@ -35,7 +35,7 @@ from flumotion.transcoder.admin.proxies.fluproxy import FlumotionProxy
 _componentRegistry = {}
 
 def registerProxy(type, cls):
-    assert not (type in _componentRegistry), "Already Registered"
+    #assert not (type in _componentRegistry), "Already Registered"
     _componentRegistry[type] = cls
     
 def getProxyClass(state, domain):
@@ -136,7 +136,7 @@ class BaseComponentProxy(FlumotionProxy):
         return self._worker
     
     def getRequestedWorkerName(self):
-        self._requestedWorkerName
+        return self._requestedWorkerName
     
     def getRequestedWorker(self):
         if self._requestedWorkerName:
@@ -249,15 +249,7 @@ class BaseComponentProxy(FlumotionProxy):
             return defer.fail(err)
         return self._worker._callRemote("killJob", self._getAvatarId(), sig)
 
-    ## Virtual Methods ##
-    
-    def _onSetUIState(self, uiState):
-        pass
-    
-    def _onUnsetUIState(self, uiState):
-        pass
 
-    
     ## Overriden Methods ##
     
     def _doSyncListener(self, listener):
@@ -304,6 +296,15 @@ class BaseComponentProxy(FlumotionProxy):
 
 
     ## Protected Virtual Methods ##
+
+    def _doBroadcastUIState(self, uiState):
+        pass
+
+    def _onSetUIState(self, uiState):
+        pass
+    
+    def _onUnsetUIState(self, uiState):
+        pass
 
     def _doExtractProperties(self, workerContext, state):
         conf = state.get("config")
@@ -591,9 +592,6 @@ class ComponentProxy(BaseComponentProxy):
 
         
     ## Virtual Methods ##
-    
-    def _doBroadcastUIState(self, uiState):
-        pass
     
     def _onUIStateSet(self, uiState, key, value):
         pass

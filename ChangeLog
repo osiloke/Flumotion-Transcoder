@@ -1,3 +1,52 @@
+2007-07-23  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Makefile.am:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/admin.py
+	  (TranscoderAdmin.__ebSartupFailed,
+	  TranscoderAdmin.__ebResumingFailed,
+	  TranscoderAdmin.__ebPausingFailed):
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement._unexpectedError):
+	* flumotion/transcoder/admin/compprops.py
+	  (ComponentPropertiesMixin.getDigest):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (MutableDataWrapper, MutableDataWrapper._clone):
+	* flumotion/transcoder/admin/datasource/sqlsource.py (SQLDataSource,
+	  SQLDataSource.__init__):
+	* flumotion/transcoder/admin/datastore/activitystore.py
+	  (ActivityStore.__newActivity, BaseActivity, BaseActivity.__init__,
+	  TranscodingActivity.__init__, BaseNotifyActivity.__init__,
+	  GETRequestNotifyActivity.__init__, MailNotifyActivity.__init__):
+	* flumotion/transcoder/admin/datastore/customerstore.py
+	  (CustomerStore.__cbProfileInitialized):
+	* flumotion/transcoder/admin/datastore/profilestore.py
+	  (ProfileStore.__cbTargetInitialized):
+	* flumotion/transcoder/admin/eventsource.py (EventSource):
+	* flumotion/transcoder/admin/monprops.py:
+	* flumotion/transcoder/admin/notifier.py
+	  (Notifier.__retryNotification):
+	* flumotion/transcoder/admin/proxies/componentproxy.py (registerProxy,
+	  BaseComponentProxy.getRequestedWorkerName, BaseComponentProxy.signal,
+	  BaseComponentProxy._doBroadcastUIState,
+	  BaseComponentProxy._onSetUIState,
+	  BaseComponentProxy._onUnsetUIState):
+	* flumotion/transcoder/admin/proxies/componentset.py
+	  (ComponentSetSkeleton.__waitComponentTimeout):
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	* flumotion/transcoder/admin/transbalancer.py:
+	* flumotion/transcoder/admin/transtask.py:
+	* flumotion/transcoder/admin/waiters.py:
+	* flumotion/transcoder/inifile.py:
+	* flumotion/transcoder/log.py (ILogger, ILogger.logFailure,
+	  ILogger.logException, ILogger.warnAndRaise, ILogger.log,
+	  ILogger.debug, ILogger.info, ILogger.warning, ILogger.error,
+	  Loggable, LoggerProxy):
+	* flumotion/transcoder/pipelinecrawler.py (printPipeline):
+	* flumotion/transcoder/process.py:
+	Small changes to please PyChecker (And correct bugs).
+
 2007-07-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/base.xml:

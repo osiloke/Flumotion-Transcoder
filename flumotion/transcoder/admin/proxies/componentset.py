@@ -235,7 +235,7 @@ class ComponentSetSkeleton(RootFlumotionProxy,
             self._doRemoveComponent(component)
             
     def __waitComponentTimeout(self, identifier, d):
-        to = self._compWaiters[identifier].pop(d)
+        self._compWaiters[identifier].pop(d)
         err = OperationTimedOutError("Timeout waiting for component '%s'" 
                                      % identifier)
         d.errback(err)

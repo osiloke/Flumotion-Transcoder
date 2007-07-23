@@ -186,4 +186,4 @@ def crawlPipeline(pipeline, visitor):
 def printPipeline(pipeline, file=sys.stdout):
     visitor = PrintVisitor(file)
     crawler = PipelineCrawler(visitor)
-    crawler.crawlPipline(pipeline)
+    crawler.crawlPipeline(pipeline)

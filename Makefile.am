@@ -8,7 +8,15 @@ include $(srcdir)/common/pychecker.mk
 SUBDIRS = common conf misc bin transcoder flumotion tests
 
 PYCHECKER_WHITELIST = \
-	flumotion/transcoder/*.py
+	flumotion/transcoder/*.py \
+	flumotion/transcoder/manager/*.py \
+	flumotion/transcoder/admin/*.py \
+	flumotion/transcoder/admin/context/*.py \
+	flumotion/transcoder/admin/datasource/*.py \
+	flumotion/transcoder/admin/datastore/*.py \
+	flumotion/transcoder/admin/proxies/*.py
+
+PYCHECKER_BLACKLIST = 
 
 EXTRA_DIST = \
 	LICENSE.Flumotion \

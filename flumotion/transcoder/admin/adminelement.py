@@ -309,7 +309,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Can be use by all child classes when adding
         a callback that is not expected to fail.
         """
-        self.logfailure(failure, "Unexpected Failure")
+        self.logFailure(failure, "Unexpected Failure")
         #Resolve the failure.
         return
 
