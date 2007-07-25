@@ -188,16 +188,24 @@ class FileMonitor(component.BaseComponent):
     
     ## Private Methods ##
     
-    def __notifyDebug(self, msg, failure=None, traceback=None):
-        debug = []
+    def __notifyDebug(self, msg, info=None, debug=None, 
+                      failure=None, exception=None):
+        infoMsg = ["File Monitor Debug Notification: %s" % msg]
+        debugMsg = []
+        if info:
+            infoMsg.append("Information:\n\n%s" % info)
+        if debug:
+            debugMsg.append("Additional Debug Info:\n\n%s" % debug)
         if failure:
-            debug.append("Failure Message: %s\nFailure Traceback:\n%s"
-                         % (log.getFailureMessage(failure),
-                            log.getFailureTraceback(failure)))
-        if traceback:
-            debug.append("Additional Traceback:\n%s" % traceback)            
-        m = messages.Warning(T_("File Monitor Debug Notification: %s" % msg),
-                             debug="\n\n".join(debug))
+            debugMsg.append("Failure Message: %s\nFailure Traceback:\n%s"
+                            % (log.getFailureMessage(failure),
+                               log.getFailureTraceback(failure)))
+        if exception:
+            debugMsg.append("Exception Message: %s\n\nException Traceback:\n%s"
+                            % (log.getExceptionMessage(exception),
+                               log.getExceptionTraceback(exception)))
+        m = messages.Warning(T_("\n\n".join(infoMsg)),
+                             debug="\n\n".join(debugMsg))
         self.addMessage(m)
     
     def __ebErrorFilter(self, failure, task=None):
@@ -208,18 +216,20 @@ class FileMonitor(component.BaseComponent):
     def __monitorError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        log.logFailure(self, failure, "Monitoring error%s",
-                       (task and " during %s" % task) or "",
-                       cleanTraceback=True)
+        log.notifyFailure(self, failure,
+                          "Monitoring error%s",
+                          (task and " during %s" % task) or "",
+                          cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
     def __unexpectedError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
-        log.logFailure(self, failure, "Unexpected error%s",
-                       (task and " during %s" % task) or "",
-                       cleanTraceback=True)
+        log.notifyFailure(self, failure,
+                          "Unexpected error%s",
+                          (task and " during %s" % task) or "",
+                          cleanTraceback=True)
         m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)

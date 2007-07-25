@@ -317,17 +317,25 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     ## Private Methods ##
     
-    def __notifyDebug(self, msg, failure=None, traceback=None):
-        debug = []
+    def __notifyDebug(self, msg, info=None, debug=None,
+                      failure=None, exception=None):
+        infoMsg = ["File Transcoder Debug Notification: %s" % msg]
+        debugMsg = []
+        if info:
+            infoMsg.append("Information:\n\n%s" % info)
+        if debug:
+            debugMsg.append("Additional Debug Info:\n\n%s" % debug)
         if failure:
-            debug.append("Failure Message: %s\n\nFailure Traceback:\n%s"
-                         % (log.getFailureMessage(failure),
-                            log.getFailureTraceback(failure)))
-        if traceback:
-            debug.append("Additional Traceback:\n%s" % traceback)            
-        m = messages.Warning(T_("File Monitor Debug Notification: %s" % msg),
-                             debug="\n\n\n".join(debug))
-        self.addMessage(m)    
+            debugMsg.append("Failure Message: %s\nFailure Traceback:\n%s"
+                            % (log.getFailureMessage(failure),
+                               log.getFailureTraceback(failure)))
+        if exception:
+            debugMsg.append("Exception Message: %s\n\nException Traceback:\n%s"
+                            % (log.getExceptionMessage(exception),
+                               log.getExceptionTraceback(exception)))
+        m = messages.Warning(T_("\n\n".join(infoMsg)),
+                             debug="\n\n".join(debugMsg))
+        self.addMessage(m)
     
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(TranscoderError, PropertyError):
@@ -343,9 +351,10 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if not failure:
             failure = Failure()
         self.onJobError(failure.getErrorMessage())
-        log.logFailure(self, failure, "Transocding error%s",
-                       (task and " during %s" % task) or "", 
-                       cleanTraceback=True)
+        log.notifyFailure(self, failure,
+                          "Transocding error%s",
+                          (task and " during %s" % task) or "", 
+                          cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
         
@@ -354,9 +363,10 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if not failure:
             failure = Failure()
         self.onJobError(failure.getErrorMessage())
-        log.logFailure(self, failure, "Unexpected error%s",
-                       (task and " during %s" % task) or "", 
-                       cleanTraceback=True)
+        log.notifyFailure(self, failure,
+                          "Unexpected error%s",
+                          (task and " during %s" % task) or "", 
+                          cleanTraceback=True)
         m = messages.Error(T_(failure.getErrorMessage()), 
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
@@ -374,8 +384,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
-            log.logException(self, e, "Unexpected exception",
-                             cleanTraceback=True)
+            log.notifyException(self, e,
+                                "Unexpected exception",
+                                cleanTraceback=True)
             self.__unexpectedError()
         
     
@@ -394,8 +405,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:
-            log.logException(self, e, "Unexpected exception",
-                             cleanTraceback=True)
+            log.notifyException(self, e,
+                                "Unexpected exception",
+                                cleanTraceback=True)
             self.__unexpectedError()
 
     def __cbJobTerminated(self, result):
@@ -405,8 +417,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             # Acknowledge return the transcoding status
             return self._status
         except Exception, e:
-            log.logException(self, e, "Unexpected exception",
-                             cleanTraceback=True)
+            log.notifyException(self, e,
+                                "Unexpected exception",
+                                cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
@@ -426,8 +439,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.__terminate(self._report, self._status)
             return failure
         except Exception, e:
-            log.logException(self, e, "Unexpected exception", 
-                             cleanTraceback=True)
+            log.notifyException(self, e,
+                                "Unexpected exception", 
+                                cleanTraceback=True)
             self.__unexpectedError()
             # Reraise for the do_acknowledge call to return the failure
             raise e
@@ -458,8 +472,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         d.addErrback(self.__ebDiagnoseAcknowledgeFail)
         
     def __ebDiagnoseAcknowledgeFail(self, failure):
-        log.logFailure(self, failure, "Acknowledgment failed",
-                       cleanTraceback=True)
+        log.notifyFailure(self, failure,
+                          "Acknowledgment failed",
+                          cleanTraceback=True)
         reactor.callLater(0, reactor.stop)
         
     def __finalizeStandardMode(self, report, succeed):
@@ -481,7 +496,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if report.fatalError:
             fatal += 1
         total = len(report.errors)
-        for t in report.targets:
+        for t in report.targets.values():
             if not t:
                 continue
             if t.fatalError:

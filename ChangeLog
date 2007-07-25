@@ -1,5 +1,21 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitor.__notifyDebug, FileMonitor.__monitorError,
+	  FileMonitor.__unexpectedError):
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__notifyDebug, FileTranscoder.__transcodingError,
+	  FileTranscoder.__unexpectedError, FileTranscoder.__cbJobDone,
+	  FileTranscoder.__ebJobFailed, FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError,
+	  FileTranscoder.__ebDiagnoseAcknowledgeFail,
+	  FileTranscoder.__terminateDiagnoseMode):
+	Added parameter to the notify method.
+	Renamed log.logFailure and log.logException 
+	to log.notifyFailure and log.notifyException.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* doc/requirments-specifications.txt:
 	Updated the substitution variable specification.
 
@@ -158,22 +174,6 @@
 	  TranscoderJob._getPreProcessVars, TranscoderJob._getPostProcessVars,
 	  TranscoderJob._fireJobInfo):
 	Normalized substitution variables.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/component/transcoder/filemonitor.py
-	  (FileMonitor.__notifyDebug, FileMonitor.__monitorError,
-	  FileMonitor.__unexpectedError):
-	* flumotion/component/transcoder/filetranscoder.py
-	  (FileTranscoder.__notifyDebug, FileTranscoder.__transcodingError,
-	  FileTranscoder.__unexpectedError, FileTranscoder.__cbJobDone,
-	  FileTranscoder.__ebJobFailed, FileTranscoder.__cbJobTerminated,
-	  FileTranscoder.__ebAcknowledgeError,
-	  FileTranscoder.__ebDiagnoseAcknowledgeFail,
-	  FileTranscoder.__terminateDiagnoseMode):
-	Added parameter to the notify method.
-	Renamed log.logFailure and log.logException 
-	to log.notifyFailure and log.notifyException.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
