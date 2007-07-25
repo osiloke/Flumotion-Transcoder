@@ -1,5 +1,11 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/eventsource.py (EventSource._fireEventTo,
+	  EventSource._fireEvent, EventSource._fireEventWithoutPayload):
+	Now use log.notifyException().
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	Added global notification timeout constants.
 
@@ -150,12 +156,6 @@
 	  Notifier.__prepareNotification, Notifier.__performNotification):
 	Implemented the notification methods and functions.
 	Corrected bug in core notification methods.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/admin/eventsource.py (EventSource._fireEventTo,
-	  EventSource._fireEvent, EventSource._fireEventWithoutPayload):
-	Now use log.notifyException().
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 

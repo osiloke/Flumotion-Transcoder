@@ -103,10 +103,7 @@ class EventSource(object):
             else:
                 getattr(listener, method)(self, payload, *args, **kwargs)
         except Exception, e:
-            self.warning("Error triggering event %s: %s"
-                         % (event, log.getExceptionMessage(e)))
-            self.debug("Traceback of event %s error:\n%s",
-                       event, log.getExceptionTraceback(e))
+            log.notifyException(self, e,  "Error triggering event %s", event)
     
     def _fireEvent(self, payload, event, interface=None):
         """
@@ -128,10 +125,7 @@ class EventSource(object):
                 else:
                     getattr(listener, method)(self, payload, *args, **kwargs)
         except Exception, e:
-            self.warning("Error triggering event %s: %s"
-                         % (event, log.getExceptionMessage(e)))
-            self.debug("Traceback of event %s error:\n%s",
-                       event, log.getExceptionTraceback(e))
+            log.notifyException(self, e,  "Error triggering event %s", event)
             
     def _fireEventWithoutPayload(self, event, interface=None):
         try:
@@ -144,8 +138,5 @@ class EventSource(object):
             for listener, (args, kwargs) in self._listeners[interface].items():
                 getattr(listener, method)(self, *args, **kwargs)
         except Exception, e:
-            self.warning("Error triggering event %s: %s"
-                         % (event, log.getExceptionMessage(e)))
-            self.debug("Traceback of event %s error:\n%s",
-                       event, log.getExceptionTraceback(e))
+            log.notifyException(self, e,  "Error triggering event %s", event)
 
