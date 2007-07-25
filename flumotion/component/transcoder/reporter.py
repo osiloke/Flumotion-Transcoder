@@ -262,8 +262,8 @@ class SourceReporter(object):
 
 class TargetReporter(CPUUsageMixin):
     
-    def __init__(self, local, rootReport, targetIndex):
-        report = rootReport.targets[targetIndex]
+    def __init__(self, local, rootReport, targetKey):
+        report = rootReport.targets[targetKey]
         CPUUsageMixin.__init__(self, report, 
                                {"postprocess": "cpuUsagePostprocess",
                                 "analyse": "cpuUsageAnalyse"})
@@ -277,7 +277,7 @@ class TargetReporter(CPUUsageMixin):
     def setFatalError(self, error):
         self.report.fatalError = error
         
-    def hasFatalError(self, targetIndex=None):
+    def hasFatalError(self, targetKey=None):
         return self.report.fatalError != None
     
     def getMediaLength(self):
@@ -332,8 +332,8 @@ class Reporter(CPUUsageMixin):
     def getSourceReporter(self):
         return SourceReporter(self.report)
     
-    def getTargetReporter(self, targetIndex):
-        return TargetReporter(self.local, self.report, targetIndex)
+    def getTargetReporter(self, targetKey):
+        return TargetReporter(self.local, self.report, targetKey)
 
     def addError(self, error=None):
         _addTaskError(self.report, error)
@@ -341,7 +341,7 @@ class Reporter(CPUUsageMixin):
     def setFatalError(self, error):
         self.report.fatalError = error
         
-    def hasFatalError(self, targetIndex=None):
+    def hasFatalError(self, targetKey=None):
         return self.report.fatalError != None
         
     def crawlPipeline(self, pipeline, targetBins):
@@ -350,12 +350,12 @@ class Reporter(CPUUsageMixin):
         crawler.crawlPipeline(pipeline)
         for c, v in visitor.getCommands().iteritems():
             self.report.source.pipeline[c] = v
-        for targetIndex, bins in targetBins.iteritems():
+        for targetKey, bins in targetBins.iteritems():
             visitor.clean()
             crawler.clean()
             for name, bin in bins.iteritems():
                 crawler.crawlBin(bin)
             for c, v in visitor.getCommands().iteritems():
-                self.report.targets[targetIndex].pipeline[c] = v
+                self.report.targets[targetKey].pipeline[c] = v
     
         

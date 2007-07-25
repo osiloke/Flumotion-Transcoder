@@ -1,5 +1,16 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py (TargetContext.__init__,
+	  Context.getTargetContext, Context.getTargetContexts,
+	  Context.getLinkDir, Context.getOutputWorkDir,
+	  Context.getLinkWorkDir):
+	* flumotion/component/transcoder/reporter.py (TargetReporter.__init__,
+	  TargetReporter.hasFatalError, Reporter.getTargetReporter,
+	  Reporter.hasFatalError, Reporter.crawlPipeline):	  
+	Made the targets properies dictionaries insteed of list.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
 	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
 	  TranscoderAdmin.onAttached, TranscoderAdmin.onComponentAddedToSet,
@@ -227,17 +238,6 @@
 	and made them module function only to prevent 
 	confusion between transcoder's Loggable and 
 	flumotion's Loggable.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/component/transcoder/context.py (TargetContext.__init__,
-	  Context.getTargetContext, Context.getTargetContexts,
-	  Context.getLinkDir, Context.getOutputWorkDir,
-	  Context.getLinkWorkDir):
-	* flumotion/component/transcoder/reporter.py (TargetReporter.__init__,
-	  TargetReporter.hasFatalError, Reporter.getTargetReporter,
-	  Reporter.hasFatalError, Reporter.crawlPipeline):	  
-	Made the targets properies dictionaries insteed of list.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 

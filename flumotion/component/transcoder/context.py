@@ -97,16 +97,16 @@ class TargetContext(TaskContext):
                  TargetTypeEnum.audiovideo: (True, True, True),
                  TargetTypeEnum.thumbnails: (False, False, False)}
     
-    def __init__(self, context, targetIndex):
+    def __init__(self, context, targetKey):
         tag = "(%s:%s:%s) " % (context.config.customer.name,
                                context.config.profile.label,
-                               context.config.targets[targetIndex].label)
-        reporter = context.reporter.getTargetReporter(targetIndex)
+                               context.config.targets[targetKey].label)
+        reporter = context.reporter.getTargetReporter(targetKey)
         TaskContext.__init__(self, context._logger, reporter, tag)
         self.local = context.local
         self._profile = context.config.profile
-        self.config = context.config.targets[targetIndex]
-        self.index = targetIndex
+        self.config = context.config.targets[targetKey]
+        self.key = targetKey
         self._random = "%d-%04d" % (os.getpid(),
                                     int(random.random()*10000))
 
@@ -248,12 +248,12 @@ class Context(TaskContext):
     def getSourceContext(self):
         return self._sourceCtx
     
-    def getTargetContext(self, targetIndex):
-        return TargetContext(self, targetIndex)
+    def getTargetContext(self, targetKey):
+        return TargetContext(self, targetKey)
     
     def getTargetContexts(self):
-        return [TargetContext(self, index) 
-                for index, config in enumerate(self.config.targets)
+        return [TargetContext(self, key) 
+                for key, config in self.config.targets.items()
                 if config != None]
 
     def getInputDir(self):        
@@ -264,5 +264,11 @@ class Context(TaskContext):
     def getOutputDir(self):
         return self.config.profile.outputDir.localize(self.local)
     
-    def getWorkDir(self):
+    def getLinkDir(self):
+        return self.config.profile.linkDir.localize(self.local)
+    
+    def getOutputWorkDir(self):
+        return self.config.profile.workDir.localize(self.local)
+    
+    def getLinkWorkDir(self):
         return self.config.profile.workDir.localize(self.local)
