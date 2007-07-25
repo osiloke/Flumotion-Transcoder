@@ -1,5 +1,22 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/base.xml:
+	* flumotion/component/transcoder/filetranscoder.xml:
+	Made the properties.py a base module for all components.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* doc/requirments-specifications.txt:
+	Updated the substitution variable specification.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder-admin.ini:
+	* flumotion/transcoder/admin/adminconfig.py (NotifierConfig):
+	Made diffrent email sender for debug and emergency emails.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* TODO:
 	Updated the TODO file.
 
