@@ -14,17 +14,20 @@ import os
 
 from zope.interface import implements
 
-from flumotion.transcoder import utils, inifile, log
+from flumotion.transcoder import utils, inifile, log, defer
 from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.admin.transprops import TranscoderProperties
+from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
+from flumotion.transcoder.admin.waiters import AssignWaiters
+from flumotion.transcoder.admin.document import FileDocument
 
 
 class ITranscoderListener(IComponentListener):
@@ -73,6 +76,7 @@ class TranscoderProxy(ComponentProxy):
                                 componentContext, 
                                 componentState, domain,
                                 ITranscoderListener)
+        self._reportPath = AssignWaiters("Transcoder report")
     
         
     ## Public Methods ##
@@ -108,11 +112,30 @@ class TranscoderProxy(ComponentProxy):
     def waitIsAcknowledged(self, timeout=None):
         return self._waitUIDictValue("job-data", "acknowledged", 
                                      False, timeout)
+
+    def getReport(self):
+        return self.__loadReport(self.__getReportPath())
     
-    def getReport(self, timeout=None):
-        d = utils.callWithTimeout(timeout, self._callRemote, "getReportPath")
-        d.addCallback(self.__cbLoadReport)
+    def waitReport(self, timeout=None):
+        # Prevent blocking if not running and no report path has been received
+        if self.isRunning():
+            d = self._reportPath.wait(timeout)
+        else:
+            d = defer.succeed(self.__getReportPath())
+        d.addCallback(self.__loadReport)
         return d
+    
+    def getDocuments(self):
+        docs = []
+        path = self.__getConfigPath()
+        if path:
+            doc = self.__wrapDocument(path, DocumentTypeEnum.trans_config)
+            docs.append(doc)
+        path = self.__getReportPath()
+        if path:
+            doc = self.__wrapDocument(path, DocumentTypeEnum.trans_report)
+            docs.append(doc)
+        return docs
     
     def acknowledge(self, timeout=None):
         return utils.callWithTimeout(timeout, self._callRemote, "acknowledge")        
@@ -125,7 +148,9 @@ class TranscoderProxy(ComponentProxy):
                        "status":    ("_onTranscoderStatusChanged", None, 
                                      TranscoderStatusEnum.pending),
                        "job-state": ("_onTranscoderJobStateChanged", None, 
-                                     JobStateEnum.pending)}}
+                                     JobStateEnum.pending),
+                       "transcoding-report": ("_onTranscodingReport", 
+                                              None, None)}}
     
     def _doBroadcastUIState(self, uiState):
         for key, handlers in self._handlerLookup.iteritems():
@@ -134,7 +159,7 @@ class TranscoderProxy(ComponentProxy):
                 if not handler[0]:
                     continue
                 if (not (subkey in keyState)) or (keyState == None):
-                    if handlers[2] != None:
+                    if handler[2] != None:
                         getattr(self, handler[0])(handlers[2])
                 else:
                     getattr(self, handler[0])(keyState.get(subkey))
@@ -178,13 +203,35 @@ class TranscoderProxy(ComponentProxy):
     def _onTranscoderJobStateChanged(self, state):
         self._fireEvent(state, "TranscoderJobStateChanged")
 
+    def _onTranscodingReport(self, reportVirtPath):
+        if not reportVirtPath:
+            self._reportPath.setValue(None)
+        else:
+            context = self.getContext()
+            local = context.group.manager.admin.getLocal()
+            self._reportPath.setValue(reportVirtPath.localize(local))
+
     
     ## Private Methodes ##
     
-    def __cbLoadReport(self, path):
+    def __getConfigPath(self):
+        virtPath = self.getProperties().getConfigPath()
+        if not virtPath:
+            return None
         context = self.getContext()
         local = context.group.manager.admin.getLocal()
-        localPath = VirtualPath(path).localize(local)
+        return virtPath.localize(local)
+        
+    def __getReportPath(self):
+        return self._reportPath.getValue()
+    
+    def __wrapDocument(self, localPath, type):
+        return FileDocument(type, os.path.basename(localPath),
+                            localPath, "plain/text")
+    
+    def __loadReport(self, localPath):
+        if not localPath:
+            return None
         if not os.path.exists(localPath):
             message = ("Transcoder report file '%s' not found" % localPath)
             self.log.warning("%s", message)
