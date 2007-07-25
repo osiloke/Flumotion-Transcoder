@@ -13,6 +13,7 @@
 from zope.interface import implements
 from twisted.internet import reactor
 
+from flumotion.common import messages
 from flumotion.common.enum import EnumClass
 
 from flumotion.transcoder import log, defer, utils
@@ -23,6 +24,8 @@ from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
+from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
+from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.workerset import WorkerSet
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
 from flumotion.transcoder.admin.proxies.monitorset import MonitorSet
@@ -34,11 +37,18 @@ from flumotion.transcoder.admin.monitoring import Monitoring, MonitoringListener
 from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
 from flumotion.transcoder.admin.transcoding import Transcoding
 from flumotion.transcoder.admin.scheduler import Scheduler, SchedulerListener
-from flumotion.transcoder.admin.notifier import Notifier
+from flumotion.transcoder.admin.notifier import Notifier, notifyEmergency, notifyDebug
 
+# Should not be necessary, but right now it is
+from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
+from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
 class TranscoderAdmin(log.Loggable,
                       ManagerSetListener,
+                      ComponentSetListener,
+                      #ComponentListener,
+                      TranscoderListener,
+                      MonitorListener,
                       MonitoringListener,
                       MonitoringTaskListener,
                       SchedulerListener,
@@ -56,13 +66,16 @@ class TranscoderAdmin(log.Loggable,
                                   self._store.getActivityStore())
         self._transCtx = TranscodingContext(self._adminCtx, self._store)
         self._managers = ManagerSet(self._adminCtx)
+        self._components = ComponentSet(self._managers)
         self._workers = WorkerSet(self._managers)
         self._transcoders = TranscoderSet(self._managers)
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
         self._scheduler = Scheduler(self._store.getActivityStore(),
-                                    self._transCtx, self._transcoding)
+                                    self._transCtx, self._notifier, 
+                                    self._transcoding)
+        self._translator = messages.Translator()
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 
@@ -76,6 +89,7 @@ class TranscoderAdmin(log.Loggable,
         d.addCallback(lambda r: self._store.initialize())
         d.addCallback(lambda r: self._notifier.initialize())
         d.addCallback(lambda r: self._managers.initialize())
+        d.addCallback(lambda r: self._components.initialize())
         d.addCallback(lambda r: self._workers.initialize())
         d.addCallback(lambda r: self._monitors.initialize())
         d.addCallback(lambda r: self._transcoders.initialize())
@@ -87,6 +101,7 @@ class TranscoderAdmin(log.Loggable,
         # Register listeners
         self._store.addListener(self)
         self._managers.addListener(self)
+        self._components.addListener(self)
         self._scheduler.addListener(self)
         self._monitoring.addListener(self)
         self._store.syncListener(self)
@@ -114,6 +129,31 @@ class TranscoderAdmin(log.Loggable,
             self.__resume()
 
 
+    ## IComponentSetListner Overriden Methods ##
+
+    def onComponentAddedToSet(self, componentset, component):
+        component.addListener(self)
+    
+    def onComponentRemovedFromSet(self, componentset, component):
+        component.removeListener(self)
+
+
+    ## IComponentListener Overriden Methods ##
+
+    def onComponentMessage(self, component, message):
+        text = self._translator.translate(message)
+        debug = message.debug
+        level = {1: "ERROR", 2: "WARNING", 3: "INFO"}[message.level]
+        worker = component.getWorker()
+        if worker:
+            msg = ("Component '%s' on worker '%s' post a %s message" 
+                   % (component.getLabel(), worker.getLabel(), level))
+        else:
+            msg = ("Orphan component '%s' post a %s message" 
+                   % (component.getLabel(), level))
+        notifyDebug(msg, info=text, debug=debug)
+
+
     ## IAdminStoreListener Overriden Methods ##
     
     def onCustomerAdded(self, admin, customer):
@@ -123,6 +163,9 @@ class TranscoderAdmin(log.Loggable,
         custCtx = self._transCtx.getCustomerContext(customer)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
+        #self._notifier.notify("Test Notify",)
+        
+        
         
     def onCustomerRemoved(self, admin, customer):
         self.debug("Customer '%s' Removed", customer.getLabel())
@@ -182,6 +225,11 @@ class TranscoderAdmin(log.Loggable,
                  montask.getLabel(), profileContext.getInputPath())
         self._scheduler.removeProfile(profileContext)
 
+    def onFailToRunOnWorker(self, task, worker):
+        msg = ("Monitoring task '%s' could not be started on worker '%s'"
+               % (task.getLabel(), worker.getLabel()))
+        notifyEmergency(msg)
+        
     
     ## ISchedulerListener Overriden Methods ##
     
@@ -369,6 +417,10 @@ class TranscoderAdmin(log.Loggable,
         d.addBoth(defer.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(defer.bridgeResult, self.debug,
+                  "Waiting components to become idle")
+        d.addBoth(defer.dropResult, self._components.waitIdle, 
+                  adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting monitoring manager to become idle")
         d.addBoth(defer.dropResult, self._monitoring.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
@@ -393,7 +445,8 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.started
 
     def __ebSartupFailed(self, failure):
-        self.logFailure(failure, "Failed to startup administration")
+        log.notifyFailure(self, failure,
+                          "Failed to startup administration")
         self._state = TaskStateEnum.stopped
 
     def __cbResumingSucceed(self, result):
@@ -401,7 +454,8 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.started
 
     def __ebResumingFailed(self, failure):
-        self.logFailure(failure, "Failed to resume administration")
+        log.notifyFailure(self, failure,
+                          "Failed to resume administration")
         self._state = TaskStateEnum.paused
         
     def __cbPausingSucceed(self, result):
@@ -409,5 +463,6 @@ class TranscoderAdmin(log.Loggable,
         self._state = TaskStateEnum.paused
 
     def __ebPausingFailed(self, failure):
-        self.logFailure(failure, "Failed to pause administration")
+        log.notifyFailure(self, failure,
+                          "Failed to pause administration")
         self._state = TaskStateEnum.started

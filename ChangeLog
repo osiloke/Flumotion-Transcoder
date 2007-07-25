@@ -1,5 +1,19 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
+	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
+	  TranscoderAdmin.onAttached, TranscoderAdmin.onComponentAddedToSet,
+	  TranscoderAdmin.onComponentRemovedFromSet,
+	  TranscoderAdmin.onComponentMessage, TranscoderAdmin.onCustomerAdded,
+	  TranscoderAdmin.onFailToRunOnWorker,
+	  TranscoderAdmin.__cbAdminInitialized,
+	  TranscoderAdmin.__ebSartupFailed, TranscoderAdmin.__ebResumingFailed,
+	  TranscoderAdmin.__ebPausingFailed):
+	Added debug notification of component messages.
+	Added emergency notification if a monitoring task cannot be started.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/customercontext.py
 	  (CustomerContext.getTranscodingContext):
 	* flumotion/transcoder/admin/context/profilecontext.py
@@ -152,20 +166,6 @@
 
 	* flumotion/transcoder/admin/adminconsts.py:
 	Added global notification timeout constants.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
-	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
-	  TranscoderAdmin.onAttached, TranscoderAdmin.onComponentAddedToSet,
-	  TranscoderAdmin.onComponentRemovedFromSet,
-	  TranscoderAdmin.onComponentMessage, TranscoderAdmin.onCustomerAdded,
-	  TranscoderAdmin.onFailToRunOnWorker,
-	  TranscoderAdmin.__cbAdminInitialized,
-	  TranscoderAdmin.__ebSartupFailed, TranscoderAdmin.__ebResumingFailed,
-	  TranscoderAdmin.__ebPausingFailed):
-	Added debug notification of component messages.
-	Added emergency notification if a monitoring task cannot be started.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
