@@ -41,6 +41,17 @@ Tests:
 - More test suites, more test suites, more test suites.
 
 Refactoring:
+- Change file-transcoder to use substitution.py class
+- Remove multi-interface support for event sources, it's not used
+  and make the event handling more complicated
+- Change the event source to not have to be able to add an object 
+  implementing only a base interface.
+  Ex: The admin should be able to only implement IComponentListener
+      and register as listnener of a ComponentSet without implementing
+      all component interfaces (ITranscoderListener and IMonitorListener)
+- Refactor file transcoder contexts to match the admin standard 
+  for fileFile, fileDir, fileBase, filePath, fileRelPath, 
+  profileName, customerName, targetName.
 - workout a solution to remove the deep references in contexts and stores.
 - Review the activities to allow for diffrent types of notifications.
 - Better filesource that handle properly lots of activities.
