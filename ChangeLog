@@ -1,5 +1,11 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder-admin.ini:
+	* flumotion/transcoder/admin/adminconfig.py (NotifierConfig):
+	Made diffrent email sender for debug and emergency emails.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/properties.py (String.checkValue,
 	  String.str2val, String.val2str):
 	* flumotion/transcoder/transconfig.py (ProfileConfig,
@@ -51,7 +57,7 @@
 	  ComponentProxy._onComponentMessage):
 	Added an event to notify of components messages.
 
-s2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/notifysubs.py (NotificationVariables,
 	  NotificationVariables.__init__,

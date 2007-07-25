@@ -38,8 +38,10 @@ class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
     smtpUsername = properties.String('smtp-username', None, False)
     smtpPassword = properties.String('smtp-password', None, False)
-    mailSender = properties.String('mail-sender', None, True)
+    mailNotifySender = properties.String('mail-notify-sender', None, True)
+    mailEmergencySender = properties.String('mail-emergency-sender', None, True)
     mailEmergencyRecipients = properties.String('mail-emergency-recipients', None, True)
+    mailDebugSender = properties.String('mail-debug-sender', None, True)
     mailDebugRecipients = properties.String('mail-debug-recipients', None, True)
 
 class AdminConfig(properties.PropertyBag):
