@@ -17,7 +17,7 @@ from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.local import Local
-
+from flumotion.transcoder.virtualpath import VirtualPathProperty
 
 class UsageProperty(properties.ValueProperty):
     
@@ -75,7 +75,7 @@ class DiscoverReport(properties.PropertyBag):
 
 class SourceReport(properties.PropertyBag):
 
-    filePath = properties.VirtualPath('file-path')
+    filePath = VirtualPathProperty('file-path')
     analyse = properties.Child('analyse', DiscoverReport)
     pipeline = properties.Dict(properties.String("pipeline"))    
 
@@ -83,8 +83,8 @@ class SourceReport(properties.PropertyBag):
 class TargetReport(TaskReport):
 
     state = properties.Enum('state', TargetStateEnum, TargetStateEnum.pending)
-    workFiles = properties.List(properties.VirtualPath('files-work'))
-    outputFiles = properties.List(properties.VirtualPath('files-output'))
+    workFiles = properties.List(VirtualPathProperty('files-work'))
+    outputFiles = properties.List(VirtualPathProperty('files-output'))
     analyse = properties.Child('analyse', DiscoverReport)
     pipeline = properties.Dict(properties.String("pipeline"))
     cpuUsagePostprocess = UsageProperty('cpu-usage-postprocess')
@@ -116,16 +116,15 @@ class TranscodingReport(properties.RootPropertyBag, TaskReport):
     doneTime = properties.DateTime('time-done')
     ackTime = properties.DateTime('time-ack')
     terminateTime = properties.DateTime('time-terminate')
-    configPath = properties.VirtualPath('config-path', None, True)
+    configPath = VirtualPathProperty('config-path', None, True)
     niceLevel = properties.Integer('nice-level')
     local = properties.Child('local', LocalReport)
     source = properties.Child('source', SourceReport)
-    targets = properties.ChildList('targets', TargetReport)
+    targets = properties.ChildDict('targets', TargetReport)
     cpuUsageTotal = UsageProperty('cpu-usage-total')
     cpuUsagePreprocess = UsageProperty('cpu-usage-preprocess')
     cpuUsageTranscoding = UsageProperty('cpu-usage-transcoding')    
     
     def init(self, config):
-        for index, target in enumerate(config.targets):
-            if target != None:
-                self.targets.addItemAt(index)
+        for key in config.targets:
+            self.targets[key] = TargetReport()

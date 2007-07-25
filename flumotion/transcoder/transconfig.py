@@ -20,6 +20,7 @@ from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
+from flumotion.transcoder.virtualpath import VirtualPathProperty
 
 
 class CustomerConfig(properties.PropertyBag):
@@ -28,14 +29,14 @@ class CustomerConfig(properties.PropertyBag):
 
 class ProfileConfig(properties.PropertyBag):
     label = properties.String('label', None, True)
-    inputDir = properties.VirtualPath('input-dir', None, True)
-    outputDir = properties.VirtualPath('output-dir', None, True)
-    linkDir = properties.VirtualPath('link-dir', None)
-    workDir = properties.VirtualPath('work-dir', None, True)
-    failedDir = properties.VirtualPath('failed-dir', None, True)
-    failedReportsDir = properties.VirtualPath('failed-reports-dir', None, True)
-    doneDir = properties.VirtualPath('done-dir', None, True)
-    doneReportsDir = properties.VirtualPath('done-reports-dir', None, True)
+    inputDir = VirtualPathProperty('input-dir', None, True)
+    outputDir = VirtualPathProperty('output-dir', None, True)
+    linkDir = VirtualPathProperty('link-dir', None)
+    workDir = VirtualPathProperty('work-dir', None, True)
+    failedDir = VirtualPathProperty('failed-dir', None, True)
+    failedReportsDir = VirtualPathProperty('failed-reports-dir', None, True)
+    doneDir = VirtualPathProperty('done-dir', None, True)
+    doneReportsDir = VirtualPathProperty('done-reports-dir', None, True)
     linkTemplate = properties.String('link-template', constants.LINK_TEMPLATE)
 
 
@@ -109,7 +110,7 @@ class TranscodingConfig(properties.RootPropertyBag):
     customer = properties.Child('customer', CustomerConfig)
     profile = properties.Child('profile', ProfileConfig)
     source = properties.Child('source', SourceConfig)
-    targets = properties.ChildList('targets', TargetConfig)
+    targets = properties.ChildDict('targets', TargetConfig)
 
     def touch(self):
         self.creationTime = datetime.datetime.now()

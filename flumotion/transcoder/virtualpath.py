@@ -18,6 +18,7 @@ from twisted.spread import jelly
 from flumotion.transcoder import utils
 from flumotion.transcoder import constants
 from flumotion.transcoder.errors import VirtualPathError
+from flumotion.transcoder.properties import ValueProperty
 
 
 _rootPattern = re.compile("(\w*):(.*)")
@@ -129,3 +130,18 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
 
 
 jelly.setUnjellyableForClass(qual(VirtualPath), VirtualPath)
+
+
+class VirtualPathProperty(ValueProperty):
+    
+    def __init__(self, descriptor, default=None, required=False):
+        ValueProperty.__init__(self, descriptor, default, required)
+    
+    def checkValue(self, value):
+        return isinstance(value, VirtualPath)
+    
+    def str2val(self, strval):
+        return VirtualPath(strval)
+    
+    def val2str(self, value):
+        return str(value)

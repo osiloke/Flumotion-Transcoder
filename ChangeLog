@@ -1,5 +1,22 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/properties.py (String.checkValue,
+	  String.str2val, String.val2str):
+	* flumotion/transcoder/transconfig.py (ProfileConfig,
+	  TranscodingConfig):
+	* flumotion/transcoder/transreport.py (SourceReport, TargetReport,
+	  TranscodingReport, TranscodingReport.init):
+	* flumotion/transcoder/virtualpath.py (VirtualPath.unjellyFor,
+	  VirtualPathProperty, VirtualPathProperty.__init__,
+	  VirtualPathProperty.checkValue, VirtualPathProperty.str2val,
+	  VirtualPathProperty.val2str):
+	Removed the VirtualPath property for properties.py to have
+	less dependencies, the property has been moved to virtualpath.py.
+	Made the String property escape/unescape values to permit
+	binary data and strange strings.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/defer.py (DebugInfo.__del__, logFailures):
 	Updated to match the new parameters of the notification functions.
 
