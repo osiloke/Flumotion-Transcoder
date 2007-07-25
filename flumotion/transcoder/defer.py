@@ -48,7 +48,7 @@ class DebugInfo(defer.DebugInfo):
         if self.failResult and _notifier:
             _notifier("Unhandled error in Deferred", 
                       failure=self.failResult, 
-                      traceback=self._getDebugTracebacks())
+                      debug=self._getDebugTracebacks())
         
 
 class Deferred(defer.Deferred):
@@ -128,6 +128,6 @@ def shiftResult(result, callable, index, *args, **kwargs):
 def logFailures(result, logger, newResult, taskDesc):
     for succeed, failure in result:
         if not succeed:
-            logger.logFailure(failure, "Failure during %s", taskDesc)
+            log.notifyFailure(logger, failure, "Failure during %s", taskDesc)
     return newResult
 

@@ -1,5 +1,10 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/defer.py (DebugInfo.__del__, logFailures):
+	Updated to match the new parameters of the notification functions.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
 	  Scheduler.onTranscodingFailed, Scheduler.onTranscodingDone,
 	  Scheduler.__notify):
