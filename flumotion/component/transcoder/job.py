@@ -328,7 +328,7 @@ class TranscoderJob(log.LoggerProxy):
             targetCtx = transTarget.getData()
             bins = transTarget.getBins()            
             if len(bins) > 0:
-                targetsBins[targetCtx.index] = bins
+                targetsBins[targetCtx.key] = bins
         context.reporter.crawlPipeline(pipeline, targetsBins)
 
     def _getPreProcessVars(self, context):
@@ -337,29 +337,33 @@ class TranscoderJob(log.LoggerProxy):
         sourceCtx = context.getSourceContext()        
         sourceAnalyse = reporter.report.source.analyse
         vars = dict()
-        vars['inputFile'] = sourceCtx.getInputFile()
-        vars['reportFile'] = sourceCtx.getReportFile()
-        vars['inputDir'] = context.getInputDir()
-        vars['outputDir'] = context.getOutputDir()
-        vars['workDir'] = context.getWorkDir()
+        
+        vars['outputBase'] = context.getOutputDir()
+        vars['inputBase'] = context.getInputDir()
+        vars['linkBase'] = context.getLinkDir()
+        vars['outputWorkBase'] = context.getOutputWorkDir()
+        vars['linkWorkBase'] = context.getLinkWorkDir()
+
+        vars['inputRelPath'] = sourceCtx.getInputFile()
+        vars['inputFile'] = os.path.basename(vars['inputRelPath'])
         vars['inputPath'] = sourceCtx.getInputPath()
-        vars['configPath'] = reporter.report.configPath
+        vars['inputDir'] = os.path.basename(os.path.join(vars['inputBase'],
+                                                         vars['inputRelPath']))
         vars['custName'] = config.customer.name
-        vars['profLabel'] = config.profile.label
-        vars['targets'] = [t.label for t in config.targets if t != None]
+        vars['profName'] = config.profile.label
         vars['sourceMime'] = sourceAnalyse.mimeType
         if sourceAnalyse.hasVideo:
-            vars['sourceHaveVideo'] = 1
+            vars['sourceHasVideo'] = 1
             vars['sourceVideoWidth'] = sourceAnalyse.videoWidth
             vars['sourceVideoHeight'] = sourceAnalyse.videoHeight
         else:
-            vars['sourceHaveVideo'] = 0
+            vars['sourceHasVideo'] = 0
             vars['sourceVideoWidth'] = 0
             vars['sourceVideoHeight'] = 0
         if sourceAnalyse.hasAudio:
-            vars['sourceHaveAudio'] = 1
+            vars['sourceHasAudio'] = 1
         else:
-            vars['sourceHaveAudio'] = 0
+            vars['sourceHasAudio'] = 0
 
         duration = sourceCtx.reporter.getMediaDuration() or -1
         length = sourceCtx.reporter.getMediaLength()
@@ -383,29 +387,48 @@ class TranscoderJob(log.LoggerProxy):
         #FIXME: Don't reference the global context
         vars = self._getPreProcessVars(self._context)
 
+        vars['outputRelPath'] = targetCtx.getOutputFile()
+        vars['outputFile'] = os.path.basename(vars['outputRelPath'])
         vars['outputPath'] = targetCtx.getOutputPath()
-        vars['linkPath'] = targetCtx.getLinkPath()
-        vars['linkWorkPath'] = targetCtx.getLinkWorkPath()
+        vars['outputDir'] = os.path.basename(os.path.join(vars['outputBase'],
+                                                          vars['outputRelPath']))
+        
+        vars['outputWorkRelPath'] = targetCtx.getOutputWorkFile()
+        vars['outputWorkFile'] = os.path.basename(vars['outputWorkRelPath'])
         vars['outputWorkPath'] = targetCtx.getOutputWorkPath()
-
-        vars['targetLabel'] = targetConfig.label
+        vars['outputWorkDir'] = os.path.basename(os.path.join(vars['outputWorkBase'],
+                                                              vars['outputWorkRelPath']))
+        
+        vars['linkRelPath'] = targetCtx.getLinkFile()
+        vars['linkFile'] = os.path.basename(vars['linkRelPath'])
+        vars['linkPath'] = targetCtx.getLinkPath()
+        vars['linkDir'] = os.path.basename(os.path.join(vars['linkBase'],
+                                                          vars['linkRelPath']))
+        
+        vars['linkWorkRelPath'] = targetCtx.getLinkWorkFile()
+        vars['linkWorkFile'] = os.path.basename(vars['linkWorkRelPath'])
+        vars['linkWorkPath'] = targetCtx.getLinkWorkPath()
+        vars['linkWorkDir'] = os.path.basename(os.path.join(vars['linkWorkBase'],
+                                                              vars['linkWorkRelPath']))
+        
+        vars['targetName'] = targetConfig.label
         vars['targetType'] = targetConfig.type.name
         vars['targetMime'] = targetAnalyse.mimeType
         if targetAnalyse.hasVideo:
-            vars['targetHaveVideo'] = 1
+            vars['targetHasVideo'] = 1
             vars['targetVideoWidth'] = targetAnalyse.videoWidth
             vars['targetVideoHeight'] = targetAnalyse.videoHeight
         else:
-            vars['targetHaveVideo'] = 0
+            vars['targetHasVideo'] = 0
             vars['targetVideoWidth'] = 0
             vars['targetVideoHeight'] = 0
         if targetAnalyse.hasAudio:
-            vars['targetHaveAudio'] = 1
+            vars['targetHasAudio'] = 1
         else:
-            vars['targetHaveAudio'] = 0
+            vars['targetHasAudio'] = 0
 
-        duration = targetReporter.getMediaDuration() or -1
-        length = targetReporter.getMediaLength()
+        duration = targetReporter.getMediaDuration() or 0.0
+        length = targetReporter.getMediaLength() or 0
         vars['targetDuration'] = duration
         vars['targetLength'] = length
         s = int(round(duration))
@@ -416,6 +439,20 @@ class TranscoderJob(log.LoggerProxy):
         vars['targetHours'] = h
         vars['targetMinutes'] = m
         vars['targetSeconds'] = s
+        
+        if duration > 0:
+            vars['mediaDuration'] = vars["targetDuration"]
+            vars['mediaLength'] = vars["targetLength"]
+            vars['mediaHours'] = vars["targetHours"]
+            vars['mediaMinutes'] = vars["targetMinutes"]
+            vars['mediaSeconds'] = vars["targetSeconds"]
+        else:
+            vars['mediaDuration'] = vars["sourceDuration"]
+            vars['mediaLength'] = vars["sourceLength"]
+            vars['mediaHours'] = vars["sourceHours"]
+            vars['mediaMinutes'] = vars["sourceMinutes"]
+            vars['mediaSeconds'] = vars["sourceSeconds"]
+        
         return vars
 
     def _getLinkTemplateVars(self, targetCtx):
@@ -491,7 +528,7 @@ class TranscoderJob(log.LoggerProxy):
             info["acknowledged"] = self._acknowledged
             info["customer-name"] = config.customer.name
             info["profile-label"] = config.profile.label
-            info["targets"] = [t.label for t in config.targets]
+            info["targets"] = [t.label for t in config.targets.values()]
             self._eventSink.onJobInfo(info)
     
     def _fireSourceInfo(self, sourceCtx):

@@ -1,5 +1,13 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob._transcoderPiplineCallback,
+	  TranscoderJob._getPreProcessVars, TranscoderJob._getPostProcessVars,
+	  TranscoderJob._fireJobInfo):
+	Normalized substitution variables.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/context.py (TargetContext.__init__,
 	  Context.getTargetContext, Context.getTargetContexts,
 	  Context.getLinkDir, Context.getOutputWorkDir,
@@ -177,14 +185,6 @@
 
 	* flumotion/transcoder/admin/adminconsts.py:
 	Added global notification timeout constants.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/component/transcoder/job.py
-	  (TranscoderJob._transcoderPiplineCallback,
-	  TranscoderJob._getPreProcessVars, TranscoderJob._getPostProcessVars,
-	  TranscoderJob._fireJobInfo):
-	Normalized substitution variables.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
