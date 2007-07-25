@@ -1,5 +1,25 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__init__,
+	  Scheduler.onTranscodingFailed, Scheduler.onTranscodingDone,
+	  Scheduler.__notify):
+	Now add notifications about the transcoding outcome.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py
+	  (TranscoderProxy.__init__, TranscoderProxy.waitIsAcknowledged,
+	  TranscoderProxy.getReport, TranscoderProxy.waitReport,
+	  TranscoderProxy.getDocuments, TranscoderProxy.acknowledge,
+	  TranscoderProxy._doBroadcastUIState,
+	  TranscoderProxy._onTranscodingReport,
+	  TranscoderProxy.__getConfigPath, TranscoderProxy.__getReportPath,
+	  TranscoderProxy.__wrapDocument, TranscoderProxy.__loadReport):
+	Corrected the report retrieval methods.
+	Added a generic document retrieval method.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxies/componentproxy.py
 	  (IComponentListener.onComponentMessage,
 	  ComponentListener.onComponentMessage, BaseComponentProxy.__init__,

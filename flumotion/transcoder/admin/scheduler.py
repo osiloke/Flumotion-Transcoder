@@ -17,10 +17,13 @@ from flumotion.transcoder import log, defer
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
+from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.transcoding import TranscodingListener
 from flumotion.transcoder.admin.transtask import TranscodingTask
 from flumotion.transcoder.admin.transtask import TranscodingTaskListener
+from flumotion.transcoder.admin.notifysubs import SourceNotificationVariables
+from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 
 #TODO: Implement a faire scheduler and prevent the possibility
 #      of the profile priority making the overhaul customer priority
@@ -67,10 +70,11 @@ class Scheduler(log.Loggable,
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, activityStore, transCtx, transcoding):
+    def __init__(self, activityStore, transCtx, notifier, transcoding):
         EventSource.__init__(self, ISchedulerListener)
         self._transCtx = transCtx
         self._store = activityStore
+        self._notifier = notifier
         self._transcoding = transcoding
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
@@ -174,13 +178,26 @@ class Scheduler(log.Loggable,
         activity.setState(ActivityStateEnum.failed)
         activity.store()
         self._fireEvent(task, "TranscodingFail")
-        
+        label = task.getLabel()
+        report = transcoder and transcoder.getReport()
+        docs = transcoder and transcoder.getDocuments()
+        trigger = NotificationTriggerEnum.failed
+        profCtx = task.getProfileContext()
+        self.__notify(label, trigger, profCtx, report, docs)
     
     def onTranscodingDone(self, task, transcoder):
+        report = transcoder.getReport()
+        docs = transcoder.getDocuments()
         activity = self._activities[task]
         activity.setState(ActivityStateEnum.done)
         activity.store()
         self._fireEvent(task, "TranscodingDone")
+        label = task.getLabel()
+        report = transcoder and transcoder.getReport()
+        docs = transcoder and transcoder.getDocuments()
+        trigger = NotificationTriggerEnum.failed
+        profCtx = task.getProfileContext()
+        self.__notify(label, trigger, profCtx, report, docs)
 
     def onTranscodingTerminated(self, task, succeed):
         self.info("Transcoding task '%s' %s", task.getLabel(), 
@@ -200,6 +217,33 @@ class Scheduler(log.Loggable,
 
         
     ## Private Methods ##
+    
+    def __notify(self, label, trigger, profCtx, report, docs):
+        sourceVars = SourceNotificationVariables(profCtx, report)
+        # Global notifications
+        transCtx = profCtx.getTranscodingContext()
+        notifications = transCtx.store.getNotifications(trigger)
+        for n in notifications:
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
+        # Customer notifications
+        custCtx = profCtx.getCustomerContext()
+        notifications = custCtx.store.getNotifications(trigger)
+        for n in notifications:
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
+        # Profile notifications
+        notifications = profCtx.store.getNotifications(trigger)
+        for n in notifications:
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
+        # Targets notifications
+        for targCtx in profCtx.iterTargetContexts():
+            notifications = targCtx.store.getNotifications(trigger)
+            if not notifications:
+                continue
+            for n in notifications:
+                targVars = sourceVars.getTargetVariables(targCtx)
+                d = self._notifier.notify(label, trigger, n, targVars, docs)
+                # Ignore Failures to prevent defer to notify them
+                d.addErrback(defer.resolveFailure, None)
     
     def __cbRestoreTasks(self, activities):
         self.debug("Restoring transcoding tasks")
