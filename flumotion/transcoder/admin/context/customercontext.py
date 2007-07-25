@@ -73,6 +73,9 @@ class CustomerContext(object):
         # For now return only the customer name
         return self.store.getName()
 
+    def getTranscodingContext(self):
+        return self.transcoding
+
     def getUnboundProfileContextByName(self, profileName):
         return UnboundProfileContext(self.store[profileName], self)
     

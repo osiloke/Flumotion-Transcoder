@@ -113,6 +113,15 @@ class TargetContext(object):
         self._vars.addVar("targetSubdir", subdir)
         self._vars.addVar("targetPath", path)
         
+    def getTranscodingContext(self):
+        return self.profile.getTranscodingContext()
+    
+    def getCustomerContext(self):
+        return self.profile.getCustomerContext()
+    
+    def getProfileContext(self):
+        return self.profile
+        
     def getSubdir(self):
         return self._vars["targetSubdir"]
     

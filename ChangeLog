@@ -1,5 +1,15 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/customercontext.py
+	  (CustomerContext.getTranscodingContext):
+	* flumotion/transcoder/admin/context/profilecontext.py
+	  (getTranscodingContext, getCustomerContext):
+	* flumotion/transcoder/admin/context/targetcontext.py
+	  (getTranscodingContext, getCustomerContext, getProfileContext):
+	Added getters to retrieve various contexts to prevent deep references.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py
 	  (FileMonitor.__notifyDebug, FileMonitor.__monitorError,
 	  FileMonitor.__unexpectedError):
@@ -137,16 +147,6 @@
 	Made possible dictionary and list values for the activities.
 	Corrected a copy/past bug where notification activities template
 	had the transcoding type set.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/admin/context/customercontext.py
-	  (CustomerContext.getTranscodingContext):
-	* flumotion/transcoder/admin/context/profilecontext.py
-	  (getTranscodingContext, getCustomerContext):
-	* flumotion/transcoder/admin/context/targetcontext.py
-	  (getTranscodingContext, getCustomerContext, getProfileContext):
-	Added getters to retrieve various contexts to prevent deep references.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 

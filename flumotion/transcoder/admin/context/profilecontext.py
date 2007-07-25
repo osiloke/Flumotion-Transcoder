@@ -115,6 +115,12 @@ class UnboundProfileContext(object):
         self._vars.addVar("sourceSubdir", self.getSubdir())
         self._vars.addVar("profileName", self.store.getName())
 
+    def getTranscodingContext(self):
+        return self.customer.getTranscodingContext()
+    
+    def getCustomerContext(self):
+        return self.customer
+
     def getIdentifier(self):
         """
         Gives an identifier that should uniquely identify a profile.
@@ -247,5 +253,3 @@ class ProfileContext(UnboundProfileContext):
         #FIXME: Dependency too deep 
         tmpl = self.customer.transcoding.admin.config.activityLabelTemplate
         return self._vars.substitute(tmpl)
-    
-    
