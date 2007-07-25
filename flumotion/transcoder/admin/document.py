@@ -19,8 +19,8 @@ from cStringIO import StringIO
 
 from zope.interface import Interface, implements
 
-from flumotiuon.transcoder.admin.errors import DocumentError
-from flumotiuon.transcoder.admin.enums import DocumentTypeEnum
+from flumotion.transcoder.admin.errors import DocumentError
+from flumotion.transcoder.admin.enums import DocumentTypeEnum
 
 
 class IDocument(Interface):
@@ -110,4 +110,3 @@ class FileDocument(object):
     
     def asFile(self):
         return open(self._path)
-

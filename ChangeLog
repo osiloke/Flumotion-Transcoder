@@ -1,5 +1,63 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/document.py:
+	Corrected invalid import path.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datastore/activitystore.py
+	  (ActivityStore.__cbWrapActivities, BaseActivity,
+	  BaseActivity.__init__, BaseActivity.__ebActivityStoreFailed,
+	  BaseActivity.__ebActivityDeleteFailed, BaseNotifyActivity,
+	  ActivityFactory):
+	Renamed log.logFailure and log.logException 
+	to log.notifyFailure and log.notifyException
+	and made them module function only to prevent 
+	confusion between transcoder's Loggable and 
+	flumotion's Loggable.
+	Properly pass the logger parameter to activities.
+	Added getRetrySleep getter to notifications.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (MutableDataWrapper._store, MutableDataWrapper.__setattr__,
+	  FileDataSource.newActivity, FileDataSource.__ebActivitiesSaveFailed):
+	Made possible dictionary and list values for the activities.
+	Corrected a copy/past bug where notification activities template
+	had the transcoding type set.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/context/customercontext.py
+	  (CustomerContext.getTranscodingContext):
+	* flumotion/transcoder/admin/context/profilecontext.py
+	  (getTranscodingContext, getCustomerContext):
+	* flumotion/transcoder/admin/context/targetcontext.py
+	  (getTranscodingContext, getCustomerContext, getProfileContext):
+	Added getters to retrieve various contexts to prevent deep references.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/adminconsts.py:
+	Added global notification timeout constants.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py (TranscoderAdmin,
+	  TranscoderAdmin.__init__, TranscoderAdmin.initialize,
+	  TranscoderAdmin.onAttached, TranscoderAdmin.onComponentAddedToSet,
+	  TranscoderAdmin.onComponentRemovedFromSet,
+	  TranscoderAdmin.onComponentMessage, TranscoderAdmin.onCustomerAdded,
+	  TranscoderAdmin.onFailToRunOnWorker,
+	  TranscoderAdmin.__cbAdminInitialized,
+	  TranscoderAdmin.__ebSartupFailed, TranscoderAdmin.__ebResumingFailed,
+	  TranscoderAdmin.__ebPausingFailed):
+	Added debug notification of component messages.
+	Added emergency notification if a monitoring task cannot be started.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/job.py
 	  (TranscoderJob._transcoderPiplineCallback,
 	  TranscoderJob._getPreProcessVars, TranscoderJob._getPostProcessVars,
