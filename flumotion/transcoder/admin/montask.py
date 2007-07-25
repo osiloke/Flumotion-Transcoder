@@ -19,7 +19,7 @@ from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask
-from flumotion.transcoder.admin.monprops import MonitorProperties
+from flumotion.transcoder.admin.proxies.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
@@ -256,10 +256,11 @@ class MonitoringTask(AdminTask, MonitorListener):
 
     def __ebSetFileStateFailed(self, failure, monitor, 
                                 virtBase, relFile, state):
-        self.logFailure(failure, "Monitoring task '%s' monitor '%s' Fail "
-                        "to change file '%s' state to %s", 
-                        self.getLabel(), monitor.getName(), 
-                        virtBase.append(relFile), state.name)
+        log.notifyFailure(self, failure,
+                          "Monitoring task '%s' monitor "
+                          "'%s' Fail to change file '%s' state to %s", 
+                          self.getLabel(), monitor.getName(), 
+                          virtBase.append(relFile), state.name)
     
     def __cbFileMoved(self, result, monitor, 
                       virtSrcBase, virtDestBase, relFiles):
@@ -272,8 +273,10 @@ class MonitoringTask(AdminTask, MonitorListener):
         
     def __ebMoveFilesFailed(self, failure, monitor,
                             virtSrcBase, virtDestBase, relFiles):
-        self.logFailure(failure, "Monitoring task '%s' monitor '%s' fail "
-                        "to move files from '%s' to '%s'", self.getLabel(),
-                        monitor.getName(), virtSrcBase, virtDestBase)
+        log.notifyFailure(self, failure,
+                          "Monitoring task '%s' monitor "
+                          "'%s' fail to move files from '%s' to '%s'",
+                          self.getLabel(), monitor.getName(), virtSrcBase, 
+                          virtDestBase)
         # Continue moving files anyway
         self.__asyncMovePendingFiles()

@@ -507,8 +507,9 @@ class AdminTask(LoggerProxy, EventSource):
             
         
     def __ebStartupFailed(self, failure, actionDesc):
-        self.logFailure(failure, "Admin task '%s' failed to startup/resume",
-                        self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Admin task '%s' failed to startup/resume",
+                          self.getLabel())
         if self._state == TaskStateEnum.starting:
             self._state = TaskStateEnum.stopped
             self._startWaiters.fireErrbacks(failure)
@@ -521,14 +522,17 @@ class AdminTask(LoggerProxy, EventSource):
     def __cbMultiDeleteResults(self, results, newResult):
         for succeed, result in results:
             if not succeed:
-                self.logFailure(result, "Failure waiting admin task '%s' "
-                                "components beeing deleted", self.getLabel())
+                log.notifyFailure(self, result,
+                                  "Failure waiting admin task '%s' "
+                                  "components beeing deleted",
+                                  self.getLabel())
         return newResult        
         
     def __bbTaskTerminated(self, resultOrFailure, result):
         if isinstance(resultOrFailure, Failure):
-            self.logFailure(resultOrFailure, "Failure terminating "
-                            "admin task '%s'", self.getLabel())
+            log.notifyFailure(self, resultOrFailure,
+                              "Failure terminating admin task '%s'",
+                              self.getLabel())
             self._doTerminated(result)
         else:
             self._doTerminated(resultOrFailure)
@@ -573,15 +577,18 @@ class AdminTask(LoggerProxy, EventSource):
                 if result != None:
                     newResult.append(result)
             else:
-                self.logFailure(result, "Failure waiting admin task '%s' "
-                                "components UI State", self.getLabel())
+                log.notifyFailure(self, result,
+                                  "Failure waiting admin task '%s' "
+                                  "components UI State",
+                                  self.getLabel())
         return newResult        
         
     def __bbSelectPotentialComponent(self, resultOrFailure):
         if isinstance(resultOrFailure, Failure):
-            self.logFailure(resultOrFailure, "Failure in admin task '%s' "
-                            "during potential component selection",
-                            self.getLabel())
+            log.notifyFailure(self, resultOrFailure,
+                              "Failure in admin task '%s' "
+                              "during potential component selection",
+                              self.getLabel())
             components = []
         else:
             components = resultOrFailure
@@ -648,8 +655,9 @@ class AdminTask(LoggerProxy, EventSource):
                        self.__ebPotentialComponentFailure)
         
     def __ebPotentialComponentFailure(self, failure):
-        self.logFailure(failure, "Failure looking for a potential component "
-                        "for admin task '%s'", self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Failure looking for a potential component "
+                          "for admin task '%s'", self.getLabel())
         self.__loadNewComponent()
         
     def __cbGotPotentialComponent(self, component):
@@ -703,9 +711,10 @@ class AdminTask(LoggerProxy, EventSource):
         self.__cancelComponentStartup(result)
         
     def __ebComponentLoadFailed(self, failure, componentName, workerName):
-        self.logFailure(failure, "Admin task '%s' fail to load "
-                        "component '%s' on worker '%s'", self.getLabel(), 
-                        componentName, workerName)
+        log.notifyFailure(self, failure,
+                          "Admin task '%s' fail to load "
+                          "component '%s' on worker '%s'",
+                          self.getLabel(), componentName, workerName)
         self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, component, workerName):
@@ -721,9 +730,10 @@ class AdminTask(LoggerProxy, EventSource):
         self.__cancelComponentStartup(component)
     
     def __ebComponentNotHappy(self, failure, component, workerName):
-        self.logFailure(failure, "Admin task '%s' component '%s' "
-                        "fail to become happy on worker '%s'", 
-                        self.getLabel(), component.getName(), workerName)
+        self.warning("Admin task '%s' component '%s' "
+                     "fail to become happy on worker '%s': %s", 
+                     self.getLabel(), component.getName(), workerName,
+                     log.getFailureMessage(failure))
         self.__abortComponentStartup(component)
 
     def  __cbGotUIState(self, _, component, workerName):
@@ -736,19 +746,22 @@ class AdminTask(LoggerProxy, EventSource):
             self.__cancelComponentStartup(component)
             
     def __ebUIStateFailed(self, failure, component, workerName):
-        self.logFailure(failure, "Admin task '%s' failed to retrieve "
-                        "component '%s' UI state",
-                        self.getLabel(), component.getName())
+        log.notifyFailure(self, failure,
+                          "Admin task '%s' failed to retrieve "
+                          "component '%s' UI state",
+                          self.getLabel(), component.getName())
         self.__abortComponentStartup(component)
         
     def __ebComponentStopFailed(self, failure, name):
-        self.logFailure(failure, "Admin task '%s' failed to stop "
-                        "component '%s'", self.getLabel(), name)
+        log.notifyFailure(self, failure,
+                          "Admin task '%s' failed to stop "
+                          "component '%s'", self.getLabel(), name)
         return failure
         
     def __ebComponentDeleteFailed(self, failure, name):
-        self.logFailure(failure, "Admin task '%s' failed to delete "
-                        "component '%s'", self.getLabel(), name)
+        log.notifyFailure(self, failure,
+                          "Admin task '%s' failed to delete "
+                          "component '%s'", self.getLabel(), name)
         return failure
 
     def __cbGetValidWorker(self, component):
@@ -760,8 +773,9 @@ class AdminTask(LoggerProxy, EventSource):
         return None
     
     def __ebNoValidWorker(self, failure):
-        self.logFailure(failure, "Failure looking for a valid worker "
-                        "for admin task '%s'", self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Failure looking for a valid worker "
+                          "for admin task '%s'", self.getLabel())
         return None
         
 

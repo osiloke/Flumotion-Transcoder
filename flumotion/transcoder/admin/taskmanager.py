@@ -283,8 +283,10 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     
     def __ebResolveCallFailure(self, failure, task, action):
         assert action in ["start", "pause", "resume"]
-        self.logFailure(failure, "Task manager '%s' failed to %s task '%s'",
-                        self.getLabel(), action, task.getLabel())
+        log.notifyFailure(self, failure,
+                          "Task manager '%s' failed to %s "
+                          "task '%s'", self.getLabel(), 
+                          action, task.getLabel())
         
     def __getTasklessComponents(self):
         return self._taskless.keys()
@@ -324,7 +326,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
     def __ebGetPropertiesFailed(self, failure, component):
         msg = ("Task manager '%s' fail to retrieve component '%s' properties."
                % (self.getLabel(), component.getName()))
-        self.logFailure(failure, "%s", msg)
+        log.notifyFailure(self, failure, "%s", msg)
         self.__apartTasklessComponent(component)
         self._pending -= 1
         self._tryStartup()
@@ -341,12 +343,14 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         return component
 
     def __ebComponentStopFailed(self, failure, name):
-        self.logFailure(failure, "Task manager '%s' failed to stop "
-                        "component '%s'", self.getLabel(), name)
+        log.notifyFailure(self, failure,
+                          "Task manager '%s' failed to stop "
+                          "component '%s'", self.getLabel(), name)
 
     def __ebComponentDeleteFailed(self, failure, name):
-        self.logFailure(failure, "Task manager '%s' failed to delete "
-                        "component '%s'", self.getLabel(), name)
+        log.notifyFailure(self, failure,
+                          "Task manager '%s' failed to delete "
+                          "component '%s'", self.getLabel(), name)
 
     def __stateChangedError(self, waiters, actionDesc):
         error = TranscoderError("State changed to %s during %s of '%s'"
@@ -370,8 +374,9 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.onComponentMoodChanged(c, c.getMood())
 
     def __ebStartupFailed(self, failure, actionDesc):
-        self.logFailure(failure, "Task Manager '%s' failed to startup/resume",
-                        self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Task Manager '%s' failed to startup/resume",
+                          self.getLabel())
         self._starting = False
         if self._state == TaskStateEnum.starting:
             self._state = TaskStateEnum.stopped
@@ -391,8 +396,9 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__stateChangedError(self._pauseWaiters, "pausing")
         
     def __ebPauseFailed(self, failure):
-        self.logFailure(failure, "Task Manager '%s' failed to pause",
-                        self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Task Manager '%s' failed to pause",
+                          self.getLabel())
         if self._state == TaskStateEnum.pausing:
             self._state = TaskStateEnum.started
             self._pauseWaiters.fireErrbacks(failure)
@@ -426,5 +432,6 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
             self.__apartTasklessComponent(c)
     
     def __ebTaskStopFailed(self, failure, task):
-        self.logFailure(failure, "Task Manager '%s' failed to stop task '%s'",
-                        self.getLabel(), task.getLabel())
+        log.notifyFailure(self, failure,
+                          "Task Manager '%s' failed to stop task '%s'",
+                          self.getLabel(), task.getLabel())

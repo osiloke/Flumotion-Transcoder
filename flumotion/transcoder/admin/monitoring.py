@@ -146,8 +146,9 @@ class Monitoring(TaskManager, WorkerSetListener,
     def __cbStartResumeMonitoring(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.logFailure(result, "Failure waiting monitor set "
-                            "to become idle")
+            log.notifyFailure(self, result,
+                              "Failure waiting monitor set "
+                              "to become idle")
         self.log("Free to continue monitoring startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -165,13 +166,16 @@ class Monitoring(TaskManager, WorkerSetListener,
         return d
     
     def __ebStartupResumingFailure(self, failure):
-        self.logFailure(failure, "Failure during monitoring startup/resuming")
+        log.notifyFailure(self, failure, 
+                          "Failure during monitoring startup/resuming")
         return failure
 
     def __ebAddComponentFailed(self, failure, name):
-        self.logFailure(failure, "Failed to add monitor '%s' "
-                        "to monitoring manager", name)
+        log.notifyFailure(self, failure,
+                          "Failed to add monitor '%s' "
+                          "to monitoring manager", name)
     
     def __ebRemoveComponentFailed(self, failure, name):
-        self.logFailure(failure, "Failed to remove monitor '%s' "
-                        "from monitoring manager", name)
+        log.notifyFailure(self, failure,
+                          "Failed to remove monitor '%s' "
+                          "from monitoring manager", name)

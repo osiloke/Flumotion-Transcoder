@@ -309,7 +309,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Can be use by all child classes when adding
         a callback that is not expected to fail.
         """
-        self.logFailure(failure, "Unexpected Failure")
+        log.notifyFailure(self, failure, "Unexpected Failure")
         #Resolve the failure.
         return
 
@@ -330,8 +330,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     def __cbLogFailures(self, results, newResult):
         for succeed, result in results:
             if not succeed:
-                self.logFailure(result, "Failure waiting for element '%s' "
-                                "to become idle", self.getLabel())
+                log.notifyFailure(self, result,
+                                  "Failure waiting for element "
+                                  "'%s' to become idle", self.getLabel())
         return newResult
     
     def __cbInitializationSucceed(self, result):

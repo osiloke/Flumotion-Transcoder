@@ -162,8 +162,9 @@ class Transcoding(TaskManager, WorkerSetListener,
     def __cbStartResumeTranscoding(self, result):
         if (isinstance(result, Failure) 
             and not result.check(OperationTimedOutError)):
-            self.logFailure(result, "Failure waiting transcoder set "
-                            "to become idle")
+            log.notifyFailure(self, result,
+                              "Failure waiting transcoder set "
+                              "to become idle")
         self.log("Free to continue transcoding startup/resuming")
         d = defer.Deferred()
         for task in self.iterTasks():
@@ -181,12 +182,15 @@ class Transcoding(TaskManager, WorkerSetListener,
         return d
 
     def __ebStartupResumingFailure(self, failure):
-        self.logFailure(failure, "Failure during transcoding startup/resuming")
+        log.notifyFailure(self, failure, 
+                          "Failure during transcoding startup/resuming")
 
     def __ebAddComponentFailed(self, failure, name):
-        self.logFailure(failure, "Failed to add transcoder '%s' "
-                        "to transcoding manager", name)
+        log.notifyFailure(self, failure,
+                          "Failed to add transcoder '%s' "
+                          "to transcoding manager", name)
     
     def __ebRemoveComponentFailed(self, failure, name):
-        self.logFailure(failure, "Failed to remove transcoder '%s' "
-                        "from transcoding manager", name)
+        log.notifyFailure(self, failure,
+                          "Failed to remove transcoder '%s' "
+                          "from transcoding manager", name)

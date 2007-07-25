@@ -1,5 +1,82 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/job.py
+	  (TranscoderJob._transcoderPiplineCallback,
+	  TranscoderJob._getPreProcessVars, TranscoderJob._getPostProcessVars,
+	  TranscoderJob._fireJobInfo):
+	Normalized substitution variables.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py
+	  (FileMonitor.__notifyDebug, FileMonitor.__monitorError,
+	  FileMonitor.__unexpectedError):
+	* flumotion/component/transcoder/filetranscoder.py
+	  (FileTranscoder.__notifyDebug, FileTranscoder.__transcodingError,
+	  FileTranscoder.__unexpectedError, FileTranscoder.__cbJobDone,
+	  FileTranscoder.__ebJobFailed, FileTranscoder.__cbJobTerminated,
+	  FileTranscoder.__ebAcknowledgeError,
+	  FileTranscoder.__ebDiagnoseAcknowledgeFail,
+	  FileTranscoder.__terminateDiagnoseMode):
+	Added parameter to the notify method.
+	Renamed log.logFailure and log.logException 
+	to log.notifyFailure and log.notifyException.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/log.py (Loggable, notifyFailure,
+	  notifyException, getExceptionMessage, getFailureMessage,
+	  getExceptionTraceback, log, debug, info, warning, error):
+	* flumotion/transcoder/admin/adminelement.py
+	  (AdminElement._unexpectedError, AdminElement.__cbLogFailures):
+	* flumotion/transcoder/admin/admintask.py (AdminTask.__ebStartupFailed,
+	  AdminTask.__cbMultiDeleteResults, AdminTask.__bbTaskTerminated,
+	  AdminTask.__cbMultiUIStateResults,
+	  AdminTask.__bbSelectPotentialComponent,
+	  AdminTask.__ebPotentialComponentFailure,
+	  AdminTask.__ebComponentLoadFailed, AdminTask.__ebComponentNotHappy,
+	  AdminTask.__ebUIStateFailed, AdminTask.__ebComponentStopFailed,
+	  AdminTask.__ebComponentDeleteFailed, AdminTask.__ebNoValidWorker):
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.__ebCustomerInitFailed):
+	* flumotion/transcoder/admin/datastore/basestore.py
+	  (BaseStore._retrievalFailed, BaseStore.__ebDataSourceError):
+	* flumotion/transcoder/admin/datastore/customerstore.py
+	  (CustomerStore.__ebProfileInitFailed):
+	* flumotion/transcoder/admin/datastore/profilestore.py
+	  (ProfileStore.__ebTargetInitFailed):
+	* flumotion/transcoder/admin/monitoring.py
+	  (Monitoring.__cbStartResumeMonitoring,
+	  Monitoring.__ebStartupResumingFailure,
+	  Monitoring.__ebAddComponentFailed,
+	  Monitoring.__ebRemoveComponentFailed):
+	* flumotion/transcoder/admin/montask.py
+	  (MonitoringTask.__ebSetFileStateFailed,
+	  MonitoringTask.__ebMoveFilesFailed):
+	* flumotion/transcoder/admin/proxies/componentset.py
+	  (ComponentSetSkeleton.__ebAcceptFailure):
+	* flumotion/transcoder/admin/proxies/fluproxy.py
+	  (BaseFlumotionProxy.__ebDictElementInitFailed,
+	  BaseFlumotionProxy.__ebElementInitFailed):
+	* flumotion/transcoder/admin/taskmanager.py
+	  (TaskManager.__ebResolveCallFailure,
+	  TaskManager.__ebGetPropertiesFailed,
+	  TaskManager.__ebComponentStopFailed,
+	  TaskManager.__ebComponentDeleteFailed, TaskManager.__ebStartupFailed,
+	  TaskManager.__ebPauseFailed, TaskManager.__ebTaskStopFailed):
+	* flumotion/transcoder/admin/transcoding.py
+	  (Transcoding.__cbStartResumeTranscoding,
+	  Transcoding.__ebStartupResumingFailure,
+	  Transcoding.__ebAddComponentFailed,
+	  Transcoding.__ebRemoveComponentFailed):
+	Renamed log.logFailure and log.logException 
+	to log.notifyFailure and log.notifyException
+	and made them module function only to prevent 
+	confusion between transcoder's Loggable and 
+	flumotion's Loggable.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/context.py (TargetContext.__init__,
 	  Context.getTargetContext, Context.getTargetContexts,
 	  Context.getLinkDir, Context.getOutputWorkDir,

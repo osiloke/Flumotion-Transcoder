@@ -116,8 +116,9 @@ class BaseStore(AdminElement):
         Can be used by child class as retrieval errorback.
         """
         #FIXME: Better Error Handling ?
-        self.logFailure(failure, "Data retrieval failed for %s '%s'",
-                        self.__class__.__name__, self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Data retrieval failed for %s '%s'",
+                          self.__class__.__name__, self.getLabel())
         #Propagate failures
         return failure
 
@@ -165,7 +166,8 @@ class BaseStore(AdminElement):
 
     def __ebDataSourceError(self, failure):
         #FIXME: Error Handling
-        self.logFailure(failure, "Store %s '%s' data source error",
-                     self.__class__.__name__, self.getLabel())
+        log.notifyFailure(self, failure,
+                          "Store %s '%s' data source error",
+                          self.__class__.__name__, self.getLabel())
         return failure
         

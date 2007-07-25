@@ -222,8 +222,9 @@ class AdminStore(BaseStore):
     
     def __ebCustomerInitFailed(self, failure, customer):
         #FIXME: Better Error Handling ?
-        self.logFailure(failure, "Customer '%s' failed to initialize; "
-                        "dropping it", customer.getLabel())
+        log.notifyFailure(self, failure, 
+                          "Customer '%s' failed to initialize; dropping it",
+                          customer.getLabel())
         customer._abort(failure)
         #Don't propagate failures, will be dropped anyway
         return

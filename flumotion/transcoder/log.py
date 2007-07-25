@@ -19,7 +19,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common import log as flog
 from flumotion.transcoder.errors import TranscoderError
-
+from flumotion.transcoder.properties import PropertyError
 
 ## Global parameters setters ##
 
@@ -52,15 +52,6 @@ ERROR = flog.ERROR
 
 class ILogger(Interface):
     
-    def logFailure(self, *args, **kwargs):
-        pass
-        
-    def logException(self, *args, **kwargs):
-        pass
-    
-    def warnAndRaise(self, *args, **kwargs):
-        pass
-    
     def log(self, *args, **kwargs):
         pass
 
@@ -82,22 +73,36 @@ class ILogger(Interface):
 class Loggable(flog.Loggable):
     
     implements(ILogger)
-    
-    def logFailure(self, failure, template, *args, **kwargs):
-        global logFailure
-        logFailure(self, failure, template, *args, **kwargs)
 
-    def logException(self, exception, template, *args, **kwargs):
-        global logFailure
-        logException(self, exception, template, *args, **kwargs)
 
-    def warnAndRaise(self, error, template, *args, **kwargs):
-        global warnAndRaise
-        warnAndRaise(self, error, template, *args, **kwargs)
+def notifyFailure(logger, failure, template, *args, **kwargs):
+    global _notifier
+    msg = getFailureMessage(failure)
+    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
+        cleanup = kwargs.get("cleanTraceback", False)
+        tb = getFailureTraceback(failure, cleanup)
+        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
+    else:
+        logger.warning(template + ": %s", *(args + (msg,)))
+    if _notifier:
+       _notifier(template % args, failure=failure)
 
+def notifyException(logger, exception, template, *args, **kwargs):
+    global _notifier
+    msg = getExceptionMessage(exception)
+    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
+        cleanup = kwargs.get("cleanTraceback", False)
+        tb = getExceptionTraceback(exception, cleanup)
+        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
+    else:
+        logger.warning(template + ": %s", *(args + (msg,)))
+    if _notifier:
+       _notifier(template % args, exception=exception)
 
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)
+    if isinstance(exception, PropertyError):
+        msg += " [%s:%s]" % (exception.locator, exception.descriptor)
     if isinstance(exception, TranscoderError):
         details = exception.causeDetails
         if details:
@@ -107,6 +112,8 @@ def getExceptionMessage(exception):
 def getFailureMessage(failure):
     msg = flog.getFailureMessage(failure)
     exception = failure.value
+    if isinstance(exception, PropertyError):
+        msg += " [%s:%s]" % (exception.locator, exception.descriptor)
     if isinstance(exception, TranscoderError):
         details = exception.causeDetails
         if details:
@@ -115,7 +122,7 @@ def getFailureMessage(failure):
 
 def getExceptionTraceback(exception=None, cleanup=False):
     #FIXME: Only work if the exception was raised in the current context
-    f = Failure()
+    f = Failure(exception)
     if exception and (f.value != exception):
         return "Not Traceback information available"
     io = StringIO.StringIO()
@@ -195,18 +202,6 @@ class LoggerProxy(object):
             raise AttributeError, attr
         return self.__dict__[attr]
     
-    def logFailure(self, *args, **kwargs):
-        args, kwargs = self._updateArgs(args, kwargs)
-        self._logger.logFailure(*args, **kwargs)
-        
-    def logException(self, *args, **kwargs):
-        args, kwargs = self._updateArgs(args, kwargs)
-        self._logger.logException(*args, **kwargs)
-    
-    def warnAndRaise(self, *args, **kwargs):
-        args, kwargs = self._updateArgs(args, kwargs)
-        self._logger.warnAndRaise(*args, **kwargs)
-    
     def log(self, *args, **kwargs):
         args, kwargs = self._updateArgs(args, kwargs)
         self._logger.log(*args, **kwargs)
@@ -232,50 +227,25 @@ class LoggerProxy(object):
 
 def log(*args, **kwargs):
     global _default_log_category
-    flog.log(_default_log_category, *args, **kwargs)
+    category = kwargs.pop("category", _default_log_category)
+    flog.log(category, *args, **kwargs)
 
 def debug(*args, **kwargs):
     global _default_log_category
-    flog.debug(_default_log_category, *args, **kwargs)
+    category = kwargs.pop("category", _default_log_category)
+    flog.debug(category, *args, **kwargs)
 
 def info(*args, **kwargs):
     global _default_log_category
-    flog.info(_default_log_category, *args, **kwargs)
+    category = kwargs.pop("category", _default_log_category)
+    flog.info(category, *args, **kwargs)
 
 def warning(*args, **kwargs):
     global _default_log_category
-    flog.warning(_default_log_category, *args, **kwargs)
+    category = kwargs.pop("category", _default_log_category)
+    flog.warning(category, *args, **kwargs)
 
 def error(*args, **kwargs):
     global _default_log_category
-    flog.error(_default_log_category, *args, **kwargs)
-
-def logFailure(logger, failure, template, *args, **kwargs):
-    global _notifier
-    msg = getFailureMessage(failure)
-    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
-        cleanup = kwargs.get("cleanTraceback", False)
-        tb = getFailureTraceback(failure, cleanup)
-        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
-    else:
-        logger.warning(template + ": %s", *(args + (msg,)))
-    if _notifier:
-       _notifier(template % args, failure=failure)
-
-def logException(logger, exception, template, *args, **kwargs):
-    global _notifier
-    msg = getExceptionMessage(exception)
-    if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
-        cleanup = kwargs.get("cleanTraceback", False)
-        tb = getExceptionTraceback(exception, cleanup)
-        logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
-    else:
-        logger.warning(template + ": %s", *(args + (msg,)))
-    if _notifier:
-       _notifier(template % args, failure=Failure(exception))
-
-def warnAndRaise(logger, error, template, *args, **kwargs):
-    assert isinstance(error, TranscoderError)
-    cause = kwargs.pop("cause", None)
-    logger.warning(template, *args, **kwargs)
-    raise error(template % args, cause=cause)
+    category = kwargs.pop("category", _default_log_category)
+    flog.error(category, *args, **kwargs)

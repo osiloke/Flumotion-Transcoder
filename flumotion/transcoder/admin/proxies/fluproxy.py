@@ -301,8 +301,9 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     
     def __ebDictElementInitFailed(self, failure, element, attr):
         identifier = element.getIdentifier()
-        self.logFailure(failure, "%s '%s' failed to initialize; dropping it",
-                        element.__class__.__name__, element.getLabel())
+        log.notifyFailure(self, failure, 
+                          "%s '%s' failed to initialize; dropping it",
+                          element.__class__.__name__, element.getLabel())
         # Remove the pending reference if it's for the same element
         self.__removePending(attr, identifier, element)
         self._onElementInitFailed(element, failure)
@@ -339,8 +340,9 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     
     def __ebElementInitFailed(self, failure, element, attr):
         identifier = element.getIdentifier()
-        self.logFailure(failure, "%s '%s' failed to initialize; dropping it",
-                        element.__class__.__name__, element.getLabel())
+        log.notifyFailure(self, failure, 
+                          "%s '%s' failed to initialize; dropping it",
+                          element.__class__.__name__, element.getLabel())
         # Remove the pending reference if it's for the same element
         self.__removePending(attr, identifier, element)
         self._onElementInitFailed(element, failure)

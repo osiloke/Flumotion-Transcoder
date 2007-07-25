@@ -225,7 +225,7 @@ class ComponentSetSkeleton(RootFlumotionProxy,
                 del self._compWaiters[identifier]
 
     def __ebAcceptFailure(self, failure, component, message):
-        self.logFailure(failure, "%s", message)
+        log.notifyFailure(self, failure, "%s", message)
         
     def __removeComponent(self, component):
         identifier = component.getIdentifier()
