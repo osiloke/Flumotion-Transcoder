@@ -97,7 +97,7 @@ class ActivityStore(log.LoggerProxy):
         return ActivityFactory(self, self, a, True)
 
     def __cbWrapActivities(self, dataList):
-        return [ActivityFactory(self, d, False) for d in dataList]
+        return [ActivityFactory(self, self, d, False) for d in dataList]
         
         
 def _buildPropertyGetter(propertyName, default):
@@ -118,7 +118,7 @@ class BaseActivity(log.LoggerProxy):
                        {"getLabel":      ("label",      None),
                         "getIdentifier": ("identifier", None),
                         "getType":       ("type",       None),
-                        "getSubtype":    ("subtype",    None),
+                        "getSubType":    ("subtype",    None),
                         "getStartTime":  ("startTime",  None),
                         "getLastTime":   ("lastTime",   None),
                         "getState":      ("state",      None)}}
@@ -152,7 +152,7 @@ class BaseActivity(log.LoggerProxy):
 
     
     def __init__(self, logger, parent, data, isNew=True):
-        log.LoggerProxy.__init__(logger)
+        log.LoggerProxy.__init__(self, logger)
         self._parent = parent
         self._data = data
         self._deleted = False
@@ -190,14 +190,16 @@ class BaseActivity(log.LoggerProxy):
     ## Private Methods ##
     
     def __ebActivityStoreFailed(self, failure):
-        self.logFailure(failure, "Fail to store %s activity '%s'",
-                        self._data and self._data.type and self._data.type.nick,
-                        self._data and self._data.label)
+        log.notifyFailure(self, failure,
+                          "Fail to store %s activity '%s'",
+                          self._data and self._data.type and self._data.type.nick,
+                          self._data and self._data.label)
         
     def __ebActivityDeleteFailed(self, failure):
-        self.logFailure(failure, "Fail to delete %s activity '%s'",
-                        self._data and self._data.type and self._data.type.nick,
-                        self._data and self._data.label)
+        log.notifyFailure(self, failure,
+                          "Fail to delete %s activity '%s'",
+                          self._data and self._data.type and self._data.type.nick,
+                          self._data and self._data.label)
 
 
 class TranscodingActivity(BaseActivity):
@@ -241,7 +243,8 @@ class BaseNotifyActivity(BaseActivity):
                        {"getTrigger":    ("trigger",    None),
                         "getTimeout":    ("timeout",    None),
                         "getRetryCount": ("retryCount", None),
-                        "getRetryMax":   ("retryMax",   None)}}
+                        "getRetryMax":   ("retryMax",   None),
+                        "getRetrySleep": ("retrySleep", None)}}
     
     def __init__(self, logger, parent, data, isNew=True):
         BaseActivity.__init__(self, logger, parent, data, isNew)
@@ -336,6 +339,6 @@ _activityLookup = {ActivityTypeEnum.transcoding:
                     NotificationTypeEnum.email: MailNotifyActivity}}
 
 
-def ActivityFactory(parent, data, isNew=True):
+def ActivityFactory(logger, parent, data, isNew=True):
     assert data.type in _activityLookup
-    return _activityLookup[data.type][data.subtype](parent, data, isNew)
+    return _activityLookup[data.type][data.subtype](logger, parent, data, isNew)
