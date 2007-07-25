@@ -215,110 +215,110 @@ TEMPLATE VARIABLES
 
 Some options can contain template variables that will
 be substituted:
-    The failed GET requests (E)
-    The done GET requests (S)
+    The failed notifications (Mail and HTTP) (E)
+    The done notifications (Mail and HTTP) (S)
+    The failed target notification (Mail and HTTP) (F)
+    The done target notification (Mail and HTTP) (T)
     The URL prefixes (U)
     The pre-process command lines (R)
     The post-process command lines (O)
     The custom directories (C)
 
-| Option    | Variables                | Example
+|      Option    | Variables                | Example
 ---------------------------------------------------------------------
-   E S U R O %(inputFile)s             : video.avi
-     S U   O %(outputFile)s            : high/video.avi.ogg
-     S U   O %(workFile)s              : high/video.avi.ogg.tmp
-     S U   O %(linkFile)s              : high/video.avi.ogg.link
-   E S U R O %(reportFile)s            : video.avi.rep
-   E S U     %(configFile)s            : video.avi.ini
+    F T E S U R O %(inputFile)s             : video.avi
+    F T     U   O %(outputFile)s            : video.avi.ogg
+            U   O %(outputWorkFile)s        : video.avi.ogg.tmp
+    F T     U   O %(linkFile)s              : video.avi.ogg.link
+            U   O %(linkWorkFile)s          : video.avi.ogg.link.tmp
 
-   E S U     %(relInputPath)s          : ogg/theora-vorbis/video.avi
-   E S U     %(relConfigPath)s         : ogg/theora-vorbis/video.avi.ini
-   E S U     %(relReportPath)s         : ogg/theora-vorbis/video.avi.rep
-     S U     %(relOutputPath)s         : ogg/theora-vorbis/high/video.avi.ogg
-     S U     %(relLinkPath)s           : ogg/theora-vorbis/high/video.avi.ogg.link
-     S U     %(relWorkPath)s           : ogg/theora-vorbis/high/video.avi.ogg.tmp
+    F T E S U R O %(inputRelPath)s          : video.avi
+    F T     U   O %(outputRelPath)s         : high/video.avi.ogg
+            U   O %(outputWorkRelPath)s     : high/video.avi.ogg.tmp
+    F T     U   O %(linkRelPath)s           : high/video.avi.ogg.link
+            U   O %(linkWorkRelPath)s       : high/video.avi.ogg.link.tmp
 
-   E S U R O %(inputDir)s              : /home/file/fluendo/files/incoming/ogg/theora-vorbis
-   E S U R O %(outputDir)s             : /home/file/fluendo/files/outgoing/theora-vorbis
-   E S U R O %(workDir)s               : /var/tmp/fluendo/working/theora-vorbis
-   E S U     %(configDir)s             : /var/tmp/fluendo/configs/theora-vorbis
-   E S U     %(failedReportsDir)s      : /var/tmp/fluendo/reports/failed/theora-vorbis
-   E S U     %(doneReportsDir)s        : /var/tmp/fluendo/reports/done/theora-vorbis
+            U R O %(inputBase)s             : /home/file/fluendo/files/incoming/ogg/theora-vorbis
+            U R O %(outputBase)s            : /home/file/fluendo/files/outgoing/ogg/theora-vorbis
+            U R O %(linkBase)s              : /home/file/fluendo/files/links/ogg/theora-vorbis
+            U R O %(outputWorkBase)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
+            U R O %(linkWorkBase)s          : /var/tmp/fluendo/working/ogg/theora-vorbis
 
-   E S U     %(inputRoot)s             : /home/file/fluendo/files/incoming
-   E S U     %(outputRoot)s            : /home/file/fluendo/files/outgoing
-   E S U     %(workRoot)s              : /var/tmp/fluendo/working
-   E S U     %(configRoot)s            : /var/tmp/fluendo/configs
-   E S U     %(failedReportsRoot)s     : /var/tmp/fluendo/reports/failed
-   E S U     %(doneReportsRoot)s       : /var/tmp/fluendo/reports/done
+            U R O %(inputDir)s              : /home/file/fluendo/files/incoming/ogg/theora-vorbis
+            U   O %(outputDir)s             : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
+            U   O %(linkDir)s               : /home/file/fluendo/files/links/ogg/theora-vorbis/high
+            U   O %(outputWorkDir)s         : /var/tmp/fluendo/working/ogg/theora-vorbis/high
+            U   O %(linkWorkDir)s           : /var/tmp/fluendo/working/ogg/theora-vorbis/high
 
-   E S U R O %(inputPath)s             : /home/file/fluendo/files/incoming/ogg/theora-vorbis/video.avi
-   E S U     %(failedPath)s            : /home/file/fluendo/files/failed/ogg/theora-vorbis/video.avi
-   E S U     %(donePath)s              : /home/file/fluendo/files/done/ogg/theora-vorbis/video.avi
-     S U   O %(outputPath)s            : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high/video.avi.ogg
-     S U   O %(linkPath)s              : /home/file/fluendo/files/links/ogg/theora-vorbis/high/video.avi.ogg.link
-     S U   O %(outputWorkPath)s        : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.tmp
-     S U   O %(linkWorkPath)s          : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.link.tmp
-   E S U R O %(configPath)s            : /home/file/fluendo/configs/ogg/theora-vorbis/video.avi.ini
-   E S U     %(reportPath)s            : /home/file/fluendo/reports/done/ogg/theora-vorbis/video.avi.rep
+            U R O %(inputPath)s             : /home/file/fluendo/files/incoming/ogg/theora-vorbis/video.avi
+            U     %(failedPath)s            : /home/file/fluendo/files/failed/ogg/theora-vorbis/video.avi
+            U     %(donePath)s              : /home/file/fluendo/files/done/ogg/theora-vorbis/video.avi
+            U   O %(outputPath)s            : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high/video.avi.ogg
+            U   O %(linkPath)s              : /home/file/fluendo/files/links/ogg/theora-vorbis/high/video.avi.ogg.link
+            U   O %(outputWorkPath)s        : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.tmp
+            U   O %(linkWorkPath)s          : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.link.tmp
 
-   E S U R O %(custName)s              : Fluendo
-   E S U R O %(profLabel)s             : OGG/theora-vorbis
-     S U   O %(targetLabel)s           : High Quality OGG
-     S U   O %(targetType)s            : Audio/Video
-     S U   O %(targetMime)s            : application/ogg
-     S U   O %(targetLength)s          : 436543251285
-     S U   O %(targetDuration)f        : 152.33335
-     S U   O %(targetHours)s           : 2
-     S U   O %(targetMinutes)s         : 20
-     S U   O %(targetSeconds)s         : 30
-     S U   O %(targetHaveVideo)d       : 1
-     S U   O %(targetHaveAudioo)d      : 1
-     S U   O %(targetVideoWidth)s      : 320
-     S U   O %(targetVideoHeight)s     : 240
-   E S U R O %(sourceMime)s            : application/ogg
-   E S U R O %(sourceLength)s          : 15432468
-   E S U R O %(sourceDuration)f        : 123.54
-   E S U R O %(sourceHours)s           : 2
-   E S U R O %(sourceMinutes)s         : 20
-   E S U R O %(sourceSeconds)s         : 30
-   E S U R O %(sourceHaveVideo)d       : 1
-   E S U R O %(sourceHaveAudioo)d      : 1
-   E S U R O %(sourceVideoWidth)s      : 640
-   E S U R O %(sourceVideoHeight)s     : 480
-   E         %(errorMessage)s          : Failed to apply post-process
-   E         %(failedTargets)s         : [ogg, mp4]
-   E     R   %(targets)s               : [ogg, mp4, 3gp]
+    F T E S U R O %(custName)s              : Fluendo
+    F T E S U R O %(profName)s              : OGG/theora-vorbis
+    F T     U   O %(targetName)s            : High Quality OGG
+    F T     U   O %(targetType)s            : Audio/Video
+    ? T     U   O %(targetMime)s            : application/ogg
+    ? T     U   O %(targetLength)d          : 436543251285
+    ? T     U   O %(targetDuration)f        : 152.33335
+    ? T     U   O %(targetHours)s           : 2
+    ? T     U   O %(targetMinutes)s         : 20
+    ? T     U   O %(targetSeconds)s         : 30
+    ? T     U   O %(targetHasVideo)d        : 1
+    ? T     U   O %(targetHasAudio)d        : 1
+    ? T     U   O %(targetVideoWidth)s      : 320
+    ? T     U   O %(targetVideoHeight)s     : 240
+    ? T ? S U R O %(sourceMime)s            : application/ogg
+    ? T ? S U R O %(sourceLength)d          : 15432468
+    ? T ? S U R O %(sourceDuration)f        : 123.54
+    ? T ? S U R O %(sourceHours)s           : 2
+    ? T ? S U R O %(sourceMinutes)s         : 20
+    ? T ? S U R O %(sourceSeconds)s         : 30
+    ? T ? S U R O %(sourceHasVideo)d        : 1
+    ? T ? S U R O %(sourceHasAudio)d        : 1
+    ? T ? S U R O %(sourceVideoWidth)s      : 640
+    ? T ? S U R O %(sourceVideoHeight)s     : 480
+    F   E         %(errorMessage)s          : Failed to apply post-process
 
- C           %(workerShared)s          : /home/file
- C           %(workerTemp)s            : /var/tmp
- C           %(custRelDir)s            : fluendo
- C           %(custRootDir)s           : /home/file/fluendo
- C           %(custFilesDir)s          : /home/file/fluendo/files
- C           %(custInputDir)s          : /home/file/fluendo/files/incoming
- C           %(custOutputDir)s         : /home/file/fluendo/files/outgoing
- C           %(custFailedDir)s         : /home/file/fluendo/files/failed
- C           %(custDoneDir)s           : /home/file/fluendo/files/done
- C           %(custLinksDir)s          : /home/file/fluendo/files/links
- C           %(custWorkingDir)s        : /var/tmp/fluendo/working
- C           %(custConfigsDir)s        : /home/file/fluendo/configs
- C           %(custReportsDir)s        : /home/file/fluendo/reports
- C           %(custFailedReportdDir)s  : /home/file/fluendo/reports/failed
- C           %(custDoneReportsDir)s    : /home/file/fluendo/reports/done
- C           %(profRelDir)s            : ogg/theora-vorbis
- C           %(profInputDir)s          : /home/file/fluendo/files/incoming/ogg/theora-vorbis
- C           %(profOutputDir)s         : /home/file/fluendo/files/outgoing/ogg/theora-vorbis
- C           %(profFailedDir)s         : /home/file/fluendo/files/failed/ogg/theora-vorbis
- C           %(profDoneDir)s           : /home/file/fluendo/files/done/ogg/theora-vorbis
- C           %(profLinksDir)s          : /home/file/fluendo/files/links/ogg/theora-vorbis
- C           %(profWorkingDir)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
- C           %(profConfigsDir)s        : /home/file/fluendo/configs/ogg/theora-vorbis
- C           %(profFailedReportsDir)s  : /home/file/fluendo/reports/failed/ogg/theora-vorbis
- C           %(profDoneReportsDir)s    : /home/file/fluendo/reports/done/ogg/theora-vorbis
- C           %(targetRelDir)s          : high
- C           %(targetOutputDir)s       : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
- C           %(targetLinksDir)s        : /home/file/fluendo/files/links/ogg/theora-vorbis/high
- C           %(targetWorkingDir)s      : /var/tmp/fluendo/working/ogg/theora-vorbis/high
+    ? T ? S U   O %(mediaLength)d           : 15432468
+    ? T ? S U   O %(mediaDuration)f         : 123.45
+    ? T ? S U   O %(mediaHours)s            : 2
+    ? T ? S U   O %(mediaMinutes)s          : 20
+    ? T ? S U   O %(mediaSeconds)s          : 30
+
+  C               %(workerShared)s          : /home/file
+  C               %(workerTemp)s            : /var/tmp
+  C               %(custRelDir)s            : fluendo
+  C               %(custRootDir)s           : /home/file/fluendo
+  C               %(custFilesDir)s          : /home/file/fluendo/files
+  C               %(custInputDir)s          : /home/file/fluendo/files/incoming
+  C               %(custOutputDir)s         : /home/file/fluendo/files/outgoing
+  C               %(custFailedDir)s         : /home/file/fluendo/files/failed
+  C               %(custDoneDir)s           : /home/file/fluendo/files/done
+  C               %(custLinksDir)s          : /home/file/fluendo/files/links
+  C               %(custWorkingDir)s        : /var/tmp/fluendo/working
+  C               %(custConfigsDir)s        : /home/file/fluendo/configs
+  C               %(custReportsDir)s        : /home/file/fluendo/reports
+  C               %(custFailedReportdDir)s  : /home/file/fluendo/reports/failed
+  C               %(custDoneReportsDir)s    : /home/file/fluendo/reports/done
+  C               %(profRelDir)s            : ogg/theora-vorbis
+  C               %(profInputDir)s          : /home/file/fluendo/files/incoming/ogg/theora-vorbis
+  C               %(profOutputDir)s         : /home/file/fluendo/files/outgoing/ogg/theora-vorbis
+  C               %(profFailedDir)s         : /home/file/fluendo/files/failed/ogg/theora-vorbis
+  C               %(profDoneDir)s           : /home/file/fluendo/files/done/ogg/theora-vorbis
+  C               %(profLinksDir)s          : /home/file/fluendo/files/links/ogg/theora-vorbis
+  C               %(profWorkingDir)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
+  C               %(profConfigsDir)s        : /home/file/fluendo/configs/ogg/theora-vorbis
+  C               %(profFailedReportsDir)s  : /home/file/fluendo/reports/failed/ogg/theora-vorbis
+  C               %(profDoneReportsDir)s    : /home/file/fluendo/reports/done/ogg/theora-vorbis
+  C               %(targetRelDir)s          : high
+  C               %(targetOutputDir)s       : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
+  C               %(targetLinksDir)s        : /home/file/fluendo/files/links/ogg/theora-vorbis/high
+  C               %(targetWorkingDir)s      : /var/tmp/fluendo/working/ogg/theora-vorbis/high
 
 
 DESCRIPTION
