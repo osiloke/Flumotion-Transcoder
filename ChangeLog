@@ -1,5 +1,14 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (MutableDataWrapper._store, MutableDataWrapper.__setattr__,
+	  FileDataSource.newActivity, FileDataSource.__ebActivitiesSaveFailed):
+	Made possible dictionary and list values for the activities.
+	Corrected a copy/past bug where notification activities template
+	had the transcoding type set.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifier.py (_disableNotification,
 	  _buildBody, _postNotification, _cbNotificationDone,
 	  _ebNotificationFailed, notifyEmergency, notifyDebug,
@@ -176,15 +185,6 @@
 	flumotion's Loggable.
 	Properly pass the logger parameter to activities.
 	Added getRetrySleep getter to notifications.
-
-2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
-
-	* flumotion/transcoder/admin/datasource/filesource.py
-	  (MutableDataWrapper._store, MutableDataWrapper.__setattr__,
-	  FileDataSource.newActivity, FileDataSource.__ebActivitiesSaveFailed):
-	Made possible dictionary and list values for the activities.
-	Corrected a copy/past bug where notification activities template
-	had the transcoding type set.
 
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 

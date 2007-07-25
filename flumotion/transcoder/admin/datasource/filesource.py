@@ -118,7 +118,18 @@ class MutableDataWrapper(object):
             self._data = data
         assert self._identifier in self._parent
         for attr, value in self._fields.items():
-            setattr(self._data, attr, utils.deepCopy(value))
+            if isinstance(value, list):
+                l = getattr(self._data, attr)
+                del l[:]
+                for v in value:
+                    l.append(utils.deepCopy(v))
+            elif isinstance(value, dict):
+                d = getattr(self._data, attr)
+                d.clear()
+                for k, v in value.items():
+                    d[k] = utils.deepCopy(v)
+            else:
+                setattr(self._data, attr, utils.deepCopy(value))
         return True
     
     def _delete(self):
@@ -173,8 +184,8 @@ TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'hidden': set([]),
                   'readonly': set(['type', 'subtype'])}
 
-NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
-                  'defaults': {'type': ActivityTypeEnum.transcoding,
+NOT_ACT_TMPL = {'class': dataprops.NotificationActivityData,
+                  'defaults': {'type': ActivityTypeEnum.notification,
                                'subtype': None,
                                'state': ActivityStateEnum.unknown,
                                'label': None,
@@ -188,7 +199,7 @@ NOT_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                                'retryCount': None,
                                'retryMax': None,
                                'retrySleep': None,
-                               'data': None},
+                               'data': {}},
                   'hidden': set([]),
                   'readonly': set(['type', 'subtype'])}
 
@@ -411,14 +422,13 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
 
-    _activityTemplateLookup = {ActivityTypeEnum.transcoding: TRANS_ACT_TMPL,
-                               ActivityTypeEnum.notification: NOT_ACT_TMPL}
-
     def newActivity(self, type, subtype):
         assert isinstance(type, ActivityTypeEnum)
-        tmpl = self._activityTemplateLookup[type]
-        return MutableDataWrapper(self._activityData.transcodings, 
-                                  tmpl, subtype=subtype)
+        if type == ActivityTypeEnum.transcoding:
+            return MutableDataWrapper(self._activityData.transcodings, 
+                                      TRANS_ACT_TMPL, subtype=subtype)
+        return MutableDataWrapper(self._activityData.notifications, 
+                                  NOT_ACT_TMPL, subtype=subtype)
 
     def newCustomer(self, cusomerId):
         raise NotImplementedError()
@@ -559,6 +569,7 @@ class FileDataSource(log.Loggable):
         return self
         
     def __ebActivitiesSaveFailed(self, failure):
-        self.logFailure(failure, "Fail to save activities")
+        log.notifyFailure(self, failure,
+                          "Fail to save activities")
         return failure
 
