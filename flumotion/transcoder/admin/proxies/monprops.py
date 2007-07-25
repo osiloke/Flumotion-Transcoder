@@ -17,10 +17,11 @@ from zope.interface import implements
 from flumotion.common import log
 
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.errors import PropertiesError
-from flumotion.transcoder.admin.compprops import IComponentProperties
-from flumotion.transcoder.admin.compprops import ComponentPropertiesMixin
 from flumotion.transcoder.utils import digestParameters
+from flumotion.transcoder.admin.errors import PropertiesError
+from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
+from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin
+
 
 class MonitorProperties(ComponentPropertiesMixin):
     

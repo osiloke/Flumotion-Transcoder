@@ -16,7 +16,7 @@ from flumotion.transcoder import utils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.monprops import MonitorProperties
+from flumotion.transcoder.admin.proxies.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener

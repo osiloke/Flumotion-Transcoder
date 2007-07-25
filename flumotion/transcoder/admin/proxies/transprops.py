@@ -20,10 +20,10 @@ from flumotion.transcoder import log, inifile, constants
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.transconfig import TranscodingConfig, TargetConfig
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.errors import PropertiesError
-from flumotion.transcoder.admin.compprops import IComponentProperties
-from flumotion.transcoder.admin.compprops import ComponentPropertiesMixin
 from flumotion.transcoder.utils import digestParameters
+from flumotion.transcoder.admin.errors import PropertiesError
+from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
+from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin
 
 
 def createTranscodingConfigFromContext(profileCtx):
@@ -50,8 +50,9 @@ def createTranscodingConfigFromContext(profileCtx):
     conf.source.preProcess = prof.store.getPreprocessCommand()
     for targ in prof.iterTargetContexts():
         tc = TargetConfig()
-        conf.targets.append(tc)
-        tc.label = targ.store.getLabel()
+        label = targ.store.getLabel()
+        conf.targets[label] = tc
+        tc.label = label
         tc.outputFile = targ.getOutputRelPath()
         if targ.store.getEnablePostprocessing():
             tc.postProcess = targ.store.getPostprocessCommand()
@@ -135,6 +136,10 @@ class TranscoderProperties(ComponentPropertiesMixin):
         self._digest = digestParameters(self._name, 
                                         self._configPath, 
                                         self._niceLevel)
+
+    def getConfigPath(self):
+        return self._configPath
+
 
     ## IComponentProperties Implementation ##
         

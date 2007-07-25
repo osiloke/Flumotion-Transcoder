@@ -20,7 +20,7 @@ from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask
-from flumotion.transcoder.admin.transprops import TranscoderProperties
+from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
 
@@ -302,8 +302,9 @@ class TranscodingTask(AdminTask, TranscoderListener):
     
     def __ebAcknowledgeFailed(self, failure, transcoder):
         if not self._isElectedComponent(transcoder): return
-        self.logFailure(failure, "Failed to acknowledge task '%s' transcoder "
-                        "'%s'", self.getLabel(), transcoder.getName())
+        log.notifyFailure(self, failure, 
+                          "Failed to acknowledge task '%s' transcoder '%s'",
+                          self.getLabel(), transcoder.getName())
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transcoder)

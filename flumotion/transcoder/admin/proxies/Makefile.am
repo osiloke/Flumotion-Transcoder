@@ -6,7 +6,8 @@ python_PYTHON = __init__.py fluproxy.py managerset.py workerset.py \
                 managerproxy.py workerproxy.py atmosphereproxy.py \
                 flowproxy.py componentproxy.py componentset.py \
                 monitorset.py monitorproxy.py groupproxy.py \
-                transcoderset.py transcoderproxy.py
+                transcoderset.py transcoderproxy.py \
+                compprops.py monprops.py transprops.py
 python_DATA =
 
 clean-local:

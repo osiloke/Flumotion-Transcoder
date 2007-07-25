@@ -1,5 +1,33 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py (TargetContext.__init__,
+	  Context.getTargetContext, Context.getTargetContexts,
+	  Context.getLinkDir, Context.getOutputWorkDir,
+	  Context.getLinkWorkDir):
+	* flumotion/component/transcoder/reporter.py (TargetReporter.__init__,
+	  TargetReporter.hasFatalError, Reporter.getTargetReporter,
+	  Reporter.hasFatalError, Reporter.crawlPipeline):	  
+	Made the targets properies dictionaries insteed of list.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/compprops.py:
+	* flumotion/transcoder/admin/monprops.py:
+	* flumotion/transcoder/admin/transprops.py:	
+	* flumotion/transcoder/admin/proxies/Makefile.am:
+	* flumotion/transcoder/admin/proxies/compprops.py:
+	* flumotion/transcoder/admin/proxies/monprops.py:
+	* flumotion/transcoder/admin/proxies/transprops.py
+	  (createTranscodingConfigFromContext,
+	  TranscoderProperties.getConfigPath):
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	* flumotion/transcoder/admin/transtask.py
+	  (TranscodingTask.__ebAcknowledgeFailed):
+	Moved components property classes to proxies.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/base.xml:
 	* flumotion/component/transcoder/filetranscoder.xml:
 	Made the properties.py a base module for all components.
