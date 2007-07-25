@@ -1,5 +1,47 @@
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (IComponentListener.onComponentMessage,
+	  ComponentListener.onComponentMessage, BaseComponentProxy.__init__,
+	  BaseComponentProxy._onActivated,
+	  BaseComponentProxy._componentStateAppend,
+	  BaseComponentProxy._onComponentMessage,
+	  ComponentProxy._onComponentMessage):
+	Added an event to notify of components messages.
+
+s2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/notifysubs.py (NotificationVariables,
+	  NotificationVariables.__init__,
+	  NotificationVariables._addAnalyseResult, SourceNotificationVariables,
+	  SourceNotificationVariables.__init__,
+	  SourceNotificationVariables.getTargetVariables,
+	  TargetNotificationVariables, TargetNotificationVariables.__init__):
+	Created classes to encapsulate the variable set to use 
+	for notification substitution.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/notifier.py (_disableNotification,
+	  _buildBody, _postNotification, _cbNotificationDone,
+	  _ebNotificationFailed, notifyEmergency, notifyDebug,
+	  Notifier.__init__, Notifier.initialize, Notifier.notify,
+	  Notifier._postMail, Notifier.__doPrepareGetRequest,
+	  Notifier.__doPrepareMailPost, Notifier.__doPerformMailPost,
+	  Notifier.__cbPostMailSucceed, Notifier.__notificationFailed,
+	  Notifier.__cannotPrepare, Notifier.__cannotPerform,
+	  Notifier.__prepareNotification, Notifier.__performNotification):
+	Implemented the notification methods and functions.
+	Corrected bug in core notification methods.
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/eventsource.py (EventSource._fireEventTo,
+	  EventSource._fireEvent, EventSource._fireEventWithoutPayload):
+	Now use log.notifyException().
+
+2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/document.py:
 	Corrected invalid import path.
 

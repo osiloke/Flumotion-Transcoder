@@ -28,7 +28,7 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.waiters import AssignWaiters, ValueWaiters
 from flumotion.transcoder.admin.errors import OrphanComponentError
-from flumotion.transcoder.admin.compprops import GenericComponentProperties
+from flumotion.transcoder.admin.proxies.compprops import GenericComponentProperties
 from flumotion.transcoder.admin.proxies.fluproxy import FlumotionProxy
 
 
@@ -62,6 +62,9 @@ class IComponentListener(Interface):
     def onComponentOrphaned(self, component, worker):
         pass
 
+    def onComponentMessage(self, component, message):
+        pass
+
 
 class ComponentListener(object):
     
@@ -74,6 +77,9 @@ class ComponentListener(object):
         pass
     
     def onComponentOrphaned(self, component, worker):
+        pass
+
+    def onComponentMessage(self, component, message):
         pass
 
 
@@ -94,6 +100,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._worker = None
         self._mood = ValueWaiters("Component Mood")
         self._properties = AssignWaiters("Component Properties")
+        self._messageIds = {} # {identifier: None}
         
 
     def addListener(self, listener):
@@ -263,7 +270,8 @@ class BaseComponentProxy(FlumotionProxy):
 
     def _onActivated(self):
         cs = self._componentState
-        cs.addListener(self, self._componentStateSet)
+        cs.addListener(self, self._componentStateSet,
+                       self._componentStateAppend)
         self.__componentMoodChanged(cs.get('mood'))
         self.__componentActiveWorkerChanged(cs.get('workerName'))
         self.__componentRequestedWorkerChanged(cs.get('workerRequested'))
@@ -294,6 +302,13 @@ class BaseComponentProxy(FlumotionProxy):
         elif key == 'workerRequested':
             self.__componentRequestedWorkerChanged(value)
 
+    def _componentStateAppend(self, state, key, value):
+        if key == 'messages':
+            if value.id in self._messageIds:
+                return
+            self._messageIds[value.id] = None
+            self._onComponentMessage(value)
+
 
     ## Protected Virtual Methods ##
 
@@ -317,6 +332,9 @@ class BaseComponentProxy(FlumotionProxy):
         pass
     
     def _onComponentOrphaned(self, worker):
+        pass
+    
+    def _onComponentMessage(self, message):
         pass
     
     
@@ -623,3 +641,5 @@ class ComponentProxy(BaseComponentProxy):
     def _onUnsetUIState(self, uiState):
         uiState.removeListener(self)
 
+    def _onComponentMessage(self, message):
+        self._fireEvent(message, "ComponentMessage")
