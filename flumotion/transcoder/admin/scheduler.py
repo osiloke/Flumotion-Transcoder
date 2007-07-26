@@ -186,8 +186,6 @@ class Scheduler(log.Loggable,
         self.__notify(label, trigger, profCtx, report, docs)
     
     def onTranscodingDone(self, task, transcoder):
-        report = transcoder.getReport()
-        docs = transcoder.getDocuments()
         activity = self._activities[task]
         activity.setState(ActivityStateEnum.done)
         activity.store()
@@ -195,7 +193,7 @@ class Scheduler(log.Loggable,
         label = task.getLabel()
         report = transcoder and transcoder.getReport()
         docs = transcoder and transcoder.getDocuments()
-        trigger = NotificationTriggerEnum.failed
+        trigger = NotificationTriggerEnum.done
         profCtx = task.getProfileContext()
         self.__notify(label, trigger, profCtx, report, docs)
 
@@ -219,7 +217,8 @@ class Scheduler(log.Loggable,
     ## Private Methods ##
     
     def __notify(self, label, trigger, profCtx, report, docs):
-        sourceVars = SourceNotificationVariables(profCtx, report)
+        success = trigger == NotificationTriggerEnum.done
+        sourceVars = SourceNotificationVariables(profCtx, success, report)
         # Global notifications
         transCtx = profCtx.getTranscodingContext()
         notifications = transCtx.store.getNotifications(trigger)

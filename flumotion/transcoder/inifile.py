@@ -123,7 +123,7 @@ class IniFile(object):
                 #parser.write(f)
                 header = getattr(propBag, "HEADER", None)
                 if header:
-                    for line in header.split('\n'):
+                    for line in header:
                         f.write("# %s\n" % line)
                     f.write("\n")
                 version = getattr(propBag, "VERSION", None)

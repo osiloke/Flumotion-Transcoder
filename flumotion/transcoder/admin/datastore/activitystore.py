@@ -28,7 +28,8 @@ from flumotion.transcoder.admin.datastore.notifystore import BaseNotification
 
 class ActivityStore(log.LoggerProxy):
     
-    def __init__(self, parent, dataSource):
+    def __init__(self, logger, parent, dataSource):
+        log.LoggerProxy.__init__(self, logger)
         self._parent = parent
         self._dataSource = dataSource
         
@@ -44,7 +45,7 @@ class ActivityStore(log.LoggerProxy):
 
     def getNotifications(self, states):
         t = ActivityTypeEnum.notification
-        return self.__getActivities(t, None, states)
+        return self.__getActivities(t, states)
     
     def newTranscoding(self, label, state, profile, 
                        inputRelPath, startTime=None):

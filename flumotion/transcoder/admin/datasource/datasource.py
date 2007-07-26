@@ -28,6 +28,14 @@ class StoringError(DataSourceError):
     def __init__(self, *args, **kwargs):
         DataSourceError.__init__(self, *args, **kwargs)
 
+class DeletionError(DataSourceError):
+    def __init__(self, *args, **kwargs):
+        DataSourceError.__init__(self, *args, **kwargs)
+
+class ResetError(DataSourceError):
+    def __init__(self, *args, **kwargs):
+        DataSourceError.__init__(self, *args, **kwargs)
+
 class RetrievalError(DataSourceError):
     def __init__(self, *args, **kwargs):
         DataSourceError.__init__(self, *args, **kwargs)

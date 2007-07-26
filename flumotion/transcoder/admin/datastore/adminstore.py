@@ -104,7 +104,7 @@ class AdminStore(BaseStore):
         BaseStore.__init__(self, StoreLogger(), None, dataSource, None,
                            IAdminStoreListener) 
         self._customers = {}
-        self._activities = ActivityStore(self, dataSource)
+        self._activities = ActivityStore(self, self, dataSource)
 
         
     ## Public Methods ##

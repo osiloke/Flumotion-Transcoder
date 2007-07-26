@@ -16,6 +16,8 @@ import shutil
 from zope.interface import implements
 from twisted.python import failure
 
+from flumotion.common import common
+
 from flumotion.transcoder import log, defer, inifile, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
@@ -27,6 +29,9 @@ from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
 from flumotion.transcoder.admin.datasource.datasource import InitializationError
+from flumotion.transcoder.admin.datasource.datasource import StoringError
+from flumotion.transcoder.admin.datasource.datasource import ResetError
+from flumotion.transcoder.admin.datasource.datasource import DeletionError
 
 
 class ImmutableWrapper(object):
@@ -62,6 +67,12 @@ class ImmutableDataWrapper(object):
         if attr in hidden:
             raise AttributeError, attr
         data = self.__dict__['_data']
+        # Hardcoded hack to allow profiles and targets without name
+        # name can be hidden when name shouldn't be seen
+        if attr == 'name':
+            name = getattr(data, attr, None)
+            if not name:
+                return self.__dict__['_identifier']
         return getattr(data, attr)
     
     def __setattr__(self, attr, value):
@@ -76,9 +87,10 @@ class MutableDataWrapper(object):
     Right now this class make the assumption it's used for activities.
     """
     
-    def __init__(self, parent, template, identifier=None, 
+    def __init__(self, source, template, path=None, identifier=None,
                  data=None, fields=None, **overrides):
-        self._parent = parent
+        self._source = source
+        self._path = path
         self._template = template
         self._identifier = identifier
         self._data = data
@@ -101,48 +113,49 @@ class MutableDataWrapper(object):
         self._fields = fields
 
     def _store(self):
-        if self.state in set([ActivityStateEnum.done,
-                              ActivityStateEnum.failed]):
-            # Do not store 'done' and 'failed' activities,
-            if self._data:
-                # Delete if the activity is terminated
-                return self._delete()
-            # Simulate the activity has been saved
-            self._identifier = utils.genUniqueIdentifier()
-            return False
-        if not self._data:
-            data = self._template['class']()
-            key = utils.genUniqueIdentifier()
-            self._parent[key] = data
-            self._identifier = key
-            self._data = data
-        assert self._identifier in self._parent
+        identifier = self._identifier or self.__newIdentifier()
+        data = self._data or self._template['class']()
+        newPath = self.__getPath(identifier, self.state)
+        newTmpPath = newPath + ".tmp"
         for attr, value in self._fields.items():
             if isinstance(value, list):
-                l = getattr(self._data, attr)
+                l = getattr(data, attr)
                 del l[:]
                 for v in value:
                     l.append(utils.deepCopy(v))
             elif isinstance(value, dict):
-                d = getattr(self._data, attr)
+                d = getattr(data, attr)
                 d.clear()
                 for k, v in value.items():
                     d[k] = utils.deepCopy(v)
             else:
-                setattr(self._data, attr, utils.deepCopy(value))
-        return True
+                setattr(data, attr, utils.deepCopy(value))
+        try:
+            common.ensureDir(os.path.dirname(newTmpPath), "activities")
+            saver = inifile.IniFile()
+            saver.saveToFile(data, newTmpPath)
+        except Exception, e:
+            log.notifyException(self._source, e,
+                                "File to save activity data file '%s'",
+                                newPath)
+            raise e
+        if self._path:
+            self.__deleteFile(self._path)
+        self.__moveFile(newTmpPath, newPath)
+        self._identifer = identifier
+        self._data = data
+        self._path = newPath
+        self._source._mutableDataStored(identifier, self._data, self._path)
     
     def _delete(self):
-        if self._data:
-            assert self._identifier in self._parent
-            del self._parent[self._identifier]
+        if self._path:
+            self.__deleteFile(self._path)
+            self._source._mutableDataDeleted(self, self._identifier,
+                                             self._data)
+            self._path = None
             self._data = None
-            return True
-        return False
+            self._identifier = None
 
-    def _clone(self):
-        return self.__class__(self._template, self._data, self._fields)
-    
     def __getattr__(self, attr):
         if attr.startswith('_'):
             if not attr in self.__dict__:
@@ -168,9 +181,38 @@ class MutableDataWrapper(object):
             raise AttributeError, attr
         fields = self._fields
         fields[attr] = value
-
+        
+    def __newIdentifier(self):
+        ident = utils.genUniqueIdentifier()
+        return self._template['file-template'] % ident
+        
+    def __getPath(self, identifier, state):
+        if state == ActivityStateEnum.done:
+            return self._source._doneActivitiesDir + identifier
+        if state == ActivityStateEnum.failed:
+            return self._source._failedActivitiesDir + identifier
+        return self._source._activeActivitiesDir + identifier
+    
+    def __deleteFile(self, file):
+        try:
+            os.remove(file)
+        except Exception, e:
+            log.notifyException(self._source, e,
+                                "Fail to delete file '%s'", file)
+            raise e
+        
+    def __moveFile(self, sourceFile, destFile):
+        try:
+            shutil.move(sourceFile, destFile)
+        except Exception, e:
+            log.notifyException(self._source, e,
+                                "Fail to move file from '%s' to '%s'",
+                                sourceFile, destFile)
+            raise e
+            
 
 TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
+                  'file-template': 'transcoding-%s.ini',
                   'defaults': {'type': ActivityTypeEnum.transcoding,
                                'subtype': None,
                                'state': ActivityStateEnum.unknown,
@@ -185,24 +227,27 @@ TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'readonly': set(['type', 'subtype'])}
 
 NOT_ACT_TMPL = {'class': dataprops.NotificationActivityData,
-                  'defaults': {'type': ActivityTypeEnum.notification,
-                               'subtype': None,
-                               'state': ActivityStateEnum.unknown,
-                               'label': None,
-                               'startTime': None,
-                               'lastTime': None,
-                               'customerName': None,
-                               'profileName': None,
-                               'targetName': None,
-                               'trigger': None,
-                               'timeout': None,
-                               'retryCount': None,
-                               'retryMax': None,
-                               'retrySleep': None,
-                               'data': {}},
-                  'hidden': set([]),
-                  'readonly': set(['type', 'subtype'])}
+                'file-template': 'notification-%s.ini',
+                'defaults': {'type': ActivityTypeEnum.notification,
+                             'subtype': None,
+                             'state': ActivityStateEnum.unknown,
+                             'label': None,
+                             'startTime': None,
+                             'lastTime': None,
+                             'customerName': None,
+                             'profileName': None,
+                             'targetName': None,
+                              'trigger': None,
+                             'timeout': None,
+                             'retryCount': None,
+                             'retryMax': None,
+                             'retrySleep': None,
+                             'data': {}},
+                'hidden': set([]),
+                'readonly': set(['type', 'subtype'])}
 
+_activityTemplateLookup = {ActivityTypeEnum.transcoding: TRANS_ACT_TMPL,
+                           ActivityTypeEnum.notification: NOT_ACT_TMPL}
 
 EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
                   'triggers': set([]),
@@ -223,6 +268,12 @@ REQ_NOT_TMPL = {'type': NotificationTypeEnum.get_request,
                 'retryMax': None,
                 'retrySleep': None,
                 'requestTemplate': None}
+
+CUST_INFO_TMPL = {'name': None,
+                  'contact': None,
+                  'adresses': None,
+                  'phone': None,
+                  'email': None}
 
 
 def _createReqNotif(wrapper, succeed, reqTmpl):
@@ -256,20 +307,21 @@ class FileDataSource(log.Loggable):
     implements(datasource.IDataSource)
     
     def __init__(self, config):
-        self._adminDataFile = config.dataFile
-        self._activityDataFile = config.activityFile
+        self._adminPath = os.path.abspath(config.dataFile)
         self._adminData = None
-        self._activityData = None
+        self._customersDir = None
+        self._customersData = {} # {filename: RootPropertyBag}
+        self._activeActivitiesDir = None
+        self._doneActivitiesDir = None
+        self._failedActivitiesDir = None
+        self._invalidActivitiesDir = None
+        self._activitiesData = {} # {filename: (filePath, MutableDataWrapper)}
     
     def initialize(self):
         self.debug("Initializing File Data Source")
         d = defer.Deferred()
-        d.addCallback(defer.dropResult, self.__loadAdminData,
-                      self._adminDataFile)
-        d.addCallback(self.__cbInitAdminData)
-        d.addCallback(defer.dropResult, self.__loadActivityData,
-                      self._activityDataFile)
-        d.addCallback(self.__cbInitActivityData)
+        d.addCallback(defer.dropResult, self.__loadAdminData)
+        d.addCallback(defer.dropResult, self.__loadActivityData)
         d.addErrback(self.__ebInitializationFailed)
         d.callback(None)
         return d
@@ -279,8 +331,10 @@ class FileDataSource(log.Loggable):
 
     def retrieveDefaults(self):
         try:
-            result = ImmutableDataWrapper(self._adminData, 
-                                      "defaults", ['customers'])
+            result = ImmutableDataWrapper(self._adminData, "defaults",
+                                          hidden=['customersDir',
+                                                  'activitiesDir',
+                                                  'name'])
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve default data"
@@ -290,8 +344,8 @@ class FileDataSource(log.Loggable):
         
     def retrieveCustomers(self):
         try:
-            result = [ImmutableDataWrapper(c, c.name, ['info', 'profiles'])
-                      for c in self._adminData.customers
+            result = [ImmutableDataWrapper(c, k, hidden=['profiles'])
+                      for k, c in self._customersData.items()
                       if c != None]
             return defer.succeed(result)
         except Exception, e:
@@ -303,8 +357,8 @@ class FileDataSource(log.Loggable):
     def retrieveCustomerInfo(self, customerData):
         try:
             assert isinstance(customerData, ImmutableDataWrapper)
-            data = customerData._getData()
-            result = ImmutableDataWrapper(data.info, (data.name, "info"))
+            result = ImmutableWrapper((customerData.identifier, "info"), 
+                                      CUST_INFO_TMPL)
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve customer info data"
@@ -315,8 +369,8 @@ class FileDataSource(log.Loggable):
     def retrieveProfiles(self, customerData):
         try:
             assert isinstance(customerData, ImmutableDataWrapper)
-            result = [ImmutableDataWrapper(p, p.name, ['targets']) 
-                      for p in customerData._getData().profiles
+            result = [ImmutableDataWrapper(p, k, hidden=['targets']) 
+                      for k, p in customerData._getData().profiles.items()
                       if p != None]
             return defer.succeed(result)
         except Exception, e:
@@ -377,8 +431,8 @@ class FileDataSource(log.Loggable):
     def retrieveTargets(self, profileData):
         try:
             assert isinstance(profileData, ImmutableDataWrapper)
-            result = [ImmutableDataWrapper(t, t.name, ['config', 'type'])
-                      for t in profileData._getData().targets
+            result = [ImmutableDataWrapper(t, k, hidden=['config', 'type'])
+                      for k, t in profileData._getData().targets.items()
                       if t != None]
             return defer.succeed(result)
         except Exception, e:
@@ -392,7 +446,7 @@ class FileDataSource(log.Loggable):
             assert isinstance(targetData, ImmutableDataWrapper)
             data = targetData._getData()
             result = ImmutableDataWrapper(data.config, (data.name, "config"),
-                                      [], ['type'])
+                                          readonly=['type'])
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve target config data"
@@ -402,20 +456,14 @@ class FileDataSource(log.Loggable):
 
     def retrieveActivities(self, type, states=None):
         try:
+            assert type in ActivityTypeEnum
             states = states and set(states)
-            if type == ActivityTypeEnum.transcoding:
-                parent = self._activityData.transcodings
-                result = [MutableDataWrapper(parent, TRANS_ACT_TMPL, i, d)
-                          for i, d in parent.iteritems()
-                          if ((states == None) or (d.state in states))]
-                return defer.succeed(result)
-            if type == ActivityTypeEnum.notification:
-                parent = self._activityData.notifications
-                result = [MutableDataWrapper(parent, NOT_ACT_TMPL, i, d)
-                          for i, d in parent.iteritems()
-                          if ((states == None) or (d.state in states))]
-                return defer.succeed(result)
-            return defer.succeed([])
+            result = []
+            tmpl = _activityTemplateLookup.get(type)
+            result = [MutableDataWrapper(self, tmpl, p, f, a)
+                      for f, (p, a) in self._activitiesData.items()
+                      if a.type == type]
+            return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve activities data"
             ex = datasource.RetrievalError(msg, cause=e)
@@ -424,11 +472,8 @@ class FileDataSource(log.Loggable):
 
     def newActivity(self, type, subtype):
         assert isinstance(type, ActivityTypeEnum)
-        if type == ActivityTypeEnum.transcoding:
-            return MutableDataWrapper(self._activityData.transcodings, 
-                                      TRANS_ACT_TMPL, subtype=subtype)
-        return MutableDataWrapper(self._activityData.notifications, 
-                                  NOT_ACT_TMPL, subtype=subtype)
+        tmpl = _activityTemplateLookup.get(type)
+        return MutableDataWrapper(self, tmpl, subtype=subtype)
 
     def newCustomer(self, cusomerId):
         raise NotImplementedError()
@@ -455,121 +500,140 @@ class FileDataSource(log.Loggable):
         raise NotImplementedError()
         
     def store(self, *data):
-        changed = False
-        for mutable in data:
-            if not isinstance(mutable, MutableDataWrapper):
-                raise NotImplementedError()
-            changed = changed or mutable._store()
-        if not changed:
+        try:
+            for mutable in data:
+                if not isinstance(mutable, MutableDataWrapper):
+                    raise NotImplementedError()
+                mutable._store()
             return defer.succeed(self)
-        d = self.__storeActivities(self._activityDataFile, self._activityData)
-        d.addCallbacks(self.__cbActivitiesSaved,
-                       self.__ebActivitiesSaveFailed)
-        return d
+        except Exception, e:
+            error = StoringError(cause=e)
+            return defer.fail(error)
         
     def reset(self, *data):
-        for mutable in data:
-            if not isinstance(mutable, MutableDataWrapper):
-                raise NotImplementedError()
-            mutable._reset()
-        return defer.succeed(self)
+        try:
+            for mutable in data:
+                if not isinstance(mutable, MutableDataWrapper):
+                    raise NotImplementedError()
+                mutable._reset()
+            return defer.succeed(self)
+        except Exception, e:
+            error = ResetError(cause=e)
+            return defer.fail(error)
         
     def delete(self, *data):
-        changed = False
-        for mutable in data:
-            if not isinstance(mutable, MutableDataWrapper):
-                raise NotImplementedError()
-            changed = changed or mutable._delete() 
-        if not changed:
+        try:
+            for mutable in data:
+                if not isinstance(mutable, MutableDataWrapper):
+                    raise NotImplementedError()
+                mutable._delete() 
             return defer.succeed(self)
-        d = self.__storeActivities(self._activityDataFile, self._activityData)
-        d.addCallbacks(self.__cbActivitiesSaved,
-                       self.__ebActivitiesSaveFailed)
-        return d
+        except Exception, e:
+            error = DeletionError(cause=e)
+            return defer.fail(error)
+
+
+    ## Protected Methods ##
+    
+    _excludedStates = set([ActivityStateEnum.failed,
+                           ActivityStateEnum.done])
+    
+    def _mutableDataStored(self, identifier, data, path):
+        if data.state in self._excludedStates:
+            self._activitiesData.pop(identifier, None)
+            return
+        self._activitiesData[identifier] = (path, data)
+    
+    def _mutableDataDeleted(self, identifier, data):
+        self._activitiesData.pop(identifier, None)
 
 
     ## Private Methods ##
     
-    def __loadAdminData(self, filePath):
-        self.debug("Loading admin data from '%s'", filePath)
-        data = dataprops.AdminData()
-        loader = inifile.IniFile();
-        loader.loadFromFile(data, filePath)
-        return data
-        
-    def __cbInitAdminData(self, data):
-        self.debug("Initializing admin data")
-        self._adminData = data
+    def __safeMove(self, sourceDir, destDir, file):
+        try:
+            shutil.move(sourceDir + file, destDir + file)
+        except Exception, e:
+            log.notifyException(self, e,
+                                "Fail to move file '%s' from '%s' to '%s'",
+                                file, sourceDir, destDir)
     
-    def __loadActivityData(self, filePath):
-        if os.path.exists(filePath):
-            self.debug("Loading activity data from '%s'", filePath)
+    def __loadAdminData(self):
+        self.debug("Loading admin data from '%s'", self._adminPath)
+        loader = inifile.IniFile()
+        adminData = dataprops.AdminData()
+        loader.loadFromFile(adminData, self._adminPath)
+        self._adminData = adminData
+        basePath = os.path.dirname(self._adminPath)
+        relDir = self._adminData.customersDir
+        absPath = utils.makeAbsolute(relDir, basePath)
+        absDir = utils.ensureAbsDirPath(absPath)
+        self._customersDir = absDir
+        common.ensureDir(self._customersDir, "customers configuration")
+        self.debug("Loading customers data from directory '%s'", absDir)
+        self._customersData.clear()
+        files = os.listdir(absDir)
+        for f in files:
+            if not f.endswith('.ini'):
+                self.log("Ignoring customer data file '%s'", f)
+                continue
+            self.log("Loading customer data file '%s'", f)
+            data = dataprops.CustomerData()
             try:
-                data = dataprops.ActivitiesData()
-                loader = inifile.IniFile();
-                loader.loadFromFile(data, filePath)
-                return data
+                loader.loadFromFile(data, absDir + f)
             except Exception, e:
-                self.warning("Activity file invalide or corrupted: %s",
-                             log.getExceptionMessage(e))
-                return dataprops.ActivitiesData()
-        else:
-            self.debug("No activitiy file found ('%s')", filePath)
-            return defer.succeed(data)
-    
-    def __cbInitActivityData(self, data):
-        self.debug("Initializing activity data")
-        self._activityData = data
-        changed = False
-        for k, t in data.transcodings.items():
-            if t.state in set([ActivityStateEnum.done,
-                              ActivityStateEnum.failed]):
-                del data.transcodings[k]
-                changed = True
-        if changed:
-            return self.__storeActivities(self._activityDataFile, data)
+                log.notifyException(self, e,
+                                    "Fail to load customer data "
+                                    "from file '%s'", absDir + f)
+                continue
+            self._customersData[f] = data
         
+    def __loadActivityData(self):
+        basePath = os.path.dirname(self._adminPath)
+        relDir = self._adminData.activitiesDir
+        absPath = utils.makeAbsolute(relDir, basePath)
+        absDir = utils.ensureAbsDirPath(absPath)
+        self._activeActivitiesDir = absDir
+        self._failedActivitiesDir = utils.ensureAbsDirPath(absDir + "failed")
+        self._doneActivitiesDir = utils.ensureAbsDirPath(absDir + "done")
+        self._invalidActivitiesDir = utils.ensureAbsDirPath(absDir + "invalid")
+        common.ensureDir(self._activeActivitiesDir, "activities data base")
+        common.ensureDir(self._failedActivitiesDir, "failed activities")
+        common.ensureDir(self._doneActivitiesDir, "done activities")
+        common.ensureDir(self._invalidActivitiesDir, "invalid activities")
+        self.debug("Loading activities data from directory '%s'", absDir)
+        loader = inifile.IniFile()
+        self._activitiesData.clear()
+        files = os.listdir(absDir)
+        for f in files:
+            if not f.endswith('.ini'):
+                self.log("Ignoring activity data file '%s'", f)
+                continue
+            if f.startswith("transcoding-"):
+                data = dataprops.TranscodingActivityData()
+            elif f.startswith("notification-"):
+                data = dataprops.NotificationActivityData()
+            else:
+                self.log("Ignoring activity data file '%s'", f)
+                continue
+            self.log("Loading activity data file '%s'", f)
+            try:
+                loader.loadFromFile(data, absDir + f)
+            except Exception, e:
+                log.notifyException(self, e,
+                                    "Fail to load activity data "
+                                    "from file '%s'", absDir + f)
+                self.__safeMove(absDir, self._invalidActivitiesDir, f)
+                continue
+            if data.state == ActivityStateEnum.done:
+                self.__safeMove(absDir, self._doneActivitiesDir, f)
+            elif data.state == ActivityStateEnum.failed:
+                self.__safeMove(absDir, self._failedActivitiesDir, f)
+            else:
+                self._activitiesData[f] = (absDir + f, data)
         
     def __ebInitializationFailed(self, failure):
         if failure.check(InitializationError):
             return failure
         msg = "Failed to initialize file data-source"
         raise InitializationError(msg, cause=failure.value)        
-
-    def __storeActivities(self, newFile, data):
-        oldFile = newFile + ".old"
-        try:
-            if os.path.exists(newFile):
-                shutil.move(newFile, oldFile)
-        except Exception, e:
-            msg = "Failed to store file data-source"
-            ex = datasource.StoringError(msg, cause=e)
-            f = failure.Failure(ex)
-            return defer.fail(f)
-                
-        try:
-            saver = inifile.IniFile();
-            saver.saveToFile(data, newFile)
-        except Exception, e:
-            try:
-                if os.path.exists(oldFile):
-                    shutil.move(oldFile, newFile)
-            except Exception, e:
-                pass
-            msg = "Failed to store file data-source"
-            ex = datasource.StoringError(msg, cause=e)
-            f = failure.Failure(ex)
-            return defer.fail(f)
-        
-        return defer.succeed(newFile)
-    
-    def __cbActivitiesSaved(self, file):
-        if file: 
-            self.log("Activities successfuly stored in file '%s'", file)
-        return self
-        
-    def __ebActivitiesSaveFailed(self, failure):
-        log.notifyFailure(self, failure,
-                          "Fail to save activities")
-        return failure
-

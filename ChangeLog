@@ -1,5 +1,58 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/customers/bigclient.ini:
+	* conf/customers/fluendo.ini:
+	* conf/transcoder-admin.ini:
+	* conf/transcoder-data.ini:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py (TargetData,
+	  ProfileData, CustomerData, AdminData, ActivityData,
+	  NotificationActivityData):
+	* flumotion/transcoder/admin/datasource/filesource.py
+	  (ImmutableDataWrapper.__getattr__, MutableDataWrapper.__init__,
+	  MutableDataWrapper._store, MutableDataWrapper._delete,
+	  MutableDataWrapper.__setattr__, MutableDataWrapper.__newIdentifier,
+	  MutableDataWrapper.__getPath, MutableDataWrapper.__deleteFile,
+	  MutableDataWrapper.__moveFile, FileDataSource.__init__,
+	  FileDataSource.initialize, FileDataSource.retrieveDefaults,
+	  FileDataSource.retrieveCustomers,
+	  FileDataSource.retrieveCustomerInfo, FileDataSource.retrieveProfiles,
+	  FileDataSource.retrieveTargets, FileDataSource.retrieveTargetConfig,
+	  FileDataSource.retrieveActivities, FileDataSource.newActivity,
+	  FileDataSource.store, FileDataSource.reset, FileDataSource.delete,
+	  FileDataSource._mutableDataStored,
+	  FileDataSource._mutableDataDeleted, FileDataSource.__safeMove,
+	  FileDataSource.__loadAdminData, FileDataSource.__loadActivityData,
+	  FileDataSource.__ebInitializationFailed):
+	Splited customer configuration in separated files.
+	Changed some names to make it more human friendly.
+	Save each activity in its own file, and move them 
+	to a different folder when the go 'done' or 'failed'.
+
+	* flumotion/transcoder/admin/datasource/datasource.py (DeletionError,
+	  DeletionError.__init__, ResetError, ResetError.__init__):
+	Added exceptions for failed reset and delete operation.
+
+	* flumotion/transcoder/admin/datastore/activitystore.py
+	  (ActivityStore.__init__, ActivityStore.getNotifications):
+	* flumotion/transcoder/admin/datastore/adminstore.py
+	  (AdminStore.__init__):
+	Properly initialize base LoggerProxy class.
+
+	* doc/requirments-specifications.txt:
+	* flumotion/transcoder/admin/notifysubs.py
+	  (SourceNotificationVariables.__init__,
+	  TargetNotificationVariables.__init__):
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.onTranscodingDone,
+	  Scheduler.__notify):
+	Added a success substitution variable.
+	  
+	* flumotion/transcoder/inifile.py (IniFile.saveToFile):
+	Made the HEADER class variable a tuple of line to be independent
+	from the line separation of the persistence medium.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/utils.py (genUniqueIdentifier, makeAbsolute,
 	  createTimeout, hasTimedOut, __callTimeout):
 	Made the timeout functions catch exceptions and notify them.

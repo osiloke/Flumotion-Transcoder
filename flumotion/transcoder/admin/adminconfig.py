@@ -32,7 +32,6 @@ class WorkerConfig(properties.PropertyBag):
 
 class DataSourceConfig(properties.PropertyBag):
     dataFile = properties.String('data-file', None, True)
-    activityFile = properties.String('activity-file', None, True)
 
 class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
