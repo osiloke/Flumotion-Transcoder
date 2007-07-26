@@ -12,6 +12,7 @@
 
 # Headers in this file shall remain intact.
 
+import os
 import re
 import md5
 import time
@@ -73,7 +74,7 @@ def genUniqueIdentifier():
     return genUniqueBinaryIdentifier().encode("HEX").upper()
 
 
-## String Utility Functions ##
+## String and Path Utility Functions ##
 
 def str2filename(value):
     """
@@ -178,6 +179,17 @@ def str2path(value):
     "toto/tatat/titi.txt" => "toto/tatat/titi.txt"
     """
     return value
+
+def makeAbsolute(path, base=None):
+    """
+    If the specified path is not absolute (do not starts with '/')
+    it's concatenated to the specified base or the current directory.
+    """
+    if not base:
+        base = os.path.abspath('')
+    if path.startswith('/'):
+        return os.path.abspath(path)
+    return os.path.abspath(ensureAbsDirPath(base) + path)
 
 def joinPath(*parts):
     return cleanupPath("/".join(parts))
@@ -336,7 +348,8 @@ def __cbForwardCallback(result, d, to):
 def createTimeout(timeout, callback, *args, **kwargs):
     if timeout == None:
         return None
-    return reactor.callLater(timeout, callback, *args, **kwargs)
+    return reactor.callLater(timeout, __callTimeout,
+                             callback, *args, **kwargs)
 
 def cancelTimeout(timeout):
     if timeout and timeout.active():
@@ -344,3 +357,9 @@ def cancelTimeout(timeout):
 
 def hasTimedOut(timeout):
     return timeout and not timeout.active()
+
+def __callTimeout(callable, *args, **kwargs):
+    try:
+        callable(*args, **kwargs)
+    except Exception, e:
+        log.notifyException(log, e, "Timeout call raise an exception")

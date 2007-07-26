@@ -1,3 +1,9 @@
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/utils.py (genUniqueIdentifier, makeAbsolute,
+	  createTimeout, hasTimedOut, __callTimeout):
+	Made the timeout functions catch exceptions and notify them.
+
 2007-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxies/transcoderproxy.py
