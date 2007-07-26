@@ -114,6 +114,7 @@ flumotion/Makefile
 flumotion/test/Makefile
 flumotion/transcoder/Makefile
 flumotion/transcoder/manager/Makefile
+flumotion/transcoder/tools/Makefile
 flumotion/transcoder/admin/Makefile
 flumotion/transcoder/admin/datasource/Makefile
 flumotion/transcoder/admin/datastore/Makefile

@@ -1,5 +1,15 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* configure.ac:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/tools/Makefile.am:
+	* flumotion/transcoder/tools/__init__.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	Added a package to put the tools programs
+	like the config file upgrader.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifysubs.py:
 	Corrected invalid import path.
 	

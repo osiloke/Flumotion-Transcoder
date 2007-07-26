@@ -1,6 +1,6 @@
 include $(top_srcdir)/common/python.mk
 
-SUBDIRS = admin manager
+SUBDIRS = admin manager tools
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder
 
