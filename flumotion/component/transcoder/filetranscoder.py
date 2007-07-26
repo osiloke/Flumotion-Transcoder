@@ -75,7 +75,6 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def init(self):
         log.setDefaultCategory(compconsts.TRANSCODER_LOG_CATEGORY)
         log.setDebugNotifier(self.__notifyDebug)
-        defer.setDebugNotifier(self.__notifyDebug)
         self.logName = None
         self._diagnoseMode = False
         self._waitAcknowledge = False

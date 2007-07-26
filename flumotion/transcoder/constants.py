@@ -10,6 +10,9 @@
 
 # Headers in this file shall remain intact.
 
+# Log categories
+DEFER_LOG_CATEGORY = "defer"
+
 # Default roots
 DEFAULT_ROOT = "default"
 TEMP_ROOT = "temp"

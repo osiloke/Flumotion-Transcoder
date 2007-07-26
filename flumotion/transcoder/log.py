@@ -18,6 +18,7 @@ from zope.interface import Interface, implements
 from twisted.python.failure import Failure
 
 from flumotion.common import log as flog
+from flumotion.transcoder import constants
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.properties import PropertyError
 
@@ -37,7 +38,8 @@ def setDefaultCategory(category):
 def setFluDebug(string):
     flog.setFluDebug(string)
     from flumotion.transcoder import defer
-    defer.setDebugging(getCategoryLevel("defer") in [LOG, DEBUG])
+    category = constants.DEFER_LOG_CATEGORY
+    defer.setDebugging(getCategoryLevel(category) in [LOG, DEBUG])
         
 
 # Proxy some flumotion.comon.log class, functions and constants
@@ -74,9 +76,10 @@ class Loggable(flog.Loggable):
     
     implements(ILogger)
 
-
 def notifyFailure(logger, failure, template, *args, **kwargs):
     global _notifier
+    info = kwargs.get("info", None)
+    debug = kwargs.get("debug", None)
     msg = getFailureMessage(failure)
     if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
         cleanup = kwargs.get("cleanTraceback", False)
@@ -84,11 +87,15 @@ def notifyFailure(logger, failure, template, *args, **kwargs):
         logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
     else:
         logger.warning(template + ": %s", *(args + (msg,)))
+    if debug:
+        logger.debug("Additional Debug Information:\n%s", debug)
     if _notifier:
-       _notifier(template % args, failure=failure)
+       _notifier(template % args, failure=failure, info=info, debug=debug)
 
 def notifyException(logger, exception, template, *args, **kwargs):
     global _notifier
+    info = kwargs.get("info", None)
+    debug = kwargs.get("debug", None)
     msg = getExceptionMessage(exception)
     if getCategoryLevel(logger.logCategory) in [LOG, DEBUG]:
         cleanup = kwargs.get("cleanTraceback", False)
@@ -96,8 +103,10 @@ def notifyException(logger, exception, template, *args, **kwargs):
         logger.warning(template + ": %s\n%s", *(args + (msg, tb)))
     else:
         logger.warning(template + ": %s", *(args + (msg,)))
+    if debug:
+        logger.debug("Additional Debug Information:\n%s", debug)
     if _notifier:
-       _notifier(template % args, exception=exception)
+       _notifier(template % args, exception=exception, info=info, debug=debug)
 
 def getExceptionMessage(exception):
     msg = flog.getExceptionMessage(exception)

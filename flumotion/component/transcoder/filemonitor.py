@@ -84,7 +84,6 @@ class FileMonitor(component.BaseComponent):
     def init(self):
         log.setDefaultCategory(compconsts.MONITOR_LOG_CATEGORY)
         log.setDebugNotifier(self.__notifyDebug)
-        defer.setDebugNotifier(self.__notifyDebug)
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []

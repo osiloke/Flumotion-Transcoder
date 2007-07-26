@@ -102,7 +102,6 @@ def exorcize():
 def main(args):
     log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
     log.setDebugNotifier(notifier.notifyDebug)
-    defer.setDebugNotifier(notifier.notifyDebug)
     
     options, configPath = parse_options(args)
     

@@ -1,5 +1,17 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/transcoder/admin/main.py:
+	* flumotion/transcoder/constants.py:
+	* flumotion/transcoder/defer.py (DebugInfo, DebugInfo.__del__):
+	* flumotion/transcoder/log.py (setFluDebug, notifyFailure,
+	  notifyException):
+	Changed the custom transcoder Deferred debug info use 
+	log.notifyFailure and log with the category 'defer'.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/customers/bigclient.ini:
 	* conf/customers/fluendo.ini:
 	* conf/transcoder-admin.ini:

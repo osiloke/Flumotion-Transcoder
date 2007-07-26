@@ -14,17 +14,11 @@ import traceback
 
 from twisted.internet import defer, reactor
 
-from flumotion.transcoder import log
+from flumotion.transcoder import log, constants
 from flumotion.transcoder.errors import OperationTimedOutError
 
 
 ## Global parameters setters ##
-
-_notifier = None
-
-def setDebugNotifier(notifier):
-    global _notifier
-    _notifier = notifier
 
 def setDebugging(on):
     defer.setDebugging(on)
@@ -40,15 +34,15 @@ fail = defer.fail
 DeferredList = defer.DeferredList
 
 
-class DebugInfo(defer.DebugInfo):
+class DebugInfo(defer.DebugInfo, log.Loggable):
+
+    logCategory = constants.DEFER_LOG_CATEGORY
 
     def __del__(self):
-        defer.DebugInfo.__del__(self)
-        global _notifier
-        if self.failResult and _notifier:
-            _notifier("Unhandled error in Deferred", 
-                      failure=self.failResult, 
-                      debug=self._getDebugTracebacks())
+        if self.failResult:
+            log.notifyFailure(self, self.failResult,
+                              "Unhandled error in Deferred",
+                              debug=self._getDebugTracebacks())
         
 
 class Deferred(defer.Deferred):
