@@ -1,5 +1,26 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py
+	  (TranscoderAdmin.__ebAdminInitializationFailed):
+	use log.notifyFailure when the initialization fail,
+	and not log.error becuse it raise a SystemExit and
+	the exception cause backtrace is lost.
+	  
+	* flumotion/transcoder/admin/datasource/dataprops.py
+	  (TranscodingActivityData, NotificationActivityData):
+	Put back the type of the activities.
+	  
+	* flumotion/transcoder/admin/proxies/componentproxy.py
+	  (BaseComponentProxy._onRemoved):
+	* flumotion/transcoder/admin/proxies/groupproxy.py
+	  (ComponentGroupProxy._onRemoved):
+	* flumotion/transcoder/admin/proxies/managerproxy.py
+	  (ManagerProxy._onRemoved):
+	If not active they had not been able to register as listener,
+	so don't remove themself as listener.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py:
 	* flumotion/component/transcoder/filetranscoder.py:
 	* flumotion/transcoder/admin/main.py:

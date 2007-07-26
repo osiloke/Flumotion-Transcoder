@@ -152,10 +152,11 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
             
     def _onRemoved(self):
         assert self._planetState, "Manager has already been removed"
-        whs = self._admin.getWorkerHeavenState()
-        whs.removeListener(self)
-        ps = self._planetState
-        ps.removeListener(self)
+        if self.isActive():
+            whs = self._admin.getWorkerHeavenState()
+            whs.removeListener(self)
+            ps = self._planetState
+            ps.removeListener(self)
         self._removeProxies("_flows", "FlowRemoved")
         self._removeProxies("_atmosphere", "AtmosphereUnset")
         self._removeProxies("_workers", "WorkerRemoved")

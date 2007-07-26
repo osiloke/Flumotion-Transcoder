@@ -212,12 +212,14 @@ class ActivityData(properties.RootPropertyBag):
 
 class TranscodingActivityData(ActivityData):
 
+    type = ActivityTypeEnum.transcoding
     subtype = properties.Enum('subtype', TranscodingTypeEnum)
     inputRelPath = properties.String('input-rel-path', None)
 
 
 class NotificationActivityData(ActivityData):
 
+    type = ActivityTypeEnum.notification
     subtype = properties.Enum('subtype', NotificationTypeEnum)
     trigger = properties.Enum('trigger', NotificationTriggerEnum)
     timeout = properties.Integer('timeout', None, False, True)

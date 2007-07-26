@@ -436,9 +436,9 @@ class TranscoderAdmin(log.Loggable,
         return self
     
     def __ebAdminInitializationFailed(self, failure):
+        log.notifyFailure(self, failure,
+                          "Failure during Transcoder Administration Initialization")
         reactor.stop()
-        self.error("Transcoder Administration Initialization Failed: %s",
-                   log.getFailureMessage(failure))
 
     def __cbSartupSucceed(self, result):
         self.info("Transcoder Administration Successfully Started")

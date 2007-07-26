@@ -278,8 +278,9 @@ class BaseComponentProxy(FlumotionProxy):
 
     def _onRemoved(self):
         assert self._componentState, "Component has already been removed"
-        cs = self._componentState
-        cs.removeListener(self)
+        if self.isActive():
+            cs = self._componentState
+            cs.removeListener(self)
         if self._hasUIState():
             self._onUnsetUIState(self._getUIState())
     

@@ -77,8 +77,9 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
             
     def _onRemoved(self):
         assert self._state, "Element has already been removed"
-        state = self._state
-        state.removeListener(self)
+        if self.isActive():
+            state = self._state
+            state.removeListener(self)
         self._removeProxies("_components", self._componentRemovedEvent)
     
     def _doDiscard(self):
