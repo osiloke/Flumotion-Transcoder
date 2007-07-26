@@ -266,16 +266,17 @@ class Notifier(log.Loggable,
         msg.attach(txt)
         
         attachments = notif.getAttachments()
-        for doc in docs:
-            if doc.getType() in attachments:
-                mimeType = doc.getMimeType()
-                mainType, subType = mimeType.split('/', 1)
-                data = MIMEBase(mainType, subType)
-                data.set_payload(doc.asString())
-                email.Encoders.encode_base64(data)
-                data.add_header('Content-Disposition', 'attachment', 
-                                filename=doc.getLabel())
-                msg.attach(data)
+        if docs:
+            for doc in docs:
+                if doc.getType() in attachments:
+                    mimeType = doc.getMimeType()
+                    mainType, subType = mimeType.split('/', 1)
+                    data = MIMEBase(mainType, subType)
+                    data.set_payload(doc.asString())
+                    email.Encoders.encode_base64(data)
+                    data.add_header('Content-Disposition', 'attachment', 
+                                    filename=doc.getLabel())
+                    msg.attach(data)
         activity.setBody(str(msg))
         
         return activity
