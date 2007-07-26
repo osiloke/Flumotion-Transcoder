@@ -28,6 +28,7 @@ class ManagerConfig(properties.PropertyBag):
 class WorkerConfig(properties.PropertyBag):
     roots = properties.Dict(properties.String('roots'))
     maxTask = properties.Integer('max-task', 1, False, True)
+    gstDebug = properties.String('gst-debug', None)
 
 
 class DataSourceConfig(properties.PropertyBag):

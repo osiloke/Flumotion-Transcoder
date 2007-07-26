@@ -190,6 +190,8 @@ class AdminData(properties.RootPropertyBag):
     HTTPRequestRetryCount = properties.Integer('http-request-retry-count', None, False, True)
     HTTPRequestRetrySleep = properties.Integer('http-request-retry-sleep', None, False, True)
     notifyFailedEMail = properties.String('notify-failed-email', None)
+    accessForceGroup = properties.String('access-force-group', None)
+    discovererMaxInterleave = properties.Float('discoverer-max-interleave', 1.0)
     customersDir = properties.String('customers-dir', None, True)
     activitiesDir = properties.String('activities-dir', None, True)
 

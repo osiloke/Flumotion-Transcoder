@@ -1,5 +1,12 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	Added some yet unused properties to be set when upgrading
+	from an old configuration file.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* configure.ac:
 	* flumotion/transcoder/Makefile.am:
 	* flumotion/transcoder/tools/Makefile.am:
