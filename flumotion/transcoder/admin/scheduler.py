@@ -217,8 +217,7 @@ class Scheduler(log.Loggable,
     ## Private Methods ##
     
     def __notify(self, label, trigger, profCtx, report, docs):
-        success = trigger == NotificationTriggerEnum.done
-        sourceVars = SourceNotificationVariables(profCtx, success, report)
+        sourceVars = SourceNotificationVariables(profCtx, trigger, report)
         # Global notifications
         transCtx = profCtx.getTranscodingContext()
         notifications = transCtx.store.getNotifications(trigger)

@@ -258,7 +258,8 @@ be substituted:
             U   O %(outputWorkPath)s        : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.tmp
             U   O %(linkWorkPath)s          : /var/tmp/fluendo/working/ogg/theora-vorbis/high/video.avi.ogg.link.tmp
 
-    F T E S       %(success)d               : 0
+    F T E S       %(success)d               : 0 or 1
+    F T E S       %(trigger)s               : done or failed
 
     F T E S U R O %(custName)s              : Fluendo
     F T E S U R O %(profName)s              : OGG/theora-vorbis

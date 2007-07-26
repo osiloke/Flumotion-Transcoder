@@ -1,5 +1,15 @@
 2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
 
+	* doc/requirments-specifications.txt:
+	* flumotion/transcoder/admin/notifysubs.py
+	  (SourceNotificationVariables.__init__,
+	  TargetNotificationVariables.__init__):
+	* flumotion/transcoder/admin/scheduler.py (Scheduler.__notify):
+	Added the 'triggger' substitution variable.
+	It type is str and can be 'done' or 'failed'.
+
+2007-07-26  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py
 	  (TranscoderAdmin.__ebAdminInitializationFailed):
 	use log.notifyFailure when the initialization fail,

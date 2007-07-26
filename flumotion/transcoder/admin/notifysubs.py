@@ -11,6 +11,7 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder.admin.substitution import Variables
+from transcoder.admin.enums import NotificationTriggerEnum
 
 class NotificationVariables(Variables):
     
@@ -78,11 +79,13 @@ class NotificationVariables(Variables):
 
 class SourceNotificationVariables(NotificationVariables):
     
-    def __init__(self, profCtx, success, report):
+    def __init__(self, profCtx, trigger, report):
         analyseReport = report and report.source.analyse
         NotificationVariables.__init__(self, None,
                                        "source", analyseReport)
-        self.addVar("success", (success and 1) or 0)
+        success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
+        self.addVar("success", success)
+        self.addVar("trigger", trigger.name)
         self.addVar("inputFile", profCtx.getInputFile())
         self.addVar("inputRelPath", profCtx.getInputRelPath())
         self.addVar("custName", profCtx.customer.store.getName())
@@ -93,7 +96,7 @@ class SourceNotificationVariables(NotificationVariables):
             key = targCtx.store.getName()
             targReport = report and report.targets[key]
             vars = TargetNotificationVariables(self, targCtx, 
-                                               success, targReport)
+                                               trigger, targReport)
             self._targets[key] = vars
         if self["sourceDuration"] <= 0:
             for vars in self._targets.values():
@@ -118,11 +121,13 @@ class SourceNotificationVariables(NotificationVariables):
 
 class TargetNotificationVariables(NotificationVariables):
     
-    def __init__(self, sourceVars, targCtx, success, targetReport):
+    def __init__(self, sourceVars, targCtx, trigger, targetReport):
         analyseReport = targetReport and targetReport.analyse
         NotificationVariables.__init__(self, sourceVars,
                                        "target", analyseReport)
-        self.addVar("success", (success and 1) or 0)
+        success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
+        self.addVar("success", success)
+        self.addVar("trigger", trigger.name)
         self.addVar("outputFile", targCtx.getOutputFile())
         self.addVar("outputRelPath", targCtx.getOutputRelPath())
         self.addVar("linkFile", targCtx.getLinkFile())
