@@ -376,6 +376,9 @@ class ValueProperty(BaseProperty):
                 raise PropertyError("Missing required property",
                                     obj.getLocator(), self.descriptor)
         else:
+            # If not required, do not save property with default value
+            if (self.getValue(obj) == self.default) and (not self.required):
+                return            
             adapter.setProperty(obj.getLocator(), self.descriptor, 
                                 self.getStrValue(obj))
 
