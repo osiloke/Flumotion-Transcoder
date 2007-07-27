@@ -1,5 +1,13 @@
 2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
 
+	* doc/requirments-specifications.txt:
+	* flumotion/component/transcoder/context.py:
+	* flumotion/component/transcoder/job.py:
+	Added two substitution variables that existed in the
+	previous version of the transcoder.
+
+2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datasource/dataprops.py:
 	Added some yet unused properties to keep them when upgrading
 	from an old configuration file.

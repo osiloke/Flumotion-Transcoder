@@ -343,6 +343,8 @@ class TranscoderJob(log.LoggerProxy):
         vars['linkBase'] = context.getLinkDir()
         vars['outputWorkBase'] = context.getOutputWorkDir()
         vars['linkWorkBase'] = context.getLinkWorkDir()
+        vars['doneBase'] = context.getDoneDir()
+        vars['failedBase'] = context.getFailedDir()
 
         vars['inputRelPath'] = sourceCtx.getInputFile()
         vars['inputFile'] = os.path.basename(vars['inputRelPath'])

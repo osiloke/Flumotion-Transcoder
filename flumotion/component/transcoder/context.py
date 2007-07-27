@@ -272,3 +272,9 @@ class Context(TaskContext):
     
     def getLinkWorkDir(self):
         return self.config.profile.workDir.localize(self.local)
+
+    def getDoneDir(self):
+        return self.config.profile.doneDir.localize(self.local)
+    
+    def getFailedDir(self):
+        return self.config.profile.failedDir.localize(self.local)

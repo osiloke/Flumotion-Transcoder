@@ -243,6 +243,8 @@ be substituted:
             U R O %(linkBase)s              : /home/file/fluendo/files/links/ogg/theora-vorbis
             U R O %(outputWorkBase)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
             U R O %(linkWorkBase)s          : /var/tmp/fluendo/working/ogg/theora-vorbis
+            U R O %(doneBase)s              : /home/file/fluendo/files/done/ogg/theora-vorbis
+            U R O %(failedBase)s            : /home/file/fluendo/files/failed/ogg/theora-vorbis
 
             U R O %(inputDir)s              : /home/file/fluendo/files/incoming/ogg/theora-vorbis
             U   O %(outputDir)s             : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
