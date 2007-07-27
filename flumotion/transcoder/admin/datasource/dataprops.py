@@ -39,6 +39,8 @@ class VideoData(properties.PropertyBag):
     videoEncoder = properties.String('video-encoder', None, True)
     videoWidth = properties.Integer('video-width', None, False, True)
     videoHeight = properties.Integer('video-height', None, False, True)
+    videoWidthMultiple = properties.Integer('video-width-multiple', None, False, True)
+    videoHeightMultiple = properties.Integer('video-height-multiple', None, False, True)
     videoMaxWidth = properties.Integer('video-max-width', None, False, True)
     videoMaxHeight = properties.Integer('video-max-height', None, False, True)
     videoPAR = properties.Fraction('video-par', None, False, True)
@@ -127,6 +129,7 @@ class ProfileData(properties.PropertyBag):
     notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
     notifyFailedRequests = properties.List(properties.String('notify-failed-requests', None))
     notifyFailedMailRecipients = properties.String('notify-failed-mail-recipients', None)
+    rejectNotMime = properties.List(properties.String('reject-not-mime', None))
     targets = properties.ChildDict('target', TargetData)
     
 

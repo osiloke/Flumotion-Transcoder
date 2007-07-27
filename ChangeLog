@@ -1,6 +1,12 @@
 2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datasource/dataprops.py:
+	Added some yet unused properties to keep them when upgrading
+	from an old configuration file.
+
+2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datasource/dataprops.py:
 	* flumotion/transcoder/inifile.py:
 	Changed the class variable name that hold properties
 	text info from HEADER to COMMENTS to prevent
