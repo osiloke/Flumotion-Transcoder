@@ -111,6 +111,15 @@ class IniFile(object):
             raise self._updateException(e, "While reading file '%s'" % filename)
     
     def saveToFile(self, propBag, path):
+        
+        def storeSection(file, parser, section):
+            file.write("[%s]\n" % section)
+            options = parser.options(section)
+            options.sort()
+            for o in options:
+                file.write("%s = %s\n" % (o, parser.get(section, o, True)))
+            file.write("\n")
+        
         parser = ConfigParser.SafeConfigParser()
         try:
             adapter = ConfigParserAdapter(parser, self.rootSectionName,
@@ -121,24 +130,25 @@ class IniFile(object):
                 #The ConfigParser doesn't write the sections and properties ordered
                 #so I have to do it myself for the file to be more readable
                 #parser.write(f)
-                header = getattr(propBag, "HEADER", None)
+                #First store the comments if present as commented lines
+                header = getattr(propBag, "COMMENTS", None)
                 if header:
                     for line in header:
                         f.write("# %s\n" % line)
                     f.write("\n")
+                #Next store the header fields if present
                 version = getattr(propBag, "VERSION", None)
                 if version:
                     f.write("[HEADER]\n")
                     f.write("version = %s\n\n" % '.'.join(map(str, version)))
                 sections = parser.sections()
+                # Make sure the global section is saved first
+                if "global" in sections:
+                    sections.remove("global")
+                    storeSection(f, parser, "global")
                 sections.sort()                    
                 for s in sections:
-                    f.write("[%s]\n" % s)
-                    options = parser.options(s)
-                    options.sort()
-                    for o in options:
-                        f.write("%s = %s\n" % (o, parser.get(s, o, True)))
-                    f.write("\n")
+                    storeSection(f, parser, s)
             finally:
                 f.close()
         except IOError, e:

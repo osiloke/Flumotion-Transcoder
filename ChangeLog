@@ -1,5 +1,13 @@
 2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/inifile.py:
+	Changed the class variable name that hold properties
+	text info from HEADER to COMMENTS to prevent
+	confusion with the ini-files generated HEADER section.
+
+2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/properties.py:
 	Do not save not required properies with default value.
 
