@@ -9,14 +9,6 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 # Headers in this file shall remain intact.
 
-"""
-Toto
-tata 
-
-
-titi
-"""
-
 from flumotion.transcoder import properties
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
