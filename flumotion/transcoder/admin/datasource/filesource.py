@@ -415,9 +415,6 @@ class FileDataSource(log.Loggable):
             d = targetData._getData()
             assert isinstance(d, dataprops.TargetData)
             result = []
-            for req in d.notifyFailedRequests:
-                if req:
-                    result.append(_createReqNotif(targetData, False, req))
             for req in d.notifyDoneRequests:
                 if req:
                     result.append(_createReqNotif(targetData, True, req))

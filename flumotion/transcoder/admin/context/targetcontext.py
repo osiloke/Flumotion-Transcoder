@@ -126,7 +126,10 @@ class TargetContext(object):
         return self._vars["targetSubdir"]
     
     def getExtension(self):
-        return '.' + self.store.getExtension()
+        ext = self.store.getExtension()
+        if ext :
+            return '.' + ext
+        return ""
     
     def getOutputRelPath(self):
         if isinstance(self.store.getConfig(), ThumbnailsConfig):

@@ -44,17 +44,14 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
         raise VirtualPathError("Cannot virtualize local path '%s', "
                                "no compatible virtual root found" % path)
     
-    def __init__(self, path, rootName=None):
+    def __init__(self, path, defaultRoot=None):
         if isinstance(path, str):
-            root2 = None
             m = _rootPattern.match(path)
             if m:
-                root2, path = m.groups()
-            if rootName and root2 and (rootName != root2):
-                raise VirtualPathError("Virtual root conflict: '%s' '%s'"
-                                       % (rootName, root2))
-            self._path = path
-            self._root = rootName or root2 or constants.DEFAULT_ROOT
+                self._root, self._path = m.groups()
+            else:
+                self._root = defaultRoot or constants.DEFAULT_ROOT
+                self._path = path
         elif isinstance(path, VirtualPath):
             self._path = path._path
             self._root = path._root

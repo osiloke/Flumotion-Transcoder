@@ -1,3 +1,21 @@
+2007-07-30  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/Makefile.am:
+	* conf/customers/fluendo.ini:
+	* configure.ac:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/tools/Makefile.am:
+	* flumotion/transcoder/tools/oldconfig.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	* flumotion/transcoder/virtualpath.py:
+	Added a script to bootstrap from the old transcoder configuration.
+	It generate the new transcoder configuration files.
+	This script will be used in the future tu upgrade the configuration files.
+	Added an extensive documentation in the generated files	as comments.
+
 2007-07-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* doc/requirments-specifications.txt:

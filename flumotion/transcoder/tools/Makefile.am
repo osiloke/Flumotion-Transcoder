@@ -4,7 +4,7 @@ SUBDIRS =
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/tools
 
-python_PYTHON = __init__.py upgrade.py
+python_PYTHON = __init__.py upgrade.py oldconfig.py
 python_DATA =
 
 clean-local:
