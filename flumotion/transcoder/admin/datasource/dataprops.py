@@ -328,7 +328,8 @@ class CustomerData(properties.RootPropertyBag):
     max-count = 1
     # The format of the ouput file, can be png od jpg
     output-format = png
-    """
+
+    ------------------------------------------------------------"""    
     
     VERSION = (1, 0)
     COMMENTS = __doc__.split('\n')

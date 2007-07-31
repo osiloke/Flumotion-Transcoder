@@ -1,3 +1,15 @@
+2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/flumotion-transcoder-upgrade.in:
+	Added the upgrade bootstrap script.
+	
+	* conf/customers/bigclient.ini:
+	* conf/customers/fluendo.ini:
+	* conf/transcoder-admin.ini:
+	* conf/transcoder-data.ini:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	Updated the configuration example comments.
+
 2007-07-30  Sebastien Merle  <sebastien@fluendo.com>
 
 	* doc/specifications.odt:
