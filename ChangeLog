@@ -1,5 +1,11 @@
 2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
 
+	* README:
+	Added a litle description of the steps 
+	to setup and run the new transcoder.
+
+2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
+
 	* bin/transcoder-uninstalled-environment:
 	Added a script that set the environment to use an 
 	unstalled version of the transcoder when sourced.
