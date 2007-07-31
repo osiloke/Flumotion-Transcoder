@@ -1,0 +1,48 @@
+# This script is made to be sourced, not executed.
+# It will set all the environment variables needed to use 
+# the an uninstalled version of the transcoder.
+# IT WILL NOT START A NEW SHELL
+# Use this way: . transcoder-uninstalled-environment trunk
+
+if test x$TRANSCODER_ENV != x1; then
+    WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+    TRANSCODER_BASE=${TRANSCODER_BASE:-"$WORKSPACE/flumotion/transcoder"}
+    if test ! -d "$TRANSCODER_BASE/${1:-"trunk"}"; then
+        echo "Transcoder root folder not found for revision ${1:-"trunk"}"
+    else
+        export TRANSCODER_REV=${1:-"trunk"}
+        export TRANSCODER_ROOT="$TRANSCODER_BASE/$TRANSCODER_REV"
+        export TRANSCODER_ENV=1
+        if test -n "$FLU_PROJECT_PATH"; then
+            export FLU_PROJECT_PATH=$TRANSCODER_ROOT:$FLU_PROJECT_PATH
+        else
+            export FLU_PROJECT_PATH=$TRANSCODER_ROOT
+        fi
+        export PATH=$TRANSCODER_ROOT/bin:$PATH
+        export PYTHONPATH=$PYTHONPATH:$TRANSCODER_ROOT
+        if test -f $TRANSCODER_ROOT/env; then
+            export PACKAGES="`env -i $TRANSCODER_ROOT/env env | grep PACKAGES | cut -d'=' -f2 | cut -d' ' -f1` $PACKAGES"
+        else
+            export PACKAGES="transcoder $PACKAGES"
+        fi
+        if test x$TRANSCODER_REV = xtrunk; then
+            case "$TERM" in
+            xterm-color)
+                PS1="\[\033[02;32m\][TRANS]\[\033[00m\] $PS1"
+                ;;
+            *)
+                PS1="[TRANS] $PS1"
+                ;;
+            esac
+        else
+            case "$TERM" in
+            xterm-color)
+                PS1="\[\033[02;32m\][TRANS $TRANSCODER_REV]\[\033[00m\] $PS1"
+                ;;
+            *)
+                PS1="[TRANS $TRANSCODER_REV] $PS1"
+                ;;
+            esac
+        fi
+    fi
+fi
