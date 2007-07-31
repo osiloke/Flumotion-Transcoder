@@ -1,5 +1,12 @@
 2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
 
+	* doc/requirments-specifications.txt:
+	* doc/specifications.odt:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	Filled a litle the template variable specification.
+
+2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/context/targetcontext.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:

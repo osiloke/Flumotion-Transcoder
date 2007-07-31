@@ -112,7 +112,7 @@ class UnboundProfileContext(object):
         self.customer = customerContext
         self.store = profileStore
         self._vars = Variables(customerContext._vars)
-        self._vars.addVar("sourceSubdir", self.getSubdir())
+        self._vars.addVar("profileSubdir", self.getSubdir())
         self._vars.addVar("profileName", self.store.getName())
 
     def getTranscodingContext(self):
@@ -198,7 +198,7 @@ class ProfileContext(UnboundProfileContext):
 
     def __init__(self, profileStore, customerContext, inputAbstractPath):
         UnboundProfileContext.__init__(self, profileStore, customerContext)
-        self._vars.addFileVars(inputAbstractPath, "source")        
+        self._vars.addFileVars(inputAbstractPath.strip('/'), "source")        
 
     def getIdentifier(self):
         """

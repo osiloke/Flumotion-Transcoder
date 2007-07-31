@@ -263,8 +263,8 @@ be substituted:
     F T E S       %(success)d               : 0 or 1
     F T E S       %(trigger)s               : done or failed
 
-    F T E S U R O %(custName)s              : Fluendo
-    F T E S U R O %(profName)s              : OGG/theora-vorbis
+    F T E S U R O %(customerName)s          : Fluendo
+    F T E S U R O %(profileName)s           : OGG/theora-vorbis
     F T     U   O %(targetName)s            : High Quality OGG
     F T     U   O %(targetType)s            : Audio/Video
     ? T     U   O %(targetMime)s            : application/ogg
