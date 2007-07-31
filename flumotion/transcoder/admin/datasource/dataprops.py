@@ -404,9 +404,9 @@ class AdminData(properties.RootPropertyBag):
     #http-request-timeout = 30
     #http-request-retry-count = 3
     #http-request-retry-sleep = 60
-    #output-media-template = "%(targetDir)s%(sourceFile)s%(targetExtension)s"
-    #output-thumb-template = "%(targetDir)s%(sourceFile)s.%%(index)03d%(targetExtension)s"
-    #link-file-template = "%(targetDir)s%(sourceFile)s.link"
+    #output-media-template = "%(targetPath)s"
+    #output-thumb-template = "%(targetDir)s%(targetBasename)s.%%(index)03d%(targetExtension)s"
+    #link-file-template = "%(targetPath)s.link"
     #config-file-template = "%(sourcePath)s.ini"
     #report-file-template = "%(sourcePath)s.%%(id)s.rep"
     #mail-subject-template = "%(customerName)s/%(profileName)s transcoding %(trigger)s"

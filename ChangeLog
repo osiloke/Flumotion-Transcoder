@@ -1,5 +1,13 @@
 2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	Added more substitution variable for targets.
+
+2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/test/test_transcontext.py:
 	* flumotion/transcoder/admin/adminconsts.py:
 	* flumotion/transcoder/admin/context/targetcontext.py:

@@ -422,7 +422,7 @@ class UpgradeConfig(Loggable):
                                     % (outputPath, self._rootDir))
                 thumbData.subdir = outputPath[len(self._rootDir):]
             if oldTargConf.appendExt:
-                thumbData.outputFileTemplate = "%(targetDir)s%(sourceFile)s%(targetExtension)s"
+                thumbData.outputFileTemplate = "%(targetPath)s"
             else:
                 thumbData.outputFileTemplate = "%(targetDir)s%(sourceBasename)s%(targetExtension)s"
             thumbData.config.periodValue = 30
