@@ -589,7 +589,7 @@ class TestTranscoderContext(unittest.TestCase):
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
-        targCtx.store.setOutputFileTemplate("/%(targetPath)s/%(sourceFile)s.hq%(targetExtension)s")
+        targCtx.store.setOutputFileTemplate("/%(targetDir)s/%(sourceFile)s.hq%(targetExtension)s")
         targCtx.store.setLinkFileTemplate("%(sourceBasename)s///./%(targetSubdir)sthe.link")
         checkVal(targCtx.getSubdir(), "very/high/")
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/very/high/")

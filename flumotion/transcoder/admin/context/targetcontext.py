@@ -109,9 +109,10 @@ class TargetContext(object):
         subdir = utils.str2path(subdir)
         subdir = utils.ensureRelDirPath(subdir)
         subdir = utils.cleanupPath(subdir)
-        path = utils.joinPath(self._vars["sourceDir"], subdir)
+        targDir = utils.joinPath(self._vars["sourceDir"], subdir)
         self._vars.addVar("targetSubdir", subdir)
-        self._vars.addVar("targetPath", path)
+        self._vars.addVar("targetDir", targDir)
+        self._vars.addVar("targetName", self.store.getName())
         
     def getTranscodingContext(self):
         return self.profile.getTranscodingContext()

@@ -375,9 +375,9 @@ class UpgradeConfig(Loggable):
             raise Exception("Identity targets not supported yet")
         targData.extension = oldTargConf.extension
         if not oldTargConf.appendExt:
-            targData.outputFileTemplate = "%(targetPath)s%(sourceBasename)s%(targetExtension)s"
+            targData.outputFileTemplate = "%(targetDir)s%(sourceBasename)s%(targetExtension)s"
             if profData.enableLinkFiles:
-                targData.linkFileTemplate = "%(targetPath)s%(sourceBasename)s.link"
+                targData.linkFileTemplate = "%(targetDir)s%(sourceBasename)s.link"
         if oldTargConf.getRequest and not self._disableRequests:
             req = self._upgradeVariables(oldTargConf.getRequest)
             targData.notifyDoneRequests.append(req)
@@ -422,9 +422,9 @@ class UpgradeConfig(Loggable):
                                     % (outputPath, self._rootDir))
                 thumbData.subdir = outputPath[len(self._rootDir):]
             if oldTargConf.appendExt:
-                thumbData.outputFileTemplate = "%(targetPath)s%(sourceFile)s%(targetExtension)s"
+                thumbData.outputFileTemplate = "%(targetDir)s%(sourceFile)s%(targetExtension)s"
             else:
-                thumbData.outputFileTemplate = "%(targetPath)s%(sourceBasename)s%(targetExtension)s"
+                thumbData.outputFileTemplate = "%(targetDir)s%(sourceBasename)s%(targetExtension)s"
             thumbData.config.periodValue = 30
             thumbData.config.periodUnit = PeriodUnitEnum.percent
             thumbData.config.maxCount = 1
