@@ -169,7 +169,7 @@ class CustomerData(properties.RootPropertyBag):
     #done-report-dir = /fluendo/reports/done
 
     # Prefix for the generated links
-    link-url-prefix = http://stream.flumotion.com/%(custName)s/ondemand/
+    link-url-prefix = http://stream.flumotion.com/%(customerName)s/ondemand/
     
     # Customer's transcoding priority (different from transcoding-priority)
     #customer-priority = 100
@@ -409,7 +409,7 @@ class AdminData(properties.RootPropertyBag):
     #link-file-template = "%(targetPath)s%(sourceFile)s.link"
     #config-file-template = "%(sourcePath)s.ini"
     #report-file-template = "%(sourcePath)s.%%(id)s.rep"
-    #mail-subject-template = "%(custName)s/%(profName)s transcoding %(trigger)s"
+    #mail-subject-template = "%(customerName)s/%(profileName)s transcoding %(trigger)s"
     mail-body-template = 
     
     # Default Values not yet used

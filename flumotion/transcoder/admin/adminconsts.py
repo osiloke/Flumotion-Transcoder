@@ -120,13 +120,13 @@ DEFAULT_HTTPREQUEST_RETRY_MAX = 3
 DEFAULT_HTTPREQUEST_RETRY_SLEEP = 60
 DEFAULT_TRANSCODING_PRIORITY = 100
 
-DEFAULT_MAIL_SUBJECT_TEMPLATE = "%(custName)s/%(profName)s transcoding %(trigger)s"
+DEFAULT_MAIL_SUBJECT_TEMPLATE = "%(customerName)s/%(profileName)s transcoding %(trigger)s"
 DEFAULT_MAIL_BODY_TEMPLATE = """
 Transcoding Report
 ==================
 
-Customer Name: %(custName)s
-Profile Name:  %(profName)s
+Customer Name: %(customerName)s
+Profile Name:  %(profileName)s
 --------------
 
   File: '%(inputRelPath)s'

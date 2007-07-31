@@ -88,8 +88,8 @@ class SourceNotificationVariables(NotificationVariables):
         self.addVar("trigger", trigger.name)
         self.addVar("inputFile", profCtx.getInputFile())
         self.addVar("inputRelPath", profCtx.getInputRelPath())
-        self.addVar("custName", profCtx.customer.store.getName())
-        self.addVar("profName", profCtx.store.getName())
+        self.addVar("customerName", profCtx.customer.store.getName())
+        self.addVar("profileName", profCtx.store.getName())
         self.addVar("errorMessage", (report and report.fatalError) or "")
         self._targets = {}
         for targCtx in profCtx.iterTargetContexts():
@@ -132,7 +132,7 @@ class TargetNotificationVariables(NotificationVariables):
         self.addVar("outputRelPath", targCtx.getOutputRelPath())
         self.addVar("linkFile", targCtx.getLinkFile())
         self.addVar("linkRelPath", targCtx.getLinkRelPath())
-        self.addVar("targeName", targCtx.store.getName())
+        self.addVar("targetName", targCtx.store.getName())
             
         if self["targetDuration"] > 0:
             self.addVar('mediaDuration', self["targetDuration"])

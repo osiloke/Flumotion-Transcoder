@@ -351,8 +351,8 @@ class TranscoderJob(log.LoggerProxy):
         vars['inputPath'] = sourceCtx.getInputPath()
         vars['inputDir'] = os.path.basename(os.path.join(vars['inputBase'],
                                                          vars['inputRelPath']))
-        vars['custName'] = config.customer.name
-        vars['profName'] = config.profile.label
+        vars['customerName'] = config.customer.name
+        vars['profileName'] = config.profile.label
         vars['sourceMime'] = sourceAnalyse.mimeType
         if sourceAnalyse.hasVideo:
             vars['sourceHasVideo'] = 1
