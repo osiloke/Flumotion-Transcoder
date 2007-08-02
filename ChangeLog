@@ -1,3 +1,8 @@
+2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/main.py:
+	Made '/' the default value of --daemonize-to
+
 2007-07-31  Sebastien Merle  <sebastien@fluendo.com>
 
 	* doc/requirments-specifications.txt:

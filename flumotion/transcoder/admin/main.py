@@ -40,7 +40,8 @@ def parse_options(args):
                      help="run in background as a daemon")
     parser.add_option('', '--daemonize-to',
                      action="store", dest="daemonizeTo",
-                     help="what directory to run from when daemonizing")
+                     help="what directory to run from when daemonizing; "
+                          "default: '/'")
     parser.add_option('-d', '--debug',
                      action="store", dest="debug",
                      help="override the configuration debug level")
@@ -69,6 +70,8 @@ def parse_options(args):
 def possess(daemonizeTo=None):
     common.ensureDir(configure.logdir, "log file")
     common.ensureDir(configure.rundir, "run file")
+    if not daemonizeTo:
+        daemonizeTo = '/'
 
     pid = common.getPid('transcoder-admin')
     if pid:
