@@ -31,7 +31,7 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.component.transcoder import targets
+from flumotion.component.transcoder.targets import *
 from flumotion.component.transcoder.context import Context, TaskContext
 from flumotion.component.transcoder.context import TargetContext
 from flumotion.component.transcoder.gstutils import Discoverer
@@ -159,10 +159,10 @@ class TranscoderJob(log.LoggerProxy):
             d.addCallback(self.__cbPerformPreProcessing, context)
             d.addErrback(self.__ebFatalFailure, context, "pre-processing")
         #Setup transcoding
-        d.addCallback(self.__cbTranscodeSource, context)
+        d.addCallback(self.__cbInitiateTargetsProcessing, context)
         d.addErrback(self.__ebFatalFailure, context, "transcoding")
         #Setup target processing
-        d.addCallback(self.__cbProcessTargets, context)
+        d.addCallback(self.__cbTargetsProcessed, context)
         d.addErrback(self.__ebFatalFailure, context, "targets processing")
         #Stop Job Usage measurment
         d.addBoth(_stopMeasureCallback, context.reporter, "job")
@@ -602,10 +602,6 @@ class TranscoderJob(log.LoggerProxy):
         if not os.path.isfile(inputPath):
             raise Exception("Invalid source file ('%s')" % inputPath)
     
-    def __showFailure(self, context, task, failure):
-        context.debug("Traceback of %s failure with filenames cleaned up:\n%s" 
-                      % (task, log.cleanTraceback(failure.getTraceback())))
-        
     def __lookupContext(self, defaultContext, failure):
         """
         If the error has a context, use it inplace of the default one.
@@ -628,8 +624,7 @@ class TranscoderJob(log.LoggerProxy):
         context.reporter.addError(failure)
         errMsg = failure.getErrorMessage()
         context.reporter.setFatalError(errMsg)
-        context.warning("Fatal error during %s: %s", task, errMsg)
-        self.__showFailure(context, task, failure)
+        log.notifyFailure(context, failure, "Fatal error during %s", task)
         self._fireError(context, errMsg)
         if not failure.check(TranscoderError):
             raise TranscoderError(errMsg, data=context, cause=failure)
@@ -646,8 +641,7 @@ class TranscoderJob(log.LoggerProxy):
             return failure
         context.reporter.addError(failure)
         warMsg = failure.getErrorMessage()
-        context.warning("Recoverable error during %s: %s", task, warMsg)
-        self.__showFailure(context, task, failure)
+        log.notifyFailure(context, failure, "Recoverable error during %s", task)
         self._fireWarning(context, warMsg)
         return result
         
@@ -711,13 +705,14 @@ class TranscoderJob(log.LoggerProxy):
         d.addCallback(lambda state, res: res, result)
         return d
 
-    _targetClassForType = {TargetTypeEnum.audio: targets.AudioTarget,
-                           TargetTypeEnum.video: targets.VideoTarget,
-                           TargetTypeEnum.audiovideo: targets.AudioVideoTarget,
-                           TargetTypeEnum.thumbnails: targets.ThumbnailsTarget}
+    _targetClassForType = {TargetTypeEnum.audio:      AudioTarget,
+                           TargetTypeEnum.video:      VideoTarget,
+                           TargetTypeEnum.audiovideo: AudioVideoTarget,
+                           TargetTypeEnum.thumbnails: ThumbnailsTarget,
+                           TargetTypeEnum.identity:   IdentityTarget}
     
     ### Called by Deferreds ###
-    def __cbTranscodeSource(self, result, context):
+    def __cbInitiateTargetsProcessing(self, result, context):
         # If stopping don't do anything
         if self._isStopping(): return
         sourceCtx = context.getSourceContext()
@@ -729,35 +724,62 @@ class TranscoderJob(log.LoggerProxy):
                                      self._transcoderProgressCallback,
                                      self._transcoderDiscoveredCallback,
                                      self._transcoderPiplineCallback)
+        startTranscoder = False
+        targets = []
+        d = defer.succeed(result)
         for targetCtx in context.getTargetContexts():
             targetConfig = targetCtx.config
             TargetClass = self._targetClassForType[targetConfig.type]
-            transcoder.addTarget(TargetClass(targetCtx.getOutputWorkPath(),
-                                             targetConfig.config, 
-                                             targetConfig.label,
-                                             targetCtx, targetCtx))
+            if issubclass(TargetClass, TranscodingTarget):
+                startTranscoder = True
+                target = TargetClass(targetCtx,
+                                     targetConfig.config, 
+                                     targetCtx.getOutputWorkPath(),
+                                     targetConfig.label, targetCtx)
+                transcoder.addTarget(target)
+                targets.append(target)
+            elif issubclass(TargetClass, ProcessingTarget):
+                target = TargetClass(targetCtx, targetCtx)
+                d.addCallback(self.__cbProcessTarget, target, context, targetCtx)
+                targets.append(target)
+            else:
+                pass
+        
+        if startTranscoder:
+            d.addCallback(self.__cbStartupTranscoding, transcoder, context)
+        
+        d.addCallback(defer.overrideResult, targets)
+        return d
+    
+    ### Called by Deferreds ###
+    def __cbStartupTranscoding(self, result, transcoder, context):
         context.reporter.startUsageMeasure("transcoding")
         self._transcoder = transcoder
         d = transcoder.start()
         d.addBoth(_stopMeasureCallback, context.reporter, "transcoding")
         return d
+    
+    ### Called by Deferreds ###
+    def __cbProcessTarget(self, result, target, context, targetCtx):
+        targetCtx.debug("Processing target")
+        return target.process(context, targetCtx)
 
     ### Called by Deferreds ###
-    def __cbProcessTargets(self, transcodingTargets, context):
+    def __cbTargetsProcessed(self, targets, context):
         # If stopping don't do anything
         if self._isStopping(): return
         context.debug("Transcoding done")
         self._setJobState(JobStateEnum.target_processing)
         d = defer.Deferred()
-        for transTarget in transcodingTargets:
-            targetCtx = transTarget.getData()
+        for target in targets:
+            targetCtx = target.getData()
             if targetCtx == None or not isinstance(targetCtx, TargetContext):
                 raise TranscoderError("The transcoder mixed-up "
                                       + "the provided context", data=context)
-            for wp in transTarget.getOutputs():
+            for wp in target.getOutputs():
                 op = targetCtx.getOutputFromWork(wp)
                 targetCtx.reporter.addFile(wp, op)
-            d.addCallback(self.__cbProcessTarget, targetCtx)
+            d.addCallback(self.__cbInitiateTargetPostProcessings, targetCtx)
         #Handle targets outcomes
         d.addCallback(self.__cbAllTargetsSucceed, context)
         d.addErrback(self.__ebSomeTargetsFailed, context)
@@ -765,7 +787,7 @@ class TranscoderJob(log.LoggerProxy):
         return d
 
     ### Called by Deferreds ###
-    def __cbProcessTarget(self, result, targetCtx):
+    def __cbInitiateTargetPostProcessings(self, result, targetCtx):
         # If stopping don't do anything
         if self._isStopping(): return
         targetCtx.info("Start target processing")
@@ -966,8 +988,9 @@ class TranscoderJob(log.LoggerProxy):
         self._setTargetState(targetCtx, TargetStateEnum.link_file_generation)
         mimeType = targetCtx.reporter.report.analyse.mimeType
         if mimeType != 'application/ogg':
-            raise TranscoderError("Target output not an ogg file, "
-                                  + "not writing link", data=targetCtx)
+            self.warning("Target output not an ogg file, "
+                         "not writing link")
+            return result
         cortadoArgs = self._getCortadoArgs(targetCtx)
         cortadoArgString = "&".join("%s=%s" % (urllib.quote(str(k)), 
                                                urllib.quote(str(v)))

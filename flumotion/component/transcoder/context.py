@@ -91,11 +91,12 @@ class SourceContext(BaseContext):
         
         
 class TargetContext(TaskContext):
-    
-    _typeInfo = {TargetTypeEnum.audio:      (True, False, True),
-                 TargetTypeEnum.video:      (False, True, True),
-                 TargetTypeEnum.audiovideo: (True, True, True),
-                 TargetTypeEnum.thumbnails: (False, False, False)}
+    # {TargetTypeEnum: (HAVE_AUDIO, HAVE_VIDEO, ANALYSE, GEN_LINK)}
+    _typeInfo = {TargetTypeEnum.audio:      (True,  False, True,  True),
+                 TargetTypeEnum.video:      (False, True,  True,  True),
+                 TargetTypeEnum.audiovideo: (True,  True,  True,  True),
+                 TargetTypeEnum.thumbnails: (False, False, False, False),
+                 TargetTypeEnum.identity:   (None, None,   False, True)}
     
     def __init__(self, context, targetKey):
         tag = "(%s:%s:%s) " % (context.config.customer.name,
@@ -188,7 +189,7 @@ class TargetContext(TaskContext):
         return self._typeInfo[self.config.type][2]
 
     def shouldGenerateLinkFile(self):
-        return self._typeInfo[self.config.type][2] and self.hasLinkConfig()
+        return self._typeInfo[self.config.type][3] and self.hasLinkConfig()
 
     #Maybe it should go out of this class
     def shouldHaveAudio(self):

@@ -13,7 +13,11 @@
 
 import os
 import gst
+import shutil
+
 from flumotion.common import common
+
+from flumotion.transcoder import log, defer
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
@@ -24,44 +28,88 @@ from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
 from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
 from flumotion.component.transcoder.thumbsink import ThumbnailSink
 
+__all__ = ['ProcessingTarget', 'TranscodingTarget', 'IdentityTarget',
+           'AudioTarget', 'VideoTarget', 'AudioVideoTarget',
+           'ThumbnailsTarget']
 
-class TranscodingTarget(object):
+class BaseTarget(log.LoggerProxy):
     
-    def __init__(self, config, tag, logger, data=None):
-        self._config = config
-        self._logger = logger
+    def __init__(self, logger, data=None):
+        log.LoggerProxy.__init__(self, logger)
         self._data = data
-        self._tag = tag
-        self._bins = {}
+
+    ## Public Methods ##
 
     def getData(self):
         return self._data
 
+    def getOutputs(self):
+        return []
+
+
+class ProcessingTarget(BaseTarget):
+
+    def __init__(self, logger, data=None):
+        BaseTarget.__init__(self, logger, data)
+        self._outputs = []
+
+
+    ## Public Methods ##
+
+    def getOutputs(self):
+        return list(self._outputs)
+
+    def process(self, context, targetCtx):
+        return defer.succeed(self)
+    
+        
+class IdentityTarget(ProcessingTarget):
+    
+    def __init__(self, logger, data=None):
+        """
+        This target only copy the source file to the target file.
+        """
+        ProcessingTarget.__init__(self, logger, data)
+        
+    def process(self, context, targCtx):
+        try:
+            srcCtx = context.getSourceContext()
+            sourcePath = srcCtx.getInputPath()
+            destPath = targCtx.getOutputWorkPath()
+            common.ensureDir(os.path.dirname(destPath), "identity output")
+            shutil.copy(sourcePath, destPath)
+            self._outputs.append(destPath)
+            return defer.succeed(self)
+        except:
+            return defer.fail()
+
+
+class TranscodingTarget(BaseTarget):
+    
+    def __init__(self, logger, config, tag, data=None):
+        BaseTarget.__init__(self, logger, data)
+        self._config = config
+        self._tag = tag
+        self._bins = {}
+
+
+    ## Public Methods ##
+
     def getBins(self):
         return self._bins
+
+    ## Protected Methods ##
     
-    def log(self, *args, **kwargs):
-        self._logger.log(*args, **kwargs)
-        
-    def debug(self, *args, **kwargs):
-        self._logger.debug(*args, **kwargs)
-
-    def info(self, *args, **kwargs):
-        self._logger.info(*args, **kwargs)
-
-    def warning(self, *args, **kwargs):
-        self._logger.warning(*args, **kwargs)
-
-    def error(self, *args, **kwargs):
-        self._logger.error(*args, **kwargs)
-
     def _raiseError(self, msg, *args):
         raise TranscoderError(msg % args, data=self._data)        
+    
+    def _setup(self, transcoder):
+        pass
     
     def _sourceDiscovered(self, discoverer):
         pass
     
-    def _pushExpectedOutputs(self, outputs):
+    def _pushMonitoredOutputs(self, outputs):
         pass
 
     def _hasTargetFile(self, filePath):
@@ -73,8 +121,8 @@ class TranscodingTarget(object):
 
 class FileTarget(TranscodingTarget):
 
-    def __init__(self, outputPath, config, tag, logger, data=None):
-        TranscodingTarget.__init__(self, config, tag, logger, data)
+    def __init__(self, logger, config, outputPath, tag, data=None):
+        TranscodingTarget.__init__(self, logger, config, tag, data)
         self._outputPath = outputPath
         common.ensureDir(os.path.dirname(outputPath), "transcoding output")
 
@@ -84,14 +132,17 @@ class FileTarget(TranscodingTarget):
     def getOutputs(self):
         return (self.getOutputPath(),)
     
-    def _pushExpectedOutputs(self, outputs):
-        outputs.append(self.getOutputPath())
+    def _pushMonitoredOutputs(self, outputs):
+        # Do not monitor the output file, because it's copied during setup
+        pass
 
     def _hasTargetFile(self, filePath):
         return self._outputPath == filePath
-    
+
+
 class AudioTarget(FileTarget):
-    def __init__(self, outputPath, config, tag, logger, data=None):
+
+    def __init__(self, logger, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -102,7 +153,7 @@ class AudioTarget(FileTarget):
             audioChannels
             muxer
         """
-        FileTarget.__init__(self, outputPath, config, tag, logger, data)
+        FileTarget.__init__(self, logger, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_audio:
@@ -119,7 +170,8 @@ class AudioTarget(FileTarget):
 
         
 class VideoTarget(FileTarget):
-    def __init__(self, outputPath, config, tag, logger, data=None):
+ 
+    def __init__(self, logger, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -132,7 +184,7 @@ class VideoTarget(FileTarget):
             videoHeight
             muxer
         """
-        FileTarget.__init__(self, outputPath, config, tag, logger, data)
+        FileTarget.__init__(self, logger, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_video:
@@ -149,7 +201,8 @@ class VideoTarget(FileTarget):
         
 
 class AudioVideoTarget(FileTarget):
-    def __init__(self, outputPath, config, tag, logger, data=None):
+ 
+    def __init__(self, logger, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -166,7 +219,7 @@ class AudioVideoTarget(FileTarget):
             muxer
             tolerance
         """
-        FileTarget.__init__(self, outputPath, config, tag, logger, data)
+        FileTarget.__init__(self, logger, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         tolerance = self._config.tolerance
@@ -252,7 +305,7 @@ class ThumbnailsTarget(TranscodingTarget):
             outputFormat Enum(jpg, png)
             smartThumbs
         """
-        TranscodingTarget.__init__(self, config, tag, logger, data)
+        TranscodingTarget.__init__(self, logger, config, tag, data)
         self._sink = None
         self._template = template
 

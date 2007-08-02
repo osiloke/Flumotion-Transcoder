@@ -389,8 +389,8 @@ class AdminTask(LoggerProxy, EventSource):
         If the maximum attempts are reache,
         _doAborted will be called.
         """
-        self.__relieveComponent()
         if self.__canRetry():
+            self.__relieveComponent()
             self.__incRetryCounter()
             self.__delayedStartComponent()
         else:
@@ -399,6 +399,7 @@ class AdminTask(LoggerProxy, EventSource):
                          self.getLabel(), str(self.__getRetryCount() + 1),
                          self._worker.getName())
             self._doAborted()
+            self.__relieveComponent()
             return
         
     def _isPendingComponent(self, component):

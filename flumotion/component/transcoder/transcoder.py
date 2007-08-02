@@ -30,7 +30,7 @@ from flumotion.component.transcoder import targets
 PLAY_ERROR_TIMEOUT = 8
 PROGRESS_TIMEOUT = 1
 
-class MultiTranscoder(object):
+class MultiTranscoder(log.LoggerProxy):
     """
     Takes a logger, an input file and a report and a timeout.
     transcoding and thumbnailing targets can be added.
@@ -41,7 +41,7 @@ class MultiTranscoder(object):
                  progressCallback=None,
                  discoveredCallback=None, 
                  pipelineCallback=None):
-        self._logger = logger
+        log.LoggerProxy.__init__(self, logger)
         self._sourcePath = sourcePath
         self._timeout = timeout
         self._discoveredCallback = discoveredCallback
@@ -57,31 +57,14 @@ class MultiTranscoder(object):
         self._waitingError = None
         self._progressSetup = False
         self._duration = None
+
+    ## Public Methods ##
+
+    def getSourcePath(self):
+        return self._sourcePath
         
-    def log(self, *args, **kwargs):
-        self._logger.log(*args, **kwargs)
-        
-    def debug(self, *args, **kwargs):
-        self._logger.debug(*args, **kwargs)
-
-    def info(self, *args, **kwargs):
-        self._logger.info(*args, **kwargs)
-
-    def warning(self, *args, **kwargs):
-        self._logger.warning(*args, **kwargs)
-
-    def error(self, *args, **kwargs):
-        self._logger.error(*args, **kwargs)
-
-    def _checkIfStarted(self, msg=None):
-        if self._started:
-            error = "Transcoder already started"
-            if msg:
-                error = error + ", " + msg
-            raise TranscoderError(error)
-
     def addTarget(self, target):
-        self._checkIfStarted("cannot add target")
+        self.__checkIfStarted("cannot add target")
         self._targets.append(target)
         return target
 
@@ -90,7 +73,7 @@ class MultiTranscoder(object):
         Start transcoding and return a defer.Defferred 
         that will return the target list on success.
         """
-        self._checkIfStarted()
+        self.__checkIfStarted()
         self._started = True
         
         if not os.path.exists(self._sourcePath):
@@ -110,29 +93,11 @@ class MultiTranscoder(object):
 
     def abort(self):
         self.debug('Aborting Transcoding')
-        self._shutdownPipeline()
+        self.__shutdownPipeline()
         return defer.succeed(self)
 
-    def _postErrorMessage(self, msg, debug=None):
-        error = gst.GError(gst.STREAM_ERROR, 
-                           gst.STREAM_ERROR_FAILED, msg)
-        message = gst.message_new_error(self._pipeline, error, debug)
-        self._pipeline.post_message(message)
-
-    def _failed(self, error=None, *args):
-        self._shutdownPipeline()
-        if error == None:
-            self._deferred.errback(Failure())
-            return
-        if not isinstance(error, Exception):
-            error = TranscoderError(error % args)
-        self._deferred.errback(error)
-
-    def _done(self):
-        if  self._progressCallback:
-            self._progressCallback(100.0)
-        self._shutdownPipeline()
-        self._deferred.callback(list(self._targets))
+    
+    ## Protected GObject Callback Methods ##
 
     def _discovered_callback(self, discoverer, ismedia):
         try:
@@ -140,7 +105,7 @@ class MultiTranscoder(object):
                 self._discoveredCallback(discoverer, ismedia)
             
             if not ismedia:
-                self._failed("Source file is not a media file ('%s')",
+                self.__failed("Source file is not a media file ('%s')",
                              self._sourcePath)
                 return
             
@@ -154,13 +119,23 @@ class MultiTranscoder(object):
                 self.log("Source media has video stream")
             
             try:
-                self._pipeline = self._makePipeline("transcoder-%s"
+                for target in self._targets:
+                    target._setup(self)
+            except Exception, e:
+                self.debug("Target setup failed: %s", 
+                           log.getExceptionMessage(e))
+                self.__failed("Could not setup targets for file '%s': %s",
+                             self._sourcePath, str(e))
+                return
+            
+            try:
+                self._pipeline = self.__makePipeline("transcoder-%s"
                                                     % self._sourcePath,
                                                     discoverer)
             except Exception, e:
                 self.debug("Pipeline setup failed: %s", 
                            log.getExceptionMessage(e))
-                self._failed("Could not setup pipeline for file '%s': %s",
+                self.__failed("Could not setup pipeline for file '%s': %s",
                              self._sourcePath, str(e))
                 return
 
@@ -171,25 +146,51 @@ class MultiTranscoder(object):
             ret = self._pipeline.set_state(gst.STATE_PLAYING)
             if ret == gst.STATE_CHANGE_FAILURE:
                 self._waitingError = reactor.callLater(PLAY_ERROR_TIMEOUT,
-                                                       self._errorNotReceived)
+                                                       self.__errorNotReceived)
                 return
         
             # start a FilesWatcher on the expected output files
             expectedOutputs = list()
             for t in self._targets:
-                t._pushExpectedOutputs(expectedOutputs)
+                t._pushMonitoredOutputs(expectedOutputs)
             self._watcher = FilesWatcher(self, expectedOutputs, 
                                          timeout=self._timeout)
             self._watcher.connect('file-completed', self._watcher_callback)
             self._watcher.connect('file-not-present', self._watcher_callback)
             self._watcher.start()
         except TranscoderError, e:
-            self._failed(e)
+            self.__failed(e)
         except:
-            self._failed()
-            
-    def _errorNotReceived(self):
-        self._failed("Could not play pipeline for file '%s'", self._sourcePath)
+            self.__failed()
+
+    def _bus_message_callback(self, bus, message):
+        try:
+            if message.type == gst.MESSAGE_STATE_CHANGED:
+                if (message.src == self._pipeline):
+                    old, new, pending = message.parse_state_changed()
+                    if new == gst.STATE_PLAYING:
+                        self.__startProgress()
+                        if self._pipelineCallback:
+                            self._pipelineCallback(self._pipeline, 
+                                                   list(self._targets))
+            elif message.type == gst.MESSAGE_ERROR:
+                if self._waitingError:
+                    self._waitingError.cancel()
+                    self._waitingError = None
+                gstgerror, debug = message.parse_error()
+                msg = ("GStreamer error while processing '%s': %s" 
+                       % (self._sourcePath, gstgerror.message))
+                self.debug(msg)
+                self.debug("Additional debug info: %s", debug)
+                self.__failed(msg)
+            elif message.type == gst.MESSAGE_EOS:
+                self.__done()
+            else:
+                self.log('Unhandled GStreamer message %r', message)
+        except TranscoderError, e:
+            self.__failed(e)
+        except:
+            self.__failed()
 
     def _watcher_callback(self, watcher, file):
         """
@@ -208,77 +209,12 @@ class MultiTranscoder(object):
                 if t._hasTargetFile(file):
                     t._raiseError("Timed out trying to transcode '%s' to '%s'",
                                   self._sourcePath, file)
-            self._failed("Timed out trying to transcode unknown file '%s'", 
+            self.__failed("Timed out trying to transcode unknown file '%s'", 
                          file)
         except TranscoderError, e:
-            self._failed(e)
+            self.__failed(e)
         except:
-            self._failed()
-
-    def _bus_message_callback(self, bus, message):
-        try:
-            if message.type == gst.MESSAGE_STATE_CHANGED:
-                if (message.src == self._pipeline):
-                    old, new, pending = message.parse_state_changed()
-                    if new == gst.STATE_PLAYING:
-                        self._startProgress()
-                        if self._pipelineCallback:
-                            self._pipelineCallback(self._pipeline, 
-                                                   list(self._targets))
-            elif message.type == gst.MESSAGE_ERROR:
-                if self._waitingError:
-                    self._waitingError.cancel()
-                    self._waitingError = None
-                gstgerror, debug = message.parse_error()
-                msg = ("GStreamer error while processing '%s': %s" 
-                       % (self._sourcePath, gstgerror.message))
-                self.debug(msg)
-                self.debug("Additional debug info: %s", debug)
-                self._failed(msg)
-            elif message.type == gst.MESSAGE_EOS:
-                self._done()
-            else:
-                self.log('Unhandled GStreamer message %r', message)
-        except TranscoderError, e:
-            self._failed(e)
-        except:
-            self._failed()
-
-    def _shutdownPipeline(self):
-        self._cleanupProgress()
-        if self._bus:
-            self._bus.remove_signal_watch()
-        self._bus = None
-        if self._pipeline:
-            self._pipeline.set_state(gst.STATE_NULL)
-        self._pipeline = None
-        if self._watcher:
-            self._watcher.stop()
-            self._watcher = None
-            
-    def _makePipeline(self, name, discoverer):
-        pipeline = gst.Pipeline(name)
-        src = gst.element_factory_make("filesrc")
-        src.props.location = self._sourcePath
-        dbin = gst.element_factory_make("decodebin")
-        pipeline.add(src, dbin)
-        src.link(dbin)
-
-        tees = {}
-        if discoverer.is_audio:
-            tees["audiosink"] = gst.element_factory_make('tee')
-        if discoverer.is_video:
-            tees["videosink"] = gst.element_factory_make('tee')
-
-        for tee in tees.values():
-            pipeline.add(tee)
-
-        for target in self._targets:
-            target._updatePipeline(pipeline, discoverer, tees)
-
-        dbin.connect('pad-added', self._decoder_pad_added, tees)
-        
-        return pipeline
+            self.__failed()
 
     def _decoder_pad_added(self, dbin, pad, tees):
         self.log("Decoder pad %r added, caps %s", pad, str(pad.get_caps()))
@@ -319,9 +255,79 @@ class MultiTranscoder(object):
                 self.debug('Unknown pad from decodebin: %r (caps %s)',
                            pad, pad.get_caps())
         except Exception, e:
-            self._postErrorMessage(str(e), log.getExceptionMessage(e))
+            self.__postErrorMessage(str(e), log.getExceptionMessage(e))
 
-    def _startProgress(self):
+
+    ## Private Methods ##
+
+    def __checkIfStarted(self, msg=None):
+        if self._started:
+            error = "Transcoder already started"
+            if msg:
+                error = error + ", " + msg
+            raise TranscoderError(error)
+        
+    def __errorNotReceived(self):
+        self.__failed("Could not play pipeline for file '%s'", self._sourcePath)
+        
+    def __postErrorMessage(self, msg, debug=None):
+        error = gst.GError(gst.STREAM_ERROR, 
+                           gst.STREAM_ERROR_FAILED, msg)
+        message = gst.message_new_error(self._pipeline, error, debug)
+        self._pipeline.post_message(message)
+
+    def __failed(self, error=None, *args):
+        self.__shutdownPipeline()
+        if error == None:
+            self._deferred.errback(Failure())
+            return
+        if not isinstance(error, Exception):
+            error = TranscoderError(error % args)
+        self._deferred.errback(error)
+
+    def __done(self):
+        if  self._progressCallback:
+            self._progressCallback(100.0)
+        self.__shutdownPipeline()
+        self._deferred.callback(list(self._targets))
+
+    def __shutdownPipeline(self):
+        self.__cleanupProgress()
+        if self._bus:
+            self._bus.remove_signal_watch()
+        self._bus = None
+        if self._pipeline:
+            self._pipeline.set_state(gst.STATE_NULL)
+        self._pipeline = None
+        if self._watcher:
+            self._watcher.stop()
+            self._watcher = None
+            
+    def __makePipeline(self, name, discoverer):
+        pipeline = gst.Pipeline(name)
+        src = gst.element_factory_make("filesrc")
+        src.props.location = self._sourcePath
+        dbin = gst.element_factory_make("decodebin")
+        pipeline.add(src, dbin)
+        src.link(dbin)
+
+        tees = {}
+        if discoverer.is_audio:
+            tees["audiosink"] = gst.element_factory_make('tee')
+        if discoverer.is_video:
+            tees["videosink"] = gst.element_factory_make('tee')
+
+        for tee in tees.values():
+            pipeline.add(tee)
+
+        for target in self._targets:
+            target._updatePipeline(pipeline, discoverer, tees)
+
+        dbin.connect('pad-added', self._decoder_pad_added, tees)
+        
+        return pipeline
+
+    def __startProgress(self):
         if not self._duration:
             try:
                 self.log('Querying the pipeline duration')
@@ -331,19 +337,19 @@ class MultiTranscoder(object):
                 self.warning("Failed to retrieve pipline duration: %s",
                              log.getExceptionMessage(e))
                 self._duration = None
-                self._updateProgress()
+                self.__updateProgress()
                 return
             if format != gst.FORMAT_TIME:
-                self._postErrorMessage("Bad pipline duration format",
+                self.__postErrorMessage("Bad pipline duration format",
                                        log.getExceptionMessage(e))
                 self.warning("Bad pipline duration format: %s",
                              log.getExceptionMessage(e))
                 self._duration = None
             else:
                 self._duration = duration
-            self._updateProgress()
+            self.__updateProgress()
 
-    def _updateProgress(self):
+    def __updateProgress(self):
         # Check if progression annot be done
         if not (self._duration and (self._duration > 0)):
             if  self._progressCallback:
@@ -356,11 +362,11 @@ class MultiTranscoder(object):
                 try:
                     position, format = sink.query_position(gst.FORMAT_TIME)
                 except gst.QueryError, e:
-                    self._postErrorMessage("Failed to retrieve pipline position", 
+                    self.__postErrorMessage("Failed to retrieve pipline position", 
                                            log.getExceptionMessage(e))
                     return
                 if format != gst.FORMAT_TIME:
-                    self._postErrorMessage("Bad pipline position format",
+                    self.__postErrorMessage("Bad pipline position format",
                                            log.getExceptionMessage(e))
                     return
                 if position >= 0:
@@ -371,13 +377,13 @@ class MultiTranscoder(object):
             if  self._progressCallback:
                 self._progressCallback(position * 100.0 / self._duration)
             self._progressTimeout = reactor.callLater(PROGRESS_TIMEOUT,
-                                                  self._updateProgress)
+                                                      self.__updateProgress)
         except TranscoderError, e:
-            self._failed(e)
+            self.__failed(e)
         except:
-            self._failed()
-    
-    def _cleanupProgress(self):
+            self.__failed()
+
+    def __cleanupProgress(self):
         if self._progressTimeout:
             self._progressTimeout.cancel()
             self._progressTimeout = None

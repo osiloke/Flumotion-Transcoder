@@ -267,7 +267,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
     def __transcodingFailed(self, transcoder=None):
         transcoder = transcoder or self.getActiveComponent()
         self.info("Transcoding task '%s' failed", self.getLabel())
-        self._fireEvent(self.getActiveComponent(), "TranscodingFailed")
+        self._fireEvent(transcoder, "TranscodingFailed")
         self._terminate(False)
     
     def __transcodingSucceed(self, transcoder=None):

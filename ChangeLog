@@ -1,5 +1,21 @@
 2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/configstore.py:
+	* flumotion/transcoder/admin/transtask.py:
+	* flumotion/transcoder/properties.py:
+	Added the new target type 'identity' that just
+	copy the source file.
+	It do not do the discovering again, so the target-specific
+	substitution variables are not defined.
+
+2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/enums.py:
 	* flumotion/transcoder/tools/upgrade.py:
 	* flumotion/transcoder/transconfig.py:

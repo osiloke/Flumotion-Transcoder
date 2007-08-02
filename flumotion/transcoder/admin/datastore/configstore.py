@@ -28,6 +28,12 @@ class BaseConfig(object):
         return self._data.type
 
 
+class IdentityConfig(BaseConfig):
+    
+    def __init__(self, data):
+        BaseConfig.__init__(self, data)
+        
+
 class AudioConfig(BaseConfig):
     """
     muxer (str)
@@ -111,7 +117,8 @@ class ThumbnailsConfig(BaseConfig):
 _configLookup = {TargetTypeEnum.audio: AudioConfig,
                  TargetTypeEnum.video: VideoConfig,
                  TargetTypeEnum.audiovideo: AudioVideoConfig,
-                 TargetTypeEnum.thumbnails: ThumbnailsConfig}
+                 TargetTypeEnum.thumbnails: ThumbnailsConfig,
+                 TargetTypeEnum.identity: IdentityConfig}
 
 def TargetConfigFactory(data):
     assert data.type in _configLookup

@@ -1029,7 +1029,7 @@ class DynEnumChild(DynamicChild):
                               root, *args, **kwargs)
         self.bagClasses = {}
         for k, c in bagClasses.iteritems():
-            if not issubclass(c, PropertyBag):
+            if c and (not issubclass(c, PropertyBag)):
                 raise PropertyRuntimeError(("Invalid class specified (%s), "
                                             + "must be a PropertyBag subclass")
                                             % c.__name__)

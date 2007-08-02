@@ -20,6 +20,7 @@ from flumotion.common import common
 
 from flumotion.transcoder import log, defer, inifile, utils
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
@@ -209,7 +210,13 @@ class MutableDataWrapper(object):
                                 "Fail to move file from '%s' to '%s'",
                                 sourceFile, destFile)
             raise e
-            
+
+
+class DummyIdentityConfig(object):
+    
+    def __init__(self):
+        self.type = TargetTypeEnum.identity
+
 
 TRANS_ACT_TMPL = {'class': dataprops.TranscodingActivityData,
                   'file-template': 'transcoding-%s.ini',
@@ -442,7 +449,12 @@ class FileDataSource(log.Loggable):
         try:
             assert isinstance(targetData, ImmutableDataWrapper)
             data = targetData._getData()
-            result = ImmutableDataWrapper(data.config, (data.name, "config"),
+            conf = data.config
+            if not conf:
+                # Build a dummy config container. It's only to not have
+                # an empty config section for identity targets
+                conf = DummyIdentityConfig()
+            result = ImmutableDataWrapper(conf, (data.name, "config"),
                                           readonly=['type'])
             return defer.succeed(result)
         except Exception, e:
