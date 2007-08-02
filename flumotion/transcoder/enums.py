@@ -17,11 +17,13 @@ TargetTypeEnum = EnumClass('TargetTypeEnum',
                            ('audio', 
                             'video', 
                             'audiovideo', 
-                            'thumbnails'),
+                            'thumbnails',
+                            'identity'),
                            ('Audio', 
                             'Video', 
                             'Audio/Video', 
-                            'Thumbnails'))
+                            'Thumbnails',
+                            'Identity'))
 
 PeriodUnitEnum = EnumClass('PeriodUnitEnum',
                            ('seconds', 

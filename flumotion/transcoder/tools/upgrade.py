@@ -176,6 +176,7 @@ class UpgradeConfig(Loggable):
     
     def upgradeCustomers(self, oldConfig):
         customers = {} # {name: CustomerData}
+        hackLookup = {}
         for oldName, oldCustConf in oldConfig.customers.items():
             nameParts = oldName.split('-', 1)
             custName = nameParts[0]
@@ -183,19 +184,41 @@ class UpgradeConfig(Loggable):
             if custName in customers:
                 custData = customers[custName]
             else:
-                self.debug("Creating data container for customer '%s'", custName)
-                custData = dataprops.CustomerData()
-                customers[custName] = custData
-                custData.name = custName
+                # Check for HACK
+                key = oldCustConf.inputDir
+                if key in hackLookup:
+                    custData = hackLookup[key][0]
+                    # Keep the smaller name
+                    if oldName < custData.name:
+                        del customers[custData.name]
+                        customers[custData.name] = custData
+                        custData.name = oldName
+                else:
+                    self.debug("Creating data container for customer '%s'", custName)
+                    custData = dataprops.CustomerData()
+                    customers[custName] = custData
+                    custData.name = custName
             if profName in custData.profiles:
-                self.warning("Duplicated profile '%s'", profName)
-                continue
+                self.warning("Duplicated profile '%s' for customer '%s'; renaming it '%s'",
+                             profName, custData.name, profName + "2")
+                profName = profName + "2"
             self.debug("Creating data container of profile '%s'", profName)
             profData = dataprops.ProfileData()
             custData.profiles[profName] = profData
             profData.name = profName
             try:
                 self._upgradeProfile(oldCustConf, custData, profData)
+                key = oldCustConf.inputDir
+                if key in hackLookup:
+                    # Ensure the last customer/profile names are smaller
+                    lastProf = hackLookup[key][1]
+                    newProf = profData
+                    if lastProf.name > newProf.name:
+                        hackLookup[key] = (custData, newProf)
+                        newProf, lastProf = lastProf, newProf
+                    self._resolveHack(custData, lastProf, newProf)
+                else:
+                    hackLookup[key] = custData, profData
             except Exception, e:
                 self.warning("Fail to upgrade profile '%s' for customer '%s': %s",
                              profName, custName, str(e))
@@ -224,6 +247,36 @@ class UpgradeConfig(Loggable):
                 self.warning("Fail to save customer '%s' file '%s': %s",
                              custKey, path, str(e))
 
+    def _getInputDir(self, custData, profData):
+        if profData.inputDir:
+            return profData.inputDir
+        if custData.inputDir:
+            result = custData.inputDir
+        elif custData.subdir:
+            result = custData.subdir
+        else:
+            result = utils.str2filename(custData.name)
+        result = utils.ensureRelDirPath(result)
+        result = result + "files/incoming/"
+        if profData.subdir:
+            result = result + profData.subdir
+        else:
+            result = result + utils.str2filename(profData.name)
+        return result
+
+    def _resolveHack(self, custData, lastProfData, newProfData):
+        self.info("Trying to upgrade HACK made for customer '%s' profiles '%s' and '%s'",
+                  custData.name, lastProfData.name, newProfData.name)
+        subdir = utils.str2filename(newProfData.name)
+        if utils.ensureRelDirPath(subdir) != utils.ensureRelDirPath(lastProfData.subdir):
+            newProfData.subdir = subdir
+        else:
+            newProfData.subdir = subdir + "2"
+        inputDir = self._getInputDir(custData, newProfData)
+        lastProfData.outputDir = inputDir
+        period = min(lastProfData.monitoringPeriod, newProfData.monitoringPeriod)
+        lastProfData.monitoringPeriod, newProfData.monitoringPeriod = period, period
+
     def _upgradeVariables(self, s):
         s = s.replace("%(workPath)", "%(outputWorkPath)")
         s = s.replace("%(workFile)", "%(outputWorkRelPath)")
@@ -243,18 +296,6 @@ class UpgradeConfig(Loggable):
         return s
 
     def _upgradeProfile(self, oldCustConf, custData, profData):
-
-        def extractSubdirs(path, midlefix):
-            if path.startswith(self._rootDir):
-                try:
-                    i = path.rindex(midlefix)
-                    return (path[len(self._rootDir):i].strip('/'),
-                            path[i + len(midlefix):].strip('/'))
-                except ValueError:
-                    return (None, None)
-            else:
-                return (None, None)
-    
         # List all subdirs
         subdirs = {}
         for kind, path in (("incoming", oldCustConf.inputDir),
@@ -265,11 +306,11 @@ class UpgradeConfig(Loggable):
             if not path.startswith(self._rootDir):
                 raise Exception("Unsupported %s path '%s'; not a subdirectory of '%s'"
                                 % (kind, path, self._rootDir))
-            subdirs[kind] = (path,) + extractSubdirs(path, kind)
+            subdirs[kind] = (path,) + self._extractSubdirs(path)
         # Count the used customer and profile subdirs
         custSubdirs = {}
         profSubdirs = {}
-        for kind, (path, custSubdir, profSubdir) in subdirs.items():
+        for kind, (path, custSubdir, middle, profSubdir) in subdirs.items():
             custSubdirs[custSubdir] = custSubdirs.setdefault(custSubdir, 0) + 1
             profSubdirs[profSubdir] = profSubdirs.setdefault(profSubdir, 0) + 1
         # Choose the most used subdirs
@@ -291,11 +332,11 @@ class UpgradeConfig(Loggable):
                            ("links",    "linkDir"),
                            ("errors",   "failedDir")):
             if not (kind in subdirs): continue
-            path, csd, psd = subdirs[kind]
-            if (csd != custSubdir) or (psd != profSubdir):
+            path, csd, middle, psd = subdirs[kind]
+            if (csd != custSubdir) or (psd != profSubdir) or (middle != kind):
                 dir = path[len(self._rootDir):].strip('/')
                 override = self._guessOverridenDir(dir)
-                setattr(profData, attr, utils.ensureAbsDirPath(override))
+                setattr(profData, attr, utils.ensureRelDirPath(override))
         
         profData.linkURLPrefix = oldCustConf.urlPrefix
         if oldCustConf.urlPrefix and  oldCustConf.linkDir:
@@ -334,6 +375,17 @@ class UpgradeConfig(Loggable):
                              targName, profData.name, custData.name, str(e))
                 del profData.targets[targName]
 
+    def _extractSubdirs(self, path):
+        if path.startswith(self._rootDir):
+            for middle in ['incoming', 'outgoing', 'errors', 'links']:
+                try:
+                    i = path.rindex(middle)
+                    return (path[len(self._rootDir):i].strip('/'),
+                            middle, path[i + len(middle):].strip('/'))
+                except ValueError:
+                    continue
+        return (None, None, None)
+ 
     def _guessOverridenDir(self, dir):
         for middle in ['incoming', 'outgoing', 'errors', 'links']:
             try:
@@ -371,8 +423,6 @@ class UpgradeConfig(Loggable):
     _pngOutputPattern = re.compile(".*-x *png.*")
 
     def _upgradeTarget(self, oldTargConf, custData, profData, targData):
-        if not (oldTargConf.videoencoder or oldTargConf.audioencoder):
-            raise Exception("Identity targets not supported yet")
         targData.extension = oldTargConf.extension
         if not oldTargConf.appendExt:
             targData.outputFileTemplate = "%(targetDir)s%(sourceBasename)s%(targetExtension)s"
@@ -390,9 +440,11 @@ class UpgradeConfig(Loggable):
             else:
                 targData.type = TargetTypeEnum.video
                 self._upgradeVideoConfig(oldTargConf, targData.config)
-        else:
+        elif oldTargConf.audioencoder:
             targData.type = TargetTypeEnum.audio
             self._upgradeAudioConfig(oldTargConf, targData.config)
+        else:
+            targData.type = TargetTypeEnum.identity
         if oldTargConf.postprocess:
             m = self._thumbnailerCmdPattern.match(oldTargConf.postprocess)
             if not m:

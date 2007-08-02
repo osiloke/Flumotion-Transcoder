@@ -1,5 +1,14 @@
 2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	* flumotion/transcoder/transconfig.py:
+	Updated the configuration upgrade script to
+	handle identity targets, and the hack used
+	with the old transcoder for non-thread-safe encoders.
+
+2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/main.py:
 	Made '/' the default value of --daemonize-to
 

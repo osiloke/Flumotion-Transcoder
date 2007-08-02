@@ -96,7 +96,8 @@ class TargetConfig(properties.PropertyBag):
                                      {TargetTypeEnum.audio: AudioConfig,
                                       TargetTypeEnum.video: VideoConfig,
                                       TargetTypeEnum.audiovideo: AudioVideoConfig,
-                                      TargetTypeEnum.thumbnails: ThumbnailsConfig})
+                                      TargetTypeEnum.thumbnails: ThumbnailsConfig,
+                                      TargetTypeEnum.identity: None})
     
 
 class TranscodingConfig(properties.RootPropertyBag):
