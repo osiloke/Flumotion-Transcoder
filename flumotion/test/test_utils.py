@@ -85,6 +85,12 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(result, expected)
             
         check("", "")
+        check(".", ".")
+        check("./", "./")
+        check("/./", "/")
+        check("/./././", "/")
+        check("./././.", ".")
+        check("././././", "./")
         check("file.txt", "file.txt")
         check("file.txt/", "file.txt/")
         check("/file.txt", "/file.txt")

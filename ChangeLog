@@ -1,5 +1,12 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/test/test_utils.py:
+	* flumotion/transcoder/utils.py:
+	Updated the path cleanup function to support new use cases.
+	Added some new tests for those use cases.
+
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/main.py:
 	Added the logdir and rundir command-line override parameters.
 

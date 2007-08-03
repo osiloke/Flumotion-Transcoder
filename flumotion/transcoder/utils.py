@@ -107,6 +107,9 @@ def cleanupPath(filePath):
     """
     Simplify a path, but keep the last '/'.
     Ex:   //test/./toto/test.txt/ => /test/toto/test.txt/
+    See test_utils.py for more use cases.
+    
+    FIXME: Too much complicated and special-cased.
     """
     parts = filePath.split('/')
     if len(parts) <= 1:
@@ -117,10 +120,16 @@ def cleanupPath(filePath):
     result.extend([p for p in parts[1:-1] if p and p != '.'])
     last = parts[-1]
     if last != '.':
-        if last or (not last and result[-1]):
+        if last or (not last and result and result[-1]):
             result.append(last)
-    else:
+    elif len(result) > 1:
         result.append('')
+    if (parts[0] == '') and ((not result) or (result[0] != '') or (len(result) < 2)):
+        result.insert(0, '')
+    if (parts[-1] == '') and ((not result) or (result[-1] != '') or (len(result) < 2)):
+        result.append('')
+    if (parts[0] == '.') and ((not result) or ((result[0] != '.') and (len(result) < 2))):
+        result.insert(0, '.')
     return '/'.join(result)
 
 def ensureDirPath(dirPath):
