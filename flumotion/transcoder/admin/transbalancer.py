@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+import math
+
 from zope.interface import Interface, implements
 
 from flumotion.transcoder.admin.admintask import IAdminTask
@@ -90,16 +92,23 @@ class TranscoderBalancer(object):
                 return
 
     def balance(self):
+        
+        def getSortedWorkers():
+            """
+            Return all the workers with at least 1 free slot
+            with the ones with the most free slots first.
+            """
+            lookup = dict([(w, float(len(t)) / w.getContext().getMaxTask()) 
+                           for w, t in self._workers.items()
+                           if len(t) < w.getContext().getMaxTask()])
+            workers = lookup.keys()
+            workers.sort(key=lookup.get)
+            return workers
+        
         if self._workers:
+            # First remove the exceding tasks
             for worker, tasks in self._workers.iteritems():
                 max = worker.getContext().getMaxTask()
-                if max > len(tasks):
-                    diff = max - len(tasks)
-                    newTasks = self._orphanes[:diff]
-                    del self._orphanes[:diff]
-                    tasks.extend(newTasks)
-                    for task in newTasks:
-                        task.suggestWorker(worker)
                 if len(tasks) > max:
                     diff = len(tasks) - max
                     oldTasks = tasks[diff:]
@@ -107,6 +116,20 @@ class TranscoderBalancer(object):
                     self._orphanes.extend(oldTasks)
                     for task in oldTasks:
                         task.suggestWorker(None)
+            # Then distribute the orphanes until there is 
+            # no more free slots or no more orphane tasks
+            while True:
+                workers = getSortedWorkers()
+                if not workers: break
+                for worker in workers:                    
+                    if not self._orphanes: break
+                    tasks = self._workers[worker]
+                    task = self._orphanes.pop()
+                    tasks.append(task)
+                    task.suggestWorker(worker)
+                else:
+                    continue
+                break
         available = self.getAvailableSlots()
         if self._listener and (available > 0):
             self._listener.onSlotsAvailable(self, available)

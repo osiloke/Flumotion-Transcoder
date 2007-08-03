@@ -1,5 +1,14 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/transbalancer.py:
+	Beter task balancing when there is few tasks.
+	Before the workers where filled one by one and
+	a task was set to another worker only when the 
+	first one was full. Now the workers are used
+	proportionally of there slot availability.
+
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/context.py:
 	Added a needed context method (that was used anyway).
 	
