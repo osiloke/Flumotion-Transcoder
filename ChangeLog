@@ -1,5 +1,10 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/tools/upgrade.py:
+	Upgrade more old transcoder hacks.
+
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/context.py:
 	* flumotion/transcoder/admin/context/targetcontext.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:

@@ -208,6 +208,13 @@ class UpgradeConfig(Loggable):
             profData.name = profName
             try:
                 self._upgradeProfile(oldCustConf, custData, profData)
+                
+                # Now try to detect some hacks made for the old transcoder
+                # The outgoing-as-incoming hack
+                if profData.inputDir and ("outgoing" in profData.inputDir):
+                    self._resolveOutgoingAsIncomingHack(custData, profData)
+                
+                # The multi-input hack
                 key = oldCustConf.inputDir
                 if key in hackLookup:
                     # Ensure the last customer/profile names are smaller
@@ -216,9 +223,10 @@ class UpgradeConfig(Loggable):
                     if lastProf.name > newProf.name:
                         hackLookup[key] = (custData, newProf)
                         newProf, lastProf = lastProf, newProf
-                    self._resolveHack(custData, lastProf, newProf)
+                    self._resolveMultiInputHack(custData, lastProf, newProf)
                 else:
                     hackLookup[key] = custData, profData
+                
             except Exception, e:
                 self.warning("Fail to upgrade profile '%s' for customer '%s': %s",
                              profName, custName, str(e))
@@ -247,33 +255,58 @@ class UpgradeConfig(Loggable):
                 self.warning("Fail to save customer '%s' file '%s': %s",
                              custKey, path, str(e))
 
-    def _getInputDir(self, custData, profData):
-        if profData.inputDir:
-            return profData.inputDir
-        if custData.inputDir:
-            result = custData.inputDir
+    def _getDir(self, custData, profData, kind="incoming"):
+        attr = {"incoming": "inputDir",
+                "outgoing": "outputDir",
+                "links": "linkDir",
+                "errors": "errorDir"}[kind]
+        if getattr(profData, attr):
+            return getattr(profData, attr)
+        if getattr(custData, attr):
+            result = getattr(custData, attr)
         elif custData.subdir:
             result = custData.subdir
         else:
             result = utils.str2filename(custData.name)
         result = utils.ensureRelDirPath(result)
-        result = result + "files/incoming/"
+        result = "%sfiles/%s/" % (result, kind)
         if profData.subdir:
             result = result + profData.subdir
         else:
             result = result + utils.str2filename(profData.name)
         return result
 
-    def _resolveHack(self, custData, lastProfData, newProfData):
-        self.info("Trying to upgrade HACK made for customer '%s' profiles '%s' and '%s'",
+    def _resolveOutgoingAsIncomingHack(self, custData, profData):
+        self.info("Trying to upgrade outgoing-as-incoming hack for customer '%s' profiles '%s'",
+                  custData.name, profData.name)
+        oldInput = profData.inputDir
+        newInput = oldInput.replace('outgoing', 'incoming')
+        profData.inputDir = None
+        currInput =  self._getDir(custData, profData, 'incoming')
+        currOutput =  self._getDir(custData, profData, 'outgoing')
+        oldInput = utils.ensureRelDirPath(oldInput)
+        newInput = utils.ensureRelDirPath(newInput)
+        currInput = utils.ensureRelDirPath(currInput)
+        currOutput = utils.ensureRelDirPath(currOutput)
+        if currInput != newInput:
+            profData.inputDir = newInput
+        identData = dataprops.TargetData()
+        profData.targets["identity"] = identData
+        identData.name = "identity"
+        identData.type = TargetTypeEnum.identity
+        if currOutput != oldInput:
+            identData.outputDir = oldInput
+
+    def _resolveMultiInputHack(self, custData, lastProfData, newProfData):
+        self.info("Trying to upgrade multi-input hack for customer '%s' profiles '%s' and '%s'",
                   custData.name, lastProfData.name, newProfData.name)
         subdir = utils.str2filename(newProfData.name)
         if utils.ensureRelDirPath(subdir) != utils.ensureRelDirPath(lastProfData.subdir):
             newProfData.subdir = subdir
         else:
             newProfData.subdir = subdir + "2"
-        inputDir = self._getInputDir(custData, newProfData)
-        lastProfData.outputDir = inputDir
+        inputDir = self._getDir(custData, newProfData)
+        lastProfData.doneDir = inputDir
         period = min(lastProfData.monitoringPeriod, newProfData.monitoringPeriod)
         lastProfData.monitoringPeriod, newProfData.monitoringPeriod = period, period
 
@@ -323,8 +356,8 @@ class UpgradeConfig(Loggable):
         
         # Arbitrary use the first profile to set the customer subdir
         if not custData.subdir:
-            custData.subdir = custSubdir
-        profData.subdir = profSubdir
+            custData.subdir = custSubdir or "."
+        profData.subdir = profSubdir or "."
         
         # Now check every path if they comply with the subdirs
         for kind, attr in (("incoming", "inputDir"),
@@ -387,12 +420,12 @@ class UpgradeConfig(Loggable):
         return (None, None, None)
  
     def _guessOverridenDir(self, dir):
-        for middle in ['incoming', 'outgoing', 'errors', 'links']:
+        for middle in ['incoming', 'outgoing', 'errors', 'links', "thumbnails"]:
             try:
                 i = dir.index(middle)
                 p1 = dir[:i].strip('/')
                 p2 = dir[i + len(middle):].strip('/')
-                return  p1 + "/file/" + middle + "/" + p2
+                return  p1 + "/files/" + middle + "/" + p2
             except ValueError:
                 pass
         return dir
@@ -472,7 +505,13 @@ class UpgradeConfig(Loggable):
                     raise Exception("Invalid thumbnail output directory '%s'; "
                                     "not a sub-directory of '%s'"
                                     % (outputPath, self._rootDir))
-                thumbData.subdir = outputPath[len(self._rootDir):]
+                targDir = outputPath[len(self._rootDir):]
+                targDir = self._guessOverridenDir(targDir.strip('/'))
+                targDir = utils.ensureRelDirPath(targDir)
+                profDir = self._getDir(custData, profData, "outgoing")
+                profDir = utils.ensureRelDirPath(profDir)
+                if targDir != profDir:
+                    thumbData.outputDir = targDir
             if oldTargConf.appendExt:
                 thumbData.outputFileTemplate = "%(targetPath)s"
             else:
