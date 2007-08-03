@@ -46,7 +46,23 @@ def parse_options(args):
                      action="store", dest="debug",
                      help="override the configuration debug level")
     
+    parser.add_option('-L', '--logdir',
+                      action="store", dest="logdir",
+                      help="flumotion log directory (default: %s)" %
+                        configure.logdir)
+    parser.add_option('-R', '--rundir',
+                      action="store", dest="rundir",
+                      help="flumotion run directory (default: %s)" %
+                        configure.rundir)
+    
     options, args = parser.parse_args(args)
+
+    # Force options down configure's throat
+    for d in ['logdir', 'rundir']:
+        o = getattr(options, d, None)
+        if o:
+            log.debug('Setting configure.%s to %s' % (d, o))
+            setattr(configure, d, o)
 
     if options.version:
         print common.version("flumotion-transcoder-admin")

@@ -1,3 +1,8 @@
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/main.py:
+	Added the logdir and rundir command-line override parameters.
+
 2007-08-02  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/context.py:
