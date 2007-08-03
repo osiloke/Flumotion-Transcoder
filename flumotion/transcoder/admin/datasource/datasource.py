@@ -223,6 +223,9 @@ class IDataSource(Interface):
          Overriding fields:
            linkTemplate (str) can be None
            linkURLPrefix (str) can be None
+           outputDir (str) can be None
+           linkDir (str) can be None
+           workDir (str) can be None
            outputFileTemplate (str) can be None
            linkFileTemplate (str) can be None
            enablePostprocessing (bool) can be None

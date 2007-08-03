@@ -114,6 +114,15 @@ class TargetContext(TaskContext):
     def hasLinkConfig(self):
         return self._profile.linkDir and self.config.linkFile        
 
+    def getOutputDir(self):
+        return self.config.outputDir or self._profile.outputDir
+
+    def getLinkDir(self):
+        return self.config.linkDir or self._profile.linkDir
+
+    def getWorkDir(self):
+        return self.config.workDir or self._profile.workDir
+
     def getOutputFile(self):
         return self.config.outputFile
 
@@ -122,10 +131,10 @@ class TargetContext(TaskContext):
     
     def getOutputWorkPath(self):
         file = WORK_FILE_TEMPLATE % (self.config.outputFile , self._random)
-        return self._profile.workDir.append(file).localize(self.local)
+        return self.getWorkDir().append(file).localize(self.local)
         
     def getOutputPath(self):
-        path = self._profile.outputDir.append(self.config.outputFile)
+        path = self.getOutputDir().append(self.config.outputFile)
         return path.localize(self.local)
         
     def getLinkWorkFile(self):
@@ -134,11 +143,11 @@ class TargetContext(TaskContext):
         return None
     
     def getLinkWorkPath(self):
-        linkDir = self._profile.linkDir
+        linkDir = self.getLinkDir()
         linkFile = self.config.linkFile
         if linkDir and linkFile:
             file = WORK_FILE_TEMPLATE % (linkFile, self._random)
-            path = self._profile.workDir.append(file)
+            path = self.getWorkDir().append(file)
             return path.localize(self.local)
         return None
     
@@ -146,7 +155,7 @@ class TargetContext(TaskContext):
         return self.config.linkFile
     
     def getLinkPath(self):
-        linkDir = self._profile.linkDir
+        linkDir = self.getLinkDir()
         linkFile = self.config.linkFile
         if linkDir and linkFile:
             return linkDir.append(linkFile).localize(self.local)
@@ -158,7 +167,7 @@ class TargetContext(TaskContext):
         return s
     
     def _getFileFromWork(self, path):
-        workDir = self._profile.workDir.localize(self.local)
+        workDir = self.getWorkDir().localize(self.local)
         #May have more than one separator
         workDir = workDir.replace(os.sep, os.sep + "+")
         workDir = self._escapeForRegex(workDir)
@@ -174,12 +183,12 @@ class TargetContext(TaskContext):
     
     def getOutputFromWork(self, workPath):
         outputFile = self._getFileFromWork(workPath)
-        path = self._profile.outputDir.append(outputFile)
+        path = self.getOutputDir().append(outputFile)
         return path.localize(self.local)
 
     def getLinkFromWork(self, workPath):
         linkFile = self._getFileFromWork(workPath)
-        path = self._profile.linkDir.append(linkFile)
+        path = self.getLinkDir().append(linkFile)
         return path.localize(self.local)
 
     def getLinkURL(self, args):

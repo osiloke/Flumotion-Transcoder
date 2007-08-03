@@ -1,5 +1,17 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/targetstore.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/transconfig.py:
+	Added a way to override ouput, work and link base directory
+	on a per target basis to support some of the old transcoder profiles.
+
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/targets.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:
 	* flumotion/transcoder/transconfig.py:

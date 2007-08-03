@@ -54,6 +54,15 @@ def createTranscodingConfigFromContext(profileCtx):
         conf.targets[label] = tc
         tc.label = label
         tc.outputFile = targ.getOutputRelPath()
+        ob = targ.getOutputBase()
+        if ob != conf.profile.outputDir:
+            tc.outputDir = ob
+        lb = targ.getLinkBase()
+        if lb != conf.profile.linkDir:
+            tc.linkDir = lb
+        wb = targ.getWorkBase()
+        if wb != conf.profile.workDir:
+            tc.workDir = wb
         if targ.store.getEnablePostprocessing():
             tc.postProcess = targ.store.getPostprocessCommand()
         if targ.store.getEnableLinkFiles():

@@ -33,6 +33,9 @@ class TargetStore(BaseStore):
     __getters__ = {"basic":
                        {"getName":      ("name", None),
                         "getSubdir":    ("subdir", None),
+                        "getOutputDir": ("outputDir", None),
+                        "getLinkDir":   ("linkDir", None),
+                        "getWorkDir":   ("workDir", None),
                         "getExtension": ("extension", None)},
                    "parent_overridable":
                        {"getOutputMediaTemplate":  ("outputMediaTemplate",),
