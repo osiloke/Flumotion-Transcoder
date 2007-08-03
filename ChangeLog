@@ -1,5 +1,14 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/transconfig.py:
+	Corrected refactoring bug in thumbnail target.
+	Removed default values for thumbnails to be able
+	to specify only the width or the height.
+
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/transbalancer.py:
 	Beter task balancing when there is few tasks.
 	Before the workers where filled one by one and

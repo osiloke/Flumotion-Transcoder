@@ -62,8 +62,8 @@ class ThumbnailsData(properties.PropertyBag):
 
     type = TargetTypeEnum.thumbnails
     periodValue = properties.Integer('period-value', None, True, True)
-    thumbsWidth = properties.Integer('thumbs-width', 128, False, True)
-    thumbsHeight = properties.Integer('thumbs-height', 128, False, True)
+    thumbsWidth = properties.Integer('thumbs-width', None, False, True)
+    thumbsHeight = properties.Integer('thumbs-height', None, False, True)
     periodUnit = properties.Enum('period-unit', 
                                    PeriodUnitEnum, 
                                    PeriodUnitEnum.seconds)

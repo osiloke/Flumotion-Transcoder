@@ -282,7 +282,7 @@ class ThumbnailsTarget(TranscodingTarget):
                 raise TranscoderError("Unknown thumbnails output format '%s'"
                                       % format)        
 
-    def __init__(self, template, config, tag, logger, data=None):
+    def __init__(self, logger, config, template, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
