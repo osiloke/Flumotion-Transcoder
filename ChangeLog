@@ -1,5 +1,10 @@
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/context.py:
+	Added a needed context method (that was used anyway).
+	
+2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/test/test_utils.py:
 	* flumotion/transcoder/utils.py:
 	Updated the path cleanup function to support new use cases.

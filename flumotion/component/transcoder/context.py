@@ -142,6 +142,9 @@ class TargetContext(TaskContext):
             return path.localize(self.local)
         return None
     
+    def getLinkFile(self):
+        return self.config.linkFile
+    
     def getLinkPath(self):
         linkDir = self._profile.linkDir
         linkFile = self.config.linkFile
