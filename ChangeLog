@@ -1,5 +1,10 @@
 2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/targets.py:
+	The output file monitoring was removed by mistake, now restored.
+
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admintask.py:
 	Cancel old component startup if the pending component changed.
 

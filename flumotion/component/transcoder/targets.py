@@ -133,8 +133,7 @@ class FileTarget(TranscodingTarget):
         return (self.getOutputPath(),)
     
     def _pushMonitoredOutputs(self, outputs):
-        # Do not monitor the output file, because it's copied during setup
-        pass
+        outputs.append(self.getOutputPath())
 
     def _hasTargetFile(self, filePath):
         return self._outputPath == filePath
