@@ -686,6 +686,12 @@ class AdminTask(LoggerProxy, EventSource):
                        callbackArgs=args, errbackArgs=args)
 
     def __shouldContinueComponentStartup(self, component, workerName):
+        # If the pending component changed, cancel
+        if component.getName() != self._pendingName:
+            self.log("Admin task '%s' pending component changed while "
+                     "starting component '%s'", 
+                     self.getLabel(), component.getName())
+            return False
         # If the target worker changed, cancel 
         if ((not self._worker) 
             or (self._worker and (workerName != self._worker.getName()))):
@@ -700,7 +706,6 @@ class AdminTask(LoggerProxy, EventSource):
                    "on worker '%s'", self.getLabel(), 
                    componentName, workerName)
         assert componentName == result.getName()
-        assert componentName == self._pendingName
         if self.__shouldContinueComponentStartup(result, workerName):
             self.__componentLoaded(result)
             d = result.waitHappy(self.HAPPY_TIMEOUT)

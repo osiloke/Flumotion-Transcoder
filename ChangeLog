@@ -1,5 +1,10 @@
 2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py:
+	Cancel old component startup if the pending component changed.
+
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/targetcontext.py:
 	* flumotion/transcoder/admin/datastore/targetstore.py:
 	Corrected some bug preventing custom output file template.
