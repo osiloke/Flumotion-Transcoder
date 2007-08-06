@@ -13,7 +13,7 @@
 from flumotion.transcoder import utils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.admin.substitution import Variables
-from flumotion.transcoder.admin.datastore.configstore import ThumbnailsConfig
+
 
 def _buildRelPathGetter(storeGetterName):
     def getter(self):
@@ -159,10 +159,7 @@ class TargetContext(object):
         return ""
     
     def getOutputRelPath(self):
-        if isinstance(self.store.getConfig(), ThumbnailsConfig):
-            template = self.store.getOutputThumbTemplate()
-        else:
-            template = self.store.getOutputMediaTemplate()
+        template = self.store.getOutputFileTemplate()
         path = self._vars.substitute(template)
         path = utils.ensureRelPath(path)
         return utils.cleanupPath(path)

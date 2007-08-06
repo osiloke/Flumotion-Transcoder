@@ -15,6 +15,7 @@ from zope.interface import Interface, implements
 from flumotion.transcoder import log, defer
 from flumotion.transcoder.admin.datastore.basestore import BaseStore
 from flumotion.transcoder.admin.datastore.configstore import TargetConfigFactory
+from flumotion.transcoder.admin.datastore.configstore import ThumbnailsConfig
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
@@ -38,9 +39,7 @@ class TargetStore(BaseStore):
                         "getWorkDir":   ("workDir", None),
                         "getExtension": ("extension", None)},
                    "parent_overridable":
-                       {"getOutputMediaTemplate":  ("outputMediaTemplate",),
-                        "getOutputThumbTemplate":  ("outputThumbTemplate",),
-                        "getLinkFileTemplate":     ("linkFileTemplate",),
+                       {"getLinkFileTemplate":     ("linkFileTemplate",),
                         "getLinkTemplate":         ("linkTemplate",),
                         "getLinkURLPrefix":        ("linkURLPrefix",),
                         "getEnablePostprocessing": ("enablePostprocessing",),
@@ -76,6 +75,14 @@ class TargetStore(BaseStore):
     
     def getConfig(self):
         return self._config
+
+    def getOutputFileTemplate(self):
+        tmpl = self._data.outputFileTemplate
+        if tmpl: return tmpl
+        if isinstance(self._config, ThumbnailsConfig):
+            return self.getParent().getOutputThumbTemplate()
+        else:
+            return self.getParent().getOutputMediaTemplate()
 
 
     ## Overridden Methods ##

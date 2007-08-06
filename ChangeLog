@@ -1,3 +1,9 @@
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datastore/targetstore.py:
+	Corrected some bug preventing custom output file template.
+
 2007-08-03  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/tools/upgrade.py:
