@@ -212,7 +212,7 @@ class UpgradeConfig(Loggable):
                 # Now try to detect some hacks made for the old transcoder
                 # The outgoing-as-incoming hack
                 if profData.inputDir and ("outgoing" in profData.inputDir):
-                    self._resolveOutgoingAsIncomingHack(custData, profData)
+                    self._resolveOutgoingAsIncomingHack(oldCustConf, custData, profData)
                 
                 # The multi-input hack
                 key = oldCustConf.inputDir
@@ -276,26 +276,31 @@ class UpgradeConfig(Loggable):
             result = result + utils.str2filename(profData.name)
         return result
 
-    def _resolveOutgoingAsIncomingHack(self, custData, profData):
+    def _resolveOutgoingAsIncomingHack(self, oldCustConfig, custData, profData):
         self.info("Trying to upgrade outgoing-as-incoming hack for customer '%s' profiles '%s'",
                   custData.name, profData.name)
         oldInput = profData.inputDir
-        newInput = oldInput.replace('outgoing', 'incoming')
+        #newInput = oldInput.replace('outgoing', 'incoming')
         profData.inputDir = None
-        currInput =  self._getDir(custData, profData, 'incoming')
+        
+        #currInput =  self._getDir(custData, profData, 'incoming')
         currOutput =  self._getDir(custData, profData, 'outgoing')
         oldInput = utils.ensureRelDirPath(oldInput)
-        newInput = utils.ensureRelDirPath(newInput)
-        currInput = utils.ensureRelDirPath(currInput)
+        #newInput = utils.ensureRelDirPath(newInput)
+        #currInput = utils.ensureRelDirPath(currInput)
         currOutput = utils.ensureRelDirPath(currOutput)
-        if currInput != newInput:
-            profData.inputDir = newInput
-        identData = dataprops.TargetData()
-        profData.targets["identity"] = identData
-        identData.name = "identity"
-        identData.type = TargetTypeEnum.identity
-        if currOutput != oldInput:
-            identData.outputDir = oldInput
+        #if currInput != newInput:
+        #    profData.inputDir = newInput
+        haveIdent = False
+        for oldProf in oldCustConfig.profiles.values():
+            haveIdent = haveIdent or oldProf.mimeCopy
+        if not haveIdent:
+            identData = dataprops.TargetData()
+            profData.targets["identity"] = identData
+            identData.name = "identity"
+            identData.type = TargetTypeEnum.identity
+            if currOutput != oldInput:
+                identData.outputDir = oldInput
 
     def _resolveMultiInputHack(self, custData, lastProfData, newProfData):
         self.info("Trying to upgrade multi-input hack for customer '%s' profiles '%s' and '%s'",

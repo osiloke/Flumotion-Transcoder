@@ -1,5 +1,10 @@
 2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/tools/upgrade.py:
+	Small changes to the upgrade script to handle better some old hacks.
+
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/transcoder.py:
 	Do not make the transcoding job fail if the position cannot
 	be retrieved for progression notification.
