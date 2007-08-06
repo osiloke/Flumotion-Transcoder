@@ -4,6 +4,7 @@
 # Flumotion - a streaming media server
 # Copyright (C) 2004,2005,2006,2007 Fluendo, S.L. (www.fluendo.com).
 # All rights reserved.
+from turtle import position
 
 # Licensees having purchased or holding a valid Flumotion Advanced
 # Streaming Server license may use this file in accordance with the
@@ -150,10 +151,10 @@ class MultiTranscoder(log.LoggerProxy):
                 return
         
             # start a FilesWatcher on the expected output files
-            expectedOutputs = list()
+            monitoredOutputs = list()
             for t in self._targets:
-                t._pushMonitoredOutputs(expectedOutputs)
-            self._watcher = FilesWatcher(self, expectedOutputs, 
+                t._pushMonitoredOutputs(monitoredOutputs)
+            self._watcher = FilesWatcher(self, monitoredOutputs, 
                                          timeout=self._timeout)
             self._watcher.connect('file-completed', self._watcher_callback)
             self._watcher.connect('file-not-present', self._watcher_callback)
@@ -334,23 +335,22 @@ class MultiTranscoder(log.LoggerProxy):
                 pipe = self._pipeline
                 duration, format = pipe.query_duration(gst.FORMAT_TIME)
             except gst.QueryError, e:
-                self.warning("Failed to retrieve pipline duration: %s",
+                self.warning("Failed to retrieve pipline duration, "
+                             "disabling progression notification: %s",
                              log.getExceptionMessage(e))
                 self._duration = None
                 self.__updateProgress()
                 return
             if format != gst.FORMAT_TIME:
-                self.__postErrorMessage("Bad pipline duration format",
-                                       log.getExceptionMessage(e))
-                self.warning("Bad pipline duration format: %s",
-                             log.getExceptionMessage(e))
+                self.warning("Bad pipline duration format, "
+                             "disabling progression notification")
                 self._duration = None
             else:
                 self._duration = duration
             self.__updateProgress()
 
     def __updateProgress(self):
-        # Check if progression annot be done
+        # Check if progression cannot be done
         if not (self._duration and (self._duration > 0)):
             if  self._progressCallback:
                 self._progressCallback(None)
@@ -361,16 +361,21 @@ class MultiTranscoder(log.LoggerProxy):
             for sink in self._pipeline.sinks():
                 try:
                     position, format = sink.query_position(gst.FORMAT_TIME)
+                    if format != gst.FORMAT_TIME:
+                        self.warning("Bad pipline position format, "
+                                     "disabling progression notification")
+                    elif position >= 0:
+                        positions.append(position)
                 except gst.QueryError, e:
-                    self.__postErrorMessage("Failed to retrieve pipline position", 
-                                           log.getExceptionMessage(e))
-                    return
-                if format != gst.FORMAT_TIME:
-                    self.__postErrorMessage("Bad pipline position format",
-                                           log.getExceptionMessage(e))
-                    return
-                if position >= 0:
-                    positions.append(position)
+                    self.warning("Failed to retrieve pipline position, "
+                                 "disabling progression notification: %s", 
+                                 log.getExceptionMessage(e))
+            if not positions:
+                # Disabling progression notification
+                self._duration = None
+                if  self._progressCallback:
+                    self._progressCallback(None)
+                return
             position = position and min(positions) or 0
             # force position <= duration
             position = min(position, self._duration)

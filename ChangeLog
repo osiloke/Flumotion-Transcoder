@@ -1,5 +1,12 @@
 2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/transcoder.py:
+	Do not make the transcoding job fail if the position cannot
+	be retrieved for progression notification.
+	Now it only disables the notification.
+
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/targets.py:
 	The output file monitoring was removed by mistake, now restored.
 
