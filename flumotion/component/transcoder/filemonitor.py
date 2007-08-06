@@ -22,7 +22,7 @@ from flumotion.common import common, messages
 from flumotion.component import component
 from flumotion.component.component import moods
 
-from flumotion.transcoder import log, defer, constants
+from flumotion.transcoder import log, defer, constants, utils
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
@@ -70,7 +70,7 @@ class FileMonitor(component.BaseComponent):
             locDestDir = os.path.dirname(locDestPath)
             self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
             try:
-                common.ensureDir(locDestDir, "input file destination")
+                utils.ensureDirExists(locDestDir, "input file destination")
                 shutil.move(locSrcPath, locDestPath)
             except Exception, e:
                 msg = ("Fail to move file '%s' to '%s': %s" 
@@ -116,7 +116,7 @@ class FileMonitor(component.BaseComponent):
             self.uiState.set('monitored-directories', self._directories)
             for virtDir in self._directories:
                 localDir = virtDir.localize(self._local)
-                common.ensureDir(localDir, "monitored")
+                utils.ensureDirExists(localDir, "monitored")
             return result
     
         try:

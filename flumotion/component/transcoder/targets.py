@@ -17,7 +17,7 @@ import shutil
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, defer
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
@@ -76,7 +76,7 @@ class IdentityTarget(ProcessingTarget):
             srcCtx = context.getSourceContext()
             sourcePath = srcCtx.getInputPath()
             destPath = targCtx.getOutputWorkPath()
-            common.ensureDir(os.path.dirname(destPath), "identity output")
+            utils.ensureDirExists(os.path.dirname(destPath), "identity output")
             shutil.copy(sourcePath, destPath)
             self._outputs.append(destPath)
             return defer.succeed(self)
@@ -124,7 +124,8 @@ class FileTarget(TranscodingTarget):
     def __init__(self, logger, config, outputPath, tag, data=None):
         TranscodingTarget.__init__(self, logger, config, tag, data)
         self._outputPath = outputPath
-        common.ensureDir(os.path.dirname(outputPath), "transcoding output")
+        utils.ensureDirExists(os.path.dirname(outputPath),
+                              "transcoding output")
 
     def getOutputPath(self):
         return self._outputPath

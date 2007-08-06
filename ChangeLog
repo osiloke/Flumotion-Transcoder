@@ -1,5 +1,25 @@
 2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/main.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/admin/substitution.py:
+	* flumotion/transcoder/errors.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	* flumotion/transcoder/utils.py:
+	Use utils.ensureDirExists inplace of common.ensureDir, 
+	that handle	multi-process creating the same directories.
+	Some configuration upgrade tweaking.
+
+2007-08-06  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/tools/upgrade.py:
 	Small changes to the upgrade script to handle better some old hacks.
 

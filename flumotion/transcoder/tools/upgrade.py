@@ -237,6 +237,14 @@ class UpgradeConfig(Loggable):
             if custData.name == custData.subdir:
                 custData.subdir = None
             for profKey, profData in custData.profiles.items():
+                # Prevent profiles incoming inside other profiles incoming
+                if ((profData.subdir == '.')
+                     and (len(custData.profiles) > 1)
+                     and (not profData.inputDir)):
+                    #Keep the ouput directory
+                    od = self._getDir(custData, profData, "outgoing")
+                    profData.outputDir = od
+                    profData.subdir = None
                 if profKey == profData.subdir:
                     profData.subdir = None
                 if profKey == profData.name:
@@ -274,23 +282,16 @@ class UpgradeConfig(Loggable):
             result = result + profData.subdir
         else:
             result = result + utils.str2filename(profData.name)
-        return result
+        return utils.cleanupPath(result)
 
     def _resolveOutgoingAsIncomingHack(self, oldCustConfig, custData, profData):
         self.info("Trying to upgrade outgoing-as-incoming hack for customer '%s' profiles '%s'",
                   custData.name, profData.name)
         oldInput = profData.inputDir
-        #newInput = oldInput.replace('outgoing', 'incoming')
         profData.inputDir = None
-        
-        #currInput =  self._getDir(custData, profData, 'incoming')
         currOutput =  self._getDir(custData, profData, 'outgoing')
         oldInput = utils.ensureRelDirPath(oldInput)
-        #newInput = utils.ensureRelDirPath(newInput)
-        #currInput = utils.ensureRelDirPath(currInput)
         currOutput = utils.ensureRelDirPath(currOutput)
-        #if currInput != newInput:
-        #    profData.inputDir = newInput
         haveIdent = False
         for oldProf in oldCustConfig.profiles.values():
             haveIdent = haveIdent or oldProf.mimeCopy
@@ -305,13 +306,22 @@ class UpgradeConfig(Loggable):
     def _resolveMultiInputHack(self, custData, lastProfData, newProfData):
         self.info("Trying to upgrade multi-input hack for customer '%s' profiles '%s' and '%s'",
                   custData.name, lastProfData.name, newProfData.name)
-        subdir = utils.str2filename(newProfData.name)
-        if utils.ensureRelDirPath(subdir) != utils.ensureRelDirPath(lastProfData.subdir):
-            newProfData.subdir = subdir
+        newSubdir = newProfData.subdir or utils.str2filename(newProfData.name)
+        lastSubdir = lastProfData.subdir or utils.str2filename(lastProfData.name)
+        if newSubdir == '.':
+            newName = utils.str2filename(newProfData.name)
+            newInputDir = self._getDir(custData, newProfData) + newName + "/"
+            newProfData.inputDir = newInputDir
         else:
-            newProfData.subdir = subdir + "2"
-        inputDir = self._getDir(custData, newProfData)
-        lastProfData.doneDir = inputDir
+            if newSubdir == lastSubdir:
+                newSubdir = newSubdir + "2"
+                newProfData.subdir = newSubdir
+            newInputDir = self._getDir(custData, newProfData)
+        lastProfData.doneDir = newInputDir
+        if lastProfData.subdir == '.':
+            lastSubdir = utils.str2filename(lastProfData.name)
+            lastInputDir = self._getDir(custData, lastProfData) + lastSubdir + "/"
+            lastProfData.inputDir = lastInputDir
         period = min(lastProfData.monitoringPeriod, newProfData.monitoringPeriod)
         lastProfData.monitoringPeriod, newProfData.monitoringPeriod = period, period
 

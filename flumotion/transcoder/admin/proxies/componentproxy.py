@@ -295,20 +295,34 @@ class BaseComponentProxy(FlumotionProxy):
     def _componentStateSet(self, state, key, value):
         self.log("Component '%s' state '%s' set to '%s'",
                  self.getLabel(), key, value)
-        if key == 'mood':
-            if self.isActive():
-                self.__componentMoodChanged(value)
-        elif key == 'workerName':
-            self.__componentActiveWorkerChanged(value)
-        elif key == 'workerRequested':
-            self.__componentRequestedWorkerChanged(value)
+        try:
+            if key == 'mood':
+                if self.isActive():
+                    self.__componentMoodChanged(value)
+            elif key == 'workerName':
+                self.__componentActiveWorkerChanged(value)
+            elif key == 'workerRequested':
+                self.__componentRequestedWorkerChanged(value)
+        except Exception, e:
+            log.notifyException(self, e,
+                                "Exception when setting component '%s' "
+                                "state key '%s' to '%s'",
+                                self.getLabel(), key, value)
+            #FIXME: Do some error handling ?
 
     def _componentStateAppend(self, state, key, value):
-        if key == 'messages':
-            if value.id in self._messageIds:
-                return
-            self._messageIds[value.id] = None
-            self._onComponentMessage(value)
+        try:
+            if key == 'messages':
+                if value.id in self._messageIds:
+                    return
+                self._messageIds[value.id] = None
+                self._onComponentMessage(value)
+        except Exception, e:
+            log.notifyException(self, e,
+                                "Exception when appening value '%s' "
+                                "to component '%s' state list '%s'",
+                                value, self.getLabel(), key)
+            #FIXME: Do some error handling ?
 
 
     ## Protected Virtual Methods ##
@@ -327,7 +341,13 @@ class BaseComponentProxy(FlumotionProxy):
         assert conf != None, "Component state without config dict"
         props = conf.get("properties")
         assert props != None, "Component state without porperty dict"
-        return self.properties_factory.createFromComponentDict(workerContext, props)
+        try:
+            return self.properties_factory.createFromComponentDict(workerContext, props)
+        except Exception, e:
+            log.notifyException(self, e,
+                                "Exception during component '%s' "
+                                "properties creation", self.getLabel())
+            return None
     
     def _onComponentRunning(self, worker):
         pass
@@ -342,9 +362,6 @@ class BaseComponentProxy(FlumotionProxy):
     ## Protected Methods ##
 
     def _getUIDictValue(self, key, name, default):
-        # For now, do not allow getting a ui state value
-        # if the UI state has not been retrieved
-        assert self._hasUIState()
         if not self._hasUIState():
             return default
         return self.__getUIDictValue(self._getUIState(), key, name, default)

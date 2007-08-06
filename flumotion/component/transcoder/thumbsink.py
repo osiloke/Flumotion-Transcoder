@@ -18,7 +18,7 @@ import gst
 import gobject
 
 from flumotion.common import common
-from flumotion.transcoder import log
+from flumotion.transcoder import log, utils
 
 class ThumbnailSink(gst.BaseSink):
     """
@@ -75,7 +75,8 @@ class ThumbnailSink(gst.BaseSink):
         filePath = None
         try:
             filePath = self._getFilePath(buffer.timestamp, self._index)
-            common.ensureDir(os.path.dirname(filePath), "thumbnail output")
+            utils.ensureDirExists(os.path.dirname(filePath),
+                                  "thumbnail output")
             f = open(filePath, "w")
             try:
                 f.write(buffer.data)

@@ -19,11 +19,10 @@ from twisted.python.failure import Failure
 
 from flumotion.component import component
 from flumotion.component.component import moods
-from flumotion.common.common import ensureDir
 from flumotion.common import errors, messages
 
 from flumotion.component.transcoder import job, compconsts
-from flumotion.transcoder import log, defer, constants, properties
+from flumotion.transcoder import log, defer, constants, properties, utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import TranscoderStatusEnum
@@ -455,7 +454,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 reportPath = reportPath + ".diag"
         self.debug("Writing report file '%s'", reportPath)
         report.status = self._status
-        ensureDir(os.path.dirname(reportPath), "report")
+        utils.ensureDirExists(os.path.dirname(reportPath), "report")
         saver = IniFile()
         saver.saveToFile(report, reportPath)
     

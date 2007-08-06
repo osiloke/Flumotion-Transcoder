@@ -37,10 +37,16 @@ class Variables(object):
     def addVar(self, name, value):
         self._variables[name] = value
         
-    def addFileVars(self, filePath, kind):
+    def updateVar(self, name, value):
+        self._variables[name] = value
+        
+    def addFileVars(self, filePath, kind, extension=None):
         """
         Add the diffrent parts of the file to the substitution set
         like following:
+        The extension can be specified explicitly
+        to support multi-dot extensions. In this case the extension
+        is not extracted from the file path.
         
         Parameters:
             filePath: /my.sub/folder/file.name.ext 
@@ -53,7 +59,8 @@ class Variables(object):
             "inputExtension" (str): ".ext",
             "inputDir" (str): "/my.sub/folder/"
         """
-        path, file, ext = utils.splitPath(filePath)
+        path, file, ext = utils.splitPath(filePath, extension == None)
+        if extension: ext = extension
         self._variables[kind + "Path"] = filePath
         self._variables[kind + "File"] = file + ext
         self._variables[kind + "Basename"] = file

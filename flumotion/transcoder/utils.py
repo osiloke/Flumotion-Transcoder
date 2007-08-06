@@ -74,6 +74,28 @@ def genUniqueIdentifier():
     return genUniqueBinaryIdentifier().encode("HEX").upper()
 
 
+## File System Utility Functions ##
+
+def ensureDirExists(dir, description):
+    """
+    Ensure the given directory exists, creating it if not.
+    Raises a SystemError if this fails, including the given description.
+    If makedirs fail, verify the directory hasn't been 
+    created by another process.
+    """
+    if not os.path.exists(dir):
+        try:
+            os.makedirs(dir)
+        except Exception, e:
+            #FIXME: Is there a constant for this ?
+            if e.errno == 17:
+                return
+            from flumotion.transcoder.errors import SystemError
+            raise SystemError("Could not create %s directory '%s': %s"
+                              % (description, dir, log.getExceptionMessage(e)),
+                              cause=e)
+
+
 ## String and Path Utility Functions ##
 
 def str2filename(value):
@@ -85,10 +107,13 @@ def str2filename(value):
     """
     return "_".join(re.split("[^0-9A-Za-z-()]", value)).lower()
 
-def splitPath(filePath):
+def splitPath(filePath, withExtention=True):
     """
     From: /toto/ta.ta/tu.tu.foo
     Return: ("/toto/ta.ta/", "tu.tu", ".foo")
+    If withExtention is set to false, the extension is not extracted:
+    From: /toto/ta.ta/tu.tu.foo
+    Return: ("/toto/ta.ta/", "tu.tu.foo", "")
     """
     path = ""
     file = filePath
@@ -97,10 +122,11 @@ def splitPath(filePath):
     if lastSepIndex > 0:
         path = file[:lastSepIndex]
         file = file[lastSepIndex:]
-    lastDotIndex = file.rfind('.')
-    if lastDotIndex >= 0:
-        ext = file[lastDotIndex:]
-        file = file[:lastDotIndex]
+    if withExtention:
+        lastDotIndex = file.rfind('.')
+        if lastDotIndex >= 0:
+            ext = file[lastDotIndex:]
+            file = file[:lastDotIndex]
     return (path, file, ext)
 
 def cleanupPath(filePath):

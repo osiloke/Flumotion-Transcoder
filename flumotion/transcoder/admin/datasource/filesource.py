@@ -132,7 +132,7 @@ class MutableDataWrapper(object):
             else:
                 setattr(data, attr, utils.deepCopy(value))
         try:
-            common.ensureDir(os.path.dirname(newTmpPath), "activities")
+            utils.ensureDirExists(os.path.dirname(newTmpPath), "activities")
             saver = inifile.IniFile()
             saver.saveToFile(data, newTmpPath)
         except Exception, e:
@@ -578,7 +578,7 @@ class FileDataSource(log.Loggable):
         absPath = utils.makeAbsolute(relDir, basePath)
         absDir = utils.ensureAbsDirPath(absPath)
         self._customersDir = absDir
-        common.ensureDir(self._customersDir, "customers configuration")
+        utils.ensureDirExists(self._customersDir, "customers configuration")
         self.debug("Loading customers data from directory '%s'", absDir)
         self._customersData.clear()
         files = os.listdir(absDir)
@@ -606,10 +606,14 @@ class FileDataSource(log.Loggable):
         self._failedActivitiesDir = utils.ensureAbsDirPath(absDir + "failed")
         self._doneActivitiesDir = utils.ensureAbsDirPath(absDir + "done")
         self._invalidActivitiesDir = utils.ensureAbsDirPath(absDir + "invalid")
-        common.ensureDir(self._activeActivitiesDir, "activities data base")
-        common.ensureDir(self._failedActivitiesDir, "failed activities")
-        common.ensureDir(self._doneActivitiesDir, "done activities")
-        common.ensureDir(self._invalidActivitiesDir, "invalid activities")
+        utils.ensureDirExists(self._activeActivitiesDir,
+                              "activities data base")
+        utils.ensureDirExists(self._failedActivitiesDir,
+                              "failed activities")
+        utils.ensureDirExists(self._doneActivitiesDir,
+                              "done activities")
+        utils.ensureDirExists(self._invalidActivitiesDir,
+                              "invalid activities")
         self.debug("Loading activities data from directory '%s'", absDir)
         loader = inifile.IniFile()
         self._activitiesData.clear()

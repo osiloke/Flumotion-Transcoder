@@ -25,8 +25,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common import common
 from flumotion.common import enum
-from flumotion.common.common import ensureDir
-from flumotion.transcoder import process, log, defer, enums
+from flumotion.transcoder import process, log, defer, enums, utils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
@@ -828,7 +827,7 @@ class TranscoderJob(log.LoggerProxy):
             for targetCtx in context.getTargetContexts():
                 for src, dest in targetCtx.reporter.getFiles():
                     context.log("Moving '%s' to '%s'", src, dest)
-                    ensureDir(os.path.dirname(dest), "transcoding done")
+                    utils.ensureDirExists(os.path.dirname(dest), "transcoding done")
                     shutil.move(src, dest)
         else:
             context.debug("Skipping moving output files, "
@@ -867,7 +866,7 @@ class TranscoderJob(log.LoggerProxy):
             source = sourceCtx.getInputPath()
             context.debug("Moving input file to '%s'", to)
             context.log("Moving '%s' to '%s'", source, to)
-            ensureDir(os.path.dirname(to), "transcoding done")
+            utils.ensureDirExists(os.path.dirname(to), "transcoding done")
             shutil.move(source, to)
             
         if (not error) and succeed:
@@ -1004,7 +1003,7 @@ class TranscoderJob(log.LoggerProxy):
         #FIXME: Don't reference the global context
         template = self._context.config.profile.linkTemplate % templateVars
         workPath = targetCtx.getLinkWorkPath()
-        ensureDir(os.path.dirname(workPath), "temporary target link")
+        utils.ensureDirExists(os.path.dirname(workPath), "temporary target link")
         handle = open(workPath, 'w')
         handle.write(template)
         handle.close()

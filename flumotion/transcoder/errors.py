@@ -45,6 +45,11 @@ class TranscoderError(Exception):
                 self.causeDetails = "Unknown"
 
 
+class SystemError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
 class TranscoderConfigError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)

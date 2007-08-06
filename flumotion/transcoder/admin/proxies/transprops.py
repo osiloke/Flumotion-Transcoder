@@ -16,7 +16,7 @@ from zope.interface import implements
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, inifile, constants
+from flumotion.transcoder import log, inifile, constants, utils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.transconfig import TranscodingConfig, TargetConfig
 from flumotion.transcoder.virtualpath import VirtualPath
@@ -163,8 +163,8 @@ class TranscoderProperties(ComponentPropertiesMixin):
         # Set the datetime of file creation
         self._config.touch()
         try:
-            common.ensureDir(os.path.dirname(localPath),
-                             "transcoding config")
+            utils.ensureDirExists(os.path.dirname(localPath),
+                                  "transcoding config")
             saver.saveToFile(self._config, localPath)
         except Exception, e:
             message = ("Failed to save transcoder config file '%s': %s"
