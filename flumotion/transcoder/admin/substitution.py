@@ -60,10 +60,12 @@ class Variables(object):
             "inputDir" (str): "/my.sub/folder/"
         """
         path, file, ext = utils.splitPath(filePath, extension == None)
-        if extension: ext = extension
-        self._variables[kind + "Path"] = filePath
+        if extension: 
+            ext = extension
+            self._variables[kind + "Path"] = filePath + extension
+        else:
+            self._variables[kind + "Path"] = filePath
         self._variables[kind + "File"] = file + ext
-        self._variables[kind + "Basename"] = file
         self._variables[kind + "Extension"] = ext
+        self._variables[kind + "Basename"] = file        
         self._variables[kind + "Dir"] = path
-

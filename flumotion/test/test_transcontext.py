@@ -19,6 +19,8 @@
 
 # Headers in this file shall remain intact.
 
+import common
+
 from twisted.trial import unittest
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
@@ -45,10 +47,13 @@ class TestTranscoderContext(unittest.TestCase):
     def getContext(self, custName, custSubdir, profName, profSubdir, 
                       targName, targSubdir, targExt):
         target = Dummy({}, 
-                       {"Subdir": targSubdir,
+                       {"Name": targName,
+                        "Subdir": targSubdir,
                         "Extension": targExt,
+                        "OutputDir": None,
+                        "LinkDir": None,
                         "OutputFileTemplate": 
-                            adminconsts.DEFAULT_OUTPUT_FILE_TEMPLATE,
+                            adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE,
                         "LinkFileTemplate": 
                              adminconsts.DEFAULT_LINK_FILE_TEMPLATE})
         profile = Dummy({targName: target},
@@ -79,7 +84,7 @@ class TestTranscoderContext(unittest.TestCase):
                           "ConfigDir": None,
                           "FailedRepDir": None,
                           "DoneRepDir": None})
-        return TranscodingContext(Dummy({custName: customer}, {}))
+        return TranscodingContext(None, Dummy({custName: customer}, {}))
 
 
     def testCustomerContext(self):
@@ -314,22 +319,22 @@ class TestTranscoderContext(unittest.TestCase):
         checkVal(profCtx.getFailedRelPath(), "test.file.avi")
         checkVal(profCtx.getDoneRelPath(), "test.file.avi")
         checkVal(profCtx.getConfigRelPath(), "test.file.avi.ini")
-        checkVal(profCtx.getFailedRepRelPath(), "test.file.avi.rep")
-        checkVal(profCtx.getDoneRepRelPath(), "test.file.avi.rep")
+        checkVal(profCtx.getFailedRepRelPath(), "test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepRelPath(), "test.file.avi.%(id)s.rep")
         
         checkVal(profCtx.getInputFile(), "test.file.avi")
         checkVal(profCtx.getFailedFile(), "test.file.avi")
         checkVal(profCtx.getDoneFile(), "test.file.avi")
         checkVal(profCtx.getConfigFile(), "test.file.avi.ini")
-        checkVal(profCtx.getFailedRepFile(), "test.file.avi.rep")
-        checkVal(profCtx.getDoneRepFile(), "test.file.avi.rep")
+        checkVal(profCtx.getFailedRepFile(), "test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepFile(), "test.file.avi.%(id)s.rep")
         
         checkCtx(profCtx.getInputPath(), "default:/fluendo/files/incoming/ogg_theora-vorbis/test.file.avi")
         checkCtx(profCtx.getFailedPath(), "default:/fluendo/files/failed/ogg_theora-vorbis/test.file.avi")
         checkCtx(profCtx.getDonePath(), "default:/fluendo/files/done/ogg_theora-vorbis/test.file.avi")
         checkCtx(profCtx.getConfigPath(), "default:/fluendo/configs/ogg_theora-vorbis/test.file.avi.ini")
-        checkCtx(profCtx.getFailedRepPath(), "default:/fluendo/reports/failed/ogg_theora-vorbis/test.file.avi.rep")
-        checkCtx(profCtx.getDoneRepPath(), "default:/fluendo/reports/done/ogg_theora-vorbis/test.file.avi.rep")
+        checkCtx(profCtx.getFailedRepPath(), "default:/fluendo/reports/failed/ogg_theora-vorbis/test.file.avi.%(id)s.rep")
+        checkCtx(profCtx.getDoneRepPath(), "default:/fluendo/reports/done/ogg_theora-vorbis/test.file.avi.%(id)s.rep")
         
         # Subdir Checks
         transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
@@ -358,22 +363,22 @@ class TestTranscoderContext(unittest.TestCase):
         checkVal(profCtx.getFailedRelPath(), "my/sub.dir/test.file.avi")
         checkVal(profCtx.getDoneRelPath(), "my/sub.dir/test.file.avi")
         checkVal(profCtx.getConfigRelPath(), "my/sub.dir/test.file.avi.ini")
-        checkVal(profCtx.getFailedRepRelPath(), "my/sub.dir/test.file.avi.rep")
-        checkVal(profCtx.getDoneRepRelPath(), "my/sub.dir/test.file.avi.rep")
+        checkVal(profCtx.getFailedRepRelPath(), "my/sub.dir/test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepRelPath(), "my/sub.dir/test.file.avi.%(id)s.rep")
         
         checkVal(profCtx.getInputFile(), "test.file.avi")
         checkVal(profCtx.getFailedFile(), "test.file.avi")
         checkVal(profCtx.getDoneFile(), "test.file.avi")
         checkVal(profCtx.getConfigFile(), "test.file.avi.ini")
-        checkVal(profCtx.getFailedRepFile(), "test.file.avi.rep")
-        checkVal(profCtx.getDoneRepFile(), "test.file.avi.rep")
+        checkVal(profCtx.getFailedRepFile(), "test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepFile(), "test.file.avi.%(id)s.rep")
         
         checkCtx(profCtx.getInputPath(), "default:/flu/one/files/incoming/ogg/vorb/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getFailedPath(), "default:/flu/one/files/failed/ogg/vorb/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getDonePath(), "default:/flu/one/files/done/ogg/vorb/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getConfigPath(), "default:/flu/one/configs/ogg/vorb/my/sub.dir/test.file.avi.ini")
-        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/ogg/vorb/my/sub.dir/test.file.avi.rep")
-        checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/ogg/vorb/my/sub.dir/test.file.avi.rep")
+        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/ogg/vorb/my/sub.dir/test.file.avi.%(id)s.rep")
+        checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/ogg/vorb/my/sub.dir/test.file.avi.%(id)s.rep")
 
         # More subdir Checks
         transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
@@ -418,8 +423,8 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getFailedPath(), "default:/flu/one/files/failed/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getDonePath(), "default:/flu/one/files/done/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getConfigPath(), "default:/flu/one/configs/my/sub.dir/test.file.avi.ini")
-        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/my/sub.dir/test.file.avi.rep")
-        checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/my/sub.dir/test.file.avi.rep")
+        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/my/sub.dir/test.file.avi.%(id)s.rep")
+        checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/my/sub.dir/test.file.avi.%(id)s.rep")
 
         # Template Checks
         transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
@@ -495,21 +500,21 @@ class TestTranscoderContext(unittest.TestCase):
         checkVal(profCtx.getFailedRelPath(), "my/sub.dir/test.file.avi")
         checkVal(profCtx.getDoneRelPath(), "my/sub.dir/test.file.avi")
         checkVal(profCtx.getConfigRelPath(), "my/sub.dir/test.file.avi.ini")
-        checkVal(profCtx.getFailedRepRelPath(), "my/sub.dir/test.file.avi.rep")
-        checkVal(profCtx.getDoneRepRelPath(), "my/sub.dir/test.file.avi.rep")
+        checkVal(profCtx.getFailedRepRelPath(), "my/sub.dir/test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepRelPath(), "my/sub.dir/test.file.avi.%(id)s.rep")
         
         checkVal(profCtx.getInputFile(), "test.file.avi")
         checkVal(profCtx.getFailedFile(), "test.file.avi")
         checkVal(profCtx.getDoneFile(), "test.file.avi")
         checkVal(profCtx.getConfigFile(), "test.file.avi.ini")
-        checkVal(profCtx.getFailedRepFile(), "test.file.avi.rep")
-        checkVal(profCtx.getDoneRepFile(), "test.file.avi.rep")
+        checkVal(profCtx.getFailedRepFile(), "test.file.avi.%(id)s.rep")
+        checkVal(profCtx.getDoneRepFile(), "test.file.avi.%(id)s.rep")
         
         checkCtx(profCtx.getInputPath(), "default:/override/input/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getFailedPath(), "default:/flu/one/files/failed/ogg/vorb/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getDonePath(), "default:/override/done/my/sub.dir/test.file.avi")
         checkCtx(profCtx.getConfigPath(), "default:/override/configs/my/sub.dir/test.file.avi.ini")
-        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/ogg/vorb/my/sub.dir/test.file.avi.rep")
+        checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/ogg/vorb/my/sub.dir/test.file.avi.%(id)s.rep")
         
 
     def testTargetContext(self):
@@ -521,7 +526,7 @@ class TestTranscoderContext(unittest.TestCase):
             self.assertEqual(value, expected)
         
         transCtx = self.getContext("Fluendo", None, "OGG", 
-                                   None, "High Quality", None, ".ogg")
+                                   None, "High Quality", None, "ogg")
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
@@ -529,15 +534,15 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/")
         checkCtx(targCtx.getLinkDir(), "default:/fluendo/files/links/ogg/")
         checkVal(targCtx.getOutputRelPath(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkRelPath(), "test.file.avi.link")
+        checkVal(targCtx.getLinkRelPath(), "test.file.avi.ogg.link")
         checkVal(targCtx.getOutputFile(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkFile(), "test.file.avi.link")
+        checkVal(targCtx.getLinkFile(), "test.file.avi.ogg.link")
         checkCtx(targCtx.getOutputPath(), "default:/fluendo/files/outgoing/ogg/test.file.avi.ogg")
-        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.link")
+        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.ogg.link")
         
         # Subdir checks
         transCtx = self.getContext("Fluendo", None, "OGG", 
-                                   None, "High Quality", "very/high", ".ogg")
+                                   None, "High Quality", "very/high", "ogg")
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
@@ -545,15 +550,15 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/very/high/")
         checkCtx(targCtx.getLinkDir(), "default:/fluendo/files/links/ogg/very/high/")
         checkVal(targCtx.getOutputRelPath(), "very/high/test.file.avi.ogg")
-        checkVal(targCtx.getLinkRelPath(), "very/high/test.file.avi.link")
+        checkVal(targCtx.getLinkRelPath(), "very/high/test.file.avi.ogg.link")
         checkVal(targCtx.getOutputFile(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkFile(), "test.file.avi.link")
+        checkVal(targCtx.getLinkFile(), "test.file.avi.ogg.link")
         checkCtx(targCtx.getOutputPath(), "default:/fluendo/files/outgoing/ogg/very/high/test.file.avi.ogg")
-        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.link")
+        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.ogg.link")
         
         # More subdir checks
         transCtx = self.getContext("Fluendo", None, "OGG", 
-                                   None, "High Quality", "/very/./high", ".ogg")
+                                   None, "High Quality", "/very/./high", "ogg")
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
@@ -561,15 +566,15 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/very/high/")
         checkCtx(targCtx.getLinkDir(), "default:/fluendo/files/links/ogg/very/high/")
         checkVal(targCtx.getOutputRelPath(), "very/high/test.file.avi.ogg")
-        checkVal(targCtx.getLinkRelPath(), "very/high/test.file.avi.link")
+        checkVal(targCtx.getLinkRelPath(), "very/high/test.file.avi.ogg.link")
         checkVal(targCtx.getOutputFile(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkFile(), "test.file.avi.link")
+        checkVal(targCtx.getLinkFile(), "test.file.avi.ogg.link")
         checkCtx(targCtx.getOutputPath(), "default:/fluendo/files/outgoing/ogg/very/high/test.file.avi.ogg")
-        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.link")
+        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.ogg.link")
         
         # Empty subdir checks
         transCtx = self.getContext("Fluendo", None, "OGG", 
-                                   None, "High Quality", "", ".ogg")
+                                   None, "High Quality", "", "ogg")
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
@@ -577,15 +582,15 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/")
         checkCtx(targCtx.getLinkDir(), "default:/fluendo/files/links/ogg/")
         checkVal(targCtx.getOutputRelPath(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkRelPath(), "test.file.avi.link")
+        checkVal(targCtx.getLinkRelPath(), "test.file.avi.ogg.link")
         checkVal(targCtx.getOutputFile(), "test.file.avi.ogg")
-        checkVal(targCtx.getLinkFile(), "test.file.avi.link")
+        checkVal(targCtx.getLinkFile(), "test.file.avi.ogg.link")
         checkCtx(targCtx.getOutputPath(), "default:/fluendo/files/outgoing/ogg/test.file.avi.ogg")
-        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.link")
+        checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.ogg.link")
         
         # Templates checks
         transCtx = self.getContext("Fluendo", None, "OGG", 
-                                   None, "High Quality", "very/high", ".ogg")
+                                   None, "High Quality", "very/high", "ogg")
         custCtx = transCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")

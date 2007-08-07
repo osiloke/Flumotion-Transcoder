@@ -32,7 +32,8 @@ def getVideoDAR(w, h, par):
 
 def getVideoSize(iw, ih, ipar, 
                  ow=None, oh=None, opar=None, 
-                 mw=None, mh=None, pref=VideoScaleMethodEnum.height):
+                 mw=None, mh=None, wm=None, hm=None,
+                 method=VideoScaleMethodEnum.height):
     """
     Return the (Width, Height, PAR) of the output video.    
     iw, ih and ipar should not be None, all other parameteres could be None.
@@ -42,13 +43,15 @@ def getVideoSize(iw, ih, ipar,
         ow:    Output video preferred width (Can be None)
         oh:    Output video preferred height (Can be None)
         opar:  Output video Pixel Aspect Ratio (Can be None)
-        mw:    Maximum output video width
-        mh:    Maximum output video height
-        pref:  Preferred method for deducing video size when not specified;
-                VideoScaleMethodEnum.width:     Preserve the original width
-                VideoScaleMethodEnum.height:    Preserve the original height
-                VideoScaleMethodEnum.downscale: Downscale one of the original axe
-                VideoScaleMethodEnum.upscale:   Upscale one of the original axe
+        mw:    Maximum output video width (Can be None)
+        mh:    Maximum output video height (Can be None)
+        wm:    Width multiple (Can be None)
+        hm:    Height multiple (Can be None)
+        method: Preferred method for deducing video size when not specified;
+            VideoScaleMethodEnum.width:     Preserve the original width
+            VideoScaleMethodEnum.height:    Preserve the original height
+            VideoScaleMethodEnum.downscale: Downscale one of the original axe
+            VideoScaleMethodEnum.upscale:   Upscale one of the original axe
     """
     #Convert to floats
     iw = float(iw)
@@ -69,26 +72,26 @@ def getVideoSize(iw, ih, ipar,
 
     #If no size was specified chose one from input...
     if not (ow or oh):
-        if (pref == None) or (pref == VideoScaleMethodEnum.height):
+        if (method == None) or (method == VideoScaleMethodEnum.height):
             #Preserve input height
             oh = ih
-        elif pref == VideoScaleMethodEnum.width:
+        elif method == VideoScaleMethodEnum.width:
             #Preserve input width
             ow = iw
-        elif pref == VideoScaleMethodEnum.downscale:
+        elif method == VideoScaleMethodEnum.downscale:
             #Downscale the input
             if (iw * parf[0]) > (ih * parf[1]):
                 ow = iw
             else:
                 oh = ih
-        elif pref == VideoScaleMethodEnum.upscale:
+        elif method == VideoScaleMethodEnum.upscale:
             #Upscale the input
             if (iw * parf[0]) >= (ih * parf[1]):
                 oh = ih
             else:
                 ow = iw
         else:
-            raise Exception("Unknown preferred method '%s'" % pref)
+            raise Exception("Unknown preferred method '%s'" % method)
 
     w, h = None, None
     #Deduce output height from input size and preferred width

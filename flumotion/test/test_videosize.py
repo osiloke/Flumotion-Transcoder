@@ -19,6 +19,8 @@
 
 # Headers in this file shall remain intact.
 
+import common
+
 from twisted.trial import unittest
 
 from flumotion.transcoder.enums import VideoScaleMethodEnum
@@ -52,7 +54,19 @@ class TestVideoSize(unittest.TestCase):
     def _expect(self, iw, ih, ipar, ow, oh, opar, mw, mh, pref, ew, eh, epar):
         rw, rh, rpar = videosize.getVideoSize(iw, ih, ipar, 
                                               ow, oh, opar, 
-                                              mw, mh, pref)
+                                              mw, mh, None, None, pref)
+        print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
+                                               self._format(ow, oh, opar),
+                                               self._format(rw, rh, rpar))
+        idar = (float(iw) * ipar[0]) / (float(ih) * ipar[1])
+        rdar = (float(rw) * rpar[0]) / (float(rh) * rpar[1])
+        self.assertTrue(abs(idar - rdar) < 0.03, "Display Aspect Ratio Changed")
+        self.assertEquals((rw, rh, rpar), (ew, eh, epar))
+
+    def _expectEx(self, iw, ih, ipar, ow, oh, opar, mw, mh, wm, hm, pref, ew, eh, epar):
+        rw, rh, rpar = videosize.getVideoSize(iw, ih, ipar, 
+                                              ow, oh, opar, 
+                                              mw, mh, wm, hm, pref)
         print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
                                                self._format(ow, oh, opar),
                                                self._format(rw, rh, rpar))

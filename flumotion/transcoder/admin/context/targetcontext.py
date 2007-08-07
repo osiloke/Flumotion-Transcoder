@@ -18,8 +18,10 @@ from flumotion.transcoder.admin.substitution import Variables
 def _buildRelPathGetter(storeGetterName):
     def getter(self):
         template = getattr(self.store, storeGetterName)()
+        print "T"*30, template
         path = self._vars.substitute(template)
         path = utils.ensureRelPath(path)
+        print "P"*30, path
         return utils.cleanupPath(path)
     return getter
 
@@ -135,8 +137,8 @@ class TargetContext(object):
         self._vars.addVar("targetSubdir", subdir)
         targPath = (utils.joinPath(self._vars["sourceDir"], subdir)
                     + self._vars["sourceFile"])
-        self._vars.addFileVars(targPath, "target", 
-                               extension=self.getExtension())
+        self._vars.addFileVars(utils.ensureRelPath(targPath),
+                               "target", extension=self.getExtension())
         
     def getTranscodingContext(self):
         return self.profile.getTranscodingContext()
@@ -153,15 +155,9 @@ class TargetContext(object):
     def getExtension(self):
         ext = self.store.getExtension()
         if ext :
-            return '.' + ext
+            return '.' + ext.lstrip('.')
         return ""
     
-    def getOutputRelPath(self):
-        template = self.store.getOutputFileTemplate()
-        path = self._vars.substitute(template)
-        path = utils.ensureRelPath(path)
-        return utils.cleanupPath(path)
-
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
         return folder

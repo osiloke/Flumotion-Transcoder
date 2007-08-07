@@ -19,6 +19,8 @@
 
 # Headers in this file shall remain intact.
 
+import common
+
 from twisted.trial import unittest
 from flumotion.transcoder import utils
 
