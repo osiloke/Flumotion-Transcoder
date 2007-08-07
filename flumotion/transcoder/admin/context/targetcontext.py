@@ -31,8 +31,7 @@ def _buildBaseGetter(baseGetterName, storeGetterName):
             value = utils.ensureAbsDirPath(value)
             value = utils.cleanupPath(value)
             return VirtualPath(value)
-        parent = getattr(self.profile, baseGetterName)()
-        return parent.append(self.getSubdir())
+        return getattr(self.profile, baseGetterName)()
     return getter
 
 def _buildDirGetter(baseGetterName, relGetterName):
@@ -73,9 +72,9 @@ class TargetContext(object):
                            extension = ".ogg"
             source path => "/subdir/file.avi"
 
-                getOutputBase: default:/fluendo/files/outgoing/ogg/subdir/high/
-                getLinkBase: default:/fluendo/files/links/ogg/subdir/high/
-                getWorkBase: temp:/fluendo/files/links/ogg/subdir/high/
+                getOutputBase: default:/fluendo/files/outgoing/ogg/
+                getLinkBase: default:/fluendo/files/links/ogg/
+                getWorkBase: temp:/fluendo/files/links/ogg/
                 
                 getOutputDir: default:/fluendo/files/outgoing/ogg/subdir/high/
                 getLinkDir: default:/fluendo/files/links/ogg/subdir/high/

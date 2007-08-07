@@ -1,5 +1,10 @@
 2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	Corrected handling of target subdir properies.
+
+2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/tools/upgrade.py:
 	Small changes to the upgrade script to better convert old format.
 
