@@ -18,10 +18,8 @@ from flumotion.transcoder.admin.substitution import Variables
 def _buildRelPathGetter(storeGetterName):
     def getter(self):
         template = getattr(self.store, storeGetterName)()
-        print "T"*30, template
         path = self._vars.substitute(template)
         path = utils.ensureRelPath(path)
-        print "P"*30, path
         return utils.cleanupPath(path)
     return getter
 
