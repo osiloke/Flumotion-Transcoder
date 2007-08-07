@@ -13,7 +13,7 @@ First, Flumotion should be installed or the uninstalled environment
 must be properly setup.
 
   To configure and build the transcoder:
-  > ./autogen.sh
+  $ ./autogen.sh
 
 
 Seting up an uninstalled environment:
@@ -33,12 +33,32 @@ The prompt will be modified to remember the current environment.
 THIS SCRIPT SHOULD BE SOURCED AND WILL NOT START A NEW SHELL.
 
   To use the uninstalled version in $TRANSCODER_BASE/trunk:
-  > . bin/transcoder-uninstalled-environment
-  [TRANS] >
+  $ . bin/transcoder-uninstalled-environment
+  [TRANS] $
   
   To use the uninstalled version in $TRANSCODER_BASE/test:
-  > . bin/transcoder-uninstalled-environment test
-  [TRANS test] >
+  $ . bin/transcoder-uninstalled-environment test
+  [TRANS test] $
+
+
+Upgrading the transcoder configuration:
+
+The script "bin/flumotion-transcoder-upgrade" can upgrade
+the transcoder configuration to ensure it's compatible with 
+the current version of the transcoder, and bootstrap the configuration
+from an old transcoder configuration format.
+
+	To upgrade (Not Implemented Yet):
+	$ . bin/transcoder-uninstalled-environment
+	[TRANS] $ bin/flumotion-transcoder-upgrade -vv upgrade \
+	> -c conf/transcoder-admin.ini
+	
+	To bootstrap from an old configuration format:
+	$ . bin/transcoder-uninstalled-environment
+	[TRANS] $ bin/flumotion-transcoder-upgrade -vv bootstrap \
+	> -o /etc/flumotion-tanscoder.ini -n /etc/flumotion/transcoder
+	
+The bootstrap command has more optional parameters to tweak the conversion process.
 
 
 Transcoding Manager:
@@ -49,8 +69,9 @@ The transcoder should be installed on the manager machine,
 or an uninstalled environment should be setup (see before).
 
   To start a manager with debug logging:
-  > . bin/transcoder-uninstalled-environment
-  [TRANS] > flumotion-manager -d 4 -T tcp -H manager.dev -P 7632 -n transcoder conf/planet.xml
+  $ . bin/transcoder-uninstalled-environment
+  [TRANS] $ flumotion-manager -d 4 -T tcp -H manager.dev -P 7632 \
+  > -n transcoder conf/planet.xml
 
 
 Transcoding Workers:
@@ -61,7 +82,8 @@ and the uninstalled environment is not needed.
 WORKERS MUST HAVE DIFFERENT NAMES.
 
   To start a worker with debug logging:
-  > flumotion-worker -d 4 -T tcp -H manager.dev -P 7632 -n worker1 -u user -p test
+  $ flumotion-worker -d 4 -T tcp -H manager.dev -P 7632 -n worker1 \
+  > -u user -p test
 
 
 Transcoder Admin:
@@ -75,6 +97,24 @@ see section 3 of doc/specification.odt
 NOTE THAT THE CONFIGURATION EXAMPLE SHOULD BE MODIFIED TO WORK.
 
   To start the transcoder admin with debug logging:
-  > . bin/transcoder-uninstalled-environment
-  [TRANS] > bin/flumotion-transcoder-admin -d 4 conf/transcoder-admin.ini
+  $ . bin/transcoder-uninstalled-environment
+  [TRANS] $ bin/flumotion-transcoder-admin -d 4 conf/transcoder-admin.ini
 
+
+Start as Daemons:
+
+Following are the commands to start the differents process
+of the transcoder as daemon. It's assumed the transcoder is installed.
+
+	Start the manager as daemon:
+	$ flumotion-manager -d 4 -D --daemonize-to=/ -L /var/log/flumotion \
+	> -R /var/run/flumotion -T tcp -P 7632 -n transcoder conf/planet.xml
+	
+	Start the workers as daemon:
+	$ flumotion-worker -d 4 -D --daemonize-to=/ -L /var/log/flumotion \
+	> -R /var/run/flumotion -T tcp -H manager.dev -P 7632 -n worker1 \
+	> -u user -p test
+
+	Start the admin as daemon:
+	$ flumotion-transcoder-admin -d 4 -D --daemonize-to=/ \
+	> -L /var/log/flumotion	-R /var/run/flumotion conf/transcoder-admin.ini
