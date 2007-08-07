@@ -207,16 +207,26 @@ def _getOutputVideoBox(config, discoverer, outputSize):
     to the information from the discoverer 
     and the configuration as (left, top, right, bottom).
     """
-    left, top, right, bottom = 0, 0, 0, 0
     width, height, par = outputSize    
-    if config.videoWidth and (width != config.videoWidth):
-        diff = width - config.videoWidth
-        left = diff / 2
-        right = diff - left
-    if config.videoHeight and (height != config.videoHeight):
-        diff = height - config.videoHeight
-        top = diff / 2
-        bottom = diff - top
+    wdiff, hdiff = 0, 0
+    if config.videoWidth:
+        if width != config.videoWidth:
+            wdiff = width - config.videoWidth
+    elif config.videoWidthMultiple:
+        wm = int(config.videoWidthMultiple)
+        if width % wm:
+            wdiff = (((width / wm) + 1) * wm) - width
+    if config.videoHeight:
+        if height != config.videoHeight:
+            hdiff = height - config.videoHeight
+    elif config.videoHeightMultiple:
+        hm = int(config.videoHeightMultiple)
+        if height % hm:
+            hdiff = (((height / hm) + 1) * hm) - height
+    left = wdiff / 2
+    right = wdiff - left
+    top = hdiff / 2
+    bottom = hdiff - top
     return (left, top, right, bottom)
 
 def _getOutputVideoCaps(config, discoverer, outputSize):

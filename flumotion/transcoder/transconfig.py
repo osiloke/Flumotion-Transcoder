@@ -61,6 +61,8 @@ class VideoConfig(properties.PropertyBag):
     videoHeight = properties.Integer('video-height', None, False, True)
     videoMaxWidth = properties.Integer('video-maxwidth', None, False, True)
     videoMaxHeight = properties.Integer('video-maxheight', None, False, True)
+    videoWidthMultiple = properties.Integer('video-width-multiple', None, False, True)
+    videoHeightMultiple = properties.Integer('video-height-multiple', None, False, True)
     videoScaleMethod = properties.Enum('video-scale-method', 
                                        VideoScaleMethodEnum,
                                        VideoScaleMethodEnum.height)

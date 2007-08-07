@@ -311,7 +311,8 @@ class CustomerData(properties.RootPropertyBag):
     video-framerate = 25/2
     # Can be Heigh, Width, Downscale or Upscale
     #video-scale-method = Heigh
-    # Not implemented yet:
+    # The width (or height) multiple of the output video.
+    # Ignored if the with (or height) is explicitly specified.
     #video-width-multiple = 1
     #video-height-multiple = 1
     

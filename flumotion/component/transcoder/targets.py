@@ -271,6 +271,8 @@ class ThumbnailsTarget(TranscodingTarget):
             self.videoHeight = config.thumbsHeight
             self.videoMaxWidth = None
             self.videoMaxHeight = None
+            self.videoWidthMultiple = None
+            self.videoHeightMultiple = None
             self.videoScaleMethod = VideoScaleMethodEnum.upscale
             self.videoFramerate = None
             self.videoPAR = (1, 1)            

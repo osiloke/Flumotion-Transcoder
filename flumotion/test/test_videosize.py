@@ -54,19 +54,7 @@ class TestVideoSize(unittest.TestCase):
     def _expect(self, iw, ih, ipar, ow, oh, opar, mw, mh, pref, ew, eh, epar):
         rw, rh, rpar = videosize.getVideoSize(iw, ih, ipar, 
                                               ow, oh, opar, 
-                                              mw, mh, None, None, pref)
-        print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
-                                               self._format(ow, oh, opar),
-                                               self._format(rw, rh, rpar))
-        idar = (float(iw) * ipar[0]) / (float(ih) * ipar[1])
-        rdar = (float(rw) * rpar[0]) / (float(rh) * rpar[1])
-        self.assertTrue(abs(idar - rdar) < 0.03, "Display Aspect Ratio Changed")
-        self.assertEquals((rw, rh, rpar), (ew, eh, epar))
-
-    def _expectEx(self, iw, ih, ipar, ow, oh, opar, mw, mh, wm, hm, pref, ew, eh, epar):
-        rw, rh, rpar = videosize.getVideoSize(iw, ih, ipar, 
-                                              ow, oh, opar, 
-                                              mw, mh, wm, hm, pref)
+                                              mw, mh, pref)
         print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
                                                self._format(ow, oh, opar),
                                                self._format(rw, rh, rpar))
@@ -435,7 +423,7 @@ class TestVideoSize(unittest.TestCase):
         print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
-                     None, None, "width",
+                     None, None, VideoScaleMethodEnum.width,
                      320, 120, (1, 2))
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 3), 
@@ -575,7 +563,7 @@ class TestVideoSize(unittest.TestCase):
         print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
-                     None, None, "downscale",
+                     None, None, VideoScaleMethodEnum.downscale,
                      320, 120, (1, 2))
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 3), 

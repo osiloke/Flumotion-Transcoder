@@ -1,5 +1,18 @@
 2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/videosize.py:
+	* flumotion/test/test_videosize.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/transconfig.py:
+	Properly handle size-multiple options for videos.
+	It add black bands to the output to respect them.
+	If a size is pecified explicitly, the multiple is ignored.
+	Fixed the test suite.
+
+2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/videosize.py:
 	* flumotion/test/test_transcontext.py:
 	* flumotion/test/test_utils.py:
