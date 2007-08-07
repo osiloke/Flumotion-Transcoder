@@ -1,5 +1,10 @@
 2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/tools/upgrade.py:
+	Small changes to the upgrade script to better convert old format.
+
+2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
+
 	* README:
 	Added the description of how to start the transcoder processes as daemons.
 

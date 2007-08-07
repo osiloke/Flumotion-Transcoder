@@ -241,7 +241,7 @@ class UpgradeConfig(Loggable):
                 if ((profData.subdir == '.')
                      and (len(custData.profiles) > 1)
                      and (not profData.inputDir)):
-                    #Keep the ouput directory
+                    #but keep the wanted ouput directory
                     od = self._getDir(custData, profData, "outgoing")
                     profData.outputDir = od
                     profData.subdir = None
@@ -249,6 +249,24 @@ class UpgradeConfig(Loggable):
                     profData.subdir = None
                 if profKey == profData.name:
                     profData.name = None
+                profName = profData.name or profKey
+                custSubdir = custData.subdir or utils.str2filename(custData.name)
+                profSubdir = profData.subdir or utils.str2filename(profName)
+                inputDefault = utils.cleanupPath("%s/files/incoming/%s/" % (custSubdir, profSubdir))
+                if profData.inputDir and (profData.inputDir == inputDefault):
+                    profData.inputDir = None
+                outputDefault = utils.cleanupPath("%s/files/outgoing/%s/" % (custSubdir, profSubdir))
+                if profData.outputDir and (profData.outputDir == outputDefault):
+                    profData.outputDir = None
+                doneDefault = utils.cleanupPath("%s/files/done/%s/" % (custSubdir, profSubdir))
+                if profData.doneDir and (profData.doneDir == doneDefault):
+                    profData.doneDir = None
+                failedDefault = utils.cleanupPath("%s/files/failed/%s/" % (custSubdir, profSubdir))
+                if profData.failedDir and (profData.failedDir == failedDefault):
+                    profData.failedDir = None
+                linkDefault = utils.cleanupPath("%s/files/links/%s/" % (custSubdir, profSubdir))
+                if profData.linkDir and (profData.linkDir == linkDefault):
+                    profData.linkDir = None
                 for targKey, targData in profData.targets.items():
                     if targKey == targData.name:
                         targData.name = None
@@ -264,10 +282,10 @@ class UpgradeConfig(Loggable):
                              custKey, path, str(e))
 
     def _getDir(self, custData, profData, kind="incoming"):
-        attr = {"incoming": "inputDir",
-                "outgoing": "outputDir",
-                "links": "linkDir",
-                "errors": "errorDir"}[kind]
+        middle, attr = {"incoming": ("incoming", "inputDir"),
+                        "outgoing": ("outgoing", "outputDir"),
+                        "links": ("links", "linkDir"),
+                        "errors": ("failed", "errorDir")}[kind]
         if getattr(profData, attr):
             return getattr(profData, attr)
         if getattr(custData, attr):
@@ -277,7 +295,7 @@ class UpgradeConfig(Loggable):
         else:
             result = utils.str2filename(custData.name)
         result = utils.ensureRelDirPath(result)
-        result = "%sfiles/%s/" % (result, kind)
+        result = "%sfiles/%s/" % (result, middle)
         if profData.subdir:
             result = result + profData.subdir
         else:
@@ -368,6 +386,9 @@ class UpgradeConfig(Loggable):
         k = profSubdirs.keys()
         k.sort(key=profSubdirs.get)
         profSubdir = k[-1]
+        if (not profSubdir) and ('/' in custSubdir):
+            profSubdir = custSubdir[custSubdir.rindex('/') + 1:]
+            custSubdir = custSubdir[:custSubdir.rindex('/')]
         
         # Arbitrary use the first profile to set the customer subdir
         if not custData.subdir:
@@ -383,7 +404,7 @@ class UpgradeConfig(Loggable):
             path, csd, middle, psd = subdirs[kind]
             if (csd != custSubdir) or (psd != profSubdir) or (middle != kind):
                 dir = path[len(self._rootDir):].strip('/')
-                override = self._guessOverridenDir(dir)
+                override = self._guessOverridenDir(dir, custData, profData)
                 setattr(profData, attr, utils.ensureRelDirPath(override))
         
         profData.linkURLPrefix = oldCustConf.urlPrefix
@@ -434,13 +455,26 @@ class UpgradeConfig(Loggable):
                     continue
         return (None, None, None)
  
-    def _guessOverridenDir(self, dir):
-        for middle in ['incoming', 'outgoing', 'errors', 'links', "thumbnails"]:
+    def _guessOverridenDir(self, dir, custData, profData):
+        for middle, new in [('incoming', 'incoming'), 
+                            ('outgoing', 'outgoing'),
+                            ('errors', 'failed'),
+                            ('links', 'links'),
+                            ('thumbnails', 'thumbnails')]:
             try:
                 i = dir.index(middle)
                 p1 = dir[:i].strip('/')
                 p2 = dir[i + len(middle):].strip('/')
-                return  p1 + "/files/" + middle + "/" + p2
+                # Check to reorder profiles directories
+                custSubdir = custData.subdir or utils.str2filename(custData.name)
+                profSubdir = profData.subdir or utils.str2filename(profData.name)
+                if p1 == (custSubdir + '/' + profSubdir):
+                    result =  custSubdir + "/files/" + new + "/" + profSubdir + '/' + p2
+                else:
+                    result =  p1 + "/files/" + new + "/" + p2
+                result = utils.ensureDirPath(result)
+                result = utils.cleanupPath(result)
+                return result
             except ValueError:
                 pass
         return dir
@@ -521,7 +555,7 @@ class UpgradeConfig(Loggable):
                                     "not a sub-directory of '%s'"
                                     % (outputPath, self._rootDir))
                 targDir = outputPath[len(self._rootDir):]
-                targDir = self._guessOverridenDir(targDir.strip('/'))
+                targDir = self._guessOverridenDir(targDir.strip('/'), custData, profData)
                 targDir = utils.ensureRelDirPath(targDir)
                 profDir = self._getDir(custData, profData, "outgoing")
                 profDir = utils.ensureRelDirPath(profDir)
