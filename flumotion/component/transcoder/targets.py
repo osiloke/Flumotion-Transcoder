@@ -22,6 +22,7 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
+from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.binmaker import makeEncodeBin
 from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
@@ -270,7 +271,7 @@ class ThumbnailsTarget(TranscodingTarget):
             self.videoHeight = config.thumbsHeight
             self.videoMaxWidth = None
             self.videoMaxHeight = None
-            self.videoScaleMethod = "upscale"
+            self.videoScaleMethod = VideoScaleMethodEnum.upscale
             self.videoFramerate = None
             self.videoPAR = (1, 1)            
             format = config.outputFormat
