@@ -1,3 +1,12 @@
+2007-08-08  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/configstore.py:
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	Use the size multiple option specified in the admin configuration.
+
 2007-08-07  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/binmaker.py:

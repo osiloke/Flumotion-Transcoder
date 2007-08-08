@@ -84,6 +84,8 @@ def createTranscodingConfigFromContext(profileCtx):
             tc.config.videoHeight = cs.getVideoHeight()
             tc.config.videoMaxWidth = cs.getVideoMaxWidth()
             tc.config.videoMaxHeight = cs.getVideoMaxHeight()
+            tc.config.videoWidthMultiple = cs.getVideoWidthMultiple()
+            tc.config.videoHeightMultiple = cs.getVideoHeightMultiple()
             tc.config.videoScaleMethod = cs.getVideoScaleMethod()
             tc.config.muxer = cs.getMuxer()            
         if tt == TargetTypeEnum.audiovideo:

@@ -61,21 +61,25 @@ class VideoConfig(BaseConfig):
     videoHeight (int)
     videoMaxWidth (int)
     videoMaxHeight (int)
+    videoWidthMultiple (int)
+    videoHeightMultiple (int)
     videoPAR (int[2])
     videoFramerate (int[2])
     """
 
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":
-                      {"getMuxer":             ("muxer", None),
-                       "getVideoEncoder":      ("videoEncoder", None),
-                       "getVideoWidth":        ("videoWidth", None),
-                       "getVideoHeight":       ("videoHeight", None),
-                       "getVideoMaxWidth":     ("videoMaxWidth", None),
-                       "getVideoMaxHeight":    ("videoMaxHeight", None),
-                       "getVideoPAR":          ("videoPAR", None),
-                       "getVideoFramerate":    ("videoFramerate", None),
-                       "getVideoScaleMethod":  ("videoScaleMethod", None)}}
+                      {"getMuxer":               ("muxer", None),
+                       "getVideoEncoder":        ("videoEncoder", None),
+                       "getVideoWidth":          ("videoWidth", None),
+                       "getVideoHeight":         ("videoHeight", None),
+                       "getVideoMaxWidth":       ("videoMaxWidth", None),
+                       "getVideoMaxHeight":      ("videoMaxHeight", None),
+                       "getVideoWidthMultiple":  ("videoWidthMultiple", None),
+                       "getVideoHeightMultiple": ("videoHeightMultiple", None),
+                       "getVideoPAR":            ("videoPAR", None),
+                       "getVideoFramerate":      ("videoFramerate", None),
+                       "getVideoScaleMethod":    ("videoScaleMethod", None)}}
     
     def __init__(self, data):
         super(VideoConfig, self).__init__(data)

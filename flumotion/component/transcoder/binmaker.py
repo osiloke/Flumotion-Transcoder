@@ -207,7 +207,7 @@ def _getOutputVideoBox(config, discoverer, outputSize):
     to the information from the discoverer 
     and the configuration as (left, top, right, bottom).
     """
-    width, height, par = outputSize    
+    width, height = outputSize[:2]
     wdiff, hdiff = 0, 0
     if config.videoWidth:
         if width != config.videoWidth:

@@ -253,6 +253,8 @@ class IDataSource(Interface):
             videoHeight (int)
             videoMaxWidth (int)
             videoMaxHeight (int)
+            videoWidthMultiple (int)
+            videoHeightMultiple (int)
             videoPAR (int[2])
             videoFramerate (int[2])
             videoScaleMethod (VideoScaleMethodEnum)
