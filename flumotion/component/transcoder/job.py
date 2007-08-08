@@ -828,6 +828,10 @@ class TranscoderJob(log.LoggerProxy):
                 for src, dest in targetCtx.reporter.getFiles():
                     context.log("Moving '%s' to '%s'", src, dest)
                     utils.ensureDirExists(os.path.dirname(dest), "transcoding done")
+                    if os.path.exists(dest):
+                        context.debug("Output file '%s' already exists; "
+                                      "deleting it", dest)
+                        os.remove(dest)
                     shutil.move(src, dest)
         else:
             context.debug("Skipping moving output files, "
@@ -867,6 +871,10 @@ class TranscoderJob(log.LoggerProxy):
             context.debug("Moving input file to '%s'", to)
             context.log("Moving '%s' to '%s'", source, to)
             utils.ensureDirExists(os.path.dirname(to), "transcoding done")
+            if os.path.exists(to):
+                context.debug("Input file '%s' already exists; "
+                              "deleting it", to)
+                os.remove(to)
             shutil.move(source, to)
             
         if (not error) and succeed:

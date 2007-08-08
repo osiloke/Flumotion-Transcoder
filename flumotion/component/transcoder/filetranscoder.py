@@ -77,6 +77,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.logName = None
         self._diagnoseMode = False
         self._waitAcknowledge = False
+        self._moveInputFile = True
         self._niceLevel = None
         self._job = None
         self._report = None
@@ -132,6 +133,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             props = self.config["properties"]
             #FIXME: Better checks for path roots
             self._waitAcknowledge = props.get("wait-acknowledge", False)
+            self._moveInputFile = props.get("move-input-file", True)
             self._niceLevel = props.get("nice-level", None)
             localRepPath = props.get("report", None)
             self._reportForcedPath = localRepPath and os.path.realpath(localRepPath)
@@ -200,7 +202,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._report.configPath = configPath
             
             if not self._diagnoseMode:
-                moveInputFile = True
+                moveInputFile = self._moveInputFile
             else:
                 self.info("Entering diagnose mode")
                 moveInputFile = False

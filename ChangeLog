@@ -1,5 +1,23 @@
 2007-08-08  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/filetranscoder.xml:
+	* flumotion/component/transcoder/job.py:
+	Added move-input-file component property to prevent
+	the component from moving the input file during testing
+	with flumotion-launch.
+	* flumotion/component/transcoder/binmaker.py:
+	Add a hack for platform version of gstreamer.
+	
+2007-08-08  Sebastien Merle  <sebastien@fluendo.com>
+
+	reviewed by: <delete if not using a buddy>
+	patch by: <delete if not someone else's patch>
+
+	* flumotion/component/transcoder/binmaker.py:
+
+2007-08-08  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/binmaker.py:
 	* flumotion/transcoder/admin/datasource/datasource.py:
 	* flumotion/transcoder/admin/datastore/configstore.py:

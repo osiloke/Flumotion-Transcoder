@@ -147,10 +147,8 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     log.info("makeVideoEncodeBin - Output Video Size: %dx%d %d/%d"
              % (outputSize[0], outputSize[1], 
                 outputSize[2].num, outputSize[2].denom))
-    caps = _getOutputVideoCaps(config, discoverer, outputSize)
-    capsfilter.props.caps = caps
-
     bin.add(inqueue, cspace, scale, capsfilter, encode, outqueue)
+
     if withRateControl:
         rate = gst.element_factory_make("videorate", "videorate-%s" % tag)
         bin.add(rate)
@@ -158,8 +156,12 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     else:
         gst.element_link_many(inqueue, cspace, scale, capsfilter)
     
+    caps = _getOutputVideoCaps(config, discoverer, outputSize)
     box = _getOutputVideoBox(config, discoverer, outputSize)
-    if (box[0] != 0) or (box[1] != 0) or (box[2] != 0) or (box[3] != 0):
+    #FIXME: Temporary hack to fix wrong behavior of the platform version
+    #       of GStreamer when the input size of videobox is odd
+    caps, box = __hackForInputStreamWithOddSize(caps, box)
+    if box[0] or box[1] or box[2] or box[3]:
         log.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" 
                  % box)
         videobox = gst.element_factory_make("videobox", "videobox-%s" % tag)
@@ -173,11 +175,48 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
         gst.element_link_many(capsfilter, videobox, encode, outqueue)
     else:
         gst.element_link_many(capsfilter, encode, outqueue)
-        
+    
+    capsfilter.props.caps = caps    
     bin.add_pad(gst.GhostPad("sink", inqueue.get_pad("sink")))
     bin.add_pad(gst.GhostPad("src", outqueue.get_pad("src")))
 
     return bin
+
+def __hackForInputStreamWithOddSize(caps, box):
+    """
+    Hack to prevent input streams with odd width or height.
+    The current platform version of GStreamer doesn't handle
+    it properly and make the last line green/garbage.
+    """
+    bl, bt, br, bb = box
+    if not (bl or bt or br or bb):
+        # videobox will not be used so forget it
+        return
+    wdiff, hdiff = 0, 0
+    if caps[0]["width"] % 2:
+        if bl or br:
+            if bl < br:
+                bl += 1
+            else:
+                br += 1
+            wdiff = 1
+        else:
+            br -= 1
+            wdiff = -1
+    if caps[0]["height"] % 2:
+        if bt or bt:
+            if bt < bb:
+                bt += 1
+            else:
+                bb += 1
+            hdiff = 1
+        else:
+            bb -= 1
+            hdiff = -1
+    for c in caps:
+        c["width"] = c["width"] + wdiff
+        c["height"] = c["height"] + hdiff
+    return caps, (bl, bt, br, bb)
 
 def _getInputVideoSize(config, discoverer):
     icaps = dict(discoverer.videocaps[0])
@@ -215,14 +254,14 @@ def _getOutputVideoBox(config, discoverer, outputSize):
     elif config.videoWidthMultiple:
         wm = int(config.videoWidthMultiple)
         if width % wm:
-            wdiff = (((width / wm) + 1) * wm) - width
+            wdiff = width -(((width / wm) + 1) * wm)
     if config.videoHeight:
         if height != config.videoHeight:
             hdiff = height - config.videoHeight
     elif config.videoHeightMultiple:
         hm = int(config.videoHeightMultiple)
         if height % hm:
-            hdiff = (((height / hm) + 1) * hm) - height
+            hdiff = height - (((height / hm) + 1) * hm)
     left = wdiff / 2
     right = wdiff - left
     top = hdiff / 2
