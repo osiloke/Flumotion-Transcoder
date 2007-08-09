@@ -18,6 +18,9 @@ from flumotion.transcoder import log
 from flumotion.component.transcoder import videosize
 from flumotion.component.transcoder import gstutils
 
+DEFAULT_WIDTH_MULTIPLE = 2
+DEFAULT_HEIGHT_MULTIPLE = 2
+
 def makeEncodeBin(file, config, dicoverer, tag,
                   audioEncodeBin, videoEncodeBin):
     encBin = gst.Bin("encoding-%s" % tag)
@@ -158,21 +161,32 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     
     caps = _getOutputVideoCaps(config, discoverer, outputSize)
     box = _getOutputVideoBox(config, discoverer, outputSize)
-    #FIXME: Temporary hack to fix wrong behavior of the platform version
-    #       of GStreamer when the input size of videobox is odd
-    caps, box = __hackForInputStreamWithOddSize(caps, box)
-    if box[0] or box[1] or box[2] or box[3]:
-        log.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" 
-                 % box)
+    if box != (0, 0, 0, 0):
+        #FIXME: Crop is a temporary hack to fix wrong behaviors
+        #       of the platform version of videobox with odd parameteres.
+        #       gstreamer-0.10.12, gstreamer-plugins-good-0.10.5
+        crop = tuple([v % 2 for v in box])
+        box = tuple([v - (v % 2) for v in box])
+        log.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" % box)
         videobox = gst.element_factory_make("videobox", "videobox-%s" % tag)
         videobox.props.left = box[0]
         videobox.props.top = box[1]
         videobox.props.right = box[2]
         videobox.props.bottom = box[3]
-        #To fill with green
-        #videobox.props.fill = 1
-        bin.add(videobox)
-        gst.element_link_many(capsfilter, videobox, encode, outqueue)
+        if crop != (0, 0, 0, 0):
+            log.info("makeVideoEncodeBin - Output Video Cropping: %d %d %d %d" % crop)
+            videocrop = gst.element_factory_make("videocrop",
+                                                 "videocrop-%s" % tag)
+            videocrop.props.left = crop[0]
+            videocrop.props.top = crop[1]
+            videocrop.props.right = crop[2]
+            videocrop.props.bottom = crop[3]
+            bin.add(videobox, videocrop)
+            gst.element_link_many(capsfilter, videobox, videocrop,
+                                  encode, outqueue)
+        else:
+            bin.add(videobox)
+            gst.element_link_many(capsfilter, videobox, encode, outqueue)
     else:
         gst.element_link_many(capsfilter, encode, outqueue)
     
@@ -181,42 +195,6 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
     bin.add_pad(gst.GhostPad("src", outqueue.get_pad("src")))
 
     return bin
-
-def __hackForInputStreamWithOddSize(caps, box):
-    """
-    Hack to prevent input streams with odd width or height.
-    The current platform version of GStreamer doesn't handle
-    it properly and make the last line green/garbage.
-    """
-    bl, bt, br, bb = box
-    if not (bl or bt or br or bb):
-        # videobox will not be used so forget it
-        return
-    wdiff, hdiff = 0, 0
-    if caps[0]["width"] % 2:
-        if bl or br:
-            if bl < br:
-                bl += 1
-            else:
-                br += 1
-            wdiff = 1
-        else:
-            br -= 1
-            wdiff = -1
-    if caps[0]["height"] % 2:
-        if bt or bt:
-            if bt < bb:
-                bt += 1
-            else:
-                bb += 1
-            hdiff = 1
-        else:
-            bb -= 1
-            hdiff = -1
-    for c in caps:
-        c["width"] = c["width"] + wdiff
-        c["height"] = c["height"] + hdiff
-    return caps, (bl, bt, br, bb)
 
 def _getInputVideoSize(config, discoverer):
     icaps = dict(discoverer.videocaps[0])
@@ -251,21 +229,21 @@ def _getOutputVideoBox(config, discoverer, outputSize):
     if config.videoWidth:
         if width != config.videoWidth:
             wdiff = width - config.videoWidth
-    elif config.videoWidthMultiple:
-        wm = int(config.videoWidthMultiple)
+    else:
+        wm = int(config.videoWidthMultiple or DEFAULT_WIDTH_MULTIPLE)
         if width % wm:
             wdiff = width -(((width / wm) + 1) * wm)
     if config.videoHeight:
         if height != config.videoHeight:
             hdiff = height - config.videoHeight
-    elif config.videoHeightMultiple:
-        hm = int(config.videoHeightMultiple)
+    else:
+        hm = int(config.videoHeightMultiple or DEFAULT_HEIGHT_MULTIPLE)
         if height % hm:
             hdiff = height - (((height / hm) + 1) * hm)
-    left = wdiff / 2
-    right = wdiff - left
-    top = hdiff / 2
-    bottom = hdiff - top
+    right = wdiff / 2
+    left = wdiff - right
+    bottom = hdiff / 2
+    top = hdiff - bottom
     return (left, top, right, bottom)
 
 def _getOutputVideoCaps(config, discoverer, outputSize):
