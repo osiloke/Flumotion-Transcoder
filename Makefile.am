@@ -1,9 +1,11 @@
-AUTOMAKE_OPTIONS = dist-bzip2 no-dist-gzip 1.8
+# version first -- they are parsed LTR and later options depend on automake 1.8.
+AUTOMAKE_OPTIONS = 1.8 dist-bzip2 no-dist-gzip
 
-ACLOCAL_AMFLAGS = -I common
+ACLOCAL_AMFLAGS = -I m4 -I common
 
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
+include $(srcdir)/common/rpm.mk
 
 SUBDIRS = common conf misc bin transcoder flumotion tests
 
@@ -14,7 +16,8 @@ PYCHECKER_WHITELIST = \
 	flumotion/transcoder/admin/context/*.py \
 	flumotion/transcoder/admin/datasource/*.py \
 	flumotion/transcoder/admin/datastore/*.py \
-	flumotion/transcoder/admin/proxies/*.py
+	flumotion/transcoder/admin/proxies/*.py \
+	flumotion/component/transcoder/*.py
 
 PYCHECKER_BLACKLIST = 
 
