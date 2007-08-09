@@ -19,6 +19,7 @@ from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPathProperty
 
+
 class UsageProperty(properties.ValueProperty):
     
     def __init__(self, descriptor, default=None, required=False):

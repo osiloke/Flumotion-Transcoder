@@ -11,7 +11,7 @@ AC_SUBST(FLUMOTION_REQ, 0.4.2.1)
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 
 dnl Add parameters for aclocal
-AC_SUBST(ACLOCAL_AMFLAGS, "-I m4 -I common")
+AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
 
 AS_AC_EXPAND(LIBDIR, $libdir)
 AC_MSG_NOTICE(Storing library files in $LIBDIR)
@@ -52,8 +52,10 @@ FLUMOTION_SETUP(flumotion/test/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder"
 FLUMOTION_SETUP(tests/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 FLUMOTION_SETUP(misc/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 
+AC_CONFIG_FILES([env], [chmod +x env])
 AC_CONFIG_FILES([bin/flumotion-transcoder-admin], [chmod +x bin/flumotion-transcoder-admin])
 AC_CONFIG_FILES([bin/flumotion-transcoder-upgrade], [chmod +x bin/flumotion-transcoder-upgrade])
+
 AC_OUTPUT(
 Makefile
 bin/Makefile

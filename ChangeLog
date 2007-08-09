@@ -1,5 +1,14 @@
 2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* Makefile.am:
+	* configure.ac:
+	* env:
+	* env.in:
+	* flumotion/transcoder/transreport.py:
+	Fixed make distcheck.
+
+2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* COPYING:
 	* conf/Makefile.am:
 	* configure.ac:
