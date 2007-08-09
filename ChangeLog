@@ -1,5 +1,10 @@
 2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/transcoder.py:
+	Removed wrong import statment.
+
+2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/binmaker.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:
 	Add a videocrop in the pipeline to correct to output size
