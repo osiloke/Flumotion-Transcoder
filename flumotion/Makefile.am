@@ -1,9 +1,6 @@
 include $(top_srcdir)/common/python.mk
 
-SUBDIRS = \
-	component \
-	test \
-	transcoder
+SUBDIRS = project component transcoder test
 
 clean-local:
 	rm -rf *.pyc *.pyo

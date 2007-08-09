@@ -55,16 +55,15 @@ class TestVideoSize(unittest.TestCase):
         rw, rh, rpar = videosize.getVideoSize(iw, ih, ipar, 
                                               ow, oh, opar, 
                                               mw, mh, pref)
-        print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
-                                               self._format(ow, oh, opar),
-                                               self._format(rw, rh, rpar))
+        #print "IN: %s - PREF: %s - OUT: %s" % (self._format(iw, ih, ipar),
+        #                                       self._format(ow, oh, opar),
+        #                                       self._format(rw, rh, rpar))
         idar = (float(iw) * ipar[0]) / (float(ih) * ipar[1])
         rdar = (float(rw) * rpar[0]) / (float(rh) * rpar[1])
         self.assertTrue(abs(idar - rdar) < 0.03, "Display Aspect Ratio Changed")
         self.assertEquals((rw, rh, rpar), (ew, eh, epar))
     
     def testMaxSizeWithPreferredSize(self):
-        print
         self._expect(320, 240, (1, 1), 
                      200, None, (1, 1), 
                      300, 200, None,
@@ -106,7 +105,6 @@ class TestVideoSize(unittest.TestCase):
         
     
     def testMaxSizeWithoutPreferredSize(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 1), 
                      200, 300, VideoScaleMethodEnum.upscale,
@@ -205,7 +203,6 @@ class TestVideoSize(unittest.TestCase):
                      200, 229, (1, 1))
         
     def testPreferredHeight(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, 200, (1, 1), 
                      None, None, None,
@@ -267,7 +264,6 @@ class TestVideoSize(unittest.TestCase):
                      38, 200, (3, 1))
 
     def testPreferredWidth(self):
-        print
         self._expect(320, 240, (1, 1), 
                      200, None, (1, 1), 
                      None, None, None,
@@ -329,7 +325,6 @@ class TestVideoSize(unittest.TestCase):
                      200, 600, (3, 1))
     
     def testDefaultPreferredMethod(self):
-        print
         #The default preferred method is "height"
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
@@ -349,7 +344,6 @@ class TestVideoSize(unittest.TestCase):
                      120, 320, (2, 1))
         
     def testPreserveHeightMethod(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
                      None, None, VideoScaleMethodEnum.height,
@@ -420,7 +414,6 @@ class TestVideoSize(unittest.TestCase):
         
         
     def testPreserveWidthMethod(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
                      None, None, VideoScaleMethodEnum.width,
@@ -490,7 +483,6 @@ class TestVideoSize(unittest.TestCase):
                      240, 1097, (3, 1))
 
     def testUpscaleMethod(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
                      None, None, VideoScaleMethodEnum.upscale,
@@ -560,7 +552,6 @@ class TestVideoSize(unittest.TestCase):
                      240, 1440, (3, 1))
 
     def testDownscaleMethod(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, (1, 2), 
                      None, None, VideoScaleMethodEnum.downscale,
@@ -630,7 +621,6 @@ class TestVideoSize(unittest.TestCase):
                      20, 320, (3, 1))
         
     def testWithoutPreferredSizeAndPAR(self):
-        print
         self._expect(320, 240, (1, 1), 
                      None, None, None, 
                      None, None, None,

@@ -10,8 +10,6 @@
 
 # Headers in this file shall remain intact.
 
-import math
-
 from zope.interface import Interface, implements
 
 from flumotion.transcoder.admin.admintask import IAdminTask

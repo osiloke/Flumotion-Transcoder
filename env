@@ -1,0 +1,20 @@
+#!/bin/sh
+
+thisdir=`cd $(dirname $0) && pwd`
+
+if test -n "$PYTHONPATH"; then
+  export PYTHONPATH=$thisdir:$PYTHONPATH
+else
+  export PYTHONPATH=$thisdir
+fi  
+
+if test -n "$FLU_PROJECT_PATH"; then
+  export FLU_PROJECT_PATH=$thisdir:$FLU_PROJECT_PATH
+else
+  export FLU_PROJECT_PATH=$thisdir
+fi  
+
+export PATH=$thisdir/bin:$PATH
+export PACKAGES="fsp $PACKAGES"
+
+exec "$@"

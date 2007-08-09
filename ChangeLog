@@ -1,5 +1,21 @@
 2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
 
+	* COPYING:
+	* conf/Makefile.am:
+	* configure.ac:
+	* env:
+	* flumotion/Makefile.am:
+	* flumotion/component/transcoder/Makefile.am:
+	* flumotion/project/Makefile.am:
+	* flumotion/test/Makefile.am:
+	* flumotion/test/test_videosize.py:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/transbalancer.py:
+	* tests/ogger.py:
+	Fixed and cleanup the build.
+
+2007-08-09  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/transcoder.py:
 	Removed wrong import statment.
 
