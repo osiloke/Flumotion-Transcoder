@@ -27,7 +27,7 @@ AC_MSG_NOTICE(Using localstatedir $LOCALSTATEDIR)
 
 
 dnl check for python
-AS_PATH_PYTHON(2.4)
+AS_PATH_PYTHON(2.4.0)
 dnl useful when we compile our own python modules
 dnl AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
