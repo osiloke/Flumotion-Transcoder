@@ -1,3 +1,3 @@
 bin_SCRIPTS = flumotion-transcoder-admin flumotion-transcoder-upgrade
 
-EXTRA_DIST = $(sbin_SCRIPTS)
+EXTRA_DIST = $(bin_SCRIPTS)
