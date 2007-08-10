@@ -42,7 +42,7 @@ GET request on the cluster admin.
 * Workers Options
    - Root directories for shared file-system and temporary file-system:
       For the examples, the root directories will be:
-        Shared: /home/file
+        Default: /home/file
         Temporary:  /var/tmp
         Maximum number of transcoding jobs.
 * Global Options:
@@ -295,36 +295,6 @@ be substituted:
     ? T ? S U   O %(mediaMinutes)s          : 20
     ? T ? S U   O %(mediaSeconds)s          : 30
 
-  C               %(workerShared)s          : /home/file
-  C               %(workerTemp)s            : /var/tmp
-  C               %(custRelDir)s            : fluendo
-  C               %(custRootDir)s           : /home/file/fluendo
-  C               %(custFilesDir)s          : /home/file/fluendo/files
-  C               %(custInputDir)s          : /home/file/fluendo/files/incoming
-  C               %(custOutputDir)s         : /home/file/fluendo/files/outgoing
-  C               %(custFailedDir)s         : /home/file/fluendo/files/failed
-  C               %(custDoneDir)s           : /home/file/fluendo/files/done
-  C               %(custLinksDir)s          : /home/file/fluendo/files/links
-  C               %(custWorkingDir)s        : /var/tmp/fluendo/working
-  C               %(custConfigsDir)s        : /home/file/fluendo/configs
-  C               %(custReportsDir)s        : /home/file/fluendo/reports
-  C               %(custFailedReportdDir)s  : /home/file/fluendo/reports/failed
-  C               %(custDoneReportsDir)s    : /home/file/fluendo/reports/done
-  C               %(profRelDir)s            : ogg/theora-vorbis
-  C               %(profInputDir)s          : /home/file/fluendo/files/incoming/ogg/theora-vorbis
-  C               %(profOutputDir)s         : /home/file/fluendo/files/outgoing/ogg/theora-vorbis
-  C               %(profFailedDir)s         : /home/file/fluendo/files/failed/ogg/theora-vorbis
-  C               %(profDoneDir)s           : /home/file/fluendo/files/done/ogg/theora-vorbis
-  C               %(profLinksDir)s          : /home/file/fluendo/files/links/ogg/theora-vorbis
-  C               %(profWorkingDir)s        : /var/tmp/fluendo/working/ogg/theora-vorbis
-  C               %(profConfigsDir)s        : /home/file/fluendo/configs/ogg/theora-vorbis
-  C               %(profFailedReportsDir)s  : /home/file/fluendo/reports/failed/ogg/theora-vorbis
-  C               %(profDoneReportsDir)s    : /home/file/fluendo/reports/done/ogg/theora-vorbis
-  C               %(targetRelDir)s          : high
-  C               %(targetOutputDir)s       : /home/file/fluendo/files/outgoing/ogg/theora-vorbis/high
-  C               %(targetLinksDir)s        : /home/file/fluendo/files/links/ogg/theora-vorbis/high
-  C               %(targetWorkingDir)s      : /var/tmp/fluendo/working/ogg/theora-vorbis/high
-
 
 DESCRIPTION
 
@@ -340,23 +310,39 @@ Transcoding Process Description:
   - TCA starts a TJC to do the transcoding (with the config as parameter)
   - TJC periodically notify the TCA of transcoding progress.
 
- If the transcoding job fail.
+ If the transcoding job fail, but the component still alive.
   - TJC write a transcoding report on the file-system
+  - TJC notify the TCA of the failure.
   - TJC goes SAD.
+  - TJC wait for acknoledgment by TCA
+  - TCA acknowledge the TJC
+  - TJC move the input file to the "failed" directory
   - TCA read the transcoding report
-  - TCA move the input file to the "failed" directory
   - TCA save a selected set of the report in the database
   - TCA send the error notifications (GET requests, Mails...)
   - TCA keep the component for further investigation. 
      A maximum number of SAD component could be implemented
      to not accumulate too much component
 
+ If the transcoding job fail, but the component is dead.
+  - TJC goes SAD or LOST.
+  - TCA ask MC to move the input file to the "failed" directory
+  - MC move the input file to the "failed" directory  
+  - TCA read the transcoding report if exists
+  - TCA save a selected set of the report in the database
+  - TCA send the error notifications (GET requests, Mails...)
+  - TCA keep the component reference for further investigation. 
+     A maximum number of SAD component could be implemented
+     to not accumulate too much component
+
  If the transcoding job succeed.
-  - TJC moved all generated files to the outgoing directory
   - TJC write a transcoding report on the file-system
+  - TJC wait for acknoledgment by TCA
   - TJC notify the TCA of the success.
+  - TCA acknowledge the TJC  
+  - TJC moved all generated files to the outgoing directory
+  - TJC move the input file to the "done" directory
   - TCA read the transcoding report
-  - TCA move the input file to the "done" directory
   - TCA save a selected set of the report in the database
   - TCA send the success notifications for each targets
   - TCA stop and remove the TJC
