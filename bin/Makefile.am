@@ -1,3 +1,6 @@
 bin_SCRIPTS = flumotion-transcoder-admin flumotion-transcoder-upgrade
 
-EXTRA_DIST = $(bin_SCRIPTS)
+CLEANFILES = $(bin_SCRIPTS)
+
+all: $(bin_SCRIPTS) $(sbin_SCRIPTS) $(noinst_SCRIPTS)
+	@chmod +x $(bin_SCRIPTS) $(sbin_SCRIPTS) $(noinst_SCRIPTS)
