@@ -83,6 +83,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self._report = None
         self._reportDefaultPath = None
         self._reportForcedPath = None
+        self._configPath = None
         self._config = None
         self._inputPath = None
         self._local = None
@@ -130,6 +131,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def do_check(self):
         
         def transcoder_checks(result):
+            # PyChecker doesn't like dynamic attributes
+            __pychecker__ = "no-objattrs"
             props = self.config["properties"]
             #FIXME: Better checks for path roots
             self._waitAcknowledge = props.get("wait-acknowledge", False)
@@ -376,7 +379,6 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         try:
             assert report == self._report, ("Job creates it's own report "
                                             + "instance. It's Baaaaad.")
-            config = self._config
             # FIXME: Very ugly, should not ask the job for this
             self._reportDefaultPath = self._job.getDoneReportPath()
             self.__writeReport(report)
@@ -392,7 +394,6 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     def __ebJobFailed(self, failure):
         try:
-            config = self._config
             report = self._report
             if not failure.check(TranscoderError):
                 m = messages.Error(T_(failure.getErrorMessage()),

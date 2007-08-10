@@ -98,11 +98,15 @@ class LocalReport(properties.PropertyBag):
     name = properties.String('name')
     
     def loadFromLocal(self, local):
+        # PyChecker doesn't like dynamic attributes
+        __pychecker__ = "no-classattr"
         self.name = local.getName()
         for name, value in local.iterVirtualRoots():
             self.roots[name] = value
             
     def getLocal(self):
+        # PyChecker doesn't like dynamic attributes
+        __pychecker__ = "no-classattr"
         return Local(self.name, self.roots)
                             
 
@@ -127,5 +131,7 @@ class TranscodingReport(properties.RootPropertyBag, TaskReport):
     cpuUsageTranscoding = UsageProperty('cpu-usage-transcoding')    
     
     def init(self, config):
+        # PyChecker doesn't like dynamic attributes
+        __pychecker__ = "no-classattr"
         for key in config.targets:
             self.targets[key] = TargetReport()

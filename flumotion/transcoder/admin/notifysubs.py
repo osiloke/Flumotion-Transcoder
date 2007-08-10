@@ -58,7 +58,9 @@ class NotificationVariables(Variables):
                 length = a.videoLength
             else:
                 length = a.audioLength or 0
-    
+
+            # PyChecker isn't smart enough to see I first convert to int
+            __pychecker__ = "no-intdivide"
             seconds = int(round(duration))
             minutes = seconds / 60
             seconds -= minutes * 60

@@ -84,6 +84,7 @@ class UnboundProfileContext(object):
                         "Config", "FailedRep", "DoneRep"]
     
     class __metaclass__(type):
+        
         def __init__(cls, classname, bases, dct):
             props = getattr(cls, "__base_getters__", [])
             for name in props:

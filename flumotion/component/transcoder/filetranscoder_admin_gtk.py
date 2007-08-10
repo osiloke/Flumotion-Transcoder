@@ -13,7 +13,6 @@
 
 import os
 import gtk
-import gobject
 
 from flumotion.common import errors, common
 
@@ -286,7 +285,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         return False
     
     def _jobWarningEvent(self, value):
-        self._jobWarning.append(_(value))
+        self._jobWarnings.append(_(value))
         self.updateJobErrors()
         self.updateStates()
         return False

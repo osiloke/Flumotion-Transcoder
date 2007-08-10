@@ -27,6 +27,8 @@ from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixi
 
 
 def createTranscodingConfigFromContext(profileCtx):
+    # PyChecker doesn't like dynamic attributes
+    __pychecker__ = "no-objattrs"
     conf = TranscodingConfig()
     conf.touch()
     prof = profileCtx

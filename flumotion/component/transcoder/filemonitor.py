@@ -209,7 +209,7 @@ class FileMonitor(component.BaseComponent):
     
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(TranscoderError):
-            return self.__transcodingError(failure, task)
+            return self.__monitorError(failure, task)
         return self.__unexpectedError(failure, task)
 
     def __monitorError(self, failure=None, task=None):

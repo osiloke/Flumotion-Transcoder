@@ -14,6 +14,8 @@ import weakref
 
 from flumotion.transcoder import log
 
+#FIXME: Find a way to not having to assume the childs classes
+#       will implement logging methods.
 
 class EventSource(object):
     """
@@ -33,6 +35,8 @@ class EventSource(object):
     ## Public Methods ##
 
     def addListener(self, listener, *args, **kwargs):
+        # PyChecker doesn't like that the logging method are undefined
+        __pychecker__ = "no-classattr"
         interfaces = []
         for interface, listeners in self._listeners.items():
             if not interface.providedBy(listener):

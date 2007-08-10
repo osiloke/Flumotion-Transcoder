@@ -14,7 +14,6 @@
 
 import os
 import gtk
-import gobject
 
 from flumotion.common import errors, common
 

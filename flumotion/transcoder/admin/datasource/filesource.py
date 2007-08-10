@@ -114,8 +114,11 @@ class MutableDataWrapper(object):
         self._fields = fields
 
     def _store(self):
+        # WARNING: This function is not generic, it's specific for activities
+        # PyChecker doesn't like dynamic attributes
+        __pychecker__ = "no-classattr"
         identifier = self._identifier or self.__newIdentifier()
-        data = self._data or self._template['class']()
+        data = self._data or self._template['class']()        
         newPath = self.__getPath(identifier, self.state)
         newTmpPath = newPath + ".tmp"
         for attr, value in self._fields.items():

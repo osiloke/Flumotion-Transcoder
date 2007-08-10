@@ -1,4 +1,4 @@
-#
+
 # .pycheckrc file created by PyChecker v0.8.14 @ Thu Oct 21 19:22:09 2004
 #
 # It should be placed in your home directory (value of $HOME).
@@ -212,10 +212,4 @@ debug = 0
 
 
 # suppressions work like this
-suppressions = {
-  'flumotion.transcoder.properties.PropertyBag': "no-classattr",
-  'flumotion.transcoder.properties.DynamicChild': "no-constCond",
-  'flumotion.transcoder.transreport.LocalReport': "no-classattr",
-  'flumotion.transcoder.transreport.TranscodingReport': "no-classattr",
-  'flumotion.transcoder.admin.proxies.transprops.createTranscodingConfigFromContext': "no-classattr no-objattrs"
-}
+suppressions = {}

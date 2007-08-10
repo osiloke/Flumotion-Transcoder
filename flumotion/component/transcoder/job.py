@@ -370,6 +370,8 @@ class TranscoderJob(log.LoggerProxy):
         length = sourceCtx.reporter.getMediaLength()
         vars['sourceDuration'] = duration
         vars['sourceLength'] = length
+        # PyChecker isn't smart enough to see I first convert to int
+        __pychecker__ = "no-intdivide"
         s = int(round(duration))
         m = s / 60
         s -= m * 60
@@ -432,6 +434,8 @@ class TranscoderJob(log.LoggerProxy):
         length = targetReporter.getMediaLength() or 0
         vars['targetDuration'] = duration
         vars['targetLength'] = length
+        # PyChecker isn't smart enough to see I first convert to int
+        __pychecker__ = "no-intdivide"
         s = int(round(duration))
         m = s / 60
         s -= m * 60

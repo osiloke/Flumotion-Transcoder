@@ -167,14 +167,14 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True):
         #       gstreamer-0.10.12, gstreamer-plugins-good-0.10.5
         crop = tuple([v % 2 for v in box])
         box = tuple([v - (v % 2) for v in box])
-        log.info("makeVideoEncodeBin - Output Video Boxing: %d %d %d %d" % box)
+        log.info("makeVideoEncodeBin - Output Video Boxing: %r" % (box,))
         videobox = gst.element_factory_make("videobox", "videobox-%s" % tag)
         videobox.props.left = box[0]
         videobox.props.top = box[1]
         videobox.props.right = box[2]
         videobox.props.bottom = box[3]
         if crop != (0, 0, 0, 0):
-            log.info("makeVideoEncodeBin - Output Video Cropping: %d %d %d %d" % crop)
+            log.info("makeVideoEncodeBin - Output Video Cropping: %r" % (crop,))
             videocrop = gst.element_factory_make("videocrop",
                                                  "videocrop-%s" % tag)
             videocrop.props.left = crop[0]

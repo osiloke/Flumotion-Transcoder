@@ -1,5 +1,26 @@
 2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/eventsource.py:
+	* flumotion/transcoder/admin/notifysubs.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/properties.py:
+	* flumotion/transcoder/transreport.py:
+	* misc/pycheckerrc:
+	Made PyChecker happyier.
+
+2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
+
 	Moved the example configuration files to doc/examples.
 	The configuration file in conf/ are the default ones that
 	will be installed.

@@ -84,8 +84,7 @@ class MultiTranscoder(log.LoggerProxy):
         self._deferred = defer.Deferred()
 
         # discover the source media
-        discoverer = Discoverer(self._sourcePath, 
-                                max_interleave=compconsts.MAX_INTERLEAVE)
+        discoverer = Discoverer(self._sourcePath, compconsts.MAX_INTERLEAVE)
         discoverer.connect('discovered', self._discovered_callback)
         discoverer.discover()
         
@@ -198,7 +197,7 @@ class MultiTranscoder(log.LoggerProxy):
         or gone unchanged in size for the past self._timeout seconds.
         """
         try:
-            #Only process the first message, prevent multiple call to _fail
+            #Only process the first message, prevent multiple call to __failed
             #if more than one target timeout at the same time
             watcher.stop()
             if self._watcher == None:
@@ -223,11 +222,11 @@ class MultiTranscoder(log.LoggerProxy):
                 if not ('audiosink' in tees):
                     self.warning("Found an audio pad not previously "
                                  "discovered. Try a bigger max-interleave.")
-                    gobject.idle_add(self._fail, 
+                    gobject.idle_add(self.__failed,
                                      "Found an audio pad for '%s' "
                                      "not previously discovered. "
-                                     "Try a bigger max-interleave."
-                                     , self.inputfile)
+                                     "Try a bigger max-interleave.",
+                                     self._sourcePath)
                     return
                 peer = tees['audiosink'].get_pad('sink')
                 if peer.is_linked():
@@ -239,11 +238,11 @@ class MultiTranscoder(log.LoggerProxy):
                 if not ('videosink' in tees):
                     self.warning("Found a video pad not previously "
                                  "discovered. Try a bigger max-interleave.")
-                    gobject.idle_add(self._fail, 
+                    gobject.idle_add(self.__failed, 
                                      "Found a video pad for '%s' "
                                      "not previously discovered. "
-                                     "Try a bigger max-interleave."
-                                     , self.inputfile)
+                                     "Try a bigger max-interleave.",
+                                     self._sourcePath)
                     return
                 peer = tees['videosink'].get_pad('sink')
                 if peer.is_linked():

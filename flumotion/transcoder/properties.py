@@ -581,6 +581,7 @@ class PropertyBag(object):
     """
 
     class __metaclass__(type):
+
         def __init__(cls, name, bases, attrs): 
             props = {}
             childs = {}
@@ -602,6 +603,7 @@ class PropertyBag(object):
             for a, v in attrs.iteritems():
                 if not a.startswith('_') and isinstance(v, BaseProperty):
                     v.setup(cls, a)
+
 
     def __init__(self, *args, **kwargs):
         self.setParent(None)
@@ -650,10 +652,10 @@ class PropertyBag(object):
         self.__dict__['_parent'] = parent and weakref.ref(parent)
     
     def getProperty(self):
-        return self._property
+        return self.__dict__.get("_property", None)
     
     def getLocator(self):
-        return self._property.getLocator(self)
+        return self.getProperty().getLocator(self)
     
     def reset(self):
         for p in self._properties.itervalues():
@@ -776,9 +778,13 @@ class DynamicChild(BaseChildProperty):
         return next
 
     def _getPreviousChild(self, obj):
+        # PyChecker doesn't like this
+        __pychecker__ = "no-constCond"
         return (self.isSet(obj) or None) and self.getValue(obj)
     
     def _getLinkValue(self, obj):
+        # PyChecker doesn't like this
+        __pychecker__ = "no-constCond"
         return ((hasattr(obj, self.linkAttr) or None) 
                 and getattr(obj, self.linkAttr))
 

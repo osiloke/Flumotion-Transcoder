@@ -326,7 +326,9 @@ class ThumbnailsTarget(TranscodingTarget):
             self.warning("Cannot generate percent-based thumbnails with a "
                          "source media without known duration, "
                          "falling back to second-based thumbnailing.")
-            newMax = max((100 / (self._config.periodValue or 10)) - 1, 1)
+            # PyChecker tell mi 100 / 10 may result to a float ? ?
+            __pychecker__ = "no-intdivide"
+            newMax = max((100 / (int(self._config.periodValue) or 10)) - 1, 1)
             if self._config.maxCount:
                 self._config.maxCount = min(self._config.maxCount, newMax)
             else:
