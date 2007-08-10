@@ -13,6 +13,8 @@
 from twisted.python import failure
 from flumotion.common import log as flog
 
+from flumotion.transcoder import log
+
 #FIXME: This class is waaayyyy too much hacky
 
 class TranscoderError(Exception):
@@ -36,7 +38,7 @@ class TranscoderError(Exception):
                 #To ignore failure.NoCurrentExceptionError if there is no current exception
                 pass
             if isinstance(self.cause, TranscoderError):
-                self.causeDetails = self.cause.getLogMessage()
+                self.causeDetails = log.getExceptionMessage(self.cause)
             if isinstance(self.cause, Exception):
                 self.causeDetails = flog.getExceptionMessage(self.cause)
             elif isinstance(self.cause, failure.Failure):
