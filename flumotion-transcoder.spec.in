@@ -38,63 +38,95 @@ rm -rf $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT install
 
 # create config dir
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/flumotion-transcoder
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/managers/transcoder
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/customers
+install -m 644 \
+        conf/managers/transcoder/planet.xml \
+        $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/managers/transcoder/planet.xml
+install -m 644 \
+        conf/transcoder/transcoder-admin.ini \
+        $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini
+install -m 644 \
+        conf/transcoder/transcoder-data.ini \
+        $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/transcoder-data.ini
+install -m 644 \
+        conf/transcoder/customers/fluendo.ini.template \
+        $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/customers/fluendo.ini.template
 
 # install service files
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 doc/redhat/flumotion-transcoder-admin \
+install -m 755 \
+        conf/redhat/flumotion-transcoder-admin \
         $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
-install -m 755 doc/redhat/flumotion-transcoder-manager \
+install -m 755 \
+        conf/redhat/flumotion-transcoder-manager \
         $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-manager
-install -m 755 doc/redhat/flumotion-transcoder-manager \
+install -m 755 \
+        conf/redhat/flumotion-transcoder-manager \
         $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-worker
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 doc/redhat/flumotion-transcoder-admin.sysconfig \
+install -m 644 \
+        conf/redhat/flumotion-transcoder-admin.sysconfig \
         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-admin
-install -m 644 doc/redhat/flumotion-transcoder-manager.sysconfig \
+install -m 644 \
+        conf/redhat/flumotion-transcoder-manager.sysconfig \
         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-manager
-install -m 644 doc/redhat/flumotion-transcoder-worker.sysconfig \
+install -m 644 \
+        conf/redhat/flumotion-transcoder-worker.sysconfig \
         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-worker
 
-install -d $RPM_BUILD_ROOT%{_sysconfdir}
-install -m 644 \
-        conf/flumotion-transcoder.ini \
-        $RPM_BUILD_ROOT%{_sysconfdir}
+# create tmp and cache dir
+install -d $RPM_BUILD_ROOT%{_localstatedir}/tmp/flumotion/transcoder
+install -d $RPM_BUILD_ROOT%{_localstatedir}/cache/flumotion/transcoder/activities
 
-# create srv and tmp dir
-install -d $RPM_BUILD_ROOT/srv/flumotion/transcoder
-install -d $RPM_BUILD_ROOT%{_localstatedir}/flumotion/transcoder
 %post
-/sbin/chkconfig --add flumotion-transcoder
+/sbin/chkconfig --add flumotion-transcoder-manager
+#/sbin/chkconfig --add flumotion-transcoder-worker
+/sbin/chkconfig --add flumotion-transcoder-admin
 
 %preun
 # if removal and not upgrade, stop the processes, clean up locks
 if [ $1 -eq 0 ]
 then
-  /sbin/service flumotion-transcoder stop
+  /sbin/service flumotion-transcoder-admin stop
+  /sbin/service flumotion-transcoder-worker stop
+  /sbin/service flumotion-transcoder-manager stop
 
-  /sbin/chkconfig --del flumotion-transcoder
+  /sbin/chkconfig --del flumotion-transcoder-admin
+#  /sbin/chkconfig --del flumotion-transcoder-worker
+  /sbin/chkconfig --del flumotion-transcoder-manager
 
-  rm -rf %{_localstatedir}/flumotion/transcoder*
+  rm -rf %{_localstatedir}/tmp/flumotion/transcoder
+  rm -rf %{_localstatedir}/cache/flumotion/transcoder
 fi
 
 %files
 %defattr(-,root,root,-)
-%doc ChangeLog COPYING README AUTHORS LICENSE.Flumotion
-%{_sbindir}/flumotion-transcoder
-%{_sbindir}/flumotion-transcoder-job
+%doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
+%{_bindir}/flumotion-transcoder-admin
+%{_bindir}/flumotion-transcoder-upgrader
 
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
 
-%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder
-%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion-transcoder.ini
-%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder
-%dir %attr(750,flumotion,root) %{_localstatedir}/flumotion/transcoder
-%dir %attr(750,flumotion,root) /srv/flumotion/transcoder
+%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
+%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-manager
+%attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-worker
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion/managers/transcoder/planet.xml
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-data.ini
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/customers/fluendo.ini.template
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-admin
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-manager
+%attr(640,flumotion,root) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-worker
+%dir %attr(750,flumotion,root) %{_localstatedir}/tmp/flumotion/transcoder
+%dir %attr(750,flumotion,root) %{_localstatedir}/cache/flumotion/transcoder
 
 %changelog
+* Fri Aug 10 2007 Sebastien Merle <sebastien@fluendo.com>
+- Updated for the new transcoder.
+
 * Fri Dec 15 2006 Thomas Vander Stichele <thomas at apestaart dot org>
 - require flumotion
 

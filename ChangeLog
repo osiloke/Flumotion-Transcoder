@@ -1,5 +1,12 @@
 2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
 
+	* doc/Makefile.am:
+	Fix typo.
+	* flumotion-transcoder.spec.in:
+	Updated the spec file for the new transcoder.
+
+2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/binmaker.py:
 	* flumotion/component/transcoder/filemonitor.py:
 	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
