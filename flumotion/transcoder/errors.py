@@ -11,9 +11,7 @@
 # Headers in this file shall remain intact.
 
 from twisted.python import failure
-from flumotion.common import log as flog
 
-from flumotion.transcoder import log
 
 #FIXME: This class is waaayyyy too much hacky
 
@@ -37,12 +35,13 @@ class TranscoderError(Exception):
             except:
                 #To ignore failure.NoCurrentExceptionError if there is no current exception
                 pass
+            from flumotion.transcoder import log
             if isinstance(self.cause, TranscoderError):
                 self.causeDetails = log.getExceptionMessage(self.cause)
             if isinstance(self.cause, Exception):
-                self.causeDetails = flog.getExceptionMessage(self.cause)
+                self.causeDetails = log.getExceptionMessage(self.cause)
             elif isinstance(self.cause, failure.Failure):
-                self.causeDetails = flog.getFailureMessage(self.cause)
+                self.causeDetails = log.getFailureMessage(self.cause)
             else:
                 self.causeDetails = "Unknown"
 
