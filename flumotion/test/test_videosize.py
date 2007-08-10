@@ -149,7 +149,6 @@ class TestVideoSize(unittest.TestCase):
         
     
     def testPreferredSize(self):
-        print
         self._expect(320, 240, (1, 1), 
                      200, 200, (1, 1), 
                      None, None, None,
