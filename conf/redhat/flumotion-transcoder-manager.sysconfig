@@ -1,0 +1,8 @@
+# Manager SSL port
+#MANAGER_PORT=7632
+
+# Manager configuration file
+#MANAGER_CONFIG=/etc/flumotion/managers/transcoder/planet.xml
+
+# Additional options
+#OPTIONS=

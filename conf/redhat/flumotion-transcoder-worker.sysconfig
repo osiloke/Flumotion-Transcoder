@@ -1,0 +1,12 @@
+# Manager hostname
+#MANAGER_HOST=localhost
+
+# Manager SSL port
+#MANAGER_PORT=7632
+
+# Manager login credentials
+#AUTH_USERNAME=user
+#AUTH_PASSWORD=test
+
+# Additional options
+#OPTIONS=

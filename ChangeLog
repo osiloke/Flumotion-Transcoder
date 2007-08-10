@@ -1,3 +1,11 @@
+2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
+
+	Moved the example configuration files to doc/examples.
+	The configuration file in conf/ are the default ones that
+	will be installed.
+	Created startup scripts and sysconfig templates for 
+	the transcoder admin, manager and worker in conf/redhat.
+
 2007-08-10  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* configure.ac:

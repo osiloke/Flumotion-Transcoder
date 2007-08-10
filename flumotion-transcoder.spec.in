@@ -6,21 +6,18 @@ Release:        @RELEASE@
 Summary:        Flumotion Transcoder
 
 Group:          Applications/Internet
-License:	Proprietary
+License:        Proprietary
 URL:            http://www.fluendo.com/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Requires:	%{gstreamer}
+Requires:       %{gstreamer}
 Requires:       flumotion
 
 # sigh, libtool
 BuildRequires:  gcc-c++
 
-BuildRequires:	%{gstreamer}-devel >= @GST_010_REQ@
-BuildRequires:	%{gstreamer}-python
-BuildRequires:	flumotion
-BuildRequires:	pygtk2-devel
+BuildRequires:	flumotion >= @FLUMOTION_REQ@
 
 %description
 Flumotion Transcoder.
@@ -45,14 +42,20 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/flumotion-transcoder
 
 # install service files
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 \
-        doc/redhat/flumotion-transcoder.init \
-        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder
+install -m 755 doc/redhat/flumotion-transcoder-admin \
+        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
+install -m 755 doc/redhat/flumotion-transcoder-manager \
+        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-manager
+install -m 755 doc/redhat/flumotion-transcoder-manager \
+        $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-worker
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 \
-        doc/redhat/flumotion-transcoder.sysconfig \
-        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder
+install -m 644 doc/redhat/flumotion-transcoder-admin.sysconfig \
+        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-admin
+install -m 644 doc/redhat/flumotion-transcoder-manager.sysconfig \
+        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-manager
+install -m 644 doc/redhat/flumotion-transcoder-worker.sysconfig \
+        $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-worker
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}
 install -m 644 \

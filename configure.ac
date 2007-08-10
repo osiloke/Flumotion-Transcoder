@@ -62,6 +62,7 @@ bin/Makefile
 common/Makefile
 conf/Makefile
 misc/Makefile
+doc/Makefile
 transcoder/Makefile
 flumotion/Makefile
 flumotion/test/Makefile

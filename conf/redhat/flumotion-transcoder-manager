@@ -1,0 +1,107 @@
+#!/bin/bash
+#
+# Startup script for Flumotion Transcoder Manager
+#
+# flumotion-transcoder-manager: Flumotion Transcoder Manager Daemon
+#
+# chkconfig: - 75 25
+#
+# description: Flumotion is a streaming server for audio and video. \
+#              See http://www.fluendo.com for details.
+#
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# paths to files and variables
+service=flumotion-transcoder-manager
+shortservice=transcoder-manager
+prog=/usr/bin/flumotion-manager
+lockdir=/var/lock/subsys
+lockfile=${lockdir}/$service.lock
+filebasename=manager-transcoder
+pidfile=/var/run/flumotion/$filebasename.pid
+logfile=/var/log/flumotion/$filebasename.log
+sysconfig=/etc/sysconfig/$service
+
+# source configuration
+if [ -f $sysconfig ] ; then
+	. $sysconfig
+fi
+
+# to make sure our service log file is always owned by the correct user,
+# we touch it
+touch_logfile() {
+	touch $logfile
+	chown flumotion $logfile
+}
+
+# if arguments are specified, we only start/stop that service part
+start() {
+	touch_logfile
+	echo -n $"Starting $service: "
+		# OPTIONS can be set from the config file as well
+	daemon --user flumotion $prog -D -n transcoder \
+	                        -P ${MANAGER_PORT:-"7632"} $OPTIONS \
+	                        ${MANAGER_CONFIG:-"/etc/flumotion/managers/transcoder/planet.xml"}
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch ${lockfile}
+	return $RETVAL
+}
+
+stop() {
+	RETVAL=0
+	if test -e ${lockfile}; then
+		echo -n $"Stopping $service: "
+			# killproc will show success or failure, but not echo newline
+		killproc -p $pidfile $service
+		RETVAL=$?
+		echo
+		[ $RETVAL = 0 ] && rm ${lockfile}
+	fi
+	return $RETVAL
+}
+
+# we cannot use functions' version of status, since that first looks
+# for running processes of the same name - so it finds processes not
+# started from /etc/rc.d as well
+status() {
+	if [ ! -f $pidfile ] ; then
+		echo $service is not running
+		return 3
+	else
+		read pid < "$pidfile"
+		if [ ! -d /proc/$pid ] ; then
+			echo "$service is dead but $pidfile exists"
+			return 1
+		else
+			echo "$service is running (pid $pid)"
+			return 0
+		fi
+	fi
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		shift
+		start $*
+		;;
+	stop)
+		shift
+		stop $*
+		;;
+	restart)
+		shift
+		stop $*
+		start $*
+		;;
+	status)
+		status $*
+		;;
+	*)
+		echo $"Usage: $service {start|stop|restart|status}"
+		exit 1
+esac
+
+exit $RETVAL

@@ -7,7 +7,7 @@ include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 include $(srcdir)/common/rpm.mk
 
-SUBDIRS = . common conf misc bin transcoder flumotion tests
+SUBDIRS = . common conf misc bin doc transcoder flumotion tests
 
 PYCHECKER_WHITELIST = \
 	flumotion/transcoder/*.py \
@@ -23,6 +23,4 @@ PYCHECKER_BLACKLIST =
 
 EXTRA_DIST = env.in \
 	LICENSE.Flumotion \
-	flumotion-transcoder.spec \
-	doc/redhat/flumotion-transcoder.init \
-	doc/redhat/flumotion-transcoder.sysconfig
+	flumotion-transcoder.spec.in
