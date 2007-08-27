@@ -25,93 +25,93 @@ sysconfig=/etc/sysconfig/$service
 
 # source configuration
 if [ -f $sysconfig ] ; then
-	. $sysconfig
+    . $sysconfig
 fi
 
 ENV_VARS=""
 if test "x$GST_DEBUG" != "x"; then
-	ENV_VARS="$ENV_VARS GST_DEBUG=$GST_DEBUG"
+    ENV_VARS="$ENV_VARS GST_DEBUG=$GST_DEBUG"
 fi	
 
 # to make sure our service log file is always owned by the correct user,
 # we touch it
 touch_logfile() {
-	touch $logfile
-	chown flumotion $logfile
+    touch $logfile
+    chown flumotion $logfile
 }
 
 # if arguments are specified, we only start/stop that service part
 start() {
-	touch_logfile
-	echo -n $"Starting $service: "
-		# MANAGER_HOST, MANAGER_PORT, AUTH_USERNAME and AUTH_PASSWORD \
-		# can be overriden from the config file
-		# OPTIONS can be set from the config file as well
-	daemon --user flumotion $ENV_VARS $prog -D -P 7632 -n $(hostname) \
-											-H ${MANAGER_HOST:-"localhost"} \
-											-P ${MANAGER_PORT:-"7632"} \
-											-u ${AUTH_USERNAME:-"user"} \
-											-p ${AUTH_PASSWORD:-"test"} \
-											$OPTIONS
-	RETVAL=$?
-	echo
-	[ $RETVAL = 0 ] && touch ${lockfile}
-	return $RETVAL
+    touch_logfile
+    echo -n $"Starting $service: "
+        # MANAGER_HOST, MANAGER_PORT, AUTH_USERNAME and AUTH_PASSWORD \
+        # can be overriden from the config file
+        # OPTIONS can be set from the config file as well
+    daemon --user flumotion $ENV_VARS $prog -D -P 7632 -n $(hostname) \
+                                            -H ${MANAGER_HOST:-"localhost"} \
+                                            -P ${MANAGER_PORT:-"7632"} \
+                                            -u ${AUTH_USERNAME:-"user"} \
+                                            -p ${AUTH_PASSWORD:-"test"} \
+                                            $OPTIONS
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && touch ${lockfile}
+    return $RETVAL
 }
 
 stop() {
-	RETVAL=0
-	if test -e ${lockfile}; then
-		echo -n $"Stopping $service: "
-			# killproc will show success or failure, but not echo newline
-		killproc -p $pidfile $service
-		RETVAL=$?
-		echo
-		[ $RETVAL = 0 ] && rm ${lockfile}
-	fi
-	return $RETVAL
+    RETVAL=0
+    if test -e ${lockfile}; then
+        echo -n $"Stopping $service: "
+            # killproc will show success or failure, but not echo newline
+        killproc -p $pidfile $service
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && rm ${lockfile}
+    fi
+    return $RETVAL
 }
 
 # we cannot use functions' version of status, since that first looks
 # for running processes of the same name - so it finds processes not
 # started from /etc/rc.d as well
 status() {
-	if [ ! -f $pidfile ] ; then
-		echo $service is not running
-		return 3
-	else
-		read pid < "$pidfile"
-		if [ ! -d /proc/$pid ] ; then
-			echo "$service is dead but $pidfile exists"
-			return 1
-		else
-			echo "$service is running (pid $pid)"
-			return 0
-		fi
-	fi
+    if [ ! -f $pidfile ] ; then
+        echo $service is not running
+        return 3
+    else
+        read pid < "$pidfile"
+        if [ ! -d /proc/$pid ] ; then
+            echo "$service is dead but $pidfile exists"
+            return 1
+        else
+            echo "$service is running (pid $pid)"
+            return 0
+        fi
+    fi
 }
 
 # See how we were called.
 case "$1" in
-	start)
-		shift
-		start $*
-		;;
-	stop)
-		shift
-		stop $*
-		;;
-	restart)
-		shift
-		stop $*
-		start $*
-		;;
-	status)
-		status $*
-		;;
-	*)
-		echo $"Usage: $service {start|stop|restart|status}"
-		exit 1
+    start)
+        shift
+        start $*
+        ;;
+    stop)
+        shift
+        stop $*
+        ;;
+    restart)
+        shift
+        stop $*
+        start $*
+        ;;
+    status)
+        status $*
+        ;;
+    *)
+        echo $"Usage: $service {start|stop|restart|status}"
+        exit 1
 esac
 
 exit $RETVAL
