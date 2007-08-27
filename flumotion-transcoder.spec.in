@@ -62,7 +62,7 @@ install -m 755 \
         conf/redhat/flumotion-transcoder-manager \
         $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-manager
 install -m 755 \
-        conf/redhat/flumotion-transcoder-manager \
+        conf/redhat/flumotion-transcoder-worker \
         $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/flumotion-transcoder-worker
 
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
