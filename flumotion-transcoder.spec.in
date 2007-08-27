@@ -114,7 +114,7 @@ fi
 %doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
-%attr(755,flumotion,root) %{_bindir}/flumotion-transcoder-upgrader
+%attr(755,flumotion,root) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,flumotion,root) %{_bindir}/flumotion-transcoder-admin
 %attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
 %attr(750,flumotion,root) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-manager
