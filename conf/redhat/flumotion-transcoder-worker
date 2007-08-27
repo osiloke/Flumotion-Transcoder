@@ -18,15 +18,22 @@ shortservice=transcoder-worker
 prog=/usr/bin/flumotion-worker
 lockdir=/var/lock/subsys
 lockfile=${lockdir}/$service.lock
-filebasename=worker-$(hostname)
-pidfile=/var/run/flumotion/$filebasename.pid
-logfile=/var/log/flumotion/$filebasename.log
 sysconfig=/etc/sysconfig/$service
 
 # source configuration
 if [ -f $sysconfig ] ; then
     . $sysconfig
 fi
+
+WORKER_NAME=${WORKER_NAME:-"$(hostname)"}
+MANAGER_HOST=${MANAGER_HOST:-"localhost"}
+MANAGER_PORT=${MANAGER_PORT:-"7632"}
+AUTH_USERNAME=${AUTH_USERNAME:-"user"}
+AUTH_PASSWORD=${AUTH_PASSWORD:-"test"}
+
+filebasename=worker.$WORKER_NAME
+pidfile=/var/run/flumotion/$filebasename.pid
+logfile=/var/log/flumotion/$filebasename.log
 
 ENV_VARS=""
 if test "x$GST_DEBUG" != "x"; then
@@ -47,11 +54,11 @@ start() {
         # MANAGER_HOST, MANAGER_PORT, AUTH_USERNAME and AUTH_PASSWORD \
         # can be overriden from the config file
         # OPTIONS can be set from the config file as well
-    daemon --user flumotion $ENV_VARS $prog -D -P 7632 -n $(hostname) \
-                                            -H ${MANAGER_HOST:-"localhost"} \
-                                            -P ${MANAGER_PORT:-"7632"} \
-                                            -u ${AUTH_USERNAME:-"user"} \
-                                            -p ${AUTH_PASSWORD:-"test"} \
+    daemon --user flumotion $ENV_VARS $prog -D -n $WORKER_NAME \
+                                            -H $MANAGER_HOST \
+                                            -P $MANAGER_PORT \
+                                            -u $AUTH_USERNAME \
+                                            -p $AUTH_PASSWORD \
                                             $OPTIONS
     RETVAL=$?
     echo
