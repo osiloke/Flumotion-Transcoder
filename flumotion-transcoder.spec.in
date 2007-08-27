@@ -76,14 +76,6 @@ install -m 644 \
         conf/redhat/flumotion-transcoder-worker.sysconfig \
         $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/flumotion-transcoder-worker
 
-# install binary files
-install -m 755 \
-        bin/flumotion-transcoder-admin \
-        $RPM_BUILD_ROOT%{_bindir}/flumotion-transcoder-admin
-install -m 755 \
-        bin/flumotion-transcoder-upgrade \
-        $RPM_BUILD_ROOT%{_bindir}/flumotion-transcoder-upgrade
-
 # create tmp and cache dir
 install -d $RPM_BUILD_ROOT%{_localstatedir}/tmp/flumotion/transcoder
 install -d $RPM_BUILD_ROOT%{_localstatedir}/cache/flumotion/transcoder/activities
