@@ -1,7 +1,7 @@
 <registry>
   <plugs>
     <plug socket="flumotion.component.plugs.lifecycle.ManagerLifecycle"
-          type="transcoderenvironment">
+          type="transcoder-environment">
       <entry location="flumotion/transcoder/manager/plugs.py"
              function="TranscoderEnvironment"/>
       <properties>

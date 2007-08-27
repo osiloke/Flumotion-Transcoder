@@ -1,3 +1,9 @@
+2007-08-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/managers/transcoder/planet.xml:
+	* flumotion/transcoder/manager/plugs.xml:
+	Changed the plug name from transcoderenvironment to transcoder-environment.
+	
 2007-08-10  Sebastien Merle  <sebastien@fluendo.com>
 
 	* doc/Makefile.am:

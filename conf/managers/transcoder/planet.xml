@@ -6,7 +6,7 @@
     </component>
     <plugs>
       <plug socket="flumotion.component.plugs.lifecycle.ManagerLifecycle"
-	        type="transcoderenvironment">
+	        type="transcoder-environment">
 	  </plug>
     </plugs>  
   </manager>
