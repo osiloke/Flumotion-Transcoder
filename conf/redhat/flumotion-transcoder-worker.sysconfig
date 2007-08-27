@@ -8,5 +8,8 @@
 #AUTH_USERNAME=user
 #AUTH_PASSWORD=test
 
+# GStreamer debug parameteres
+#GST_DEBUG=
+
 # Additional options
 #OPTIONS=

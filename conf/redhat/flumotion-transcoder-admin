@@ -15,7 +15,7 @@
 # paths to files and variables
 service=flumotion-transcoder-admin
 shortservice=transcoder-admin
-prog=/usr/sbin/$service
+prog=/usr/bin/$service
 lockdir=/var/lock/subsys
 lockfile=${lockdir}/$service.lock
 pidfile=/var/run/flumotion/$shortservice.pid

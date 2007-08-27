@@ -1,5 +1,19 @@
 2007-08-27  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/redhat/flumotion-transcoder-admin:
+	* conf/redhat/flumotion-transcoder-manager:
+	* conf/redhat/flumotion-transcoder-worker:
+	* conf/redhat/flumotion-transcoder-worker.sysconfig:
+	* configure.ac:
+	* flumotion/transcoder/admin/context/Makefile.am:
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	Added a nano part to the version.
+	The pythondir was wrong for datastore and context makefiles.
+	Fixed logfile name for transcoder manager.
+	Added GST_DEBUG sys option for transcoder worker.
+
+2007-08-27  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/managers/transcoder/planet.xml:
 	* flumotion/transcoder/manager/plugs.xml:
 	Changed the plug name from transcoderenvironment to transcoder-environment.

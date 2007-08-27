@@ -28,6 +28,11 @@ if [ -f $sysconfig ] ; then
 	. $sysconfig
 fi
 
+ENV_VARS=""
+if test "x$GST_DEBUG" != "x"; then
+	ENV_VARS="$ENV_VARS GST_DEBUG=$GST_DEBUG"
+fi	
+
 # to make sure our service log file is always owned by the correct user,
 # we touch it
 touch_logfile() {
@@ -42,12 +47,12 @@ start() {
 		# MANAGER_HOST, MANAGER_PORT, AUTH_USERNAME and AUTH_PASSWORD \
 		# can be overriden from the config file
 		# OPTIONS can be set from the config file as well
-	daemon --user flumotion $prog -D -P 7632 -n $(hostname) \
-							-H ${MANAGER_HOST:-"localhost"} \
-							-P ${MANAGER_PORT:-"7632"} \
-							-u ${AUTH_USERNAME:-"user"} \
-							-p ${AUTH_PASSWORD:-"test"} \
-							$OPTIONS
+	daemon --user flumotion $ENV_VARS $prog -D -P 7632 -n $(hostname) \
+											-H ${MANAGER_HOST:-"localhost"} \
+											-P ${MANAGER_PORT:-"7632"} \
+											-u ${AUTH_USERNAME:-"user"} \
+											-p ${AUTH_PASSWORD:-"test"} \
+											$OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL = 0 ] && touch ${lockfile}
