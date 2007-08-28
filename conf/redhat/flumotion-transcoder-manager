@@ -28,6 +28,9 @@ if [ -f $sysconfig ] ; then
     . $sysconfig
 fi
 
+MANAGER_PORT=${MANAGER_PORT:-"7632"}
+MANAGER_CONFIG=${MANAGER_CONFIG:-"/etc/flumotion/managers/transcoder/planet.xml"}
+
 # to make sure our service log file is always owned by the correct user,
 # we touch it
 touch_logfile() {
@@ -41,8 +44,8 @@ start() {
     echo -n $"Starting $service: "
         # OPTIONS can be set from the config file as well
     daemon --user flumotion $prog -D -n transcoder \
-                            -P ${MANAGER_PORT:-"7632"} $OPTIONS \
-                            ${MANAGER_CONFIG:-"/etc/flumotion/managers/transcoder/planet.xml"}
+                            -P $MANAGER_PORT $OPTIONS \
+                            $MANAGER_CONFIG
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && touch ${lockfile}

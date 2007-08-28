@@ -27,6 +27,8 @@ if [ -f $sysconfig ] ; then
     . $sysconfig
 fi
 
+TRANSCODER_CONFIG=${TRANSCODER_CONFIG:-"/etc/flumotion/transcoder/transcoder-admin.ini"}
+
 # to make sure our service log file is always owned by the correct user,
 # we touch it
 touch_logfile() {
@@ -39,8 +41,7 @@ start() {
     touch_logfile
     echo -n $"Starting $service: "
         # OPTIONS can be set from the config file as well
-    daemon --user flumotion $prog -D $OPTIONS \
-                            ${TRANSCODER_CONFIG:-"/etc/flumotion/transcoder/transcoder-admin.ini"}
+    daemon --user flumotion $prog -D $OPTIONS $TRANSCODER_CONFIG
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && touch ${lockfile}
