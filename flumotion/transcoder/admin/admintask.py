@@ -474,7 +474,6 @@ class AdminTask(LoggerProxy, EventSource):
     
     def __setActiveComponent(self, component):
         self._active.setValue(component)
-        self._resetRetryCounter()
     
     def __startup(self):
         self.log("Starting/Resuming admin task '%s'", self.getLabel())
@@ -645,7 +644,6 @@ class AdminTask(LoggerProxy, EventSource):
             if worker == self._worker:
                 self.debug("The valid component '%s' is already started",
                            active.getName())
-                self._resetRetryCounter()
                 return
         # Set the pendingName right now to prevent other
         # transoder to be started

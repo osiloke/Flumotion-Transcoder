@@ -1,5 +1,12 @@
 2007-08-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py:
+	Reverted last changes. If the retry counter is reseted
+	and nothing more, the components that crash are 
+	started forever.
+
+2007-08-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder/transcoder-admin.ini:
 	Use SSL by default.
 	* flumotion/transcoder/admin/admintask.py:
