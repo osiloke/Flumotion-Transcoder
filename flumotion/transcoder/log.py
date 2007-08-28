@@ -24,7 +24,7 @@ from flumotion.transcoder.properties import PropertyError
 
 ## Global parameters setters ##
 
-_default_log_category = ""
+logCategory = ""
 _notifier = None
 
 def setDebugNotifier(notifier):
@@ -32,8 +32,8 @@ def setDebugNotifier(notifier):
     _notifier = notifier
 
 def setDefaultCategory(category):
-    global _default_log_category
-    _default_log_category = category
+    global logCategory
+    logCategory = category
 
 def setFluDebug(string):
     flog.setFluDebug(string)
@@ -235,26 +235,26 @@ class LoggerProxy(object):
 ### Helper functions to log without logger ##
 
 def log(*args, **kwargs):
-    global _default_log_category
-    category = kwargs.pop("category", _default_log_category)
+    global logCategory
+    category = kwargs.pop("category", logCategory)
     flog.log(category, *args, **kwargs)
 
 def debug(*args, **kwargs):
-    global _default_log_category
-    category = kwargs.pop("category", _default_log_category)
+    global logCategory
+    category = kwargs.pop("category", logCategory)
     flog.debug(category, *args, **kwargs)
 
 def info(*args, **kwargs):
-    global _default_log_category
-    category = kwargs.pop("category", _default_log_category)
+    global logCategory
+    category = kwargs.pop("category", logCategory)
     flog.info(category, *args, **kwargs)
 
 def warning(*args, **kwargs):
-    global _default_log_category
-    category = kwargs.pop("category", _default_log_category)
+    global logCategory
+    category = kwargs.pop("category", logCategory)
     flog.warning(category, *args, **kwargs)
 
 def error(*args, **kwargs):
-    global _default_log_category
-    category = kwargs.pop("category", _default_log_category)
+    global logCategory
+    category = kwargs.pop("category", logCategory)
     flog.error(category, *args, **kwargs)
