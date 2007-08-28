@@ -12,12 +12,8 @@ Features:
   with htaccess-like files (#882)
 - Add multi-pass encoding support (#783)
 - Add a size/duration limitation for the output targets (#798)
-- Add an option to set the output with and heigh multiple (#1067)
-- Add an identity target that only copy the incoming file (#1059)
 - Add an option to force the group and rights of the generated files (#1060)
 - Compare the duration of the source file and target file if possible (#1061)
-- Add a substitution variable with the duraion of any duration disponible.
-  The duration of the source or the duration of the target (#1062)
 - Change the scheduler to use a faire queuing algorithm (#1063)
 - Add input file filtering (#1065)
 - Add input file rejection (#1066)
@@ -33,8 +29,13 @@ Features:
   should be moved to be able to make inplace transcoding 
   (without moving the sourcefile).
 - Add configuration/report files versioning and automatique upgrading.
-- Send a debug notification (by mail) on warnings with traceback.
-- Send a debug notification when a deferred end with an unresolved failure.
+- Add authentication token to the datasource/datastore/API to be able to
+  manage rights and log who made odifications (#1271)
+- Add a transcoding-command component that listen somehow (HTTP GET?) and
+  send trancoding request to the admin like the file-monitor (#1272)
+- Add a configuration override parameter to the transcoding-command and
+  file-monitor components to be able in one case add command parameters
+  and in the other have .htaccess like overriding files (#1273)
 
 Tests:
 - Write manual test procedures (like for FSP)
@@ -52,6 +53,7 @@ Refactoring:
 - Refactor file transcoder contexts to match the admin standard 
   for fileFile, fileDir, fileBase, filePath, fileRelPath, 
   profileName, customerName, targetName.
-- workout a solution to remove the deep references in contexts and stores.
-- Review the activities to allow for diffrent types of notifications.
-- Better filesource that handle properly lots of activities.
+- Workout a solution to remove the deep references in contexts and stores.
+- Better retry count handling for task's components to make the diffrence
+  between actively stopped components and crashed components.
+
