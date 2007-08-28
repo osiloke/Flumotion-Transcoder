@@ -1,3 +1,10 @@
+2007-08-28  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder/transcoder-admin.ini:
+	Use SSL by default.
+	* flumotion/transcoder/admin/admintask.py:
+	Reset retry counter when component startup succeed.	
+
 2007-08-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/redhat/flumotion-transcoder-admin:
