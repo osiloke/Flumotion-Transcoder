@@ -194,20 +194,24 @@ class FileMonitor(component.BaseComponent):
     
     def __updateUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.__doUpdateItem, key, subkey, value))
-        self.__doSmoothUpdate()
+        self.__startupSmoothUpdate()
     
     def __setUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.uiState.setitem, key, subkey, value))
-        self.__doSmoothUpdate()
+        self.__startupSmoothUpdate()
     
     def __delUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.uiState.delitem, key, subkey, value))
-        self.__doSmoothUpdate()
+        self.__startupSmoothUpdate()
     
     def __doUpdateItem(self, key, subkey, value):
-        state = self.uiState.get('pending-files')
-        if (key in state) and (state.get(subkey) != value):
-            self.uiState.setitem('pending-files', key, value)
+        state = self.uiState.get(key)
+        if (subkey in state) and (state.get(subkey) != value):
+            self.uiState.setitem(key, subkey, value)
+    
+    def __startupSmoothUpdate(self):
+        if not self._uiItemDelay and self._uiItemDelta:
+            self.__doSmoothUpdate()
     
     def __doSmoothUpdate(self):
         self._uiItemDelay = None

@@ -1,6 +1,11 @@
 2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py:
+	Fixed UI State update smoothing.
+
+2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
 	* flumotion/component/transcoder/filetranscoder.py:
 	* flumotion/component/transcoder/job.py:
 	* flumotion/transcoder/admin/main.py:
