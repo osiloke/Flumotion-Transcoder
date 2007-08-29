@@ -68,7 +68,7 @@ class MonitorProxy(ComponentProxy):
                                 componentState, domain,
                                 IMonitorListener)
         self._alreadyAdded = {} # {file: None}
-        self._stateUpdateDelta = []
+        self._stateUpdateDelta = {}
         self._stateUpdateDelay = None
         self._stateUpdateResult = None
 
@@ -82,7 +82,7 @@ class MonitorProxy(ComponentProxy):
             
     def setFileStateBuffered(self, virtBase, relFile, state):
         self.log("Schedule to set file %s%s state to %s", virtBase, relFile, state.nick)
-        self._stateUpdateDelta.append((virtBase, relFile, state))
+        self._stateUpdateDelta[(virtBase, relFile)] = state
         self.__updateFilesState()
     
     def setFileState(self, virtBase, relFile, state):
@@ -173,7 +173,8 @@ class MonitorProxy(ComponentProxy):
             self.log("Buffered files state update still pending, wait more")
             self.__updateFilesState()
             return
-        delta, self._filesStateDelta = self._filesStateDelta, []
+        delta = [(v, r, s) for (v, r), s in self._stateUpdateDelta.iteritems()]
+        self._stateUpdateDelta.clear()
         self.log("Buffered state update of %d files", len(delta))
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "setFilesState", delta)

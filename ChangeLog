@@ -1,5 +1,13 @@
 2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	Use the buffered files' state method in the task.
+	Fixed some bugs in the state update methods.
+
+2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor.py:
 	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/proxies/monitorproxy.py:

@@ -95,9 +95,7 @@ class MonitoringTask(AdminTask, MonitorListener):
             return
         self.log("Monitoring task '%s' file '%s' state changed to %s",
                  self.getLabel(), virtBase.append(relPath), state.name)
-        d = monitor.setFileState(virtBase, relPath, state)
-        d.addErrback(self.__ebSetFileStateFailed, monitor, 
-                     virtBase, relPath, state)
+        monitor.setFileStateBuffered(virtBase, relPath, state)
         
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         args = virtSrcBase, virtDestBase, relFiles
@@ -254,14 +252,6 @@ class MonitoringTask(AdminTask, MonitorListener):
         d.addCallbacks(self.__cbFileMoved, self.__ebMoveFilesFailed, 
                        callbackArgs=args, errbackArgs=args)
 
-    def __ebSetFileStateFailed(self, failure, monitor, 
-                                virtBase, relFile, state):
-        log.notifyFailure(self, failure,
-                          "Monitoring task '%s' monitor "
-                          "'%s' Fail to change file '%s' state to %s", 
-                          self.getLabel(), monitor.getName(), 
-                          virtBase.append(relFile), state.name)
-    
     def __cbFileMoved(self, result, monitor, 
                       virtSrcBase, virtDestBase, relFiles):
         for relFile in relFiles:
