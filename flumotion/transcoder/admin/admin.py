@@ -412,26 +412,38 @@ class TranscoderAdmin(log.Loggable,
         self.info("Waiting Transcoder Administration to become Idle")
         self.debug("Waiting store to become idle")
         d = self._store.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Data store didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting managers to become idle")
         d.addBoth(defer.dropResult, self._managers.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Managers didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting components to become idle")
         d.addBoth(defer.dropResult, self._components.waitIdle, 
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Components didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting monitoring manager to become idle")
         d.addBoth(defer.dropResult, self._monitoring.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Monitoring tasks didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting transcoding manager to become idle")
         d.addBoth(defer.dropResult, self._transcoding.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Transcoding tasks didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting scheduler to become idle")
         d.addBoth(defer.dropResult, self._scheduler.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
+        d.addErrback(defer.bridgeResult, self.warning,
+                     "Scheduler didn't became idle; trying to continue")
         d.addBoth(defer.dropResult, self.__startup)
         return self
     

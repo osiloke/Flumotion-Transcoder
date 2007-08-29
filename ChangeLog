@@ -1,5 +1,11 @@
 2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminconsts.py:
+	More logging of idle waiting outcomes.
+
+2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py:
 	* flumotion/transcoder/log.py:
 	Log idle information for debug.
