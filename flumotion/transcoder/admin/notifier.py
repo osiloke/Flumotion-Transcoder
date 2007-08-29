@@ -95,7 +95,7 @@ def _cbNotificationDone(result, kind):
 
 def _ebNotificationFailed(failure, kind):
     log.warning("%s notification failed: %s", kind,
-                log.getFailurMessage(failure),
+                log.getFailureMessage(failure),
                 category=adminconsts.NOTIFIER_LOG_CATEGORY)
 
 def notifyEmergency(msg, info=None, debug=None, 
