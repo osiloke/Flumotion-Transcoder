@@ -266,7 +266,7 @@ class TranscoderAdmin(log.Loggable,
         def changeState(newState):
             inputBase = profCtx.getInputBase()
             relPath = profCtx.getInputRelPath()        
-            montask.setFileState(inputBase, relPath, newState)
+            montask.setFileStateBuffered(inputBase, relPath, newState)
 
         # Schedule new file if not alreday scheduled
         # and synchronize the file states

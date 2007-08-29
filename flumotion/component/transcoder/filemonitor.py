@@ -40,6 +40,10 @@ class FileMonitorMedium(component.BaseComponentMedium):
     def remote_setFileState(self, virtBase, relFile, status):
         self.comp.setFileState(virtBase, relFile, status)
         
+    def remote_setFilesState(self, states):
+        for virtBase, relFile, status in states:
+            self.comp.setFileState(virtBase, relFile, status)
+        
     def remote_moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         self.comp.moveFiles(virtSrcBase, virtDestBase, relFiles)
         

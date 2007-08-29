@@ -12,7 +12,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import utils, defer, log
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
@@ -68,6 +68,9 @@ class MonitorProxy(ComponentProxy):
                                 componentState, domain,
                                 IMonitorListener)
         self._alreadyAdded = {} # {file: None}
+        self._stateUpdateDelta = []
+        self._stateUpdateDelay = None
+        self._stateUpdateResult = None
 
         
     ## Public Methods ##
@@ -77,11 +80,17 @@ class MonitorProxy(ComponentProxy):
         d.addCallback(self.__cbRetrieveFiles)
         return d
             
+    def setFileStateBuffered(self, virtBase, relFile, state):
+        self.log("Schedule to set file %s%s state to %s", virtBase, relFile, state.nick)
+        self._stateUpdateDelta.append((virtBase, relFile, state))
+        self.__updateFilesState()
+    
     def setFileState(self, virtBase, relFile, state):
+        self.log("Set file %s%s state to %s", virtBase, relFile, state.nick)
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "setFileState",
                                   virtBase, relFile, state)
-        return d
+        return d    
     
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
@@ -150,6 +159,38 @@ class MonitorProxy(ComponentProxy):
 
     
     ## Private Methods ##
+    
+    def __updateFilesState(self):
+        if self._stateUpdateDelay or not self._stateUpdateDelta:
+            return
+        period = adminconsts.MONITOR_STATE_UPDATE_PERIOD
+        to = utils.createTimeout(period, self.__doFilesStateUpdate)
+        self._stateUpdateDelay = to
+        
+    def __doFilesStateUpdate(self):
+        self._stateUpdateDelay = None
+        if self._stateUpdateResult != None:
+            self.log("Buffered files state update still pending, wait more")
+            self.__updateFilesState()
+            return
+        delta, self._filesStateDelta = self._filesStateDelta, []
+        self.log("Buffered state update of %d files", len(delta))
+        d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
+                                  self._callRemote, "setFilesState", delta)
+        self._stateUpdateResult = d
+        d.addCallbacks(self.__cbFilesStateUpdateSucceed, 
+                       self.__ebFilesStateUpdateFailed)
+        
+    def __cbFilesStateUpdateSucceed(self, result):
+        self.log("Buffered files state update succeed")
+        self._stateUpdateResult = None
+        self.__updateFilesState()
+
+    def __ebFilesStateUpdateFailed(self, failure):
+        self._stateUpdateResult = None
+        log.notifyFailure(self, failure,
+                          "Failed to update file states")
+        self.__updateFilesState()
     
     def __cbRetrieveFiles(self, ui):
         files = []

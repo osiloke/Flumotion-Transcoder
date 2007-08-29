@@ -1,5 +1,15 @@
 2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	Buffer and periodically update the monitors' files state
+	to prevent remote invocation timeout when theres is 
+	many files' state update to be done at the same time.
+	Fixes #1274
+
+2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/adminconsts.py:
 	More logging of idle waiting outcomes.
