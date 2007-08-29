@@ -94,6 +94,8 @@ class FileMonitor(component.BaseComponent):
         self._local = None
         self._scanPeriod = None
         self._directories = []
+        self._uiItemDelta = []
+        self._uiItemDelay = None
 
     def do_check(self):
         
@@ -165,8 +167,7 @@ class FileMonitor(component.BaseComponent):
                 
     def setFileState(self, virtBase, relFile, status):        
         key = (virtBase, relFile)
-        if key in self.uiState.get('pending-files'):
-            self.uiState.setitem('pending-files', key, status)
+        self.__updateUIItem('pending-files', key, status)
 
 
     ## Signal Handler Methods ##
@@ -174,14 +175,14 @@ class FileMonitor(component.BaseComponent):
     def _file_added(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File added : '%s'", localFile)
-        self.uiState.setitem('pending-files', (virtBase, file), 
-                             MonitorFileStateEnum.downloading)
+        self.__setUIItem('pending-files', (virtBase, file), 
+                         MonitorFileStateEnum.downloading)
     
     def _file_completed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File completed '%s'", localFile)
-        self.uiState.setitem('pending-files', (virtBase, file), 
-                             MonitorFileStateEnum.pending)
+        self.__setUIItem('pending-files', (virtBase, file), 
+                         MonitorFileStateEnum.pending)
     
     def _file_removed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
@@ -190,6 +191,32 @@ class FileMonitor(component.BaseComponent):
     
     
     ## Private Methods ##
+    
+    def __updateUIItem(self, key, subkey, value):
+        self._uiItemDelta.append((self.__doUpdateItem, key, subkey, value))
+        self.__doSmoothUpdate()
+    
+    def __setUIItem(self, key, subkey, value):
+        self._uiItemDelta.append((self.uiState.setitem, key, subkey, value))
+        self.__doSmoothUpdate()
+    
+    def __delUIItem(self, key, subkey, value):
+        self._uiItemDelta.append((self.uiState.delitem, key, subkey, value))
+        self.__doSmoothUpdate()
+    
+    def __doUpdateItem(self, key, subkey, value):
+        state = self.uiState.get('pending-files')
+        if (key in state) and (state.get(subkey) != value):
+            self.uiState.setitem('pending-files', key, value)
+    
+    def __doSmoothUpdate(self):
+        self._uiItemDelay = None
+        values = self._uiItemDelta.pop(0)
+        if not values: return
+        func, key, subkey, val = values
+        func(key, subkey, val)
+        if self._uiItemDelta:
+            self._uiItemDelay = utils.callNext(self.__smoothUpdate)
     
     def __notifyDebug(self, msg, info=None, debug=None, 
                       failure=None, exception=None):

@@ -1,5 +1,22 @@
 2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/transcoder/admin/main.py:
+	* flumotion/transcoder/admin/proxies/fluproxy.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/constants.py:
+	* flumotion/transcoder/process.py:
+	* flumotion/transcoder/utils.py:
+	Added an utility function callNext with the same kind 
+	of semantic	than the thread yield syscall for threading.
+	It's actually a callLater with a very small non-zero delay.
+	Replaced all callLater(0) with callNext().
+	The file-monitor now control the rate of the uiState updates.
+
+2007-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/montask.py:
 	* flumotion/transcoder/admin/proxies/monitorproxy.py:

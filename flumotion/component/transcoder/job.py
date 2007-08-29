@@ -207,7 +207,7 @@ class TranscoderJob(log.LoggerProxy):
             self._setTargetState(targetCtx, TargetStateEnum.pending)
         
         #start to work after the starting call chain terminate
-        reactor.callLater(0, d.callback, None)
+        utils.callNext(d.callback, None)
         self._runningState = RunningState.running
         return d
             
@@ -290,7 +290,7 @@ class TranscoderJob(log.LoggerProxy):
         reporter = self._context.reporter
         reporter.report.state = state
         # The state is changed after the current processing chain terminate.
-        reactor.callLater(0, self._fireJobStateChanged, state)
+        utils.callNext(self._fireJobStateChanged, state)
         
     def _setTargetState(self, targetCtx, state):
         targetCtx.reporter.report.state = state

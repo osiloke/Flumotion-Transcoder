@@ -140,7 +140,7 @@ def main(args):
         possess(options.daemonizeTo)
 
     a = admin.TranscoderAdmin(config)
-    reactor.callLater(0, a.initialize)
+    utils.callNext(a.initialize)
     reactor.run()
 
     if options.daemonize:

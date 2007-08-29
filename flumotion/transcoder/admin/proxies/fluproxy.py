@@ -89,15 +89,10 @@ class BaseFlumotionProxy(adminelement.AdminElement):
     ## Overriden Methods ##
     
     def _doPrepareInit(self, chain):
-        #FIXME: Remove this, its only for testing
-        import random
-        chain.addCallback(defer.delayedSuccess, random.random())
-        
+        pass
+    
     def _doPrepareActivation(self, chain):
-        #FIXME: Remove this, its only for testing
-        import random
-        chain.addCallback(defer.delayedSuccess, random.random())
-
+        pass
 
     ## Protected Methods ##
     

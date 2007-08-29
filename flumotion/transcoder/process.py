@@ -78,7 +78,8 @@ class Process(worker.ProcessProtocol, log.Loggable):
         if self._aborted:
             return self._aborted
         self._aborted = defer.Deferred()
-        self.timeout = utils.createTimeout(0, self._timeout, "abort")
+        utils.cancelTimeout(self.timeout)
+        utils.callNext(self._timeout, "abort")
         return self._aborted
 
     def _timeout(self, what):

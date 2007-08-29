@@ -24,7 +24,7 @@ from twisted.internet import reactor
 
 from flumotion.common import enum
 
-from flumotion.transcoder import log, defer
+from flumotion.transcoder import constants, log, defer
 from flumotion.transcoder.errors import OperationTimedOutError
 
 
@@ -348,7 +348,11 @@ def deepCopy(value):
                     % (str(value), value.__class__.__name__))
 
 
-## Timeout Utility Functions ##
+## Timeout and Delay Utility Functions ##
+
+def callNext(callable, *args, **kwargs):
+    return reactor.callLater(constants.CALL_NEXT_DELAY,
+                             callable, *args, **kwargs)
 
 def callWithTimeout(timeout, callable, *args, **kwargs):
     d = callable(*args, **kwargs)

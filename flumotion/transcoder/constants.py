@@ -13,6 +13,8 @@
 # Log categories
 DEFER_LOG_CATEGORY = "defer"
 
+CALL_NEXT_DELAY = 0.01
+
 # Default roots
 DEFAULT_ROOT = "default"
 TEMP_ROOT = "temp"

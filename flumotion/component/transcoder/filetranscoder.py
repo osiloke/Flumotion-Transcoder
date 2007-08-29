@@ -476,7 +476,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         log.notifyFailure(self, failure,
                           "Acknowledgment failed",
                           cleanTraceback=True)
-        reactor.callLater(0, reactor.stop)
+        utils.callNext(reactor.stop)
         
     def __finalizeStandardMode(self, report, succeed):
         if not succeed:
@@ -508,7 +508,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         if total > fatal:
             msg += " ** %d Recoverable Error(s)" % (total - fatal)
         self.info("*"*6 + " " + msg + " " + "*"*6)
-        reactor.callLater(0, reactor.stop)
+        utils.callNext(reactor.stop)
         
     def __terminateStandardMode(self, report, succeed):
         pass

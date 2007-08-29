@@ -13,7 +13,7 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor
 
-from flumotion.transcoder import log, defer
+from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
@@ -268,7 +268,7 @@ class Scheduler(log.Loggable,
     
     def __startupTasks(self):
         if self.isStarted() and not self._startDelay:
-            self._startDelay = reactor.callLater(0, self.__asyncStartTask)
+            self._startDelay = utils.callNext(self.__asyncStartTask)
     
     def __cancelTasksStartup(self):
         if self._startDelay:
@@ -285,7 +285,7 @@ class Scheduler(log.Loggable,
             self._startDelay = None
             return
         self.__startTranscodingTask(profCtx)
-        self._startDelay = reactor.callLater(0, self.__asyncStartTask)
+        self._startDelay = utils.callNext(self.__asyncStartTask)
         
     def __startTranscodingTask(self, profCtx, activity=None):
         identifier = profCtx.getIdentifier()
