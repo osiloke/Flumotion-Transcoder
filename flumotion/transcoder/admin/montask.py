@@ -192,7 +192,8 @@ class MonitoringTask(AdminTask, MonitorListener):
         # this event was ignored
         # So resend the mood changing event
         mood = component.getMood()
-        self.onComponentMoodChanged(component, mood)
+        if mood:
+            self.onComponentMoodChanged(component, mood)
 
     def _onStarted(self):
         for c in self.iterComponents():
