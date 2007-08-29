@@ -76,6 +76,13 @@ class Loggable(flog.Loggable):
     
     implements(ILogger)
 
+
+class Logger(Loggable):
+    
+    def __init__(self, category):
+        self.logCategory = category
+    
+
 def notifyFailure(logger, failure, template, *args, **kwargs):
     global _notifier
     info = kwargs.get("info", None)

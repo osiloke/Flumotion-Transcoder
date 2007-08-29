@@ -15,10 +15,14 @@ from twisted.python.failure import Failure
 
 from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.log import LoggerProxy
+from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
 from flumotion.transcoder.admin.waiters import PassiveWaiters
 from flumotion.transcoder.admin.waiters import CounterWaiters
+
+
+_idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)    
 
 
 class AdminElement(eventsource.EventSource, LoggerProxy):
@@ -77,7 +81,11 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             d = defer.succeed(self)
         else:
             d = self._idleWaiters.wait(timeout)
-        d.addCallback(self.__cbWaitChildIdle, timeout)
+        _idleLogger.log("%s #%s: Wait idle state (%s); Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self), id(d),
+                        self._idleWaiters.getValue(),
+                        self._idleWaiters.getTarget())
+        d.addCallback(self.__cbWaitChildIdle, timeout, id(d))
         return d
 
     def initialize(self):
@@ -184,22 +192,41 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     ## Protected/Friend Method ##
     
     def _setIdleTarget(self, value):
+        _idleLogger.log("%s #%s: Set idle target; Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self), 
+                        self._idleWaiters.getValue(), value)
         self._idleWaiters.setTarget(value)
     
     def _incIdlTarget(self):
+        _idleLogger.log("%s #%s: Inc idle target; Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self),
+                        self._idleWaiters.getValue(),
+                        self._idleWaiters.getTarget() + 1)
         self._idleWaiters.incTarget()
         
     def _decIdlTarget(self):
+        _idleLogger.log("%s #%s: Dec idle target; Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self),
+                        self._idleWaiters.getValue(),
+                        self._idleWaiters.getTarget() - 1)
         self._idleWaiters.decTarget()
     
     def _childElementActivated(self):
+        _idleLogger.log("%s #%s: Inc idle value; Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self), 
+                        self._idleWaiters.getValue() + 1,
+                        self._idleWaiters.getTarget())
         self._idleWaiters.inc()
         
     def _childElementRemoved(self):
+        _idleLogger.log("%s #%s: Dec idle value; Value: %d, Target: %d", 
+                        self.__class__.__name__, id(self), 
+                        self._idleWaiters.getValue() - 1,
+                        self._idleWaiters.getTarget())
         self._idleWaiters.dec()
 
     def _childElementAborted(self):
-        self._idleWaiters.decTarget()
+        self._decIdlTarget()
     
     def _isBeingRemoved(self):
         """
@@ -316,7 +343,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
 
     ## Private Methods ##
     
-    def __cbWaitChildIdle(self, element, timeout):
+    def __cbWaitChildIdle(self, element, timeout, tag):
+        _idleLogger.log("%s #%s became idle (%s)", 
+                        self.__class__.__name__, id(self), tag)
         childs = self._doGetChildElements()
         if not childs: return element
         defs = [c.waitIdle(timeout) for c in childs]
