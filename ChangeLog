@@ -1,5 +1,10 @@
 2007-08-30  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	Better (working?) state update smoothing.
+
+2007-08-30  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/compconsts.py:
 	* flumotion/component/transcoder/filemonitor.py:
 	Made the file-monitor ui state updates even more smooth.

@@ -194,34 +194,33 @@ class FileMonitor(component.BaseComponent):
     
     def __updateUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.__doUpdateItem, key, subkey, value))
-        self.__startupSmoothUpdate()
+        self.__smoothUpdate()
     
     def __setUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.uiState.setitem, key, subkey, value))
-        self.__startupSmoothUpdate()
+        self.__smoothUpdate()
     
     def __delUIItem(self, key, subkey, value):
         self._uiItemDelta.append((self.uiState.delitem, key, subkey, value))
-        self.__startupSmoothUpdate()
+        self.__smoothUpdate()
     
     def __doUpdateItem(self, key, subkey, value):
         state = self.uiState.get(key)
         if (subkey in state) and (state.get(subkey) != value):
             self.uiState.setitem(key, subkey, value)
     
-    def __startupSmoothUpdate(self):
-        if not self._uiItemDelay and self._uiItemDelta:
-            self.__doSmoothUpdate()
+    def __smoothUpdate(self):
+        if (not self._uiItemDelay) and self._uiItemDelta:
+            delay = compconsts.SMOOTH_UPTDATE_DELAY
+            self._uiItemDelay = reactor.callLater(delay, self.__doSmoothUpdate)
     
     def __doSmoothUpdate(self):
         self._uiItemDelay = None
-        values = self._uiItemDelta.pop(0)
-        if not values: return
-        func, key, subkey, val = values
-        func(key, subkey, val)
-        if self._uiItemDelta:
-            delay = compconsts.SMOOTH_UPTDATE_DELAY
-            self._uiItemDelay = reactor.callLater(delay, self.__smoothUpdate)
+        values = self._uiItemDelta.pop(0, None)
+        if values:
+            func, key, subkey, val = values
+            func(key, subkey, val)
+        self.__smoothUpdate()
     
     def __notifyDebug(self, msg, info=None, debug=None, 
                       failure=None, exception=None):
