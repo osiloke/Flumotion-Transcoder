@@ -16,8 +16,14 @@ import gst
 from gst.extend import discoverer
 
 from flumotion.transcoder import defer
+from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder import compconsts, videosize
 
+
+class DiscovererError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+    
 
 class Discoverer(discoverer.Discoverer):
     """
@@ -39,9 +45,7 @@ class Discoverer(discoverer.Discoverer):
         if is_media:
             deferred.callback(discoverer)
         else:
-            error = Exception(("Discoverer does not think "
-                               + "'%s' is a media file")
-                              % self.filePath)
+            error = DiscovererError("'%s' is not a media file" % self.filePath)
             deferred.errback(error)
     
 

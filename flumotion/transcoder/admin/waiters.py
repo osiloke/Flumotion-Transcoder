@@ -132,6 +132,9 @@ class AssignWaiters(BaseWaiters):
     def getValue(self):
         return self._value
     
+    def fail(self, error):
+        self._fireErrbacks(error)
+    
 
 class CounterWaiters(BaseWaiters):
     """

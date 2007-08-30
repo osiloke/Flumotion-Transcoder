@@ -1,6 +1,28 @@
 2007-08-30  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py:
+	Use a dictionary for state update.
+	The update are not orderred anymore, but it prevent
+	updating the state to an already obsolete value.
+	* flumotion/component/transcoder/gstutils.py:
+	Better error message.
+	* flumotion/test/test_utils.py:
+	Some cosmetic changes.
+	* flumotion/transcoder/admin/admin.py:
+	Filter out some component messages.
+	* flumotion/transcoder/admin/admintask.py:
+	Do not notify ui state retrieval error when the component
+	isn't running anymore (crashed).
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/admin/waiters.py:
+	Call errback on UI state waiters in case the retrieval failed.
+	* flumotion/test/Makefile.am:
+	* flumotion/test/test_timeouts.py:
+	Add a testsuit for utils.callWithTimeout().
+
+2007-08-30  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
 	Better (working?) state update smoothing.
 
 2007-08-30  Sebastien Merle  <sebastien@fluendo.com>

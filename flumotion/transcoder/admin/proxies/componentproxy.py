@@ -477,6 +477,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._retrievingUIState = False
         self.warning("Component '%s' fail to retrieve its UI state: %s",
                      self.getLabel(), log.getFailureMessage(failure))
+        self._uiState.fail(failure)
 
     def __isOperationTerminated(self, failure, status, resultDef):
         if not self.isValid():

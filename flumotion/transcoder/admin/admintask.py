@@ -281,7 +281,7 @@ class AdminTask(LoggerProxy, EventSource):
         if active:
             # Wait UI State to be sure the file events are fired
             d = active.waitUIState(timeout)
-            d.addCallback(defer.overrideResult, self)
+            d.addBoth(defer.overrideResult, self)
         else:
             d = defer.succeed(self)
         self._doChainWaitIdle(d)
@@ -752,10 +752,12 @@ class AdminTask(LoggerProxy, EventSource):
             self.__cancelComponentStartup(component)
             
     def __ebUIStateFailed(self, failure, component, workerName):
-        log.notifyFailure(self, failure,
-                          "Admin task '%s' failed to retrieve "
-                          "component '%s' UI state",
-                          self.getLabel(), component.getName())
+        if component.isRunning():
+            # Do not notify failure because of component crash
+            log.notifyFailure(self, failure,
+                              "Admin task '%s' failed to retrieve "
+                              "component '%s' UI state",
+                              self.getLabel(), component.getName())
         self.__abortComponentStartup(component)
         
     def __ebComponentStopFailed(self, failure, name):

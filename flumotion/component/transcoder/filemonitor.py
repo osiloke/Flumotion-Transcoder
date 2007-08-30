@@ -94,7 +94,7 @@ class FileMonitor(component.BaseComponent):
         self._local = None
         self._scanPeriod = None
         self._directories = []
-        self._uiItemDelta = []
+        self._uiItemDelta = {}
         self._uiItemDelay = None
 
     def do_check(self):
@@ -193,15 +193,15 @@ class FileMonitor(component.BaseComponent):
     ## Private Methods ##
     
     def __updateUIItem(self, key, subkey, value):
-        self._uiItemDelta.append((self.__doUpdateItem, key, subkey, value))
+        self._uiItemDelta[(key, subkey)] = (self.__doUpdateItem, value)
         self.__smoothUpdate()
     
     def __setUIItem(self, key, subkey, value):
-        self._uiItemDelta.append((self.uiState.setitem, key, subkey, value))
+        self._uiItemDelta[(key, subkey)] = (self.uiState.setitem, value)
         self.__smoothUpdate()
     
     def __delUIItem(self, key, subkey, value):
-        self._uiItemDelta.append((self.uiState.delitem, key, subkey, value))
+        self._uiItemDelta[(key, subkey)] = (self.uiState.delitem, value)
         self.__smoothUpdate()
     
     def __doUpdateItem(self, key, subkey, value):
@@ -216,9 +216,10 @@ class FileMonitor(component.BaseComponent):
     
     def __doSmoothUpdate(self):
         self._uiItemDelay = None
-        values = self._uiItemDelta.pop(0, None)
-        if values:
-            func, key, subkey, val = values
+        if self._uiItemDelta:
+            itemKey = self._uiItemDelta.iterkeys().next()
+            key, subkey = itemKey
+            func, val = self._uiItemDelta.pop(itemKey)
             func(key, subkey, val)
         self.__smoothUpdate()
     

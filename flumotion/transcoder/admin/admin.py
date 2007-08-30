@@ -141,8 +141,10 @@ class TranscoderAdmin(log.Loggable,
     ## IComponentListener Overriden Methods ##
 
     def onComponentMessage(self, component, message):
+        if self.__filterMessageOut(message):
+            return
         text = self._translator.translate(message)
-        debug = message.debug
+        debug = message.debug      
         level = {1: "ERROR", 2: "WARNING", 3: "INFO"}[message.level]
         worker = component.getWorker()
         if worker:
@@ -260,6 +262,17 @@ class TranscoderAdmin(log.Loggable,
 
     
     ## Private Methods ##
+    
+    def __filterMessageOut(self, message):
+        debug = message.debug
+        if message.level == 2: # WARNING
+            if "twisted.internet.error.ConnectionDone" in debug:
+                return True
+            if "twisted.internet.error.ConnectionLost" in debug:
+                return True
+            if "is not a media file" in debug:
+                return True
+        return False
     
     def __fileStateChanged(self, montask, profCtx, state):
         

@@ -353,7 +353,7 @@ class TestUtils(unittest.TestCase):
         check(['AAA  ','  BBB  ','  CCC'])
         
         
-    def test_joinMailRecipients(self):
+    def testJoinMailRecipients(self):
         
         def check(value, expected):
             result = utils.joinMailRecipients(value)
@@ -382,7 +382,7 @@ class TestUtils(unittest.TestCase):
         check([(None, "test@mail.com"), ("With Space", "test2@mail.com"), ("", "test3@mail.com")], 
               "test@mail.com, With Space <test2@mail.com>, test3@mail.com")
 
-    def test_splitMailRecipients(self):
+    def testSplitMailRecipients(self):
         
         def check(value, expected):
             result = utils.splitMailRecipients(value)
@@ -404,5 +404,3 @@ class TestUtils(unittest.TestCase):
         
         check("test@mail.com, With Space <test2@mail.com>, test3@mail.com",
               [("", "test@mail.com"), ("With Space", "test2@mail.com"), ("", "test3@mail.com")])
-        
-        
