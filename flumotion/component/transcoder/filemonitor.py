@@ -220,7 +220,8 @@ class FileMonitor(component.BaseComponent):
         func, key, subkey, val = values
         func(key, subkey, val)
         if self._uiItemDelta:
-            self._uiItemDelay = utils.callNext(self.__smoothUpdate)
+            delay = compconsts.SMOOTH_UPTDATE_DELAY
+            self._uiItemDelay = reactor.callLater(delay, self.__smoothUpdate)
     
     def __notifyDebug(self, msg, info=None, debug=None, 
                       failure=None, exception=None):
