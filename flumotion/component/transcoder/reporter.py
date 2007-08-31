@@ -31,12 +31,15 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     To use it again with a diffrent target it must be cleaned.
     """
     
-    _hiddenProperties = {"name": None,
-                         "fd": None,
-                         "current-level-buffers": None,
-                         "current-level-bytes": None,
-                         "current-level-time": None
-                         }
+    _hiddenElements = set(["tee", "typefind"])
+    _hiddenProperties = set(["name", "fd", "copyright", "qos"])
+    _hiddenCompProps = {"queue":           set(["current-level-buffers",
+                                                 "current-level-bytes",
+                                                 "current-level-time",
+                                                 "max-size-buffers",
+                                                 "max-size-bytes",
+                                                 "max-size-time"]),
+                        "audiorate":        set(["in", "out", "drop"])}
 
     _genericTypes = {True:  {True: None, False: "audio"},
                      False: {True: "video", False: None}}
@@ -74,14 +77,19 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     def _elem2str(self, element):
         desc = ""
         factory = element.get_factory()
+        name = factory.get_name()
         if factory:
-            desc += factory.get_name()
+            name = factory.get_name()
+            
         else:
-            desc += element.__class__.__name__
+            name = element.__class__.__name__
+        desc += name
         if desc == "capsfilter":
             return str(element.get_property("caps"))
+        compProps = self._hiddenCompProps.get(name, set())
+        hiddenProps = self._hiddenProperties | compProps
         for p in gobject.list_properties(element):
-            if p.name in self._hiddenProperties:
+            if (p.name in hiddenProps):
                 continue
             defVal = p.default_value
             currVal = element.get_property(p.name)
@@ -122,7 +130,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
         #When crawling the whole pipeline, we should stop at the tee elements 
         #to not crawl the target parts of the pipeline
         factory = element.get_factory()
-        if factory and (factory.get_name() == "tee"):
+        if factory and (factory.get_name() in self._hiddenElements):
             return False
         
         #Find the element type. 
