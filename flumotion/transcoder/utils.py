@@ -98,6 +98,29 @@ def ensureDirExists(dir, description):
 
 ## String and Path Utility Functions ##
 
+_dumpTransTable = '................................ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~.................................................................................................................................'
+
+def hexDump(file, lineCount, lineSize=16):
+    result = []
+    currSize = 0
+    maxSize = lineCount * lineSize
+    while currSize < maxSize:
+        line = file.read(lineSize)
+        ascii = line.translate(_dumpTransTable)
+        hex = ''
+        i = 0
+        while i*8 <= len(line):
+            hex += ' '.join([c.encode('hex') for c in line[i*8:i*8 + 8]])
+            hex += '  '
+            i += 1
+        hexPad = ' '*((lineSize*3 + (lineSize/8)*2) - len(hex))
+        asciiPad = ' '*(lineSize - len(ascii))
+        result.append("%s%s|%s%s|" % (hex, hexPad, ascii, asciiPad))
+        currSize += len(line)
+        if len(line) < lineSize:
+            break
+    return "\n".join(result)
+
 def str2filename(value):
     """
     Build a valid name for a file or a directory from a specified string.

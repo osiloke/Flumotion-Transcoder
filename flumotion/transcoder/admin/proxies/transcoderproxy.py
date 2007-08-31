@@ -113,15 +113,18 @@ class TranscoderProxy(ComponentProxy):
         return self._waitUIDictValue("job-data", "acknowledged", 
                                      False, timeout)
 
+    def getReportPath(self):
+        return self._reportPath.getValue()
+    
     def getReport(self):
-        return self.__loadReport(self.__getReportPath())
+        return self.__loadReport(self.__getLocalReportPath())
     
     def waitReport(self, timeout=None):
         # Prevent blocking if not running and no report path has been received
         if self.isRunning():
             d = self._reportPath.wait(timeout)
         else:
-            d = defer.succeed(self.__getReportPath())
+            d = defer.succeed(self.__getLocalReportPath())
         d.addCallback(self.__loadReport)
         return d
     
@@ -131,7 +134,7 @@ class TranscoderProxy(ComponentProxy):
         if path:
             doc = self.__wrapDocument(path, DocumentTypeEnum.trans_config)
             docs.append(doc)
-        path = self.__getReportPath()
+        path = self.__getLocalReportPath()
         if path:
             doc = self.__wrapDocument(path, DocumentTypeEnum.trans_report)
             docs.append(doc)
@@ -204,15 +207,18 @@ class TranscoderProxy(ComponentProxy):
         self._fireEvent(state, "TranscoderJobStateChanged")
 
     def _onTranscodingReport(self, reportVirtPath):
-        if not reportVirtPath:
-            self._reportPath.setValue(None)
-        else:
-            context = self.getContext()
-            local = context.group.manager.admin.getLocal()
-            self._reportPath.setValue(reportVirtPath.localize(local))
+        self._reportPath.setValue(reportVirtPath or None)
 
     
     ## Private Methodes ##
+    
+    def __getLocalReportPath(self):
+        virtPath = self._reportPath.getValue()
+        if not virtPath:
+            return None
+        context = self.getContext()
+        local = context.group.manager.admin.getLocal()
+        return virtPath.localize(local)
     
     def __getConfigPath(self):
         virtPath = self.getProperties().getConfigPath()
@@ -222,9 +228,6 @@ class TranscoderProxy(ComponentProxy):
         local = context.group.manager.admin.getLocal()
         return virtPath.localize(local)
         
-    def __getReportPath(self):
-        return self._reportPath.getValue()
-    
     def __wrapDocument(self, localPath, type):
         return FileDocument(type, os.path.basename(localPath),
                             localPath, "plain/text")

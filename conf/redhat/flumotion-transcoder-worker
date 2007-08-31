@@ -17,6 +17,7 @@ service=flumotion-transcoder-worker
 shortservice=transcoder-worker
 prog=/usr/bin/flumotion-worker
 lockdir=/var/lock/subsys
+daemondir=/var/cache/flumotion/transcoder
 lockfile=${lockdir}/$service.lock
 sysconfig=/etc/sysconfig/$service
 
@@ -54,7 +55,8 @@ start() {
         # MANAGER_HOST, MANAGER_PORT, AUTH_USERNAME and AUTH_PASSWORD \
         # can be overriden from the config file
         # OPTIONS can be set from the config file as well
-    daemon --user flumotion $ENV_VARS $prog -D -n $WORKER_NAME \
+    daemon --user flumotion $ENV_VARS $prog -D --daemonize-to=$daemondir \
+                                            -n $WORKER_NAME \
                                             -H $MANAGER_HOST \
                                             -P $MANAGER_PORT \
                                             -u $AUTH_USERNAME \

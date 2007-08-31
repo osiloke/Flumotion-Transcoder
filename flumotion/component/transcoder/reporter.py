@@ -31,15 +31,22 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     To use it again with a diffrent target it must be cleaned.
     """
     
-    _hiddenElements = set(["tee", "typefind"])
-    _hiddenProperties = set(["name", "fd", "copyright", "qos"])
+    _hiddenElements = set(["typefind", "identity"])
+    _hiddenProperties = set(["name", "fd", "copyright", "qos", "buffer-size", "sync"])
     _hiddenCompProps = {"queue":           set(["current-level-buffers",
                                                  "current-level-bytes",
                                                  "current-level-time",
                                                  "max-size-buffers",
                                                  "max-size-bytes",
                                                  "max-size-time"]),
-                        "audiorate":        set(["in", "out", "drop"])}
+                        "audiorate":        set(["in", "out", "drop", "add"]),
+                        "videorate":        set(["in", "out", "drop", "add"]),
+                        "lame":             set(["mode", "force-ms", "free-format",
+                                                 "error-protection", "padding-type",
+                                                 "extension", "strict-iso",
+                                                 "disable-reservoir", "vbr-mean-bitrate",
+                                                 "ath-only", "ath-short", "no-ath",
+                                                 "cwlimit", "allow-diff-short", "emphasis"])}
 
     _genericTypes = {True:  {True: None, False: "audio"},
                      False: {True: "video", False: None}}
@@ -60,8 +67,8 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     
     def getCommands(self):
         result = dict(self.commands)
-        #If there is pending element,
-        #Add them to the last command type        
+        # If there is pending element,
+        # Add them to the last command type        
         if len(self._pending) > 0:
             type = self._lastType
             if type == None:
@@ -76,11 +83,10 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     
     def _elem2str(self, element):
         desc = ""
+        type = self._getElementType(element)
         factory = element.get_factory()
-        name = factory.get_name()
         if factory:
             name = factory.get_name()
-            
         else:
             name = element.__class__.__name__
         desc += name
@@ -127,35 +133,38 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
         return None
             
     def enterElement(self, branch, previous, element, next):
-        #When crawling the whole pipeline, we should stop at the tee elements 
-        #to not crawl the target parts of the pipeline
+        # When crawling the whole pipeline, we should stop at the tee elements 
+        # to not crawl the target parts of the pipeline
         factory = element.get_factory()
-        if factory and (factory.get_name() in self._hiddenElements):
+        if factory and (factory.get_name() == "tee"):
             return False
+        # And we may ignore some elements
+        if factory and (factory.get_name() in self._hiddenElements):
+            return True
         
-        #Find the element type. 
-        #If the type is not found, store it for later triage
+        # Find the element type. 
+        # If the type is not found, store it for later triage
         type = self._getElementType(element)
         if type == None:
             self._pending.append(self._elem2str(element))
             return True
         self._lastType = type
         
-        #retrieve the command for the current type
+        # retrieve the command for the current type
         if type in self.commands:
             cmd = self.commands[type] + self._separator
         else:
             cmd = ""
             
-        #If there is pending element, add them to the command
+        # If there is pending element, add them to the command
         if len(self._pending) > 0:
             cmd += self._separator.join(self._pending) + self._separator
             del self._pending[:]
             
-        #Add trhe current element command
+        # Add trhe current element command
         cmd += self._elem2str(element)
         
-        #And store back the command
+        # And store back the command
         self.commands[type] = cmd
         return True
 

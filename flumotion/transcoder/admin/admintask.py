@@ -677,13 +677,16 @@ class AdminTask(LoggerProxy, EventSource):
         workerName = self._worker.getName()
         self.debug("Admin task '%s' loading component '%s' on  worker '%s'",
                    self.getLabel(), componentName, workerName)
-        d = self._doLoadComponent(self._worker, componentName,
-                                  self._label, self._properties,
-                                  self.LOAD_TIMEOUT)
-        args = (componentName, workerName)
-        d.addCallbacks(self.__cbComponentLoadSucceed,
-                       self.__ebComponentLoadFailed,
-                       callbackArgs=args, errbackArgs=args)
+        try:
+            d = self._doLoadComponent(self._worker, componentName,
+                                      self._label, self._properties,
+                                      self.LOAD_TIMEOUT)
+            args = (componentName, workerName)
+            d.addCallbacks(self.__cbComponentLoadSucceed,
+                           self.__ebComponentLoadFailed,
+                           callbackArgs=args, errbackArgs=args)
+        except Exception, e:
+            self.__ebComponentLoadFailed(Failure(e), componentName, workerName)
 
     def __shouldContinueComponentStartup(self, component, workerName):
         # If the pending component changed, cancel

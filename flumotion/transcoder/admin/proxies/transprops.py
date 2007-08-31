@@ -159,8 +159,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
         
-    def asComponentProperties(self, workerContext):
-        # First save the config file
+    def prepare(self, workerContext):
         adminLocal = workerContext.admin.getLocal()
         localPath = self._configPath.localize(adminLocal)
         saver = inifile.IniFile()
@@ -190,7 +189,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
             log.warning("%s", message)
             raise PropertiesError(message)
         
-        
+    def asComponentProperties(self, workerContext):
         props = []
         local = workerContext.getLocal()
         props.extend(local.asComponentProperties())
@@ -200,3 +199,13 @@ class TranscoderProperties(ComponentPropertiesMixin):
         props.append(("admin-id", self._name))
         props.append(("wait-acknowledge", True))
         return props
+
+    def asLaunchArguments(self, workerContext):
+        args = []
+        local = workerContext.getLocal()
+        args.append("config=%s" % self._configPath)
+        if self._niceLevel:
+            args.append("nice-level=%d" % self._niceLevel)
+        args.append("wait-acknowledge=True")
+        args.extend(local.asLaunchArguments())
+        return args

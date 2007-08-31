@@ -230,6 +230,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         
         def transcoder_start(result):
             d = self._job.start()
+            self._reportDefaultPath = self._job.getDoneReportPath()
+            self.__syncReport(self._report)
             d.addCallbacks(self.__cbJobDone, self.__ebJobFailed)
             return result
         
@@ -298,6 +300,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     def onTargetWarning(self, label, warning):
         self.uiState.setitem('targets-data', (label, "target-warning"), warning)
+
+    def onSyncReport(self, report):
+        self.__syncReport(report)
 
 
     ## Protected/Friend Methods ##
@@ -375,14 +380,17 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.addMessage(m)
         return failure
     
+    def __syncReport(self, report):
+        self.__writeReport(report)
+        self._fireTranscodingReport(self._reportDefaultPath)
+    
     def __cbJobDone(self, report):
         try:
             assert report == self._report, ("Job creates it's own report "
                                             + "instance. It's Baaaaad.")
             # FIXME: Very ugly, should not ask the job for this
             self._reportDefaultPath = self._job.getDoneReportPath()
-            self.__writeReport(report)
-            self._fireTranscodingReport(self._reportDefaultPath)
+            self.__syncReport(report)
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
@@ -401,8 +409,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 self.addMessage(m)
             # FIXME: Very ugly, should not ask the job for this
             self._reportDefaultPath = self._job.getFailedReportPath()
-            self.__writeReport(report)
-            self._fireTranscodingReport(self._reportDefaultPath)
+            self.__syncReport(report)
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:
@@ -413,8 +420,9 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
 
     def __cbJobTerminated(self, result):
         try:
-            self.__writeReport(self._report)
-            self.__terminate(self._report, self._status)
+            report = self._report
+            self.__syncReport(report)
+            self.__terminate(report, self._status)
             # Acknowledge return the transcoding status
             return self._status
         except Exception, e:
@@ -436,7 +444,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             if newReportPath != self._reportDefaultPath:
                 self._reportDefaultPath = newReportPath
                 self._fireTranscodingReport(self._reportDefaultPath)
-            self.__writeReport(self._report)
+            self.__syncReport(self._report)
             self.__terminate(self._report, self._status)
             return failure
         except Exception, e:

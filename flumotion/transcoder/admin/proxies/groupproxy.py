@@ -124,6 +124,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
                        componentLabel, worker, properties, timeout=None):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
+        properties.prepare(worker.getContext())
         props = properties.asComponentProperties(worker.getContext())
         resDef = defer.Deferred()
         initDef = defer.Deferred()

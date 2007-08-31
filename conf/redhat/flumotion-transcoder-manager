@@ -17,6 +17,7 @@ service=flumotion-transcoder-manager
 shortservice=transcoder-manager
 prog=/usr/bin/flumotion-manager
 lockdir=/var/lock/subsys
+daemondir=/var/cache/flumotion/transcoder
 lockfile=${lockdir}/$service.lock
 filebasename=manager.transcoder
 pidfile=/var/run/flumotion/$filebasename.pid
@@ -43,9 +44,9 @@ start() {
     touch_logfile
     echo -n $"Starting $service: "
         # OPTIONS can be set from the config file as well
-    daemon --user flumotion $prog -D -n transcoder \
-                            -P $MANAGER_PORT $OPTIONS \
-                            $MANAGER_CONFIG
+    daemon --user flumotion $prog -D --daemonize-to=$daemondir \
+                                  -n transcoder -P $MANAGER_PORT \
+                                  $OPTIONS $MANAGER_CONFIG
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && touch ${lockfile}

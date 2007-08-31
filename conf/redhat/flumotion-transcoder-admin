@@ -17,6 +17,7 @@ service=flumotion-transcoder-admin
 shortservice=transcoder-admin
 prog=/usr/bin/$service
 lockdir=/var/lock/subsys
+daemondir=/var/cache/flumotion/transcoder
 lockfile=${lockdir}/$service.lock
 pidfile=/var/run/flumotion/$shortservice.pid
 logfile=/var/log/flumotion/$shortservice.log
@@ -41,7 +42,8 @@ start() {
     touch_logfile
     echo -n $"Starting $service: "
         # OPTIONS can be set from the config file as well
-    daemon --user flumotion $prog -D $OPTIONS $TRANSCODER_CONFIG
+    daemon --user flumotion $prog -D --daemonize-to=$daemondir \
+                                  $OPTIONS $TRANSCODER_CONFIG
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && touch ${lockfile}

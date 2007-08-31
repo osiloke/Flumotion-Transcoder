@@ -13,6 +13,7 @@
 import os
 import shutil
 import urllib
+import commands
 
 import gobject
 gobject.threads_init()
@@ -71,6 +72,9 @@ class JobEventSink(object):
         pass
     
     def onTargetWarning(self, label, warning):
+        pass
+
+    def onSyncReport(self, report):
         pass
 
 
@@ -145,6 +149,31 @@ class TranscoderJob(log.LoggerProxy):
         context.reporter.time("start")
         
         sourceCtx = context.getSourceContext()
+        
+        # Initialize some report data
+        inputPath = sourceCtx.getInputPath()
+        if os.path.exists(inputPath):
+            # The input file size
+            sourceCtx.reporter.report.fileSize = os.stat(inputPath).st_size
+            # The input file type (with the file command)
+            try:
+                #FIXME: Don't use commands module
+                fileType = commands.getoutput("file -b %s" 
+                                              % commands.mkarg(inputPath))
+            except Exception, e:
+                fileType = "ERROR: %s" % str(e)
+            sourceCtx.reporter.report.fileType = fileType
+            # The input file header
+            try:
+                inputFile = file(inputPath)
+                try:
+                    dump = utils.hexDump(inputFile, 8, 16)
+                    for line in dump.split('\n'):
+                        sourceCtx.reporter.report.fileHeader.append(line)
+                finally:
+                    inputFile.close()
+            except:
+                pass
         
         self._unrecognizedOutputs = {}
         self._failedPostProcesses = {}
@@ -318,6 +347,7 @@ class TranscoderJob(log.LoggerProxy):
             context.info("Source file contains unknown stream type : %s" 
                       % otherstream)
         self._fireSourceInfo(context.getSourceContext())
+        self._fireSyncReport()
     
     def _transcoderPiplineCallback(self, pipeline, transcodingTargets):
         #FIXME: Don't reference the global context
@@ -329,6 +359,7 @@ class TranscoderJob(log.LoggerProxy):
             if len(bins) > 0:
                 targetsBins[targetCtx.key] = bins
         context.reporter.crawlPipeline(pipeline, targetsBins)
+        self._fireSyncReport()
 
     def _getPreProcessVars(self, context):
         reporter = context.reporter
@@ -581,6 +612,9 @@ class TranscoderJob(log.LoggerProxy):
             else:
                 self._eventSink.onJobWarning(warning)
     
+    def _fireSyncReport(self):
+        if self._eventSink:
+            self._eventSink.onSyncReport(self._context.reporter.report)
     
     ## Private Methods ##
         
@@ -915,7 +949,13 @@ class TranscoderJob(log.LoggerProxy):
         targetCtx.debug("Analysing target output file '%s'",
                         targetCtx.getOutputWorkPath())
         self._setTargetState(targetCtx, TargetStateEnum.analysis)
-        discoverer = Discoverer(targetCtx.getOutputWorkPath())
+        
+        outputPath = targetCtx.getOutputWorkPath()
+        if os.path.exists(outputPath):
+            targetCtx.reporter.report.fileSize = os.stat(outputPath).st_size
+        self._fireSyncReport()
+            
+        discoverer = Discoverer(outputPath)
         targetCtx.reporter.startUsageMeasure("analyse")
         d = discoverer.discover()
         d.addBoth(_stopMeasureCallback, targetCtx.reporter, "analyse")
@@ -1029,6 +1069,7 @@ class TranscoderJob(log.LoggerProxy):
         if self._isStopping(): return
         targetCtx.warning("Target processing failed")
         self._fireTargetInfo(targetCtx)
+        self._fireSyncReport()
         return failure
     
     ### Called by Deferreds ###
@@ -1038,6 +1079,7 @@ class TranscoderJob(log.LoggerProxy):
         targetCtx.debug("Target processing done")
         self._fireTargetInfo(targetCtx)
         self._setTargetState(targetCtx, TargetStateEnum.done)
+        self._fireSyncReport()
         return result
     
     ### Called by Deferreds ###

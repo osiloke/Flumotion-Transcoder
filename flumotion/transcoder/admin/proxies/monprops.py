@@ -56,6 +56,9 @@ class MonitorProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
         
+    def prepare(self, workerContext):
+        pass
+        
     def asComponentProperties(self, workerContext):
         props = []
         local = workerContext.getLocal()
@@ -66,3 +69,13 @@ class MonitorProperties(ComponentPropertiesMixin):
         props.append(("admin-id", self._name))
         props.extend(local.asComponentProperties())
         return props
+    
+    def asLaunchArguments(self, workerContext):
+        args = []
+        local = workerContext.getLocal()
+        for d in self._directories:
+            args.append("directory=%s" % d)
+        if self._scanPeriod:
+            args.append("scan-period=%d" % self._scanPeriod)
+        args.extend(local.asLaunchArguments())
+        return args

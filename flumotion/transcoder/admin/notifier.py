@@ -185,12 +185,12 @@ class Notifier(log.Loggable,
     def initialize(self):
         return defer.succeed(self)
     
-    def notify(self, label, trigger, notification, variables, documents):
+    def notify(self, label, trigger, notification, variables, documents, diagnostic=None):
         global _shutingDown
         self.info("%s notification '%s' [%s] initiated", 
                   notification.getType().nick, label, trigger.nick)
         activity = self.__prepareNotification(label, trigger, notification, 
-                                              variables, documents)
+                                              variables, documents, diagnostic)
         activity.store()
         d = defer.Deferred()
         self._results[activity] = d
@@ -227,7 +227,7 @@ class Notifier(log.Loggable,
     
     ## Private Methods ##
     
-    def __doPrepareGetRequest(self, label, trigger, notif, vars, docs):
+    def __doPrepareGetRequest(self, label, trigger, notif, vars, docs, diagnostic):
         store = self._activities
         activity = store.newNotification(NotificationTypeEnum.get_request,
                                          label, ActivityStateEnum.started,
@@ -236,7 +236,7 @@ class Notifier(log.Loggable,
         activity.setRequestURL(url)
         return activity
 
-    def __doPrepareMailPost(self, label, trigger, notif, vars, docs):
+    def __doPrepareMailPost(self, label, trigger, notif, vars, docs, diagnostic):
         store = self._activities
         activity = store.newNotification(NotificationTypeEnum.email,
                                          label, ActivityStateEnum.started,
@@ -256,7 +256,9 @@ class Notifier(log.Loggable,
         ccRecipients = utils.joinMailRecipients(ccRecipientsFields)
         
         body = vars.substitute(notif.getBodyTemplate())
-
+        if diagnostic:
+            body = body + "\n\n" + diagnostic
+        
         msg = MIMEMultipart()
         msg['Subject'] = subject
         msg['From'] = sender
@@ -391,10 +393,10 @@ class Notifier(log.Loggable,
         self.warning("%s", message)
         raise NotificationError(message)
     
-    def __prepareNotification(self, label, trigger, notif, vars, docs):
+    def __prepareNotification(self, label, trigger, notif, vars, docs, diagnostic):
         type = notif.getType()
         prep = self._prepareLookup.get(type, self.__cannotPrepare)
-        return prep(self, label, trigger, notif, vars, docs)
+        return prep(self, label, trigger, notif, vars, docs, diagnostic)
         
     def __performNotification(self, activity):
         self._retries[activity] = None

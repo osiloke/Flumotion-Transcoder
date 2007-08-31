@@ -47,3 +47,10 @@ class Local(object):
         for root, value in self._roots.iteritems():
             result.append(("local-root", "%s:%s" % (root, value)))
         return result
+    
+    def asLaunchArguments(self):
+        args = []
+        args.append("local-name=%s" % self._name)
+        for root, value in self._roots.iteritems():
+            args.append("local-root=%s:%s" % (root, value))
+        return args

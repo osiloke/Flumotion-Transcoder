@@ -25,7 +25,13 @@ class IComponentProperties(Interface):
     def getDigest(self):
         pass
 
+    def prepare(self, workerContext):
+        pass
+
     def asComponentProperties(self, workerContext):
+        pass
+
+    def asLaunchArguments(self, workerContext):
         pass
     
 
@@ -63,5 +69,11 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
     
+    def prepare(self, workerContext):
+        pass
+    
     def asComponentProperties(self, workerContext):
-        return copy.deepcopy(self._properties)
+        raise NotImplementedError()
+    
+    def asLaunchArguments(self, workerContext):
+        raise NotImplementedError()

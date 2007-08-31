@@ -78,7 +78,10 @@ class SourceReport(properties.PropertyBag):
 
     filePath = VirtualPathProperty('file-path')
     analyse = properties.Child('analyse', DiscoverReport)
-    pipeline = properties.Dict(properties.String("pipeline"))    
+    pipeline = properties.Dict(properties.String("pipeline"))
+    fileType = properties.String("file-type")
+    fileHeader = properties.List(properties.String("file-header"))
+    fileSize = properties.Integer('file-size')
 
 
 class TargetReport(TaskReport):
@@ -90,6 +93,7 @@ class TargetReport(TaskReport):
     pipeline = properties.Dict(properties.String("pipeline"))
     cpuUsagePostprocess = UsageProperty('cpu-usage-postprocess')
     cpuUsageAnalyse = UsageProperty('cpu-usage-analyse')
+    fileSize = properties.Integer('file-size')
 
 
 class LocalReport(properties.PropertyBag):
