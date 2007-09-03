@@ -268,7 +268,8 @@ EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
                   'bodyTemplate': None,
                   'attachments': set([DocumentTypeEnum.trans_report,
                                       DocumentTypeEnum.trans_config,
-                                      DocumentTypeEnum.trans_log]),
+                                      DocumentTypeEnum.trans_log,
+                                      DocumentTypeEnum.diagnostic]),
                   'recipients': {}}
 
 

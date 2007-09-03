@@ -153,6 +153,9 @@ class TranscoderProperties(ComponentPropertiesMixin):
     def getConfigPath(self):
         return self._configPath
 
+    def getConfig(self):
+        return self._config
+
 
     ## IComponentProperties Implementation ##
         

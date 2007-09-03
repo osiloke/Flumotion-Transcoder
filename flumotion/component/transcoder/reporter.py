@@ -91,13 +91,16 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
             name = element.__class__.__name__
         desc += name
         if desc == "capsfilter":
-            return str(element.get_property("caps"))
+            return "'%s'" % str(element.get_property("caps")).replace("; ", ";")
         compProps = self._hiddenCompProps.get(name, set())
         hiddenProps = self._hiddenProperties | compProps
         for p in gobject.list_properties(element):
             if (p.name in hiddenProps):
                 continue
-            defVal = p.default_value
+            if p.name == "location":
+                desc += " location=$FILE_PATH"
+                continue
+            defVal = p.default_value            
             currVal = element.get_property(p.name)
             if currVal != defVal:
                 #For enums
@@ -332,16 +335,22 @@ class Reporter(CPUUsageMixin):
 
     def init(self, context):
         sourceCtx = context.getSourceContext()
-        self.setSourcePath(sourceCtx.getInputPath())
+        self.setCurrentPath(sourceCtx.getInputPath())
         self.report.local.loadFromLocal(context.local)
+        virtInput = VirtualPath.virtualize(sourceCtx.getInputPath(), self.local)
+        virtDone = VirtualPath.virtualize(sourceCtx.getDoneInputPath(), self.local)
+        virtFailed = VirtualPath.virtualize(sourceCtx.getFailedInputPath(), self.local)
+        self.report.source.inputPath = virtInput
+        self.report.source.donePath = virtDone
+        self.report.source.failedPath = virtFailed
 
     _timeLookup = {"start": "startTime",
                    "done": "doneTime",
                    "acknowledge": "ackTime",
                    "terminated": "terminateTime"}
 
-    def setSourcePath(self, path):
-        self.report.source.filePath = VirtualPath.virtualize(path, self.local)
+    def setCurrentPath(self, path):
+        self.report.source.lastPath = VirtualPath.virtualize(path, self.local)
 
     def time(self, name):
         setattr(self.report, self._timeLookup[name], datetime.datetime.now())

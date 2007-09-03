@@ -58,8 +58,8 @@ reactor.addSystemEventTrigger("before", "shutdown", _disableNotification)
 
 ## Notification Function ###
 
-def _buildBody(sender, recipients, subject, msg, 
-               info=None, debug=None, failure=None, exception=None):
+def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
+               failure=None, exception=None, documents=None):
     body = [msg]
     if info:
         body.append("Information:\n\n%s" % info)
@@ -79,6 +79,16 @@ def _buildBody(sender, recipients, subject, msg,
     msg['To'] = recipients
     txt = MIMEText("\n\n\n".join(body))
     msg.attach(txt)
+    if documents:
+        for doc in documents:
+            mimeType = doc.getMimeType()
+            mainType, subType = mimeType.split('/', 1)
+            data = MIMEBase(mainType, subType)
+            data.set_payload(doc.asString())
+            email.Encoders.encode_base64(data)
+            data.add_header('Content-Disposition', 'attachment', 
+                            filename=doc.getLabel())
+            msg.attach(data)
     return str(msg)
 
 def _postNotification(smtpServer, sender, recipients, body):
@@ -98,8 +108,8 @@ def _ebNotificationFailed(failure, kind):
                 log.getFailureMessage(failure),
                 category=adminconsts.NOTIFIER_LOG_CATEGORY)
 
-def notifyEmergency(msg, info=None, debug=None, 
-                    failure=None, exception=None):
+def notifyEmergency(msg, info=None, debug=None, failure=None,
+                    exception=None, documents=None):
     """
     This function can be used from anywere to notify
     emergency situations when no Notifier reference
@@ -113,8 +123,8 @@ def notifyEmergency(msg, info=None, debug=None,
         recipients = _emergencyRecipients
         log.info("Try sending an emergency notification to %s", recipients,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
-        body = _buildBody(sender, recipients, msg, msg,
-                          info, debug, failure, exception)
+        body = _buildBody(sender, recipients, msg, msg, info, debug,
+                          failure, exception, documents)
         d = _postNotification(_smtpServer, sender, recipients, body)
         args = ("Emergency",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
@@ -124,8 +134,8 @@ def notifyEmergency(msg, info=None, debug=None,
                     log.getExceptionMessage(e),
                     category=adminconsts.NOTIFIER_LOG_CATEGORY)
 
-def notifyDebug(msg, info=None, debug=None,
-                failure=None, exception=None):
+def notifyDebug(msg, info=None, debug=None, failure=None,
+                exception=None, documents=None):
     """
     This function can be used from anywere to notify
     debug information (like traceback) when no 
@@ -140,8 +150,8 @@ def notifyDebug(msg, info=None, debug=None,
         log.info("Try sending a debug notification to %s from %s", 
                  recipients, sender,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
-        body = _buildBody(sender, recipients, msg, msg,
-                          info, debug, failure, exception)
+        body = _buildBody(sender, recipients, msg, msg, info, debug,
+                          failure, exception, documents)
         d = _postNotification(_smtpServer, sender, recipients, body)
         args = ("Debug",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
@@ -185,12 +195,12 @@ class Notifier(log.Loggable,
     def initialize(self):
         return defer.succeed(self)
     
-    def notify(self, label, trigger, notification, variables, documents, diagnostic=None):
+    def notify(self, label, trigger, notification, variables, documents):
         global _shutingDown
         self.info("%s notification '%s' [%s] initiated", 
                   notification.getType().nick, label, trigger.nick)
         activity = self.__prepareNotification(label, trigger, notification, 
-                                              variables, documents, diagnostic)
+                                              variables, documents)
         activity.store()
         d = defer.Deferred()
         self._results[activity] = d
@@ -227,7 +237,7 @@ class Notifier(log.Loggable,
     
     ## Private Methods ##
     
-    def __doPrepareGetRequest(self, label, trigger, notif, vars, docs, diagnostic):
+    def __doPrepareGetRequest(self, label, trigger, notif, vars, docs):
         store = self._activities
         activity = store.newNotification(NotificationTypeEnum.get_request,
                                          label, ActivityStateEnum.started,
@@ -236,7 +246,7 @@ class Notifier(log.Loggable,
         activity.setRequestURL(url)
         return activity
 
-    def __doPrepareMailPost(self, label, trigger, notif, vars, docs, diagnostic):
+    def __doPrepareMailPost(self, label, trigger, notif, vars, docs):
         store = self._activities
         activity = store.newNotification(NotificationTypeEnum.email,
                                          label, ActivityStateEnum.started,
@@ -256,8 +266,6 @@ class Notifier(log.Loggable,
         ccRecipients = utils.joinMailRecipients(ccRecipientsFields)
         
         body = vars.substitute(notif.getBodyTemplate())
-        if diagnostic:
-            body = body + "\n\n" + diagnostic
         
         msg = MIMEMultipart()
         msg['Subject'] = subject
@@ -393,10 +401,10 @@ class Notifier(log.Loggable,
         self.warning("%s", message)
         raise NotificationError(message)
     
-    def __prepareNotification(self, label, trigger, notif, vars, docs, diagnostic):
+    def __prepareNotification(self, label, trigger, notif, vars, docs):
         type = notif.getType()
         prep = self._prepareLookup.get(type, self.__cannotPrepare)
-        return prep(self, label, trigger, notif, vars, docs, diagnostic)
+        return prep(self, label, trigger, notif, vars, docs)
         
     def __performNotification(self, activity):
         self._retries[activity] = None

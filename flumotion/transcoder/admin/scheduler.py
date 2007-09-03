@@ -185,7 +185,12 @@ class Scheduler(log.Loggable,
         trigger = NotificationTriggerEnum.failed
         profCtx = task.getProfileContext()
         diagnostic = self._diagnose.transcodingFailure(task, transcoder)
-        self.__notify(label, trigger, profCtx, report, docs, diagnostic)
+        if diagnostic:
+            if docs:
+                docs.append(diagnostic)
+            else:
+                docs = [diagnostic]
+        self.__notify(label, trigger, profCtx, report, docs)
     
     def onTranscodingDone(self, task, transcoder):
         activity = self._activities[task]
@@ -218,22 +223,22 @@ class Scheduler(log.Loggable,
         
     ## Private Methods ##
     
-    def __notify(self, label, trigger, profCtx, report, docs, diagnostic=None):
+    def __notify(self, label, trigger, profCtx, report, docs):
         sourceVars = SourceNotificationVariables(profCtx, trigger, report)
         # Global notifications
         transCtx = profCtx.getTranscodingContext()
         notifications = transCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs, diagnostic)
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
         # Customer notifications
         custCtx = profCtx.getCustomerContext()
         notifications = custCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs, diagnostic)
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
         # Profile notifications
         notifications = profCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs, diagnostic)
+            self._notifier.notify(label, trigger, n, sourceVars, docs)
         # Targets notifications
         for targCtx in profCtx.iterTargetContexts():
             notifications = targCtx.store.getNotifications(trigger)
@@ -241,7 +246,7 @@ class Scheduler(log.Loggable,
                 continue
             for n in notifications:
                 targVars = sourceVars.getTargetVariables(targCtx)
-                d = self._notifier.notify(label, trigger, n, targVars, docs, diagnostic)
+                d = self._notifier.notify(label, trigger, n, targVars, docs)
                 # Ignore Failures to prevent defer to notify them
                 d.addErrback(defer.resolveFailure, None)
     

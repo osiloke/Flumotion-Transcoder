@@ -1,3 +1,23 @@
+2007-09-03  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/diagnose.py:
+	* flumotion/transcoder/admin/enums.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/transreport.py:
+	More diagnostic information.
+	Now the diagnostic is a document attached to the mails.
+	It include the gstreamer pipeline to play and reproduce
+	the complete or parctial transcodification.
+
 2007-08-31  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/redhat/flumotion-transcoder-admin:

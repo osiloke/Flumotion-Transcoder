@@ -919,7 +919,7 @@ class TranscoderJob(log.LoggerProxy):
             try:
                 newFile = sourceCtx.getDoneInputPath()
                 moveSource(newFile)
-                context.reporter.setSourcePath(newFile)
+                context.reporter.setCurrentPath(newFile)
             except Exception, e:
                 context.warning("Failed to move input file: %s", 
                                 log.getExceptionMessage(e))
@@ -931,7 +931,7 @@ class TranscoderJob(log.LoggerProxy):
             try:
                 newFile = sourceCtx.getFailedInputPath()
                 moveSource(newFile)
-                context.reporter.setSourcePath(newFile)
+                context.reporter.setCurrentPath(newFile)
             except Exception, e:
                 context.warning("Failed to move input file: %s", 
                                 log.getExceptionMessage(e))

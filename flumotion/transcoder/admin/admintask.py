@@ -12,6 +12,7 @@
 
 from zope.interface import Interface, implements
 from twisted.internet import reactor
+from twisted.internet.error import ConnectionLost
 from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
@@ -755,7 +756,7 @@ class AdminTask(LoggerProxy, EventSource):
             self.__cancelComponentStartup(component)
             
     def __ebUIStateFailed(self, failure, component, workerName):
-        if component.isRunning():
+        if not failure.check(ConnectionLost):
             # Do not notify failure because of component crash
             log.notifyFailure(self, failure,
                               "Admin task '%s' failed to retrieve "

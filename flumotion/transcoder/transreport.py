@@ -76,7 +76,10 @@ class DiscoverReport(properties.PropertyBag):
 
 class SourceReport(properties.PropertyBag):
 
-    filePath = VirtualPathProperty('file-path')
+    lastPath = VirtualPathProperty('last-path')
+    inputPath = VirtualPathProperty('input-path')
+    donePath = VirtualPathProperty('done-path')
+    failedPath = VirtualPathProperty('failed-path')
     analyse = properties.Child('analyse', DiscoverReport)
     pipeline = properties.Dict(properties.String("pipeline"))
     fileType = properties.String("file-type")

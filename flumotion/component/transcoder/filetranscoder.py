@@ -165,8 +165,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                     msg = "Config file not found ('%s')" % localConfigPath
                     raise TranscoderConfigError(msg)
                 self._configPath = localConfigPath
-                virtAltPath = baseReport.source.filePath
-                self._inputPath = virtAltPath.localize(self._local)
+                alternatives = [baseReport.source.lastPath,
+                                baseReport.source.failedPath,
+                                baseReport.source.donePath,
+                                baseReport.source.inputPath]
+                for virtAltPath in alternatives:
+                    self._inputPath = virtAltPath.localize(self._local)
+                    if os.path.isfile(self._inputPath):
+                        break
                 self._diagnoseMode = True
             return result
         
@@ -325,8 +331,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     
     ## Private Methods ##
     
-    def __notifyDebug(self, msg, info=None, debug=None,
-                      failure=None, exception=None):
+    def __notifyDebug(self, msg, info=None, debug=None, failure=None, 
+                      exception=None, documents=None):
         infoMsg = ["File Transcoder Debug Notification: %s" % msg]
         debugMsg = []
         if info:

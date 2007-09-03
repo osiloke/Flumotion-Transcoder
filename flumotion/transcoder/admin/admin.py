@@ -160,9 +160,8 @@ class TranscoderAdmin(log.Loggable,
             msg = ("Orphan component '%s' post a %s message" 
                    % (component.getLabel(), level))
         diagnostic = self._diagnose.componentMessage(component, message)
-        if diagnostic:
-            debug = debug + "\n\n" + diagnostic
-        notifyDebug(msg, info=text, debug=debug)
+        documents = (diagnostic and [diagnostic]) or None
+        notifyDebug(msg, info=text, debug=debug, documents=documents)
 
 
     ## IAdminStoreListener Overriden Methods ##

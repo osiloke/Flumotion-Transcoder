@@ -223,8 +223,8 @@ class FileMonitor(component.BaseComponent):
             func(key, subkey, val)
         self.__smoothUpdate()
     
-    def __notifyDebug(self, msg, info=None, debug=None, 
-                      failure=None, exception=None):
+    def __notifyDebug(self, msg, info=None, debug=None, failure=None,
+                      exception=None, documents=None):
         infoMsg = ["File Monitor Debug Notification: %s" % msg]
         debugMsg = []
         if info:

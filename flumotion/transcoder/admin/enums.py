@@ -82,7 +82,9 @@ MailAddressTypeEnum = EnumClass("MailAddressTypeEnum",
 DocumentTypeEnum = EnumClass("DocumentTypeEnum",
                              ("trans_report",
                               "trans_config",
-                              "trans_log"),
+                              "trans_log",
+                              "diagnostic"),
                              ("Transcoding Report",
                               "Transcoding Configuration",
-                              "Transcoding Log"))
+                              "Transcoding Log",
+                              "Error Diagnostic"))
