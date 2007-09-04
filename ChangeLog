@@ -1,3 +1,11 @@
+2007-09-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/transcoder/admin/diagnose.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	Better reporting, handling of muxer less pipelines.
+
 2007-09-03  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py:

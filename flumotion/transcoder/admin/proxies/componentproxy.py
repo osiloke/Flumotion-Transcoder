@@ -98,6 +98,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._uiState = AssignWaiters("Component UIState")
         self._requestedWorkerName = None
         self._worker = None
+        self._pid = None
         self._mood = ValueWaiters("Component Mood")
         self._properties = AssignWaiters("Component Properties")
         self._messageIds = {} # {identifier: None}
@@ -150,8 +151,14 @@ class BaseComponentProxy(FlumotionProxy):
             return self._manager.getWorkerByName(self._requestedWorkerName)
         return None
     
+    def getPID(self):
+        return self._pid
+    
     def getMood(self):
         return self._mood.getValue()
+    
+    def getProperties(self):
+        return self._properties.getValue()
 
     def waitHappy(self, timeout=None):
         return self._mood.wait([moods.happy], 
@@ -164,9 +171,6 @@ class BaseComponentProxy(FlumotionProxy):
     def waitMoodChange(self, timeout=None):
         return self._mood.wait(None, None, timeout)
 
-    def getProperties(self):
-        return self._properties.getValue()
-    
     def waitProperties(self, timeout=None):
         return self._properties.wait(timeout)
 
@@ -303,6 +307,8 @@ class BaseComponentProxy(FlumotionProxy):
                 self.__componentActiveWorkerChanged(value)
             elif key == 'workerRequested':
                 self.__componentRequestedWorkerChanged(value)
+            elif key == 'pid':
+                self._pid = value
         except Exception, e:
             log.notifyException(self, e,
                                 "Exception when setting component '%s' "

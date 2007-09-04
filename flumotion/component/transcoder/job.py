@@ -339,27 +339,35 @@ class TranscoderJob(log.LoggerProxy):
             self._fireProgress(percent)
 
     def _transcoderDiscoveredCallback(self, discoverer, ismedia):
-        #FIXME: Don't reference the global context
-        context = self._context
-        sourceCtx = context.getSourceContext()
-        sourceCtx.reporter.doAnalyse(discoverer)
-        for otherstream in discoverer.otherstreams:
-            context.info("Source file contains unknown stream type : %s" 
-                      % otherstream)
-        self._fireSourceInfo(context.getSourceContext())
-        self._fireSyncReport()
+        try:
+            #FIXME: Don't reference the global context
+            context = self._context
+            sourceCtx = context.getSourceContext()
+            sourceCtx.reporter.doAnalyse(discoverer)
+            for otherstream in discoverer.otherstreams:
+                context.info("Source file contains unknown stream type : %s" 
+                          % otherstream)
+            self._fireSourceInfo(context.getSourceContext())
+            self._fireSyncReport()
+        except Exception, e:
+            log.notifyException(context, e,
+                                "Exception during source analyse reporting")
     
     def _transcoderPiplineCallback(self, pipeline, transcodingTargets):
-        #FIXME: Don't reference the global context
-        context = self._context
-        targetsBins = {}
-        for transTarget in transcodingTargets:
-            targetCtx = transTarget.getData()
-            bins = transTarget.getBins()            
-            if len(bins) > 0:
-                targetsBins[targetCtx.key] = bins
-        context.reporter.crawlPipeline(pipeline, targetsBins)
-        self._fireSyncReport()
+        try:
+            #FIXME: Don't reference the global context
+            context = self._context
+            targetsBins = {}
+            for transTarget in transcodingTargets:
+                targetCtx = transTarget.getData()
+                bins = transTarget.getBins()            
+                if len(bins) > 0:
+                    targetsBins[targetCtx.key] = bins
+            context.reporter.crawlPipeline(pipeline, targetsBins)
+            self._fireSyncReport()
+        except Exception, e:
+            log.notifyException(context, e,
+                                "Exception during pipeline reporting")
 
     def _getPreProcessVars(self, context):
         reporter = context.reporter

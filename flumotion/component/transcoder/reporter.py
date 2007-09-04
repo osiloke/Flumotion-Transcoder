@@ -41,6 +41,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
                                                  "max-size-time"]),
                         "audiorate":        set(["in", "out", "drop", "add"]),
                         "videorate":        set(["in", "out", "drop", "add"]),
+                        "vorbisenc":        set(["last-message"]),
                         "lame":             set(["mode", "force-ms", "free-format",
                                                  "error-protection", "padding-type",
                                                  "extension", "strict-iso",
@@ -91,7 +92,10 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
             name = element.__class__.__name__
         desc += name
         if desc == "capsfilter":
-            return "'%s'" % str(element.get_property("caps")).replace("; ", ";")
+            caps = str(element.get_property("caps"))
+            if caps == "ANY":
+                return "capsfilter"
+            return "'%s'" % caps.replace("; ", ";")
         compProps = self._hiddenCompProps.get(name, set())
         hiddenProps = self._hiddenProperties | compProps
         for p in gobject.list_properties(element):
@@ -164,7 +168,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
             cmd += self._separator.join(self._pending) + self._separator
             del self._pending[:]
             
-        # Add trhe current element command
+        # Add the current element command
         cmd += self._elem2str(element)
         
         # And store back the command

@@ -71,6 +71,7 @@ class DiagnoseHelper(object):
             diagnostic.extend(self.__reportDiagnostic(component))
             diagnostic.extend(self.__transcoderDiagnostic(component, workerName))
         
+        diagnostic.append("")
         text = '\n\n'.join(diagnostic)
         label = "Component Message Diagnostic"
         return StringDocument(DocumentTypeEnum.diagnostic, label, text)
@@ -81,6 +82,8 @@ class DiagnoseHelper(object):
         diagnostic.extend(self.__componentDiagnostic(transcoder))
         diagnostic.extend(self.__reportDiagnostic(transcoder))
         diagnostic.extend(self.__transcoderDiagnostic(transcoder))
+        
+        diagnostic.append("")
         text = '\n\n'.join(diagnostic)
         label = "Transcoding Failure Diagnostic"
         return StringDocument(DocumentTypeEnum.diagnostic, label, text)
@@ -105,10 +108,12 @@ class DiagnoseHelper(object):
         else:
             host = worker.getHost()
             name = worker.getName()
-            diagnostic.append("Worker Name:  %s" % name)
-            diagnostic.append("Worker Host:  %s" % (host or "Unknown"))
+            pid = component.getPID()
+            diagnostic.append("Component PID:  %s" % (pid or "Unknown"))
+            diagnostic.append("Worker Name:    %s" % name)
+            diagnostic.append("Worker Host:    %s" % (host or "Unknown"))
             if host:
-                diagnostic.append("Go to Worker: ssh -At %s" % host)
+                diagnostic.append("Go to Worker:   ssh -At %s" % host)
         return diagnostic
     
     def __monitorDiagnostic(self, monitor, workerName=None):
@@ -174,7 +179,13 @@ class DiagnoseHelper(object):
         diagnostic.append(local)
         return diagnostic
 
-    def __reportDiagnostic(self, transcoder):
+    def __reportDiagnostic(self, transcoder, workerName=None):
+        
+        def formatDuration(sec):
+            return "%dm %ds %d" % (int(sec / 60),
+                                   int(sec % 60),
+                                   int((sec - int(sec)) * 1000))
+        
         diagnostic = ["SOURCE FILE INFO\n----------------"]
         if not transcoder:
             return diagnostic
@@ -191,7 +202,12 @@ class DiagnoseHelper(object):
             diagnostic.append("## No Component Configuration ##")
             return diagnostic
         worker = transcoder.getWorker()
+        if not worker and workerName:
+            worker = self._workers.getWorker(workerName)
+        if not workerName:
+            workerName = (worker and worker.getName()) or "Unknown Worker"
         workerLocal = None
+        adminLocal = None
         host = None
         if worker:
             host = worker.getHost()
@@ -224,19 +240,60 @@ class DiagnoseHelper(object):
                                   commands.mkarg("%s:%s" % (host, sourcePath)) + " .")
         else:
             diagnostic.append("Virtual File:   %s" % sourceFile)
-        
-        # Source Type        
-        sourceType = report.source.fileType
-        if sourceType:
-            diagnostic.append("File Type:      %s" % sourceType)
-        else:
-            diagnostic.append("Unknown File Type")
         # Source Size
         sourceSize = report.source.fileSize
         if sourceSize != None:
             diagnostic.append("File Size:      %s KB" % (sourceSize / 1024))
         else:
-            diagnostic.append("Unknwon File Size")
+            diagnostic.append("File Size:      Unknwon")
+        # Source Type        
+        sourceType = report.source.fileType
+        if sourceType:
+            diagnostic.append("File Type:      %s" % sourceType)
+        else:
+            diagnostic.append("File Type:      Unknown")
+        # Mime Type
+        if report.source.analyse.mimeType:
+            diagnostic.append("Mime Type:      %s" % report.source.analyse.mimeType)
+        else:
+            diagnostic.append("Mime Type:      Unknown")
+        # Discovered Audio
+        analyse = report.source.analyse
+        if analyse.hasAudio:
+            otherCodec = analyse.otherTags.get("audio-codec", "Unknown Codec")
+            audioCodec = analyse.audioTags.get("audio-codec", None)
+            info = audioCodec or otherCodec
+            info += ", %s" % formatDuration(analyse.audioDuration)
+            info += ", %d channels(s) : %dHz @ %dbits" % (analyse.audioChannels,
+                                                        analyse.audioRate,
+                                                        analyse.audioDepth)
+            for tag, val in analyse.audioTags.items():
+                if tag in set(["bitrate"]):
+                    info += ", %s: %s" % (tag, val)
+            diagnostic.append("Audio Info:     %s" % info)
+        else:
+            diagnostic.append("Audio Info:     Not Discovered")
+        # Discovered Video
+        if analyse.hasVideo:
+            otherCodec = analyse.otherTags.get("video-codec", "Unknown Codec")
+            audioCodec = analyse.audioTags.get("video-codec", None)
+            info = audioCodec or otherCodec
+            info += ", %s" % formatDuration(analyse.videoDuration)
+            if not analyse.videoRate:
+                rate = ""
+            else:
+                rate = "@ %d/%d fps" % analyse.videoRate
+                rate +=  " (~ %d fps)" % int(round(analyse.videoRate[0]
+                                                   / analyse.videoRate[1]))
+            info += ", %d x %d %s" % (analyse.videoWidth,
+                                      analyse.videoHeight,
+                                      rate)
+            for tag, val in analyse.audioTags.items():
+                if tag in set(["bitrate"]):
+                    info += ", %s: %s" % (tag, val)
+            diagnostic.append("Video Info:     %s" % info)
+        else:
+            diagnostic.append("Video Info:     Not Discovered")
         # Source Header
         if report.source.fileHeader:
             sourceHeader = '\n    '.join(report.source.fileHeader)
@@ -257,20 +314,22 @@ class DiagnoseHelper(object):
             play2Pipeline = gstlaunch + demux.replace(" location=$FILE_PATH", sourceLocation)
             trans1Pipeline = gstlaunch + "filesrc" +  sourceLocation + " ! decodebin name=decoder"
             trans2Pipeline = gstlaunch + demux.replace(" location=$FILE_PATH", sourceLocation)
+            base1Pipeline = trans1Pipeline
+            base2Pipeline = trans2Pipeline
             if "video" in report.source.pipeline:
                 videoSource = " demuxer. ! " + report.source.pipeline["video"]
                 play1Pipeline += " decoder. ! ffmpegcolorspace ! videoscale ! autovideosink"
                 play2Pipeline += videoSource + " ! ffmpegcolorspace ! videoscale ! autovideosink"
                 trans1Pipeline += " decoder. ! 'video/x-raw-yuv;video/x-raw-rgb' ! tee name=vtee"
                 trans2Pipeline += videoSource + " ! tee name=vtee"
+                base2Pipeline += videoSource + " name=vsrc"
             if "audio" in report.source.pipeline:
                 audioSource = " demuxer. ! " + report.source.pipeline["audio"]
                 play1Pipeline += " decoder. ! audioconvert ! autoaudiosink"
                 play2Pipeline += audioSource + " ! audioconvert ! autoaudiosink"
                 trans1Pipeline += " decoder. ! 'audio/x-raw-int;audio/x-raw-float' ! tee name=atee"
                 trans2Pipeline += audioSource + " ! tee name=atee"
-            base1Pipeline = trans1Pipeline
-            base2Pipeline = trans2Pipeline
+                base2Pipeline += audioSource + " name=asrc"
             targetsPipelines = {}
             for name, target in report.targets.iteritems():
                 type = config.targets[name].type
@@ -282,36 +341,48 @@ class DiagnoseHelper(object):
                                                   "diagnostic_"
                                                   + os.path.basename(targetFile))
                         targetLocation = commands.mkarg("location=" + targetFile)
-                        muxerName = "muxer-%s" % name
-                        muxer = " " + target.pipeline["muxer"]
-                        muxer = muxer.replace(" ! ", " name=%s ! " % muxerName, 1)
-                        muxer = muxer.replace(" location=$FILE_PATH", targetLocation)
-                        trans1Pipeline += muxer
-                        trans2Pipeline += muxer
-                        targ1Pipeline = base1Pipeline + muxer
-                        targ2Pipeline = base2Pipeline + muxer
+                        muxed = "muxer" in target.pipeline
+                        if muxed:
+                            # Target with muxer
+                            muxerName = "muxer-%s" % name
+                            muxer = " " + target.pipeline["muxer"]
+                            muxer = muxer.replace(" ! ", " name=%s ! " % muxerName, 1)
+                            muxer = muxer.replace(" location=$FILE_PATH", targetLocation)
+                            trans1Pipeline += muxer
+                            trans2Pipeline += muxer
+                            targ1Pipeline = base1Pipeline + muxer
+                            targ2Pipeline = base2Pipeline + muxer
                         if "video" in target.pipeline:
-                            videoTarget = " vtee. ! " + target.pipeline["video"] + " ! %s." % muxerName
-                            trans1Pipeline += videoTarget
-                            trans2Pipeline += videoTarget
-                            targ1Pipeline += videoTarget
-                            targ2Pipeline += videoTarget
+                            if muxed:
+                                videoTarget = target.pipeline["video"] + " ! %s." % muxerName
+                            else:
+                                videoTarget = target.pipeline["video"]
+                                videoTarget = videoTarget.replace(" location=$FILE_PATH", targetLocation)
+                            trans1Pipeline += " vtee. ! " + videoTarget
+                            trans2Pipeline += " vtee. ! " + videoTarget
+                            targ1Pipeline += " decoder. ! " + videoTarget
+                            targ2Pipeline += " vsrc. ! " + videoTarget
                         if "audio" in target.pipeline:
-                            audioTarget = " atee. ! " + target.pipeline["audio"] + " ! %s." % muxerName
-                            trans1Pipeline += audioTarget
-                            trans2Pipeline += audioTarget
-                            targ1Pipeline += audioTarget
-                            targ2Pipeline += audioTarget
+                            if muxed:
+                                audioTarget = target.pipeline["audio"] + " ! %s." % muxerName
+                            else:
+                                audioTarget = target.pipeline["audio"]
+                                audioTarget = audioTarget.replace(" location=$FILE_PATH", targetLocation)
+                            trans1Pipeline += " atee. ! " + audioTarget
+                            trans2Pipeline += " atee. ! " + audioTarget
+                            targ1Pipeline += " decoder. ! " + audioTarget
+                            targ2Pipeline += " asrc. ! " + audioTarget
                         targetsPipelines[name] = (targ1Pipeline, targ2Pipeline)
-            diagnostic.append("Dynamic Playing:\n\n    " + play1Pipeline)
-            diagnostic.append("Static Playing:\n\n    " + play2Pipeline)
+            diagnostic.append("PLAY SOURCE")
+            diagnostic.append("  Dynamic:\n\n    " + play1Pipeline)
+            diagnostic.append("  Static:\n\n    " + play2Pipeline)
             for name, (pipeline1, pipeline2) in targetsPipelines.iteritems():
-                diagnostic.append("Target %s Dynamic Transcoding:\n\n    %s"
-                                  % (name, pipeline1))
-                diagnostic.append("Target %s Static Transcoding:\n\n    %s"
-                                  % (name, pipeline2))
-            diagnostic.append("Full Dynamic Transcoding:\n\n    " + trans1Pipeline)
-            diagnostic.append("Full Static Transcoding:\n\n    " + trans2Pipeline)
+                diagnostic.append("TRANSCODE TARGET " + name)
+                diagnostic.append("  Dynamic:\n\n    " + pipeline1)
+                diagnostic.append("  Static:\n\n    " + pipeline2)
+            diagnostic.append("TRANSCODE ALL TARGETS")
+            diagnostic.append("  Dynamic:\n\n    " + trans1Pipeline)
+            diagnostic.append("  Static:\n\n    " + trans2Pipeline)
 
         return diagnostic
 
