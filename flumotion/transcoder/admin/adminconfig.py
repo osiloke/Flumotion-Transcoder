@@ -62,6 +62,9 @@
     # SMTP server host used to send mail notifications
     smtp-server = mail.fluendo.com
     
+    # If TLS should be used for SMTP
+    #smtp-require-tls = True
+    
     # SMTP username and password used if authentication is needed
     #smtp-username = 
     #smtp-password = 
