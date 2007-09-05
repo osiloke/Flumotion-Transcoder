@@ -1,5 +1,12 @@
 2007-09-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	Change the transcoder process-priority to be a value
+	from [0,100] insteed of a nice level.
+
+2007-09-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminconfig.py:
 	* flumotion/transcoder/admin/datasource/filesource.py:
 	* flumotion/transcoder/admin/notifier.py:

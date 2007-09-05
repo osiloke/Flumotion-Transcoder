@@ -177,7 +177,8 @@ class CustomerData(properties.RootPropertyBag):
     # Customer's transcoding priority (different from transcoding-priority)
     #customer-priority = 100
     
-    # Default Process Priority to use for this customer tasks
+    # Default Process Priority to use for this customer tasks with value
+    # between 0 and 100 with 0 very low priority and 100 very high
     #process-priority =
     
     # Flags to enable pre-processing, post-processing and link generation

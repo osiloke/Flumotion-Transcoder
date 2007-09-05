@@ -137,7 +137,8 @@ class TranscoderProperties(ComponentPropertiesMixin):
         configPath = prof.getConfigPath()
         config = createTranscodingConfigFromContext(prof)
         priority = prof.store.getProcessPriority()
-        return cls(name, configPath, config, priority)
+        niceLevel = 19 - (29 * min(100, max(0, priority)) / 100)
+        return cls(name, configPath, config, niceLevel)
 
     def __init__(self, name, configPath, config, niceLevel=None):
         assert config != None
