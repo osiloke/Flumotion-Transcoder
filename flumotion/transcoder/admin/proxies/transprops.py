@@ -137,7 +137,10 @@ class TranscoderProperties(ComponentPropertiesMixin):
         configPath = prof.getConfigPath()
         config = createTranscodingConfigFromContext(prof)
         priority = prof.store.getProcessPriority()
-        niceLevel = 19 - (29 * min(100, max(0, priority)) / 100)
+        # for priority in [0,100] the nice level will be in  [19,0]
+        # and for priority in [100-200] the nice level will be in [0,-15]
+        niceLevel = (19 - (19 * min(100, max(0, priority)) / 100) 
+                     - (15 * (min(200, max(100, priority)) - 100) / 100))
         return cls(name, configPath, config, niceLevel)
 
     def __init__(self, name, configPath, config, niceLevel=None):

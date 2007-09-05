@@ -178,7 +178,8 @@ class CustomerData(properties.RootPropertyBag):
     #customer-priority = 100
     
     # Default Process Priority to use for this customer tasks with value
-    # between 0 and 100 with 0 very low priority and 100 very high
+    # between 0 and 200 with 0 low priority, 100 normal and 200 very high
+    # For priority > 100, root privileges may be needed
     #process-priority =
     
     # Flags to enable pre-processing, post-processing and link generation

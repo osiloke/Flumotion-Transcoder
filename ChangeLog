@@ -2,6 +2,13 @@
 
 	* flumotion/transcoder/admin/datasource/dataprops.py:
 	* flumotion/transcoder/admin/proxies/transprops.py:
+	process-priority should now be a value in [0,200]
+	with root privileges needed for priotity > 100.
+
+2007-09-05  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
 	Change the transcoder process-priority to be a value
 	from [0,100] insteed of a nice level.
 
