@@ -137,6 +137,7 @@ class DataSourceConfig(properties.PropertyBag):
 
 class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
+    smtpRequireTLS = properties.Boolean('smtp-require-tls', True)
     smtpUsername = properties.String('smtp-username', None, False)
     smtpPassword = properties.String('smtp-password', None, False)
     mailNotifySender = properties.String('mail-notify-sender', None, True)

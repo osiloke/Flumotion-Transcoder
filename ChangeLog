@@ -1,3 +1,10 @@
+2007-09-05  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/notifier.py:
+	Added an option to disable smtp TLS.
+
 2007-09-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/job.py:

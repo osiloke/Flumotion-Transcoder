@@ -40,6 +40,7 @@ from flumotion.transcoder.admin.datastore.activitystore import GETRequestNotifyA
 # the configuration is loaded and setup
 
 _smtpServer = "mail.fluendo.com"
+_smtpRequireTLS = False
 _emergencySender = "Transcoder Emergency <transcoder-emergency@fluendo.com>"
 _debugSender = "Transcoder Debug <transcoder-debug@fluendo.com>"
 _emergencyRecipients = "sebastien@fluendo.com"
@@ -91,11 +92,12 @@ def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
             msg.attach(data)
     return str(msg)
 
-def _postNotification(smtpServer, sender, recipients, body):
+def _postNotification(smtpServer, requireTLS, sender, recipients, body):
     senderAddr = utils.splitMailAddress(sender)[1]
     recipientsAddr = [f[1] for f in utils.splitMailRecipients(recipients)]
     return Notifier._postMail(smtpServer, None, None, senderAddr,
                               recipientsAddr, StringIO(body),
+                              requireTLS=requireTLS,
                               timeout=adminconsts.GLOBAL_MAIL_NOTIFY_TIMEOUT,
                               retries=adminconsts.GLOBAL_MAIL_NOTIFY_RETRIES)
 
@@ -125,7 +127,8 @@ def notifyEmergency(msg, info=None, debug=None, failure=None,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
                           failure, exception, documents)
-        d = _postNotification(_smtpServer, sender, recipients, body)
+        d = _postNotification(_smtpServer, _smtpRequireTLS,
+                              sender, recipients, body)
         args = ("Emergency",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
                        callbackArgs=args, errbackArgs=args)
@@ -152,7 +155,8 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
                           failure, exception, documents)
-        d = _postNotification(_smtpServer, sender, recipients, body)
+        d = _postNotification(_smtpServer, _smtpRequireTLS,
+                              sender, recipients, body)
         args = ("Debug",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
                        callbackArgs=args, errbackArgs=args)
@@ -182,9 +186,11 @@ class Notifier(log.Loggable,
         self._retries = {} # {BaseNotifyActivity: IDelayedCall}
         self._results = {} # {BaseNotifyActivity: Deferred}
         # Setup global notification info
-        global _smtpServer, _emergencySender, _debugSender
+        global _smtpServer, _smtpRequireTLS
+        global _emergencySender, _debugSender
         global _emergencyRecipients, _debugRecipients
         _smtpServer = notifierContext.config.smtpServer
+        _smtpRequireTLS = notifierContext.config.smtpRequireTLS
         _emergencySender = notifierContext.config.mailEmergencySender
         _debugSender = notifierContext.config.mailDebugSender
         _emergencyRecipients = notifierContext.config.mailEmergencyRecipients
@@ -215,12 +221,13 @@ class Notifier(log.Loggable,
     @staticmethod
     def _postMail(smtpServer, smtpUsername, smtpPassword, 
                   senderAddr, recipientsAddr, bodyFile, 
-                  timeout=None, retries=0):
+                  requireTLS=True, timeout=None, retries=0):
         d = defer.Deferred()
         authenticate = (smtpUsername != None) and (smtpUsername != "")
         factory = ESMTPSenderFactory(username=smtpUsername,
                                      password=smtpPassword,
                                      requireAuthentication=authenticate,
+                                     requireTransportSecurity=requireTLS,
                                      fromEmail=senderAddr, 
                                      toEmail=recipientsAddr,
                                      file=bodyFile, 
@@ -326,6 +333,7 @@ class Notifier(log.Loggable,
                            self._context.config.smtpPassword,
                            senderAddr, recipientsAddr,
                            StringIO(activity.getBody()),
+                           self._context.config.smtpRequireTLS,
                            activity.getTimeout())
         args = (activity,)
         d.addCallbacks(self.__cbPostMailSucceed, self.__ebPostMailFailed,
