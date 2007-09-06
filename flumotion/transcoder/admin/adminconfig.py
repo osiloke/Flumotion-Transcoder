@@ -61,6 +61,9 @@
     
     # SMTP server host used to send mail notifications
     smtp-server = mail.fluendo.com
+
+    # If a non standard port should be used
+    smtp-port = 2525
     
     # If TLS should be used for SMTP
     #smtp-require-tls = True
@@ -140,6 +143,7 @@ class DataSourceConfig(properties.PropertyBag):
 
 class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
+    smtpPort = properties.Integer('smtp-port', 25, False, True)
     smtpRequireTLS = properties.Boolean('smtp-require-tls', True)
     smtpUsername = properties.String('smtp-username', None, False)
     smtpPassword = properties.String('smtp-password', None, False)

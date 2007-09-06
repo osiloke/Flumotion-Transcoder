@@ -1,3 +1,9 @@
+2007-09-06  Pedro Gracia <pedro@flumotion.com>
+
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/notifier.py:
+	Added an option to configure SMTP server port.
+
 2007-09-05  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datasource/dataprops.py:

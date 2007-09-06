@@ -40,6 +40,7 @@ from flumotion.transcoder.admin.datastore.activitystore import GETRequestNotifyA
 # the configuration is loaded and setup
 
 _smtpServer = "mail.fluendo.com"
+_smtpPort = 25
 _smtpRequireTLS = False
 _emergencySender = "Transcoder Emergency <transcoder-emergency@fluendo.com>"
 _debugSender = "Transcoder Debug <transcoder-debug@fluendo.com>"
@@ -92,10 +93,10 @@ def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
             msg.attach(data)
     return str(msg)
 
-def _postNotification(smtpServer, requireTLS, sender, recipients, body):
+def _postNotification(smtpServer, smtpPort, requireTLS, sender, recipients, body):
     senderAddr = utils.splitMailAddress(sender)[1]
     recipientsAddr = [f[1] for f in utils.splitMailRecipients(recipients)]
-    return Notifier._postMail(smtpServer, None, None, senderAddr,
+    return Notifier._postMail(smtpServer, smtpPort, None, None, senderAddr,
                               recipientsAddr, StringIO(body),
                               requireTLS=requireTLS,
                               timeout=adminconsts.GLOBAL_MAIL_NOTIFY_TIMEOUT,
@@ -127,7 +128,7 @@ def notifyEmergency(msg, info=None, debug=None, failure=None,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
                           failure, exception, documents)
-        d = _postNotification(_smtpServer, _smtpRequireTLS,
+        d = _postNotification(_smtpServer, _smtpPort, _smtpRequireTLS, 
                               sender, recipients, body)
         args = ("Emergency",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
@@ -155,7 +156,7 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
                           failure, exception, documents)
-        d = _postNotification(_smtpServer, _smtpRequireTLS,
+        d = _postNotification(_smtpServer, _smtpPort, _smtpRequireTLS,
                               sender, recipients, body)
         args = ("Debug",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
@@ -219,7 +220,7 @@ class Notifier(log.Loggable,
     ## Protected Static Methods ##
 
     @staticmethod
-    def _postMail(smtpServer, smtpUsername, smtpPassword, 
+    def _postMail(smtpServer, smtpPort, smtpUsername, smtpPassword, 
                   senderAddr, recipientsAddr, bodyFile, 
                   requireTLS=True, timeout=None, retries=0):
         d = defer.Deferred()
@@ -234,7 +235,7 @@ class Notifier(log.Loggable,
                                      deferred=d,
                                      retries=retries,
                                      timeout=timeout)
-        reactor.connectTCP(smtpServer, 25, factory)
+        reactor.connectTCP(smtpServer, smtpPort, factory)
         return d
 
     @staticmethod
@@ -329,6 +330,7 @@ class Notifier(log.Loggable,
         self.log("Posting mail from %s to %s",
                  senderAddr, ", ".join(recipientsAddr))
         d = self._postMail(self._context.config.smtpServer,
+                           self._context.config.smtpPort,
                            self._context.config.smtpUsername,
                            self._context.config.smtpPassword,
                            senderAddr, recipientsAddr,
