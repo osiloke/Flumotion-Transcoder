@@ -34,3 +34,8 @@ class WorkerContext(object):
         if self.config and (self.config.maxTask != None):
             return self.config.maxTask
         return self._default.maxTask
+    
+    def getMaxKeepFailed(self):
+        if self.config and (self.config.maxKeepFailed != None):
+            return self.config.maxKeepFailed
+        return self._default.maxKeepFailed

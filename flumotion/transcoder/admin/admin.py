@@ -23,6 +23,7 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.diagnose import DiagnoseHelper
+from flumotion.transcoder.admin.janitor import Janitor
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
@@ -74,6 +75,7 @@ class TranscoderAdmin(log.Loggable,
         self._diagnose = DiagnoseHelper(self._managers,
                                         self._workers,
                                         self._components)
+        self._janitor = Janitor(self._adminCtx, self._components)
         self._transcoders = TranscoderSet(self._managers)
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
@@ -102,6 +104,8 @@ class TranscoderAdmin(log.Loggable,
         d.addCallback(lambda r: self._scheduler.initialize())
         d.addCallback(lambda r: self._monitoring.initialize())
         d.addCallback(lambda r: self._transcoding.initialize())
+        d.addCallback(lambda r: self._janitor.initialize())
+        d.addCallback(lambda r: self._diagnose.initialize())
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners

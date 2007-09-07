@@ -1,3 +1,23 @@
+2007-09-07  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/test/Makefile.am:
+	* flumotion/test/test_ringbuffer.py:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/context/workercontext.py:
+	* flumotion/transcoder/admin/diagnose.py:
+	* flumotion/transcoder/admin/janitor.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/ringbuffer.py:
+	Added a Janitor class that will keep the manager clean.
+	It will keep a specified maximum of sad/lost components
+	for each workers, and if this limit is passed, it will 
+	start dumping the oldest sad/lost components of the worker.
+
 2007-09-06  Pedro Gracia <pedro@flumotion.com>
 
 	* flumotion/transcoder/admin/adminconfig.py:

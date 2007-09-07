@@ -110,6 +110,9 @@
     # GStreamer debug modifier; Not used yet
     gst-debug = *:2
     
+    # The maximum number of failed components to keep
+    #max-keep-failed = 5
+    
     # The workers default properties can be overriden 
     # by worker name. For example:
     [workers:repeater.dev]
@@ -135,6 +138,7 @@ class ManagerConfig(properties.PropertyBag):
 class WorkerConfig(properties.PropertyBag):
     roots = properties.Dict(properties.String('roots'))
     maxTask = properties.Integer('max-task', 1, False, True)
+    maxKeepFailed = properties.Integer('max-keep-failed', 5, False, True)
     gstDebug = properties.String('gst-debug', None)
 
 

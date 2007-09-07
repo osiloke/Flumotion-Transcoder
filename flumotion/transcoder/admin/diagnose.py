@@ -33,6 +33,9 @@ class DiagnoseHelper(object):
         
     
     ## Public Methods ##
+    
+    def initialize(self):
+        return defer.succeed(self)
         
     def filterComponentMessage(self, message):
         debug = message.debug
@@ -46,6 +49,8 @@ class DiagnoseHelper(object):
             if "flumotion.transcoder.errors.TranscoderError: Timed out trying to transcode" in debug:
                 return True
             if "exceptions.Exception: Source file not found" in debug:
+                return True
+            if "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video" in debug:
                 return True
         if message.level == 1: # ERROR
             if "__checkConfig(): Source file not found" in debug:
@@ -182,6 +187,8 @@ class DiagnoseHelper(object):
     def __reportDiagnostic(self, transcoder, workerName=None):
         
         def formatDuration(sec):
+            if sec == None:
+                return "Unknown Duration"
             return "%dm %ds %d" % (int(sec / 60),
                                    int(sec % 60),
                                    int((sec - int(sec)) * 1000))

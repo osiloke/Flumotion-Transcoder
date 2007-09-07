@@ -96,7 +96,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._componentState = componentState
         self._retrievingUIState = False
         self._uiState = AssignWaiters("Component UIState")
-        self._requestedWorkerName = None
+        self._requestedWorkerName = componentState.get('workerRequested')
         self._worker = None
         self._pid = None
         self._mood = ValueWaiters("Component Mood")
@@ -490,13 +490,20 @@ class BaseComponentProxy(FlumotionProxy):
             # Assume the objectives is fulfilled,
             resultDef.callback(self)
             return True
-        if failure and failure.check(PBConnectionLost):
-            msg = ("Forced Stop/Delete of component '%s' aborted "
-                   "because the remote connection was lost" % self.getLabel())
-            self.warning("%s", msg)
-            error = OperationAbortedError(msg, cause=failure.value)
-            resultDef.errback(error)
-            return True
+        if failure:
+            if failure.check(UnknownComponentError):
+                self.debug("Forced Stop/Delete of component '%s' aborted "
+                           "because the component is unknown (already deleted ?)",
+                           self.getLabel())
+                resultDef.callback(self)
+                return True
+            if failure.check(PBConnectionLost):
+                msg = ("Forced Stop/Delete of component '%s' aborted "
+                       "because the remote connection was lost" % self.getLabel())
+                self.warning("%s", msg)
+                error = OperationAbortedError(msg, cause=failure.value)
+                resultDef.errback(error)
+                return True
         return False
     
     def __stopOrDelete(self, _, status, label, resultDef):

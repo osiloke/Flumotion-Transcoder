@@ -20,6 +20,7 @@ TRANSCODING_LOG_CATEGORY = "transcoding"
 SCHEDULER_LOG_CATEGORY = "scheduler"
 NOTIFIER_LOG_CATEGORY = "notifier"
 IDLE_LOG_CATEGORY = "idle"
+JANITOR_LOG_CATEGORY = "janitor"
 
 GET_REQUEST_AGENT = "Flumotion Transcoder"
 
