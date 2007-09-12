@@ -404,3 +404,47 @@ class TestUtils(unittest.TestCase):
         
         check("test@mail.com, With Space <test2@mail.com>, test3@mail.com",
               [("", "test@mail.com"), ("With Space", "test2@mail.com"), ("", "test3@mail.com")])
+
+        
+    def testFilterFormat(self):
+        
+        def check(value, expectedFormat, expectedResult, vars):
+            format = utils.filterFormat(value, vars)
+            self.assertEqual(format, expectedFormat)
+            result = None
+            try:
+                result = format % vars                
+            except Exception, e:
+                self.fail("'%s' %% %r Sould work: %s" % (value, vars, e))
+            self.assertEqual(result, expectedResult)
+        
+        vars = {"toto": "AAA", "tata": "BBB", "titi": "CCC"}
+        check("", "", "", {})
+        check("", "", "", vars)
+        check("pimpampoum", "pimpampoum", "pimpampoum", vars)
+        check("%(toto)s", "%(toto)s", "AAA", vars)
+        check("%(titi)s", "%(titi)s", "CCC", vars)
+        check("1111 555 333 %(toto)s 4444",
+              "1111 555 333 %(toto)s 4444",
+              "1111 555 333 AAA 4444", vars)
+        check("%pim%pam%poum%", "%%pim%%pam%%poum%%", "%pim%pam%poum%", vars)
+        check("%pim%%pam%%poum%", "%%pim%%%%pam%%%%poum%%", "%pim%%pam%%poum%", vars)
+        check("%%pim%%%pam%%%poum%%", "%%%%pim%%%%%%pam%%%%%%poum%%%%", "%%pim%%%pam%%%poum%%", vars)
+        check("%(pim)%(pam)%(poum)%", "%%(pim)%%(pam)%%(poum)%%", "%(pim)%(pam)%(poum)%", vars)
+        check("%(pim%(pam)%(poum%", "%%(pim%%(pam)%%(poum%%", "%(pim%(pam)%(poum%", vars)
+        check("%(pim)%(pam%(poum)%", "%%(pim)%%(pam%%(poum)%%", "%(pim)%(pam%(poum)%", vars)
+        check("%(pim)s%(pam)s%(poum)s", "%%(pim)s%%(pam)s%%(poum)s", "%(pim)s%(pam)s%(poum)s", vars)
+        check("%(pim%(pam)s%(poum", "%%(pim%%(pam)s%%(poum", "%(pim%(pam)s%(poum", vars)
+        check("%(pim)s%(pam%(poum)s", "%%(pim)s%%(pam%%(poum)s", "%(pim)s%(pam%(poum)s", vars)
+        check("%(pim)s%(toto)s%(poum)s", "%%(pim)s%(toto)s%%(poum)s", "%(pim)sAAA%(poum)s", vars)
+        check("%(pims%(toto)s%(poums", "%%(pims%(toto)s%%(poums", "%(pimsAAA%(poums", vars)
+        check("%%(pim)s%%(toto)s%(poum)s%", "%%%%(pim)s%%%(toto)s%%(poum)s%%", "%%(pim)s%AAA%(poum)s%", vars)
+        check("%(toto)s%(tata)s%(titi)s", "%(toto)s%(tata)s%(titi)s", "AAABBBCCC", vars)
+        check("%(totos%(tata)s%(titis", "%%(totos%(tata)s%%(titis", "%(totosBBB%(titis", vars)
+        check("%%(toto)s111%%222%(tata)s444%555%(titi666%(pam)s777%(titi)s%(pam)s%%",
+              "%%%(toto)s111%%%%222%(tata)s444%%555%%(titi666%%(pam)s777%(titi)s%%(pam)s%%%%",
+              "%AAA111%%222BBB444%555%(titi666%(pam)s777CCC%(pam)s%%", vars)
+        check("%(toto)satest%(tata)sta%%ta%(pim)tutu%d%(titi)spam%%%spam%",
+              "%(toto)satest%(tata)sta%%%%ta%%(pim)tutu%%d%(titi)spam%%%%%%spam%%",
+              "AAAatestBBBta%%ta%(pim)tutu%dCCCpam%%%spam%", vars)
+        

@@ -17,6 +17,7 @@ import re
 import urllib
 import random
 
+from flumotion.transcoder import utils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.log import LoggerProxy
@@ -63,15 +64,18 @@ class SourceContext(BaseContext):
         return self.config.inputFile
     
     def getReportFile(self):
-        return self.config.reportTemplate % {"id": self._random}
+        vars = {"id": self._random}
+        template = self.config.reportTemplate
+        format = utils.filterFormat(template, vars)
+        return format % vars
         
     def getFailedReportPath(self):
-        file = self.config.reportTemplate % {"id": self._random}
+        file = self.getReportFile()
         path = self._profile.failedReportsDir.append(file)
         return path.localize(self.local)
 
     def getDoneReportPath(self):
-        file = self.config.reportTemplate % {"id": self._random}
+        file = self.getReportFile()
         path = self._profile.doneReportsDir.append(file)
         return path.localize(self.local)
         

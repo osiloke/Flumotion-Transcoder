@@ -121,6 +121,35 @@ def hexDump(file, lineCount, lineSize=16):
             break
     return "\n".join(result)
 
+_notKeyedVarPattern = re.compile('%(?!\()')
+_keyedVarPattern = re.compile('%(?=\()')
+_varNamePattern = re.compile('\(([a-zA-Z0-9_]*)\).*')
+
+def filterFormat(format, vars):
+    """
+    Escape a format string to only let the variable in
+    the specified dict. The values of the dict are not used and not changed.
+    Ex:
+        format = "%(toto)satest%(tata)sta%%ta%(pim)tutu%d%(titi)spam%%%spam%"
+        vars = {"toto": None, "tata": None, "titi": None}
+        result = "%(toto)satest%(tata)sta%%%%ta%%(pim)tutu%%d%(titi)spam%%%%%%spam%%"
+    """
+    escaped = '%%'.join(_notKeyedVarPattern.split(format))
+    parts = _keyedVarPattern.split(escaped)
+    result = parts[:1]
+    for i, p in enumerate(parts[1:]):
+        m = _varNamePattern.match(p)
+        if m:
+            if m.group(1) in vars:
+                result.append(p)
+                continue
+        result.append('')
+        result.append(p)
+    return '%'.join(result)
+        
+        
+        
+
 def str2filename(value):
     """
     Build a valid name for a file or a directory from a specified string.

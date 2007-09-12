@@ -28,13 +28,22 @@ class TranscoderError(Exception):
         self.causeDetails = None
         self.causeTraceback = None
         if self.cause:
-            try:
-                f = failure.Failure()
-                if f.value == self.cause:
+            if isinstance(self.cause, failure.Failure):
+                f = self.cause
+                self.cause = f.value
+                try:
                     self.causeTraceback = f.getTraceback()
-            except:
-                #To ignore failure.NoCurrentExceptionError if there is no current exception
-                pass
+                except:
+                    #To ignore failure.NoCurrentExceptionError if there is no current exception
+                    pass
+            else:
+                try:
+                    f = failure.Failure()
+                    if f.value == self.cause:
+                        self.causeTraceback = f.getTraceback()
+                except:
+                    #To ignore failure.NoCurrentExceptionError if there is no current exception
+                    pass
             from flumotion.transcoder import log
             if isinstance(self.cause, TranscoderError):
                 self.causeDetails = log.getExceptionMessage(self.cause)

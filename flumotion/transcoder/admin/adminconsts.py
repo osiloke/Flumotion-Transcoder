@@ -106,10 +106,10 @@ GLOBAL_MAIL_NOTIFY_RETRIES = 5
 
 # AdminStore default values
 DEFAULT_OUTPUT_MEDIA_TEMPLATE = "%(targetPath)s"
-DEFAULT_OUTPUT_THUMB_TEMPLATE = "%(targetDir)s%(targetBasename)s.%%(index)03d%(targetExtension)s"
+DEFAULT_OUTPUT_THUMB_TEMPLATE = "%(targetDir)s%(targetBasename)s.%(index)03d%(targetExtension)s"
 DEFAULT_LINK_FILE_TEMPLATE = "%(targetPath)s.link"
 DEFAULT_CONFIG_FILE_TEMPLATE = "%(sourcePath)s.ini"
-DEFAULT_REPORT_FILE_TEMPLATE = "%(sourcePath)s.%%(id)s.rep"
+DEFAULT_REPORT_FILE_TEMPLATE = "%(sourcePath)s.%(id)s.rep"
 DEFAULT_MONITORING_PERIOD = 5
 DEFAULT_TRANSCODING_TIMEOUT = 60
 DEFAULT_POSTPROCESS_TIMEOUT = 60

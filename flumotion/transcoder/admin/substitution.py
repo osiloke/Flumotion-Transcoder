@@ -23,7 +23,8 @@ class Variables(object):
 
     def substitute(self, value):
         #FIXME: Better error handling
-        return value % self._variables
+        format = utils.filterFormat(value, self._variables)
+        return format % self._variables
             
     def __iter__(self):
         return iter(self._variables)

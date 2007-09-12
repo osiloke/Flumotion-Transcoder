@@ -67,7 +67,8 @@ class ThumbnailSink(gst.BaseSink):
                 "index": index,
                 "time": time,
                 "timestamp": timestamp}
-        return self._filePathTemplate % vars        
+        format = utils.filterFormat(self._filePathTemplate, vars)
+        return format % vars        
 
     def do_render(self, buffer):
         self._index += 1

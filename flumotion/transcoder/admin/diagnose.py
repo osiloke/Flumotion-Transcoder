@@ -52,6 +52,8 @@ class DiagnoseHelper(object):
                 return True
             if "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video" in debug:
                 return True
+            if "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream" in debug:
+                return True
         if message.level == 1: # ERROR
             if "__checkConfig(): Source file not found" in debug:
                 return True
