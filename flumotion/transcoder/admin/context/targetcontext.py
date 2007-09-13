@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.admin.substitution import Variables
 
@@ -19,8 +19,8 @@ def _buildRelPathGetter(storeGetterName):
     def getter(self):
         template = getattr(self.store, storeGetterName)()
         path = self._vars.substitute(template)
-        path = utils.ensureRelPath(path)
-        return utils.cleanupPath(path)
+        path = fileutils.ensureRelPath(path)
+        return fileutils.cleanupPath(path)
     return getter
 
 def _buildBaseGetter(baseGetterName, storeGetterName):
@@ -28,8 +28,8 @@ def _buildBaseGetter(baseGetterName, storeGetterName):
         folder = getattr(self.store, storeGetterName)()
         if folder != None:
             value = self._expandDir(folder)
-            value = utils.ensureAbsDirPath(value)
-            value = utils.cleanupPath(value)
+            value = fileutils.ensureAbsDirPath(value)
+            value = fileutils.cleanupPath(value)
             return VirtualPath(value)
         return getattr(self.profile, baseGetterName)()
     return getter
@@ -38,14 +38,14 @@ def _buildDirGetter(baseGetterName, relGetterName):
     def getter(self):
         folder = getattr(self, baseGetterName)()
         relPath = getattr(self, relGetterName)()
-        path, file, ext = utils.splitPath(relPath)
+        path, file, ext = fileutils.splitPath(relPath)
         return folder.append(path)
     return getter
 
 def _buildFileGetter(relGetterName):
     def getter(self):
         relPath = getattr(self, relGetterName)()
-        path, file, ext = utils.splitPath(relPath)
+        path, file, ext = fileutils.splitPath(relPath)
         return file + ext
     return getter
 
@@ -129,13 +129,13 @@ class TargetContext(object):
         self._vars = Variables(self.profile._vars)
         self._vars.addVar("targetName", self.store.getName())
         subdir = self.store.getSubdir() or ""
-        subdir = utils.str2path(subdir)
-        subdir = utils.ensureRelDirPath(subdir)
-        subdir = utils.cleanupPath(subdir)
+        subdir = fileutils.str2path(subdir)
+        subdir = fileutils.ensureRelDirPath(subdir)
+        subdir = fileutils.cleanupPath(subdir)
         self._vars.addVar("targetSubdir", subdir)
-        targPath = (utils.joinPath(self._vars["sourceDir"], subdir)
+        targPath = (fileutils.joinPath(self._vars["sourceDir"], subdir)
                     + self._vars["sourceFile"])
-        self._vars.addFileVars(utils.ensureRelPath(targPath),
+        self._vars.addFileVars(fileutils.ensureRelPath(targPath),
                                "target", extension=self.getExtension())
         
     def getTranscodingContext(self):

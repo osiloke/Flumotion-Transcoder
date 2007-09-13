@@ -22,7 +22,8 @@ from flumotion.component.component import moods
 from flumotion.common import errors, messages
 
 from flumotion.component.transcoder import job, compconsts
-from flumotion.transcoder import log, defer, constants, properties, utils
+from flumotion.transcoder import log, defer, constants, properties
+from flumotion.transcoder import utils, fileutils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import TranscoderStatusEnum
@@ -88,6 +89,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self._inputPath = None
         self._local = None
         self._status = TranscoderStatusEnum.pending
+        self._pathAttr = None
         self.uiState.addDictKey('job-data', {})
         self.uiState.addDictKey('source-data', {})
         self.uiState.addDictKey('targets-data', {})
@@ -138,6 +140,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self._waitAcknowledge = props.get("wait-acknowledge", False)
             self._moveInputFile = props.get("move-input-file", True)
             self._niceLevel = props.get("nice-level", None)
+            self._pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
             localRepPath = props.get("report", None)
             self._reportForcedPath = localRepPath and os.path.realpath(localRepPath)
             if props.has_key("config"):
@@ -216,7 +219,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 self.info("Entering diagnose mode")
                 moveInputFile = False
             
-            self._job = job.TranscoderJob(self, self)
+            self._job = job.TranscoderJob(self, self, self._pathAttr)
             self._job.setup(self._local, self._config, self._report,
                             moveInputFile=moveInputFile, 
                             altInputDir=altInputDir,
@@ -471,9 +474,12 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 reportPath = reportPath + ".diag"
         self.debug("Writing report file '%s'", reportPath)
         report.status = self._status
-        utils.ensureDirExists(os.path.dirname(reportPath), "report")
+        fileutils.ensureDirExists(os.path.dirname(reportPath),
+                                  "report", self._pathAttr)
         saver = IniFile()
         saver.saveToFile(report, reportPath)
+        if self._pathAttr:
+            self._pathAttr.apply(reportPath)        
     
     def __finalize(self, report, succeed):
         if self._diagnoseMode:

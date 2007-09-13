@@ -90,36 +90,40 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a "container" object 
         with the following fields:
-            outputMediaTemplate (str)
-            outputThumbTemplate (str)
-            linkFileTemplate (str)
-            configFileTemplate (str)
-            reportFileTemplate (str)
-            monitoringPeriod (int) : 
+            outputMediaTemplate (str) can be None
+            outputThumbTemplate (str) can be None
+            linkFileTemplate (str) can be None
+            configFileTemplate (str) can be None
+            reportFileTemplate (str) can be None
+            accessForceGroup (str) can be None
+            accessForceUser (str) can be None
+            accessForceDirMode (int) can be None
+            accessForceFileMode (int) can be None
+            monitoringPeriod (int) can be None: 
                 Gives the default period used to monitor the filesystem.
-            transcodingPriority (int) :
+            transcodingPriority (int) can be None:
                 Gives the default priority of the transcoding jobs.
-            transcodingTimeout (int) :
+            transcodingTimeout (int) can be None:
                 Gives the default timeout of the transcoding jobs.
-            postprocessTimeout (int) :
+            postprocessTimeout (int) can be None:
                 Gives the default timeout of the post-processing.
-            preprocessTimeout (int) :
+            preprocessTimeout (int) can be None:
                 Gives the default timeout of the pre-processing.
-            mailSubjectTemplate (str) :
+            mailSubjectTemplate (str) can be None:
                 Gives the default template for the mail notifications subject.
-            mailBodyTemplate (str) :
+            mailBodyTemplate (str) can be None:
                 Gives the default template for the mail notifications body.
-            mailTimeout (int) :
+            mailTimeout (int) can be None:
                 Gives the default timeout for mail notifications.
-            mailRetryCount (int) :
+            mailRetryCount (int) can be None:
                 Gives the default retry count for mail notifications.
-            mailRetrySleep (int) :
+            mailRetrySleep (int) can be None:
                 Gives the default time between retry for mail notifications.                
-            HTTPRequestTimeout (int) :
+            HTTPRequestTimeout (int) can be None:
                 Gives the default timeout for HTTP request notifications.
-            HTTPRequestRetryCount (int) :
+            HTTPRequestRetryCount (int) can be None:
                 Gives the default retry count for HTTP request notifications.
-            HTTPRequestRetrySleep (int) :
+            HTTPRequestRetrySleep (int) can be None:
                 Gives the default time between retry 
                 for HTTP request notifications.
         """
@@ -161,6 +165,10 @@ class IDataSource(Interface):
            postprocessTimeout (int) can be None
            transcodingTimeout (int) can be None
            monitoringPeriod (int) can be None
+           accessForceGroup (str) can be None
+           accessForceUser (str) can be None
+           accessForceDirMode (int) can be None
+           accessForceFileMode (int) can be None
         """
         
     def retrieveCustomerInfo(self, customerData):

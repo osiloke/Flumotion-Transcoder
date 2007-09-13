@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder import constants
 from flumotion.transcoder.admin import adminconsts
@@ -98,14 +98,22 @@ class CustomerContext(object):
                                          self.store.iterProfiles(),
                                          self, input)
         
+    def getPathAttributes(self):
+        forceUser = self.store.getAccessForceUser()
+        forceGroup = self.store.getAccessForceGroup()
+        forceDirMode = self.store.getAccessForceDirMode()
+        forceFileMode = self.store.getAccessForceFileMode()
+        return fileutils.PathAttributes(forceUser, forceGroup,
+                                        forceDirMode, forceFileMode)
+    
     def getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
-            subdir = utils.str2path(subdir)
-            subdir = utils.ensureRelDirPath(subdir)
-            return utils.cleanupPath(subdir)
-        subdir = utils.str2filename(self.store.getName())
-        return utils.ensureDirPath(subdir)
+            subdir = fileutils.str2path(subdir)
+            subdir = fileutils.ensureRelDirPath(subdir)
+            return fileutils.cleanupPath(subdir)
+        subdir = fileutils.str2filename(self.store.getName())
+        return fileutils.ensureDirPath(subdir)
         
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
@@ -114,12 +122,12 @@ class CustomerContext(object):
     def _getDir(self, rootName, folder, template):
         if folder != None:
             folder = self._expandDir(folder)
-            folder = utils.ensureAbsDirPath(folder)
-            folder = utils.cleanupPath(folder)
+            folder = fileutils.ensureAbsDirPath(folder)
+            folder = fileutils.cleanupPath(folder)
             return VirtualPath(folder, rootName)
         subdir = self.getSubdir()
-        folder = utils.ensureAbsDirPath(template % subdir)
-        folder = utils.cleanupPath(folder)
+        folder = fileutils.ensureAbsDirPath(template % subdir)
+        folder = fileutils.cleanupPath(folder)
         return VirtualPath(folder, rootName)
         
     def getInputBase(self):

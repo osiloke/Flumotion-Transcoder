@@ -22,7 +22,7 @@ from flumotion.common import common, messages
 from flumotion.component import component
 from flumotion.component.component import moods
 
-from flumotion.transcoder import log, defer, constants, utils
+from flumotion.transcoder import log, defer, constants, fileutils
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
@@ -74,7 +74,9 @@ class FileMonitor(component.BaseComponent):
             locDestDir = os.path.dirname(locDestPath)
             self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
             try:
-                utils.ensureDirExists(locDestDir, "input file destination")
+                fileutils.ensureDirExists(locDestDir,
+                                          "input file destination",
+                                          self._pathAttr)
                 shutil.move(locSrcPath, locDestPath)
             except Exception, e:
                 msg = ("Fail to move file '%s' to '%s': %s" 
@@ -96,6 +98,7 @@ class FileMonitor(component.BaseComponent):
         self._directories = []
         self._uiItemDelta = {}
         self._uiItemDelay = None
+        self._pathAttr = None
 
     def do_check(self):
         
@@ -117,12 +120,14 @@ class FileMonitor(component.BaseComponent):
         def monitor_setup(result):
             props = self.config["properties"]
             self._scanPeriod = props["scan-period"]
+            self._pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
             strDirs = props.get("directory", [])
             self._directories = map(VirtualPath, strDirs)
             self.uiState.set('monitored-directories', self._directories)
             for virtDir in self._directories:
                 localDir = virtDir.localize(self._local)
-                utils.ensureDirExists(localDir, "monitored")
+                fileutils.ensureDirExists(localDir, "monitored",
+                                          self._pathAttr)
             return result
     
         try:

@@ -18,6 +18,10 @@
         <property name="nice-level" type="int" required="no" multiple="no"/>
         <property name="local-root" type="string" required="no" multiple="yes"/> 
         <property name="local-name" type="string" required="no" multiple="no"/> 
+        <property name="force-group" type="string" required="no" multiple="no"/>
+        <property name="force-user" type="string" required="no" multiple="no"/>
+        <property name="force-dir-mode" type="string" required="no" multiple="no"/>
+        <property name="force-file-mode" type="string" required="no" multiple="no"/>
       </properties>
 
     </component>

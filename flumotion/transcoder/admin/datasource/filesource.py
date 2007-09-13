@@ -18,7 +18,7 @@ from twisted.python import failure
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, defer, inifile, utils
+from flumotion.transcoder import log, defer, inifile, utils, fileutils
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
@@ -135,7 +135,8 @@ class MutableDataWrapper(object):
             else:
                 setattr(data, attr, utils.deepCopy(value))
         try:
-            utils.ensureDirExists(os.path.dirname(newTmpPath), "activities")
+            fileutils.ensureDirExists(os.path.dirname(newTmpPath),
+                                      "activities")
             saver = inifile.IniFile()
             saver.saveToFile(data, newTmpPath)
         except Exception, e:
@@ -579,10 +580,10 @@ class FileDataSource(log.Loggable):
         self._adminData = adminData
         basePath = os.path.dirname(self._adminPath)
         relDir = self._adminData.customersDir
-        absPath = utils.makeAbsolute(relDir, basePath)
-        absDir = utils.ensureAbsDirPath(absPath)
+        absPath = fileutils.makeAbsolute(relDir, basePath)
+        absDir = fileutils.ensureAbsDirPath(absPath)
         self._customersDir = absDir
-        utils.ensureDirExists(self._customersDir, "customers configuration")
+        fileutils.ensureDirExists(self._customersDir, "customers configuration")
         self.debug("Loading customers data from directory '%s'", absDir)
         self._customersData.clear()
         files = os.listdir(absDir)
@@ -604,20 +605,20 @@ class FileDataSource(log.Loggable):
     def __loadActivityData(self):
         basePath = os.path.dirname(self._adminPath)
         relDir = self._adminData.activitiesDir
-        absPath = utils.makeAbsolute(relDir, basePath)
-        absDir = utils.ensureAbsDirPath(absPath)
+        absPath = fileutils.makeAbsolute(relDir, basePath)
+        absDir = fileutils.ensureAbsDirPath(absPath)
         self._activeActivitiesDir = absDir
-        self._failedActivitiesDir = utils.ensureAbsDirPath(absDir + "failed")
-        self._doneActivitiesDir = utils.ensureAbsDirPath(absDir + "done")
-        self._invalidActivitiesDir = utils.ensureAbsDirPath(absDir + "invalid")
-        utils.ensureDirExists(self._activeActivitiesDir,
-                              "activities data base")
-        utils.ensureDirExists(self._failedActivitiesDir,
-                              "failed activities")
-        utils.ensureDirExists(self._doneActivitiesDir,
-                              "done activities")
-        utils.ensureDirExists(self._invalidActivitiesDir,
-                              "invalid activities")
+        self._failedActivitiesDir = fileutils.ensureAbsDirPath(absDir + "failed")
+        self._doneActivitiesDir = fileutils.ensureAbsDirPath(absDir + "done")
+        self._invalidActivitiesDir = fileutils.ensureAbsDirPath(absDir + "invalid")
+        fileutils.ensureDirExists(self._activeActivitiesDir,
+                                  "activities data base")
+        fileutils.ensureDirExists(self._failedActivitiesDir,
+                                  "failed activities")
+        fileutils.ensureDirExists(self._doneActivitiesDir,
+                                  "done activities")
+        fileutils.ensureDirExists(self._invalidActivitiesDir,
+                                  "invalid activities")
         self.debug("Loading activities data from directory '%s'", absDir)
         loader = inifile.IniFile()
         self._activitiesData.clear()

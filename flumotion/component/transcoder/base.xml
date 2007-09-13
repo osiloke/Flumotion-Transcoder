@@ -16,6 +16,7 @@
           <filename location="local.py" />
           <filename location="virtualpath.py" />
           <filename location="utils.py" />
+          <filename location="fileutils.py" />          
           <filename location="defer.py" />
           <filename location="properties.py" />
           <filename location="inifile.py" />                    

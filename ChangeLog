@@ -1,3 +1,41 @@
+2007-09-13  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/base.xml:
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filemonitor.xml:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/filetranscoder.xml:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/test/Makefile.am:
+	* flumotion/test/test_fileutils.py:
+	* flumotion/test/test_utils.py:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/context/customercontext.py:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/adminstore.py:
+	* flumotion/transcoder/admin/datastore/customerstore.py:
+	* flumotion/transcoder/admin/main.py:
+	* flumotion/transcoder/admin/proxies/monprops.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/admin/substitution.py:
+	* flumotion/transcoder/fileutils.py:
+	* flumotion/transcoder/properties.py:
+	* flumotion/transcoder/tools/upgrade.py:
+	* flumotion/transcoder/utils.py:
+	* flumotion/transcoder/virtualpath.py:
+	Moved the file related functions from utils.py to fileutils.py.
+	Added a PathAttributes class to handle file and directory
+	ownership and mode configuration. the configuration files now
+	have the properties access-force-user, access-force-group,
+	access-force-dir-mode and access-force-file-mode.
+
 2007-09-12  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/context.py:

@@ -15,7 +15,7 @@ import re
 from twisted.python.reflect import qual
 from twisted.spread import jelly
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import fileutils
 from flumotion.transcoder import constants
 from flumotion.transcoder.errors import VirtualPathError
 from flumotion.transcoder.properties import ValueProperty
@@ -35,11 +35,11 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
         """
         From a path and local, it creates a VirtualPath instance.
         """
-        path = utils.cleanupPath(path)
+        path = fileutils.cleanupPath(path)
         for name, value in local.iterVirtualRoots():
-            value = utils.cleanupPath(value)
+            value = fileutils.cleanupPath(value)
             if path.startswith(value):
-                path = utils.ensureAbsPath(path[len(value):])
+                path = fileutils.ensureAbsPath(path[len(value):])
                 return VirtualPath(path, name)
         raise VirtualPathError("Cannot virtualize local path '%s', "
                                "no compatible virtual root found" % path)
@@ -72,7 +72,7 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
         """
         roots = local.getVirtualRoots()
         if self._root in roots:
-            return utils.joinPath(roots[self._root], self._path)
+            return fileutils.joinPath(roots[self._root], self._path)
         raise VirtualPathError("Cannot localize virtual path '%s', "
                                " virtual root not found for this local" % self)
     
@@ -99,13 +99,13 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
     def join(self, virtPath):
         #FIXME: Maybe better to raise an exception
         assert virtPath._root == self._root
-        return VirtualPath(utils.joinPath(self._path, virtPath._path),
+        return VirtualPath(fileutils.joinPath(self._path, virtPath._path),
                               self._root)
 
     def append(self, *parts):
         goodparts = [p for p in parts if p]
         if not goodparts: return self
-        path = utils.joinPath(self._path, utils.joinPath(*goodparts))
+        path = fileutils.joinPath(self._path, fileutils.joinPath(*goodparts))
         return VirtualPath(path, self._root)
 
 

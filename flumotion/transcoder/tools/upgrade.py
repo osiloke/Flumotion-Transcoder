@@ -20,7 +20,7 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
-from flumotion.transcoder import utils, log, inifile
+from flumotion.transcoder import fileutils, log, inifile
 from flumotion.transcoder.tools import oldconfig
 from flumotion.transcoder.admin import adminconfig
 from flumotion.transcoder.admin.datasource import dataprops
@@ -75,8 +75,8 @@ class UpgradeConfig(Loggable):
                  doBackup=True):
         self._tag = tag
         self._oldFile = oldConfigFile
-        self._newDir = utils.ensureAbsDirPath(newConfigDir)
-        self._rootDir = utils.ensureAbsDirPath(rootDir)
+        self._newDir = fileutils.ensureAbsDirPath(newConfigDir)
+        self._rootDir = fileutils.ensureAbsDirPath(rootDir)
         self._disableRequests = disableRequests or False
         self._changeMail = changeMail
         self._keepConfig = keepConfig or False
@@ -167,7 +167,7 @@ class UpgradeConfig(Loggable):
         adminData.accessForceGroup = oldConfig.groupName
         adminData.discovererMaxInterleave = oldConfig.maxInterleave
         adminData.customersDir = self._customerDataRelDir
-        base = utils.ensureAbsDirPath("/var/cache/flumotion/transcoder/%s" % self._tag)
+        base = fileutils.ensureAbsDirPath("/var/cache/flumotion/transcoder/%s" % self._tag)
         adminData.activitiesDir = base + "activities"
 
         self.info("Saving transcoder global data to '%s'", self._adminDataPath)
@@ -250,21 +250,21 @@ class UpgradeConfig(Loggable):
                 if profKey == profData.name:
                     profData.name = None
                 profName = profData.name or profKey
-                custSubdir = custData.subdir or utils.str2filename(custData.name)
-                profSubdir = profData.subdir or utils.str2filename(profName)
-                inputDefault = utils.cleanupPath("%s/files/incoming/%s/" % (custSubdir, profSubdir))
+                custSubdir = custData.subdir or fileutils.str2filename(custData.name)
+                profSubdir = profData.subdir or fileutils.str2filename(profName)
+                inputDefault = fileutils.cleanupPath("%s/files/incoming/%s/" % (custSubdir, profSubdir))
                 if profData.inputDir and (profData.inputDir == inputDefault):
                     profData.inputDir = None
-                outputDefault = utils.cleanupPath("%s/files/outgoing/%s/" % (custSubdir, profSubdir))
+                outputDefault = fileutils.cleanupPath("%s/files/outgoing/%s/" % (custSubdir, profSubdir))
                 if profData.outputDir and (profData.outputDir == outputDefault):
                     profData.outputDir = None
-                doneDefault = utils.cleanupPath("%s/files/done/%s/" % (custSubdir, profSubdir))
+                doneDefault = fileutils.cleanupPath("%s/files/done/%s/" % (custSubdir, profSubdir))
                 if profData.doneDir and (profData.doneDir == doneDefault):
                     profData.doneDir = None
-                failedDefault = utils.cleanupPath("%s/files/failed/%s/" % (custSubdir, profSubdir))
+                failedDefault = fileutils.cleanupPath("%s/files/failed/%s/" % (custSubdir, profSubdir))
                 if profData.failedDir and (profData.failedDir == failedDefault):
                     profData.failedDir = None
-                linkDefault = utils.cleanupPath("%s/files/links/%s/" % (custSubdir, profSubdir))
+                linkDefault = fileutils.cleanupPath("%s/files/links/%s/" % (custSubdir, profSubdir))
                 if profData.linkDir and (profData.linkDir == linkDefault):
                     profData.linkDir = None
                 for targKey, targData in profData.targets.items():
@@ -293,14 +293,14 @@ class UpgradeConfig(Loggable):
         elif custData.subdir:
             result = custData.subdir
         else:
-            result = utils.str2filename(custData.name)
-        result = utils.ensureRelDirPath(result)
+            result = fileutils.str2filename(custData.name)
+        result = fileutils.ensureRelDirPath(result)
         result = "%sfiles/%s/" % (result, middle)
         if profData.subdir:
             result = result + profData.subdir
         else:
-            result = result + utils.str2filename(profData.name)
-        return utils.cleanupPath(result)
+            result = result + fileutils.str2filename(profData.name)
+        return fileutils.cleanupPath(result)
 
     def _resolveOutgoingAsIncomingHack(self, oldCustConfig, custData, profData):
         self.info("Trying to upgrade outgoing-as-incoming hack for customer '%s' profiles '%s'",
@@ -308,8 +308,8 @@ class UpgradeConfig(Loggable):
         oldInput = profData.inputDir
         profData.inputDir = None
         currOutput =  self._getDir(custData, profData, 'outgoing')
-        oldInput = utils.ensureRelDirPath(oldInput)
-        currOutput = utils.ensureRelDirPath(currOutput)
+        oldInput = fileutils.ensureRelDirPath(oldInput)
+        currOutput = fileutils.ensureRelDirPath(currOutput)
         haveIdent = False
         for oldProf in oldCustConfig.profiles.values():
             haveIdent = haveIdent or oldProf.mimeCopy
@@ -324,10 +324,10 @@ class UpgradeConfig(Loggable):
     def _resolveMultiInputHack(self, custData, lastProfData, newProfData):
         self.info("Trying to upgrade multi-input hack for customer '%s' profiles '%s' and '%s'",
                   custData.name, lastProfData.name, newProfData.name)
-        newSubdir = newProfData.subdir or utils.str2filename(newProfData.name)
-        lastSubdir = lastProfData.subdir or utils.str2filename(lastProfData.name)
+        newSubdir = newProfData.subdir or fileutils.str2filename(newProfData.name)
+        lastSubdir = lastProfData.subdir or fileutils.str2filename(lastProfData.name)
         if newSubdir == '.':
-            newName = utils.str2filename(newProfData.name)
+            newName = fileutils.str2filename(newProfData.name)
             newInputDir = self._getDir(custData, newProfData) + newName + "/"
             newProfData.inputDir = newInputDir
         else:
@@ -337,7 +337,7 @@ class UpgradeConfig(Loggable):
             newInputDir = self._getDir(custData, newProfData)
         lastProfData.doneDir = newInputDir
         if lastProfData.subdir == '.':
-            lastSubdir = utils.str2filename(lastProfData.name)
+            lastSubdir = fileutils.str2filename(lastProfData.name)
             lastInputDir = self._getDir(custData, lastProfData) + lastSubdir + "/"
             lastProfData.inputDir = lastInputDir
         period = min(lastProfData.monitoringPeriod, newProfData.monitoringPeriod)
@@ -405,7 +405,7 @@ class UpgradeConfig(Loggable):
             if (csd != custSubdir) or (psd != profSubdir) or (middle != kind):
                 dir = path[len(self._rootDir):].strip('/')
                 override = self._guessOverridenDir(dir, custData, profData)
-                setattr(profData, attr, utils.ensureRelDirPath(override))
+                setattr(profData, attr, fileutils.ensureRelDirPath(override))
         
         profData.linkURLPrefix = oldCustConf.urlPrefix
         if oldCustConf.urlPrefix and  oldCustConf.linkDir:
@@ -466,14 +466,14 @@ class UpgradeConfig(Loggable):
                 p1 = dir[:i].strip('/')
                 p2 = dir[i + len(middle):].strip('/')
                 # Check to reorder profiles directories
-                custSubdir = custData.subdir or utils.str2filename(custData.name)
-                profSubdir = profData.subdir or utils.str2filename(profData.name)
+                custSubdir = custData.subdir or fileutils.str2filename(custData.name)
+                profSubdir = profData.subdir or fileutils.str2filename(profData.name)
                 if p1 == (custSubdir + '/' + profSubdir):
                     result =  custSubdir + "/files/" + new + "/" + profSubdir + '/' + p2
                 else:
                     result =  p1 + "/files/" + new + "/" + p2
-                result = utils.ensureDirPath(result)
-                result = utils.cleanupPath(result)
+                result = fileutils.ensureDirPath(result)
+                result = fileutils.cleanupPath(result)
                 return result
             except ValueError:
                 pass
@@ -556,9 +556,9 @@ class UpgradeConfig(Loggable):
                                     % (outputPath, self._rootDir))
                 targDir = outputPath[len(self._rootDir):]
                 targDir = self._guessOverridenDir(targDir.strip('/'), custData, profData)
-                targDir = utils.ensureRelDirPath(targDir)
+                targDir = fileutils.ensureRelDirPath(targDir)
                 profDir = self._getDir(custData, profData, "outgoing")
-                profDir = utils.ensureRelDirPath(profDir)
+                profDir = fileutils.ensureRelDirPath(profDir)
                 if targDir != profDir:
                     thumbData.outputDir = targDir
             if oldTargConf.appendExt:
@@ -625,12 +625,12 @@ def main(argv):
     Loggable.level = min(5, options.verbose + 2)
     
     if args == ['bootstrap']:
-        oldConfigFile = utils.makeAbsolute(options.oldConfigFile)
-        rootDir = utils.makeAbsolute(options.rootDir)
+        oldConfigFile = fileutils.makeAbsolute(options.oldConfigFile)
+        rootDir = fileutils.makeAbsolute(options.rootDir)
         newConfigDir = options.newConfigDir
         if not newConfigDir:
             newConfigDir = DEFAULT_NEW_CONFIG_DIR % options.tag
-        newConfigDir = utils.makeAbsolute(newConfigDir)
+        newConfigDir = fileutils.makeAbsolute(newConfigDir)
         
         if not os.path.exists(oldConfigFile):
             parser.error("Old configuration file '%s' not found" % oldConfigFile)

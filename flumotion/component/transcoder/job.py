@@ -26,7 +26,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common import common
 from flumotion.common import enum
-from flumotion.transcoder import process, log, defer, enums, utils
+from flumotion.transcoder import process, log, defer, enums, utils, fileutils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
@@ -97,7 +97,7 @@ RunningState = enum.EnumClass('StopState', ('initializing', 'running',
 
 class TranscoderJob(log.LoggerProxy):
     
-    def __init__(self, logger, eventSink=None):
+    def __init__(self, logger, eventSink=None, pathAttr=None):
         log.LoggerProxy.__init__(self, logger)
         self._context = None
         self._moveInputFile = True
@@ -113,6 +113,7 @@ class TranscoderJob(log.LoggerProxy):
         self._runningState = RunningState.initializing
         self._stopping = False
         self._stoppingDefer = None
+        self._pathAttr = pathAttr
 
         
     ## Public Methods ##
@@ -167,7 +168,7 @@ class TranscoderJob(log.LoggerProxy):
             try:
                 inputFile = file(inputPath)
                 try:
-                    dump = utils.hexDump(inputFile, 8, 16)
+                    dump = fileutils.hexDump(inputFile, 8, 16)
                     for line in dump.split('\n'):
                         sourceCtx.reporter.report.fileHeader.append(line)
                 finally:
@@ -873,12 +874,16 @@ class TranscoderJob(log.LoggerProxy):
             for targetCtx in context.getTargetContexts():
                 for src, dest in targetCtx.reporter.getFiles():
                     context.log("Moving '%s' to '%s'", src, dest)
-                    utils.ensureDirExists(os.path.dirname(dest), "transcoding done")
+                    fileutils.ensureDirExists(os.path.dirname(dest),
+                                              "transcoding done",
+                                              self._pathAttr)
                     if os.path.exists(dest):
                         context.debug("Output file '%s' already exists; "
                                       "deleting it", dest)
                         os.remove(dest)
                     shutil.move(src, dest)
+                    if self._pathAttr:
+                        self._pathAttr.apply(dest)
         else:
             context.debug("Skipping moving output files, "
                           "because transcoding fail")
@@ -916,7 +921,9 @@ class TranscoderJob(log.LoggerProxy):
             source = sourceCtx.getInputPath()
             context.debug("Moving input file to '%s'", to)
             context.log("Moving '%s' to '%s'", source, to)
-            utils.ensureDirExists(os.path.dirname(to), "transcoding done")
+            fileutils.ensureDirExists(os.path.dirname(to),
+                                      "transcoding done",
+                                      self._pathAttr)
             if os.path.exists(to):
                 context.debug("Input file '%s' already exists; "
                               "deleting it", to)
@@ -1063,7 +1070,8 @@ class TranscoderJob(log.LoggerProxy):
         #FIXME: Don't reference the global context
         template = self._context.config.profile.linkTemplate % templateVars
         workPath = targetCtx.getLinkWorkPath()
-        utils.ensureDirExists(os.path.dirname(workPath), "temporary target link")
+        fileutils.ensureDirExists(os.path.dirname(workPath),
+                                  "temporary target link")
         handle = open(workPath, 'w')
         handle.write(template)
         handle.close()

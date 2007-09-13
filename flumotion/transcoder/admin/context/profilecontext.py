@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.substitution import Variables
@@ -24,8 +24,8 @@ def _buildBaseGetter(baseGetterName, storeGetterName):
         parent = getattr(self.customer, baseGetterName)()
         if folder != None:
             value = self._expandDir(folder)
-            value = utils.ensureAbsDirPath(value)
-            value = utils.cleanupPath(value)
+            value = fileutils.ensureAbsDirPath(value)
+            value = fileutils.cleanupPath(value)
             return VirtualPath(value, parent.getRoot())
         return parent.append(self.getSubdir())
     return getter
@@ -34,14 +34,14 @@ def _buildDirGetter(baseGetterName, relGetterName):
     def getter(self):
         folder = getattr(self, baseGetterName)()
         relPath = getattr(self, relGetterName)()
-        path, file, ext = utils.splitPath(relPath)
+        path, file, ext = fileutils.splitPath(relPath)
         return folder.append(path)
     return getter
 
 def _buildFileGetter(relGetterName):
     def getter(self):
         relPath = getattr(self, relGetterName)()
-        path, file, ext = utils.splitPath(relPath)
+        path, file, ext = fileutils.splitPath(relPath)
         return file + ext
     return getter
 
@@ -133,11 +133,11 @@ class UnboundProfileContext(object):
     def getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
-            subdir = utils.str2path(subdir)
-            subdir = utils.ensureRelDirPath(subdir)
-            return utils.cleanupPath(subdir)
-        subdir = utils.str2filename(self.store.getName())
-        return utils.ensureDirPath(subdir)
+            subdir = fileutils.str2path(subdir)
+            subdir = fileutils.ensureRelDirPath(subdir)
+            return fileutils.cleanupPath(subdir)
+        subdir = fileutils.str2filename(self.store.getName())
+        return fileutils.ensureDirPath(subdir)
 
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
@@ -232,18 +232,18 @@ class ProfileContext(UnboundProfileContext):
     
     def getConfigRelPath(self):
         path = self._vars.substitute(self.store.getConfigFileTemplate())
-        path = utils.ensureRelPath(path)
-        return utils.cleanupPath(path)
+        path = fileutils.ensureRelPath(path)
+        return fileutils.cleanupPath(path)
     
     def getFailedRepRelPath(self):
         path = self._vars.substitute(self.store.getReportFileTemplate())
-        path = utils.ensureRelPath(path)
-        return utils.cleanupPath(path)
+        path = fileutils.ensureRelPath(path)
+        return fileutils.cleanupPath(path)
     
     def getDoneRepRelPath(self):
         path = self._vars.substitute(self.store.getReportFileTemplate())
-        path = utils.ensureRelPath(path)
-        return utils.cleanupPath(path)
+        path = fileutils.ensureRelPath(path)
+        return fileutils.cleanupPath(path)
     
     def getTranscoderLabel(self):
         #FIXME: Dependency too deep 

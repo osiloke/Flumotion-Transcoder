@@ -78,7 +78,11 @@ class CustomerStore(BaseStore):
                        "getPreprocessTimeout":    ("preprocessTimeout",),
                        "getPostprocessTimeout":   ("postprocessTimeout",),
                        "getTranscodingTimeout":   ("transcodingTimeout",),
-                       "getMonitoringPeriod":     ("monitoringPeriod",)}}
+                       "getMonitoringPeriod":     ("monitoringPeriod",),
+                       "getAccessForceUser":      ("accessForceUser",),
+                       "getAccessForceGroup":     ("accessForceGroup",),
+                       "getAccessForceDirMode":   ("accessForceDirMode",),
+                       "getAccessForceFileMode":   ("accessForceFileMode",)}}
     
 
     def __init__(self, logger, parent, dataSource, customerData):

@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import utils, fileutils
 
 
 class Variables(object):
@@ -60,7 +60,7 @@ class Variables(object):
             "inputExtension" (str): ".ext",
             "inputDir" (str): "/my.sub/folder/"
         """
-        path, file, ext = utils.splitPath(filePath, extension == None)
+        path, file, ext = fileutils.splitPath(filePath, extension == None)
         if extension: 
             ext = extension
             self._variables[kind + "Path"] = filePath + extension

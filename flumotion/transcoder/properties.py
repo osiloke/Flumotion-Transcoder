@@ -928,6 +928,22 @@ class Integer(ValueProperty):
     def val2str(self, value):
         return str(value)
 
+
+class Octal(ValueProperty):
+    
+    def __init__(self, descriptor, default=None, required=False):
+        ValueProperty.__init__(self, descriptor, default, required)
+    
+    def checkValue(self, value):
+        return isinstance(value, int) or isinstance(value, long)
+    
+    def str2val(self, strval):
+        return int(strval, 8)
+    
+    def val2str(self, value):
+        return oct(value, 8).rstrip('L')
+
+
 class Float(ValueProperty):
     
     def __init__(self, descriptor, default=None, required=False):

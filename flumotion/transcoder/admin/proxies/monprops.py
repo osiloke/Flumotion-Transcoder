@@ -16,6 +16,7 @@ from zope.interface import implements
 
 from flumotion.common import log
 
+from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.utils import digestParameters
 from flumotion.transcoder.admin.errors import PropertiesError
@@ -31,8 +32,9 @@ class MonitorProperties(ComponentPropertiesMixin):
     def createFromComponentDict(cls, workerContext, props):
         scanPeriod = props.get("scan-period", None)
         directories = props.get("directory", list())
+        pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
         name = props.get("admin-id", "")
-        return cls(name, directories, scanPeriod)
+        return cls(name, directories, scanPeriod, pathAttr)
     
     @classmethod
     def createFromContext(cls, customerCtx):
@@ -40,15 +42,17 @@ class MonitorProperties(ComponentPropertiesMixin):
         for p in customerCtx.iterUnboundProfileContexts():
             folders.append(p.getInputBase())
         period = customerCtx.store.getMonitoringPeriod()
-        return cls(customerCtx.store.getName(), folders, period)
+        pathAttr = customerCtx.getPathAttributes()
+        return cls(customerCtx.store.getName(), folders, period, pathAttr)
     
-    def __init__(self, name, virtDirs, scanPeriod=None):
+    def __init__(self, name, virtDirs, scanPeriod=None, pathAttr=None):
         assert isinstance(virtDirs, list) or isinstance(virtDirs, tuple)
         self._name = name
         self._directories = tuple(virtDirs)
         self._scanPeriod = scanPeriod
+        self._pathAttr = pathAttr
         self._digest = digestParameters(self._name, self._directories, 
-                                        self._scanPeriod)
+                                        self._scanPeriod, self._pathAttr)
         
 
     ## IComponentProperties Implementation ##
@@ -66,6 +70,8 @@ class MonitorProperties(ComponentPropertiesMixin):
             props.append(("directory", str(d)))
         if self._scanPeriod:
             props.append(("scan-period", self._scanPeriod))
+        if self._pathAttr:
+            props.extend(self._pathAttr.asComponentProperties())
         props.append(("admin-id", self._name))
         props.extend(local.asComponentProperties())
         return props
@@ -77,5 +83,7 @@ class MonitorProperties(ComponentPropertiesMixin):
             args.append("directory=%s" % d)
         if self._scanPeriod:
             args.append("scan-period=%d" % self._scanPeriod)
+        if self._pathAttr:
+            args.extend(self._pathAttr.asLaunchArguments())
         args.extend(local.asLaunchArguments())
         return args

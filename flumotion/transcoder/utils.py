@@ -12,7 +12,6 @@
 
 # Headers in this file shall remain intact.
 
-import os
 import re
 import md5
 import time
@@ -74,52 +73,7 @@ def genUniqueIdentifier():
     return genUniqueBinaryIdentifier().encode("HEX").upper()
 
 
-## File System Utility Functions ##
-
-def ensureDirExists(dir, description):
-    """
-    Ensure the given directory exists, creating it if not.
-    Raises a SystemError if this fails, including the given description.
-    If makedirs fail, verify the directory hasn't been 
-    created by another process.
-    """
-    if not os.path.exists(dir):
-        try:
-            os.makedirs(dir)
-        except Exception, e:
-            #FIXME: Is there a constant for this ?
-            if e.errno == 17:
-                return
-            from flumotion.transcoder.errors import SystemError
-            raise SystemError("Could not create %s directory '%s': %s"
-                              % (description, dir, log.getExceptionMessage(e)),
-                              cause=e)
-
-
 ## String and Path Utility Functions ##
-
-_dumpTransTable = '................................ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~.................................................................................................................................'
-
-def hexDump(file, lineCount, lineSize=16):
-    result = []
-    currSize = 0
-    maxSize = lineCount * lineSize
-    while currSize < maxSize:
-        line = file.read(lineSize)
-        ascii = line.translate(_dumpTransTable)
-        hex = ''
-        i = 0
-        while i*8 <= len(line):
-            hex += ' '.join([c.encode('hex') for c in line[i*8:i*8 + 8]])
-            hex += '  '
-            i += 1
-        hexPad = ' '*((lineSize*3 + (lineSize/8)*2) - len(hex))
-        asciiPad = ' '*(lineSize - len(ascii))
-        result.append("%s%s|%s%s|" % (hex, hexPad, ascii, asciiPad))
-        currSize += len(line)
-        if len(line) < lineSize:
-            break
-    return "\n".join(result)
 
 _notKeyedVarPattern = re.compile('%(?!\()')
 _keyedVarPattern = re.compile('%(?=\()')
@@ -145,141 +99,7 @@ def filterFormat(format, vars):
                 continue
         result.append('')
         result.append(p)
-    return '%'.join(result)
-        
-        
-        
-
-def str2filename(value):
-    """
-    Build a valid name for a file or a directory from a specified string.
-    Replace all caracteres out of [0-9A-Za-z-()] by '_' and lower the case.
-    Ex: "Big Client Corp" => "big_client_corp"
-        "OGG-Theora/Vorbis" => "ogg_theora_vorbis"
-    """
-    return "_".join(re.split("[^0-9A-Za-z-()]", value)).lower()
-
-def splitPath(filePath, withExtention=True):
-    """
-    From: /toto/ta.ta/tu.tu.foo
-    Return: ("/toto/ta.ta/", "tu.tu", ".foo")
-    If withExtention is set to false, the extension is not extracted:
-    From: /toto/ta.ta/tu.tu.foo
-    Return: ("/toto/ta.ta/", "tu.tu.foo", "")
-    """
-    path = ""
-    file = filePath
-    ext = ""
-    lastSepIndex = filePath.rfind('/') + 1
-    if lastSepIndex > 0:
-        path = file[:lastSepIndex]
-        file = file[lastSepIndex:]
-    if withExtention:
-        lastDotIndex = file.rfind('.')
-        if lastDotIndex >= 0:
-            ext = file[lastDotIndex:]
-            file = file[:lastDotIndex]
-    return (path, file, ext)
-
-def cleanupPath(filePath):
-    """
-    Simplify a path, but keep the last '/'.
-    Ex:   //test/./toto/test.txt/ => /test/toto/test.txt/
-    See test_utils.py for more use cases.
-    
-    FIXME: Too much complicated and special-cased.
-    """
-    parts = filePath.split('/')
-    if len(parts) <= 1:
-        return filePath
-    result = []
-    if parts[0] != '.':
-        result.append(parts[0])
-    result.extend([p for p in parts[1:-1] if p and p != '.'])
-    last = parts[-1]
-    if last != '.':
-        if last or (not last and result and result[-1]):
-            result.append(last)
-    elif len(result) > 1:
-        result.append('')
-    if (parts[0] == '') and ((not result) or (result[0] != '') or (len(result) < 2)):
-        result.insert(0, '')
-    if (parts[-1] == '') and ((not result) or (result[-1] != '') or (len(result) < 2)):
-        result.append('')
-    if (parts[0] == '.') and ((not result) or ((result[0] != '.') and (len(result) < 2))):
-        result.insert(0, '.')
-    return '/'.join(result)
-
-def ensureDirPath(dirPath):
-    """
-    Ensure the path ends by a '/'.
-    """
-    if (not dirPath) or dirPath.endswith('/'):
-        return dirPath
-    return dirPath + '/'
-
-def ensureAbsPath(dirPath):
-    """
-    Ensure the path starts with a '/'.
-    """
-    if not dirPath:
-        return '/'
-    if dirPath.startswith('/'):
-        return dirPath
-    return '/' + dirPath
-
-_ensureRelPathPattern = re.compile("/*(.*)")
-def ensureRelPath(aPath):
-    """
-    Ensure the path do not starts with a '/'.
-    """
-    if not aPath:
-        return aPath
-    return _ensureRelPathPattern.match(aPath).group(1)
-
-def ensureAbsDirPath(dirPath):
-    """
-    Shortcut to ensureDirPath(ensureAbsPath()) because it's used a lot.
-    """
-    if not dirPath:
-        return '/'
-    if not dirPath.endswith('/'):
-        dirPath = dirPath + '/'
-    if not dirPath.startswith('/'):
-        dirPath = '/' + dirPath
-    return dirPath
-
-def ensureRelDirPath(dirPath):
-    """
-    Shortcut to ensureDirPath(ensureRelPath()) because it's used a lot.
-    """
-    if not dirPath:
-        return dirPath
-    if not dirPath.endswith('/'):
-        dirPath = dirPath + '/'
-    return _ensureRelPathPattern.match(dirPath).group(1)
-
-def str2path(value):
-    """
-    Convert a string to a path.
-    Actualy doing nothing.
-    "toto/tatat/titi.txt" => "toto/tatat/titi.txt"
-    """
-    return value
-
-def makeAbsolute(path, base=None):
-    """
-    If the specified path is not absolute (do not starts with '/')
-    it's concatenated to the specified base or the current directory.
-    """
-    if not base:
-        base = os.path.abspath('')
-    if path.startswith('/'):
-        return os.path.abspath(path)
-    return os.path.abspath(ensureAbsDirPath(base) + path)
-
-def joinPath(*parts):
-    return cleanupPath("/".join(parts))
+    return '%'.join(result)        
 
 def splitEscaped(regex, s):
     """

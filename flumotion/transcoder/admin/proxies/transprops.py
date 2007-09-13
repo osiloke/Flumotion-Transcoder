@@ -16,7 +16,7 @@ from zope.interface import implements
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, inifile, constants, utils
+from flumotion.transcoder import log, inifile, constants, utils, fileutils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.transconfig import TranscodingConfig, TargetConfig
 from flumotion.transcoder.virtualpath import VirtualPath
@@ -111,7 +111,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
         niceLevel = props.get("nice-level", None)
         name = props.get("admin-id", "")
         configPath = VirtualPath(props.get("config", None))
-        
+        pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
         adminLocal = workerContext.admin.getLocal()
         localPath = configPath.localize(adminLocal)
         if not os.path.exists(localPath):
@@ -127,7 +127,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
             raise PropertiesError(message)
-        return cls(name, configPath, config, niceLevel)
+        return cls(name, configPath, config, niceLevel, pathAttr)
     
     @classmethod
     def createFromContext(cls, profileCtx):
@@ -135,24 +135,27 @@ class TranscoderProperties(ComponentPropertiesMixin):
         cust = prof.customer
         name = "%s/%s" % (cust.store.getName(), prof.store.getName())
         configPath = prof.getConfigPath()
+        pathAttr = cust.getPathAttributes()
         config = createTranscodingConfigFromContext(prof)
         priority = prof.store.getProcessPriority()
         # for priority in [0,100] the nice level will be in  [19,0]
         # and for priority in [100-200] the nice level will be in [0,-15]
         niceLevel = (19 - (19 * min(100, max(0, priority)) / 100) 
                      - (15 * (min(200, max(100, priority)) - 100) / 100))
-        return cls(name, configPath, config, niceLevel)
+        return cls(name, configPath, config, niceLevel, pathAttr)
 
-    def __init__(self, name, configPath, config, niceLevel=None):
+    def __init__(self, name, configPath, config, niceLevel=None, pathAttr=None):
         assert config != None
         self._name = name
         self._configPath = configPath
         self._config = config
         self._niceLevel = niceLevel
+        self._pathAttr = pathAttr
         # For now only use the configPath property in the digest
         self._digest = digestParameters(self._name, 
                                         self._configPath, 
-                                        self._niceLevel)
+                                        self._niceLevel,
+                                        self._pathAttr)
 
     def getConfigPath(self):
         return self._configPath
@@ -172,29 +175,17 @@ class TranscoderProperties(ComponentPropertiesMixin):
         saver = inifile.IniFile()
         # Set the datetime of file creation
         self._config.touch()
-        try:
-            utils.ensureDirExists(os.path.dirname(localPath),
-                                  "transcoding config")
+        try:            
+            fileutils.ensureDirExists(os.path.dirname(localPath),
+                                      "transcoding config", self._pathAttr)
             saver.saveToFile(self._config, localPath)
         except Exception, e:
             message = ("Failed to save transcoder config file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
             raise PropertiesError(message)
-        
-        try:
-            saver.loadFromFile(self._config, localPath)
-        except Exception, e:
-            message = ("Failed to load transcoder config file '%s': %s"
-                       % (localPath, log.getExceptionMessage(e)))
-            log.warning("%s", message)
-            raise PropertiesError(message)
-            
-        except Exception, e:
-            message = ("Failed to save transcoder config file '%s': %s"
-                       % (localPath, log.getExceptionMessage(e)))
-            log.warning("%s", message)
-            raise PropertiesError(message)
+        if self._pathAttr:
+            self._pathAttr.apply(localPath)
         
     def asComponentProperties(self, workerContext):
         props = []
@@ -203,6 +194,8 @@ class TranscoderProperties(ComponentPropertiesMixin):
         props.append(("config", str(self._configPath)))
         if self._niceLevel:
             props.append(("nice-level", self._niceLevel))
+        if self._pathAttr:
+            props.extend(self._pathAttr.asComponentProperties())
         props.append(("admin-id", self._name))
         props.append(("wait-acknowledge", True))
         return props
@@ -213,6 +206,8 @@ class TranscoderProperties(ComponentPropertiesMixin):
         args.append("config=%s" % self._configPath)
         if self._niceLevel:
             args.append("nice-level=%d" % self._niceLevel)
+        if self._pathAttr:
+            args.extend(self._pathAttr.asLaunchArguments())
         args.append("wait-acknowledge=True")
         args.extend(local.asLaunchArguments())
         return args

@@ -22,7 +22,8 @@ from twisted.internet import reactor
 from flumotion.common import common, errors
 from flumotion.configure import configure
 
-from flumotion.transcoder import inifile, log, defer, constants, utils
+from flumotion.transcoder import inifile, log, defer, constants
+from flumotion.transcoder import utils, fileutils
 from flumotion.transcoder.admin import adminconfig, adminconsts
 from flumotion.transcoder.admin import admin, notifier
 
@@ -84,8 +85,8 @@ def parse_options(args):
 
     
 def possess(daemonizeTo=None):
-    utils.ensureDirExists(configure.logdir, "log file")
-    utils.ensureDirExists(configure.rundir, "run file")
+    fileutils.ensureDirExists(configure.logdir, "log file")
+    fileutils.ensureDirExists(configure.rundir, "run file")
     if not daemonizeTo:
         daemonizeTo = '/'
 

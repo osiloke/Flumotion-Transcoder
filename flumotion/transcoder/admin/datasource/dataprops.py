@@ -156,6 +156,12 @@ class CustomerData(properties.RootPropertyBag):
     # Subdirectory; if not specified, the lowercase name is used.
     #subdir = fluendo
     
+    # Access properties to force user, group and mode
+    access-force-group = file
+    access-force-user = fluendo
+    access-force-dir-mode = 0775
+    access-force-file-mode = 0664
+    
     # The various base directories can be specified directly
     # as virtual path. If the virtual path root is not specified,
     # the 'default' root will be automaticaly used 
@@ -370,6 +376,10 @@ class CustomerData(properties.RootPropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)    
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    accessForceGroup = properties.String('access-force-group', None)
+    accessForceUser = properties.String('access-force-user', None)
+    accessForceDirMode = properties.Octal('access-force-dir-mode', None)
+    accessForceFileMode = properties.Octal('access-force-file-mode', None)
     profiles = properties.ChildDict('profile', ProfileData, root=True)
 
 
@@ -387,6 +397,12 @@ class AdminData(properties.RootPropertyBag):
     
     # Global Section
     [global]
+    
+    # Access properties to force user, group and mode
+    access-force-group = file
+    access-force-user = fluendo
+    access-force-dir-mode = 0775
+    access-force-file-mode = 0664
     
     # Path to the directory containing the customers' property files.
     # Can be absolute or relative to this file.
@@ -419,7 +435,6 @@ class AdminData(properties.RootPropertyBag):
     mail-body-template = 
     
     # Default Values not yet used
-    #access-force-group = file
     #discoverer-max-interleave = 1.0
 
     ------------------------------------------------------------"""
@@ -446,6 +461,9 @@ class AdminData(properties.RootPropertyBag):
     HTTPRequestRetryCount = properties.Integer('http-request-retry-count', None, False, True)
     HTTPRequestRetrySleep = properties.Integer('http-request-retry-sleep', None, False, True)
     accessForceGroup = properties.String('access-force-group', None)
+    accessForceUser = properties.String('access-force-user', None)
+    accessForceDirMode = properties.Octal('access-force-dir-mode', None)
+    accessForceFileMode = properties.Octal('access-force-file-mode', None)
     discovererMaxInterleave = properties.Float('discoverer-max-interleave', 1.0)
     customersDir = properties.String('customers-dir', None, True)
     activitiesDir = properties.String('activities-dir', None, True)
