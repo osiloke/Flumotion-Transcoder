@@ -250,7 +250,7 @@ class Notifier(log.Loggable,
         activity = store.newNotification(NotificationTypeEnum.get_request,
                                          label, ActivityStateEnum.started,
                                          notif, trigger)
-        url = vars.substitute(notif.getRequestTemplate())
+        url = vars.substituteURL(notif.getRequestTemplate())
         activity.setRequestURL(url)
         return activity
 

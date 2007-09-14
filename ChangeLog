@@ -1,5 +1,11 @@
 2007-09-14  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/substitution.py:
+	Properly quote substituted variables for HTTP Requests.
+
+2007-09-14  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filetranscoder.py:
 	* flumotion/component/transcoder/gstutils.py:
 	* flumotion/component/transcoder/job.py:

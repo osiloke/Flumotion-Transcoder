@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+import urllib
+
 from flumotion.transcoder import utils, fileutils
 
 
@@ -25,6 +27,11 @@ class Variables(object):
         #FIXME: Better error handling
         format = utils.filterFormat(value, self._variables)
         return format % self._variables
+    
+    def substituteURL(self, value):
+        format = utils.filterFormat(value, self._variables)
+        urlVars = dict([(k, urllib.quote(v)) for k, v in self._variables])
+        return format % urlVars
             
     def __iter__(self):
         return iter(self._variables)
