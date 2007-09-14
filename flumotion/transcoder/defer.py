@@ -98,7 +98,7 @@ def bridgeResult(result, callable, *args, **kwargs):
     callable(*args, **kwargs)
     return result
 
-def resolveFailure(failure, result, *args):
+def resolveFailure(failure, result=None, *args):
     """
     Resolve an errorback.
     If the failure's error type is in the specified

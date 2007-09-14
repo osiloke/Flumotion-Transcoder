@@ -229,16 +229,22 @@ class Scheduler(log.Loggable,
         transCtx = profCtx.getTranscodingContext()
         notifications = transCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs)
+            d = self._notifier.notify(label, trigger, n, sourceVars, docs)
+            # Ignore Failures to prevent defer to notify them
+            d.addErrback(defer.resolveFailure)
         # Customer notifications
         custCtx = profCtx.getCustomerContext()
         notifications = custCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs)
+            d = self._notifier.notify(label, trigger, n, sourceVars, docs)
+            # Ignore Failures to prevent defer to notify them
+            d.addErrback(defer.resolveFailure)
         # Profile notifications
         notifications = profCtx.store.getNotifications(trigger)
         for n in notifications:
-            self._notifier.notify(label, trigger, n, sourceVars, docs)
+            d = self._notifier.notify(label, trigger, n, sourceVars, docs)
+            # Ignore Failures to prevent defer to notify them
+            d.addErrback(defer.resolveFailure)
         # Targets notifications
         for targCtx in profCtx.iterTargetContexts():
             notifications = targCtx.store.getNotifications(trigger)
@@ -248,7 +254,7 @@ class Scheduler(log.Loggable,
                 targVars = sourceVars.getTargetVariables(targCtx)
                 d = self._notifier.notify(label, trigger, n, targVars, docs)
                 # Ignore Failures to prevent defer to notify them
-                d.addErrback(defer.resolveFailure, None)
+                d.addErrback(defer.resolveFailure)
     
     def __cbRestoreTasks(self, activities):
         self.debug("Restoring transcoding tasks")

@@ -177,8 +177,6 @@ class TranscoderAdmin(log.Loggable,
         custCtx = self._transCtx.getCustomerContext(customer)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
-        #self._notifier.notify("Test Notify",)
-        
         
         
     def onCustomerRemoved(self, admin, customer):

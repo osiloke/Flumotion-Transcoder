@@ -1,5 +1,13 @@
 2007-09-14  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/defer.py:
+	Properly catch failures when a notification fail,
+	do not let the deferer catch it and notify it.
+
+2007-09-14  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifier.py:
 	* flumotion/transcoder/admin/substitution.py:
 	Properly quote substituted variables for HTTP Requests.
