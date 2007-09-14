@@ -504,7 +504,15 @@ class BaseComponentProxy(FlumotionProxy):
                 error = OperationAbortedError(msg, cause=failure.value)
                 resultDef.errback(error)
                 return True
+            status['last-message'] = log.getFailureMessage(failure)
         return False
+    
+    def __deletionFailed(self, status, label, resultDef):
+        info = "Could not force component '%s' deletion" % label
+        self.warning("%s", info)
+        err = status.get('last-message', None)
+        msg = info + ((err and (": " + err)) or "")
+        resultDef.errback(TranscoderError(msg))
     
     def __stopOrDelete(self, _, status, label, resultDef):
         if self.__isOperationTerminated(None, status, resultDef): return
@@ -547,10 +555,8 @@ class BaseComponentProxy(FlumotionProxy):
             return
         status["kill-retries"] = status.setdefault("Kill-retries", 0) + 1
         if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
-             # if kill fail, theres nothing we can do, do we ?
-            msg = "Could not force component '%s' deletion" % label
-            self.warning("%s", msg)
-            resultDef.errback(TranscoderError(msg))
+            # if kill fail, theres nothing we can do, do we ?
+            self.__deletionFailed(status, label, resultDef)
             return
         # Failed to kill, try again to stop or delete
         self.__stopOrDelete(None, status, 
@@ -575,9 +581,7 @@ class BaseComponentProxy(FlumotionProxy):
                 or (not status.get("can_kill", True))):
                 # if already killed or we are not allowed to kill, 
                 # theres nothing we can do, do we ?
-                msg = "Could not force component '%s' deletion" % label
-                self.warning("%s", msg)
-                resultDef.errback(TranscoderError(msg))
+                self.__deletionFailed(status, label, resultDef)
                 return
             # If we already tried too much, kill the component
             d = self.kill()
@@ -610,10 +614,8 @@ class BaseComponentProxy(FlumotionProxy):
         if self.__isOperationTerminated(failure, status, resultDef): return
         status["delete-retries"] = status.setdefault("delete-retries", 0) + 1
         if status["delete-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
-             # if deletion fail, theres nothing we can do, do we ?
-            msg = "Could not force component '%s' deletion" % label
-            self.warning("%s", msg)
-            resultDef.errback(TranscoderError(msg))
+            # if deletion fail, theres nothing we can do, do we ?
+            self.__deletionFailed(status, label, resultDef)
             return
         # The component is still buzzy, don't log, just retry
         if not failure.check(BusyComponentError):

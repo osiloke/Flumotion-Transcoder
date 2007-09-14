@@ -155,8 +155,7 @@ class MutableDataWrapper(object):
     def _delete(self):
         if self._path:
             self.__deleteFile(self._path)
-            self._source._mutableDataDeleted(self, self._identifier,
-                                             self._data)
+            self._source._mutableDataDeleted(self._identifier, self._data)
             self._path = None
             self._data = None
             self._identifier = None

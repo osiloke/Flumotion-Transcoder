@@ -110,12 +110,12 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             configPath = VirtualPath(props["config"])
             localConfigPath = configPath.localize(local)
             if not os.path.exists(localConfigPath):
-                msg = "Config file '%s' not found" % localConfigPath
+                msg = "Config file not found ('%s')" % localConfigPath
                 raise TranscoderConfigError(msg)
         elif props.has_key("diagnose"):
             localReportPath = props["diagnose"]
             if not os.path.exists(localReportPath):
-                msg = "Report file '%s' not found" % localReportPath
+                msg = "Report file not found ('%s')" % localReportPath
                 raise TranscoderConfigError(msg)
         else:
             msg = ("One of the component properties "
@@ -126,7 +126,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             localRealPath = os.path.realpath(props["report"])
             localReportDir = os.path.dirname(localRealPath)
             if not os.path.exists(localReportDir):
-                msg = "Output report directory '%s' not found" % localReportDir
+                msg = "Output report directory not found ('%s')" % localReportDir
                 raise TranscoderConfigError(msg)
             
         

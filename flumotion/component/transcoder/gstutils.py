@@ -21,8 +21,9 @@ from flumotion.component.transcoder import compconsts, videosize
 
 
 class DiscovererError(TranscoderError):
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
+    def __init__(self, msg, file, *args, **kwargs):
+        TranscoderError.__init__(self, msg, *args, **kwargs)
+        self.file = file
     
 
 class Discoverer(discoverer.Discoverer):
@@ -45,7 +46,7 @@ class Discoverer(discoverer.Discoverer):
         if is_media:
             deferred.callback(discoverer)
         else:
-            error = DiscovererError("'%s' is not a media file" % self.filePath)
+            error = DiscovererError("Discovered file is not a known media", self.filePath)
             deferred.errback(error)
     
 

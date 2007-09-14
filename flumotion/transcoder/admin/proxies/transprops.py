@@ -115,7 +115,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
         adminLocal = workerContext.admin.getLocal()
         localPath = configPath.localize(adminLocal)
         if not os.path.exists(localPath):
-            message = ("Transcoder config file '%s' not found" % localPath)
+            message = ("Transcoder config file not found ('%s')" % localPath)
             log.warning("%s", message)
             raise PropertiesError(message)
         loader = inifile.IniFile()

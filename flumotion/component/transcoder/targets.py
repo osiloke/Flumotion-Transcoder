@@ -35,11 +35,15 @@ __all__ = ['ProcessingTarget', 'TranscodingTarget', 'IdentityTarget',
 
 class BaseTarget(log.LoggerProxy):
     
-    def __init__(self, logger, data=None):
+    def __init__(self, logger, label, data=None):
         log.LoggerProxy.__init__(self, logger)
+        self._label = label
         self._data = data
 
     ## Public Methods ##
+
+    def getLabel(self):
+        return self._label
 
     def getData(self):
         return self._data
@@ -50,8 +54,8 @@ class BaseTarget(log.LoggerProxy):
 
 class ProcessingTarget(BaseTarget):
 
-    def __init__(self, logger, data=None):
-        BaseTarget.__init__(self, logger, data)
+    def __init__(self, logger, label, data=None):
+        BaseTarget.__init__(self, logger, label, data)
         self._outputs = []
 
 
@@ -66,11 +70,11 @@ class ProcessingTarget(BaseTarget):
         
 class IdentityTarget(ProcessingTarget):
     
-    def __init__(self, logger, data=None):
+    def __init__(self, logger, label, data=None):
         """
         This target only copy the source file to the target file.
         """
-        ProcessingTarget.__init__(self, logger, data)
+        ProcessingTarget.__init__(self, logger, label, data)
         
     def process(self, context, targCtx):
         try:
@@ -88,8 +92,8 @@ class IdentityTarget(ProcessingTarget):
 
 class TranscodingTarget(BaseTarget):
     
-    def __init__(self, logger, config, tag, data=None):
-        BaseTarget.__init__(self, logger, data)
+    def __init__(self, logger, label, config, tag, data=None):
+        BaseTarget.__init__(self, logger, label, data)
         self._config = config
         self._tag = tag
         self._bins = {}
@@ -123,8 +127,8 @@ class TranscodingTarget(BaseTarget):
 
 class FileTarget(TranscodingTarget):
 
-    def __init__(self, logger, config, outputPath, tag, data=None):
-        TranscodingTarget.__init__(self, logger, config, tag, data)
+    def __init__(self, logger, label, config, outputPath, tag, data=None):
+        TranscodingTarget.__init__(self, logger, label, config, tag, data)
         self._outputPath = outputPath
         fileutils.ensureDirExists(os.path.dirname(outputPath),
                                   "transcoding output")
@@ -144,7 +148,7 @@ class FileTarget(TranscodingTarget):
 
 class AudioTarget(FileTarget):
 
-    def __init__(self, logger, config, outputPath, tag, data=None):
+    def __init__(self, logger, label, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -155,7 +159,7 @@ class AudioTarget(FileTarget):
             audioChannels
             muxer
         """
-        FileTarget.__init__(self, logger, config, outputPath, tag, data)
+        FileTarget.__init__(self, logger, label, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_audio:
@@ -173,7 +177,7 @@ class AudioTarget(FileTarget):
         
 class VideoTarget(FileTarget):
  
-    def __init__(self, logger, config, outputPath, tag, data=None):
+    def __init__(self, logger, label, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -186,7 +190,7 @@ class VideoTarget(FileTarget):
             videoHeight
             muxer
         """
-        FileTarget.__init__(self, logger, config, outputPath, tag, data)
+        FileTarget.__init__(self, logger, label, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         if not discoverer.is_video:
@@ -204,7 +208,7 @@ class VideoTarget(FileTarget):
 
 class AudioVideoTarget(FileTarget):
  
-    def __init__(self, logger, config, outputPath, tag, data=None):
+    def __init__(self, logger, label, config, outputPath, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -221,7 +225,7 @@ class AudioVideoTarget(FileTarget):
             muxer
             tolerance
         """
-        FileTarget.__init__(self, logger, config, outputPath, tag, data)
+        FileTarget.__init__(self, logger, label, config, outputPath, tag, data)
 
     def _sourceDiscovered(self, discoverer):
         tolerance = self._config.tolerance
@@ -286,7 +290,7 @@ class ThumbnailsTarget(TranscodingTarget):
                 raise TranscoderError("Unknown thumbnails output format '%s'"
                                       % format)        
 
-    def __init__(self, logger, config, template, tag, data=None):
+    def __init__(self, logger, label, config, template, tag, data=None):
         """
         Some abstract data can be specified to be able to track the target,
         the data will be embedded in the TranscoderError if the error
@@ -309,7 +313,7 @@ class ThumbnailsTarget(TranscodingTarget):
             outputFormat Enum(jpg, png)
             smartThumbs
         """
-        TranscodingTarget.__init__(self, logger, config, tag, data)
+        TranscodingTarget.__init__(self, logger, label, config, tag, data)
         self._sink = None
         self._template = template
 

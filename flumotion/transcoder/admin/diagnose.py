@@ -44,18 +44,18 @@ class DiagnoseHelper(object):
                 return True
             if "twisted.internet.error.ConnectionLost" in debug:
                 return True
-            if "is not a media file" in debug:
+            if "is not a known media" in debug:
                 return True
-            if "flumotion.transcoder.errors.TranscoderError: Timed out trying to transcode" in debug:
+            if "output file stalled during transcoding" in debug:
                 return True
-            if "exceptions.Exception: Source file not found" in debug:
+            if "Source file not found" in debug:
                 return True
             if "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video" in debug:
                 return True
             if "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream" in debug:
                 return True
         if message.level == 1: # ERROR
-            if "__checkConfig(): Source file not found" in debug:
+            if "Source file not found" in debug:
                 return True
         return False
 
@@ -314,11 +314,13 @@ class DiagnoseHelper(object):
         # Pipelines
         if not report.source.pipeline:
             diagnostic.append("## No Pipeline Information ##")
+        elif not "demuxer" in report.source.pipeline:
+            diagnostic.append("## No Pipeline Section for Source Demuxer ##")
         else:
             gstlaunch = "GST_DEBUG=2 gst-launch -v "
             sourceFile = config.source.inputFile
             sourceLocation = commands.mkarg("location=" + sourceFile)
-            demux = report.source.pipeline["demuxer"] + " name=demuxer"            
+            demux = report.source.pipeline["demuxer"] + " name=demuxer"
             play1Pipeline = gstlaunch + "filesrc" + sourceLocation + " ! decodebin name=decoder"
             play2Pipeline = gstlaunch + demux.replace(" location=$FILE_PATH", sourceLocation)
             trans1Pipeline = gstlaunch + "filesrc" +  sourceLocation + " ! decodebin name=decoder"

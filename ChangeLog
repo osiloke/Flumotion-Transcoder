@@ -1,3 +1,18 @@
+2007-09-14  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/gstutils.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/diagnose.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/errors.py:
+	Change in exception handling and exception messages.
+
 2007-09-13  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/base.xml:

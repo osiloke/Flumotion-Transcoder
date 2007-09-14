@@ -104,8 +104,7 @@ class MultiTranscoder(log.LoggerProxy):
                 self._discoveredCallback(discoverer, ismedia)
             
             if not ismedia:
-                self.__failed("Source file is not a media file ('%s')",
-                             self._sourcePath)
+                self.__failed("Source file is not a known media")
                 return
             
             for t in self._targets:
@@ -177,8 +176,8 @@ class MultiTranscoder(log.LoggerProxy):
                     self._waitingError.cancel()
                     self._waitingError = None
                 gstgerror, debug = message.parse_error()
-                msg = ("GStreamer error while processing '%s': %s" 
-                       % (self._sourcePath, gstgerror.message))
+                msg = ("GStreamer error during transcoding: %s" 
+                       % gstgerror.message)
                 self.debug(msg)
                 self.debug("Additional debug info: %s", debug)
                 self.__failed(msg)
@@ -206,10 +205,10 @@ class MultiTranscoder(log.LoggerProxy):
             #try to find the target that failed
             for t in self._targets:
                 if t._hasTargetFile(file):
-                    t._raiseError("Timed out trying to transcode '%s' to '%s'",
-                                  self._sourcePath, file)
-            self.__failed("Timed out trying to transcode unknown file '%s'", 
-                         file)
+                    t._raiseError("Target '%s' output file stalled during "
+                                  "transcoding: '%s'", t.getLabel(), file)
+            self.__failed("Unknown target output file stalled during "
+                          "transcoding: '%s'", file)
         except TranscoderError, e:
             self.__failed(e)
         except:

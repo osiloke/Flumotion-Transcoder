@@ -236,7 +236,7 @@ class TranscoderProxy(ComponentProxy):
         if not localPath:
             return None
         if not os.path.exists(localPath):
-            message = ("Transcoder report file '%s' not found" % localPath)
+            message = ("Transcoder report file not found ('%s')" % localPath)
             self.warning("%s", message)
             raise TranscoderError(message)
         loader = inifile.IniFile()

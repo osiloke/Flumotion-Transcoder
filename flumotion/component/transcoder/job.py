@@ -23,7 +23,6 @@ from twisted.internet import reactor, error
 from twisted.python.failure import Failure
 
 #from gst.extend.discoverer import Discoverer
-
 from flumotion.common import common
 from flumotion.common import enum
 from flumotion.transcoder import process, log, defer, enums, utils, fileutils
@@ -34,7 +33,7 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder.targets import *
 from flumotion.component.transcoder.context import Context, TaskContext
 from flumotion.component.transcoder.context import TargetContext
-from flumotion.component.transcoder.gstutils import Discoverer
+from flumotion.component.transcoder.gstutils import Discoverer, DiscovererError
 from flumotion.component.transcoder.transcoder import MultiTranscoder
 
 
@@ -778,14 +777,14 @@ class TranscoderJob(log.LoggerProxy):
             TargetClass = self._targetClassForType[targetConfig.type]
             if issubclass(TargetClass, TranscodingTarget):
                 startTranscoder = True
-                target = TargetClass(targetCtx,
+                target = TargetClass(targetCtx, targetConfig.label,
                                      targetConfig.config, 
                                      targetCtx.getOutputWorkPath(),
                                      targetConfig.label, targetCtx)
                 transcoder.addTarget(target)
                 targets.append(target)
             elif issubclass(TargetClass, ProcessingTarget):
-                target = TargetClass(targetCtx, targetCtx)
+                target = TargetClass(targetCtx, targetConfig.label, targetCtx)
                 d.addCallback(self.__cbProcessTarget, target, context, targetCtx)
                 targets.append(target)
             else:
@@ -999,18 +998,18 @@ class TranscoderJob(log.LoggerProxy):
                 else: 
                     expChunks.append("no audio")
                 if gota: 
-                    gotChunks.append("audio")
+                    gotChunks.append("audio stream")
                 else: 
-                    gotChunks.append("no audio")
+                    gotChunks.append("no audio stream")
             if expv != None:
                 if expv: 
                     expChunks.append("video")
                 else: 
                     expChunks.append("no video")
                 if gotv: 
-                    gotChunks.append("video")
+                    gotChunks.append("video stream")
                 else: 
-                    gotChunks.append("no video")
+                    gotChunks.append("no video stream")
             message = ("Expected %s, and got %s" 
                        % (" and ".join(expChunks) or "nothing",
                           " and ".join(gotChunks) or "nothing"))
@@ -1021,6 +1020,10 @@ class TranscoderJob(log.LoggerProxy):
     def __ebTargetIsNotAMedia(self, failure, targetCtx):
         # If stopping don't do anything
         if self._isStopping(): return
+        if failure.check(DiscovererError):
+            raise TranscoderError("Target '%s' output file is not a known media"
+                                  % targetCtx.config.label,
+                                  data=targetCtx, cause=failure)
         raise TranscoderError(str(failure.value), data=targetCtx, cause=failure)
     
     ### Called by Deferreds ###

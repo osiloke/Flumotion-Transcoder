@@ -28,6 +28,15 @@ class TranscoderError(Exception):
         self.causeDetails = None
         self.causeTraceback = None
         if self.cause:
+            from flumotion.transcoder import log
+            if isinstance(self.cause, TranscoderError):
+                self.causeDetails = log.getExceptionMessage(self.cause)
+            if isinstance(self.cause, Exception):
+                self.causeDetails = log.getExceptionMessage(self.cause)
+            elif isinstance(self.cause, failure.Failure):
+                self.causeDetails = log.getFailureMessage(self.cause)
+            else:
+                self.causeDetails = "Unknown"            
             if isinstance(self.cause, failure.Failure):
                 f = self.cause
                 self.cause = f.value
@@ -44,16 +53,6 @@ class TranscoderError(Exception):
                 except:
                     #To ignore failure.NoCurrentExceptionError if there is no current exception
                     pass
-            from flumotion.transcoder import log
-            if isinstance(self.cause, TranscoderError):
-                self.causeDetails = log.getExceptionMessage(self.cause)
-            if isinstance(self.cause, Exception):
-                self.causeDetails = log.getExceptionMessage(self.cause)
-            elif isinstance(self.cause, failure.Failure):
-                self.causeDetails = log.getFailureMessage(self.cause)
-            else:
-                self.causeDetails = "Unknown"
-
 
 class SystemError(TranscoderError):
     def __init__(self, *args, **kwargs):
