@@ -30,7 +30,8 @@ class Variables(object):
     
     def substituteURL(self, value):
         format = utils.filterFormat(value, self._variables)
-        urlVars = dict([(k, urllib.quote(v)) for k, v in self._variables])
+        urlVars = dict([(k, (isinstance(v, str) and urllib.quote(v)) or v)
+                        for k, v in self._variables.iteritems()])
         return format % urlVars
             
     def __iter__(self):

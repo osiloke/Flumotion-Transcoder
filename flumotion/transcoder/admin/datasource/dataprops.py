@@ -421,10 +421,10 @@ class AdminData(properties.RootPropertyBag):
     #post-process-timeout = 60
     #pre-process-timeout = 60
     #mail-timeout = 30
-    #mail-retry-count = 3
+    #mail-retry-max = 3
     #mail-retry-sleep = 60
     #http-request-timeout = 30
-    #http-request-retry-count = 3
+    #http-request-retry-max = 3
     #http-request-retry-sleep = 60
     #output-media-template = "%(targetPath)s"
     #output-thumb-template = "%(targetDir)s%(targetBasename)s.%%(index)03d%(targetExtension)s"
@@ -455,10 +455,10 @@ class AdminData(properties.RootPropertyBag):
     mailSubjectTemplate = properties.String('mail-subject-template', None)
     mailBodyTemplate = properties.String('mail-body-template', None)
     mailTimeout = properties.Integer('mail-timeout', None, False, True)
-    mailRetryCount = properties.Integer('mail-retry-count', None, False, True)
+    mailRetryMax = properties.Integer('mail-retry-max', None, False, True)
     mailRetrySleep = properties.Integer('mail-retry-sleep', None, False, True)
     HTTPRequestTimeout = properties.Integer('http-request-timeout', None, False, True)
-    HTTPRequestRetryCount = properties.Integer('http-request-retry-count', None, False, True)
+    HTTPRequestRetryMax = properties.Integer('http-request-retry-max', None, False, True)
     HTTPRequestRetrySleep = properties.Integer('http-request-retry-sleep', None, False, True)
     accessForceGroup = properties.String('access-force-group', None)
     accessForceUser = properties.String('access-force-user', None)

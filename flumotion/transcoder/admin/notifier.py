@@ -184,6 +184,8 @@ class Notifier(log.Loggable,
     def __init__(self, notifierContext, activityStore):
         self._activities = activityStore
         self._context = notifierContext
+        self._paused = True
+        self._awaitingActivities = []
         self._retries = {} # {BaseNotifyActivity: IDelayedCall}
         self._results = {} # {BaseNotifyActivity: Deferred}
         # Setup global notification info
@@ -200,21 +202,28 @@ class Notifier(log.Loggable,
     ## Public Methods ##
     
     def initialize(self):
-        return defer.succeed(self)
+        self.debug("Retrieve notification activities")
+        states = [ActivityStateEnum.started]
+        d = self._activities.getNotifications(states)
+        d.addCallback(self.__cbRestoreNotifications)
+        d.addErrback(self.__ebInitializationFailed)
+        return d
     
+    def start(self, timeout=None):
+        for activity in self._awaitingActivities:
+            left = activity.getTimeLeftBeforeRetry()
+            d = self.__startupNotification(activity, left)
+            d.addErrback(defer.resolveFailure)
+        del self._awaitingActivities[:]
+        return defer.succeed(self)
+        
     def notify(self, label, trigger, notification, variables, documents):
-        global _shutingDown
-        self.info("%s notification '%s' [%s] initiated", 
+        self.info("%s notification '%s' for trigger '%s' initiated", 
                   notification.getType().nick, label, trigger.nick)
         activity = self.__prepareNotification(label, trigger, notification, 
                                               variables, documents)
         activity.store()
-        d = defer.Deferred()
-        self._results[activity] = d
-        self._retries[activity] = None
-        if not _shutingDown:
-            self.__performNotification(activity)
-        return d
+        return self.__startupNotification(activity)
     
     
     ## Protected Static Methods ##
@@ -244,6 +253,14 @@ class Notifier(log.Loggable,
                               agent=adminconsts.GET_REQUEST_AGENT)
     
     ## Private Methods ##
+    
+    def __cbRestoreNotifications(self, activities):
+        self.debug("Restoring %d notification activities", len(activities))
+        for activity in activities:
+            self._awaitingActivities.append(activity)
+    
+    def __ebInitializationFailed(self, failure):
+        return failure    
     
     def __doPrepareGetRequest(self, label, trigger, notif, vars, docs):
         store = self._activities
@@ -298,10 +315,31 @@ class Notifier(log.Loggable,
         activity.setBody(str(msg))
         
         return activity
+
+    def __startupNotification(self, activity, delay=0):
+        global _shutingDown
+        d = defer.Deferred()
+        self._results[activity] = d
+        self._retries[activity] = None
+        if delay > 0:
+            self.debug("Delaying notification '%s' for %d seconds",
+                       activity.getLabel(), delay)
+            reactor.callLater(delay, self.__performNotification, activity)
+        else:
+            self.__performNotification(activity)
+        return d
+    
+    
+    
+    def __getRetriesLeftDesc(self, activity):
+        left = activity.getRetryMax() - activity.getRetryCount()
+        if left > 1: return "%d retries left" % left
+        if left == 1: return "1 retry left"
+        return "no retry left"
     
     def __doPerformGetRequest(self, activity):
         assert isinstance(activity, GETRequestNotifyActivity)
-        self.debug("GET request '%s' initiated for URL %s" 
+        self.debug("GET request '%s' initiated with URL %s" 
                    % (activity.getLabel(), activity.getRequestURL()))
         d = self._performGetRequest(activity.getRequestURL(), 
                                     timeout=activity.getTimeout())
@@ -317,7 +355,9 @@ class Notifier(log.Loggable,
         self.__notificationSucceed(activity)
 
     def __ebGetPageFailed(self, failure, activity):
-        self.debug("GET request '%s' failed: %s", activity.getLabel(), 
+        retryLeftDesc = self.__getRetriesLeftDesc(activity)
+        self.debug("GET request '%s' failed (%s): %s",
+                   activity.getLabel(), retryLeftDesc,
                    log.getFailureMessage(failure))
         self.__retryNotification(activity)
 
@@ -350,14 +390,16 @@ class Notifier(log.Loggable,
         self.__notificationSucceed(activity)
     
     def __ebPostMailFailed(self, failure, activity):
-        self.debug("Mail post '%s' failed: %s", activity.getLabel(), 
+        retryLeftDesc = self.__getRetriesLeftDesc(activity)
+        self.debug("Mail post '%s' failed (%s): %s",
+                   activity.getLabel(), retryLeftDesc,
                    log.getFailureMessage(failure))
         self.__retryNotification(activity)
 
     def __retryNotification(self, activity):
         activity.incRetryCount()
         if activity.getRetryCount() > activity.getRetryMax():
-            desc = "Retry count exceeded (%d)" % activity.getRetryMax()
+            desc = "Retry count exceeded %d" % activity.getRetryMax()
             self.__notificationFailed(activity, desc)
             return
         activity.store()
@@ -367,7 +409,7 @@ class Notifier(log.Loggable,
         self._retries[activity] = dc
         
     def __notificationSucceed(self, activity):
-        self.info("%s notification '%s' [%s] succeed", 
+        self.info("%s notification '%s' for trigger '%s' succeed", 
                   activity.getSubType().nick, activity.getLabel(), 
                   activity.getTrigger().nick)
         activity.setState(ActivityStateEnum.done)
@@ -377,7 +419,7 @@ class Notifier(log.Loggable,
         
     
     def __notificationFailed(self, activity, desc=None):
-        message = ("%s notification '%s' [%s] failed: %s"
+        message = ("%s notification '%s' for trigger '%s' failed: %s"
                    % (activity.getSubType().nick,
                       activity.getLabel(), 
                       activity.getTrigger().nick, desc))
@@ -417,6 +459,7 @@ class Notifier(log.Loggable,
         return prep(self, label, trigger, notif, vars, docs)
         
     def __performNotification(self, activity):
+        if _shutingDown: return
         self._retries[activity] = None
         type = activity.getSubType()
         prep = self._performLookup.get(type, self.__cannotPerform)

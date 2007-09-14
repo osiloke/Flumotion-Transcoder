@@ -250,6 +250,17 @@ class BaseNotifyActivity(BaseActivity):
     def __init__(self, logger, parent, data, isNew=True):
         BaseActivity.__init__(self, logger, parent, data, isNew)
 
+    def getTimeLeftBeforeRetry(self):
+        now = datetime.datetime.now()
+        last = self.getLastTime()
+        sleep = self.getRetrySleep()
+        expected = last + datetime.timedelta(0, sleep)
+        if expected < now:
+            return 0
+        delta = expected - now
+        # We ignore the days
+        return delta.seconds
+
     def incRetryCount(self):
         assert not self._deleted
         self._data.retryCount += 1
@@ -305,18 +316,6 @@ class MailNotifyActivity(BaseNotifyActivity):
 
     def __init__(self, logger, parent, data, isNew=True):
         BaseNotifyActivity.__init__(self, logger, parent, data, isNew)
-
-#    def getBody(self):
-#        """
-#        Not created by metaclass because it return a file-like.
-#        """
-#        return StringIO(self._data.data["body"])
-#    
-#    def setBody(self, bodyFile):
-#        """
-#        Not created by metaclass because it gives a file-like.
-#        """
-#        self._data.data["body"] = bodyFile.read()
 
     def getRecipientsAddr(self):
         """

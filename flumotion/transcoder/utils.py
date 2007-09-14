@@ -206,16 +206,22 @@ def deepCopy(value):
     Do not mess up the enums.
     Only work for the basic types:
         str, int, float, long, dict, list and enums.
+    All instances of subclasses of these base types
+    will be replaced by instances of the base type.
     """
     if value == None:
         return None
     if isinstance(value, (str, int, float, long, enum.Enum, datetime.datetime)):
         return value
     if isinstance(value, dict):
-        return value.__class__([(deepCopy(k), deepCopy(v)) 
-                                for k, v in value.items()])
-    if isinstance(value, (list, tuple, set)):
-        return value.__class__([deepCopy(v) for v in value])
+        return dict([(deepCopy(k), deepCopy(v)) 
+                     for k, v in value.items()])
+    if isinstance(value, list):
+        return [deepCopy(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple([deepCopy(v) for v in value])
+    if isinstance(value, set):
+        return set([deepCopy(v) for v in value])
     raise TypeError("Value type unsuported by deepCopy: \"%s\" (%s)" 
                     % (str(value), value.__class__.__name__))
 

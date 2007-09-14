@@ -359,6 +359,10 @@ class TranscoderAdmin(log.Loggable,
                       "Starting scheduler manager")
         d.addCallback(defer.dropResult, self._scheduler.start,
                       adminconsts.SCHEDULER_START_TIMEOUT)
+        d.addCallback(defer.bridgeResult, self.debug,
+                      "Starting notification manager")
+        d.addCallback(defer.dropResult, self._notifier.start,
+                      adminconsts.NOTIFIER_START_TIMEOUT)
         d.addCallbacks(self.__cbSartupSucceed, self.__ebSartupFailed)
         d.callback(None)
         
