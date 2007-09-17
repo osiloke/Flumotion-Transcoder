@@ -150,9 +150,9 @@ class MonitorProxy(ComponentProxy):
     def _onMonitorDelFile(self, virtBase, relFile, state):
         ident = (virtBase, relFile)
         args = (virtBase, relFile, state)
-        assert ident in self._alreadyAdded
-        del self._alreadyAdded[ident]
-        self._fireEvent(args, "MonitorFileRemoved")
+        if ident in self._alreadyAdded:
+            del self._alreadyAdded[ident]
+            self._fireEvent(args, "MonitorFileRemoved")
 
 
     ## Overriden Methods ##
