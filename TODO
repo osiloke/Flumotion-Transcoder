@@ -6,13 +6,10 @@ Documentation:
 - Update (write from scratch?) the documentation
 
 Features:
-- Add the result of the "file" command in the report (#797)
-- Add the file header (hexdump) in the report (#797)
 - Make the file monitor build a configuration for each file 
   with htaccess-like files (#882)
 - Add multi-pass encoding support (#783)
 - Add a size/duration limitation for the output targets (#798)
-- Add an option to force the group and rights of the generated files (#1060)
 - Compare the duration of the source file and target file if possible (#1061)
 - Change the scheduler to use a faire queuing algorithm (#1063)
 - Add input file filtering (#1065)
@@ -36,6 +33,15 @@ Features:
 - Add a configuration override parameter to the transcoding-command and
   file-monitor components to be able in one case add command parameters
   and in the other have .htaccess like overriding files (#1273)
+- Add a start-index config property for the thumbnails (#1311)
+- Add a quality property for the thumbnails (#1312)
+- Use templating engine for mails and diagnosis reports (#1328)
+
+Bugs:
+- When a file is moved to incoming with the exact same name that one that
+  has just been moved to done or failed, the monitor think the file has not
+  been moved and that it's the same file so it doesn't inform the admin
+  that a new file has been added and it's never transcoded. (#1303)
 
 Tests:
 - Write manual test procedures (like for FSP)
