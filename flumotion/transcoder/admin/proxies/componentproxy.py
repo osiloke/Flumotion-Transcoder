@@ -592,8 +592,8 @@ class BaseComponentProxy(FlumotionProxy):
             return
         if failure.check(BusyComponentError):
             # The component is buzy changing mood,
-            # so wait mood change (with a timeout)    
-            d = self.waitMoodChange(adminconsts.FORCED_DELETION_TIMEOUT)
+            # so wait mood change (with a larger timeout)    
+            d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
             d.addBoth(self.__asyncForceStop, status, label, resultDef)
             return
         # FIXME: make flumotion raise a specific exception 
@@ -617,11 +617,14 @@ class BaseComponentProxy(FlumotionProxy):
             # if deletion fail, theres nothing we can do, do we ?
             self.__deletionFailed(status, label, resultDef)
             return
-        # The component is still buzzy, don't log, just retry
-        if not failure.check(BusyComponentError):
-            self.warning("Fail to delete component '%s': %s",
-                         label, log.getFailureMessage(failure))
-        #FIXME: What about already deleted component ?
+        if failure.check(BusyComponentError):
+            # The component is buzy changing mood,
+            # so wait mood change (with a larger timeout)    
+            d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
+            d.addBoth(self.__asyncForceDelete, status, label, resultDef)
+            return
+        self.warning("Fail to delete component '%s': %s",
+                     label, log.getFailureMessage(failure))
         self.__asyncForceDelete(None, status, label, resultDef)
 
 
