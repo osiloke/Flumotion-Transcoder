@@ -193,17 +193,16 @@ class Scheduler(log.Loggable,
         self.__notify(label, trigger, profCtx, report, docs)
     
     def onTranscodingDone(self, task, transcoder):
-        self.onTranscodingFailed(task, transcoder)
-#        activity = self._activities[task]
-#        activity.setState(ActivityStateEnum.done)
-#        activity.store()
-#        self._fireEvent(task, "TranscodingDone")
-#        label = task.getLabel()
-#        report = transcoder and transcoder.getReport()
-#        docs = transcoder and transcoder.getDocuments()
-#        trigger = NotificationTriggerEnum.done
-#        profCtx = task.getProfileContext()
-#        self.__notify(label, trigger, profCtx, report, docs)
+        activity = self._activities[task]
+        activity.setState(ActivityStateEnum.done)
+        activity.store()
+        self._fireEvent(task, "TranscodingDone")
+        label = task.getLabel()
+        report = transcoder and transcoder.getReport()
+        docs = transcoder and transcoder.getDocuments()
+        trigger = NotificationTriggerEnum.done
+        profCtx = task.getProfileContext()
+        self.__notify(label, trigger, profCtx, report, docs)
 
     def onTranscodingTerminated(self, task, succeed):
         self.info("Transcoding task '%s' %s", task.getLabel(), 

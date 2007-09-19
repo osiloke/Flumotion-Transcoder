@@ -1,5 +1,10 @@
 2007-09-19  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py:
+	Aaaarrg, forgot to revert commented code.
+
+2007-09-19  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/binmaker.py:
 	* flumotion/component/transcoder/job.py:
 	* flumotion/component/transcoder/reporter.py:
