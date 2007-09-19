@@ -157,9 +157,8 @@ class TranscoderJob(log.LoggerProxy):
             sourceCtx.reporter.report.fileSize = os.stat(inputPath).st_size
             # The input file type (with the file command)
             try:
-                #FIXME: Don't use commands module
-                fileType = commands.getoutput("file -b %s" 
-                                              % commands.mkarg(inputPath))
+                arg = utils.mkCmdArg(inputPath)
+                fileType = commands.getoutput("file -b" + arg)
             except Exception, e:
                 fileType = "ERROR: %s" % str(e)
             sourceCtx.reporter.report.fileType = fileType
@@ -353,7 +352,20 @@ class TranscoderJob(log.LoggerProxy):
             log.notifyException(context, e,
                                 "Exception during source analyse reporting")
     
-    def _transcoderPiplineCallback(self, pipeline, transcodingTargets):
+    def _transcoderInitializedCallback(self, pipeline, transcodingTargets):
+        try:
+            #FIXME: Don't reference the global context
+            context = self._context
+            for transTarget in transcodingTargets:
+                targetCtx = transTarget.getData()
+                info = transTarget.getPipelineInfo()
+                targetCtx.reporter.updatePipelineInfo(info)
+            self._fireSyncReport()
+        except Exception, e:
+            log.notifyException(context, e, "Exception during "
+                                "transcoder initialization reporting")
+    
+    def _transcoderPlayingCallback(self, pipeline, transcodingTargets):
         try:
             #FIXME: Don't reference the global context
             context = self._context
@@ -766,9 +778,10 @@ class TranscoderJob(log.LoggerProxy):
         self._setJobState(JobStateEnum.transcoding)
         transcoder = MultiTranscoder(self, sourceCtx.getInputPath(),
                                      context.config.transcodingTimeout,
+                                     self._transcoderInitializedCallback,
                                      self._transcoderProgressCallback,
                                      self._transcoderDiscoveredCallback,
-                                     self._transcoderPiplineCallback)
+                                     self._transcoderPlayingCallback)
         startTranscoder = False
         targets = []
         d = defer.succeed(result)

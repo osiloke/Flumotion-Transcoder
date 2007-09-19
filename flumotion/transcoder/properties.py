@@ -116,7 +116,11 @@ class PropertyDict(dict):
         dict.__setitem__(self, name, item)
         
     def update(self, items):
-        raise NotImplementedError
+        for name, item in items.iteritems():
+            self.prop.checkItem(self.parent, item)
+        for name, item in items.iteritems():
+            self.prop.bindItem(self.parent, item, name)
+            dict.__setitem__(self, name, item)
     
     def putItem(self, name, item):
         self.prop.bindItem(self.parent, item, name)

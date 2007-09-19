@@ -1,3 +1,25 @@
+2007-09-19  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/diagnose.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/admin/diagutils.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/properties.py:
+	* flumotion/transcoder/transreport.py:
+	* flumotion/transcoder/utils.py:
+	Keep the information about the pipeline being constructed,
+	and reconstruct pipelines in the diagnostic document.
+	Made the pipeline extraction functions in a separated
+	module to later use by diagnostic command.
+
 2007-09-17  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/adminconsts.py:

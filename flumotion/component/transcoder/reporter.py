@@ -40,7 +40,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
                                                  "max-size-bytes",
                                                  "max-size-time"]),
                         "audiorate":        set(["in", "out", "drop", "add"]),
-                        "videorate":        set(["in", "out", "drop", "add"]),
+                        "videorate":        set(["in", "out", "drop", "add", "duplicate"]),
                         "vorbisenc":        set(["last-message"]),
                         "lame":             set(["mode", "force-ms", "free-format",
                                                  "error-protection", "padding-type",
@@ -313,6 +313,9 @@ class TargetReporter(CPUUsageMixin):
     def doAnalyse(self, discoverer):
         _loadDiscoverer(self.report.analyse, discoverer)    
 
+    def updatePipelineInfo(self, pipelineInfo):
+        self.report.pipelineInfo.update(pipelineInfo)
+
     def addFile(self, work, output):
         if len(self.report.workFiles) != len(self.report.outputFiles):
             raise Exception("Report's file list invalid")
@@ -379,13 +382,13 @@ class Reporter(CPUUsageMixin):
         crawler = pipelinecrawler.PipelineCrawler(visitor)
         crawler.crawlPipeline(pipeline)
         for c, v in visitor.getCommands().iteritems():
-            self.report.source.pipeline[c] = v
+            self.report.source.pipelineAudit[c] = v
         for targetKey, bins in targetBins.iteritems():
             visitor.clean()
             crawler.clean()
             for name, bin in bins.iteritems():
                 crawler.crawlBin(bin)
             for c, v in visitor.getCommands().iteritems():
-                self.report.targets[targetKey].pipeline[c] = v
+                self.report.targets[targetKey].pipelineAudit[c] = v
     
         

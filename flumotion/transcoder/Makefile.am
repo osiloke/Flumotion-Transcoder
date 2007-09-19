@@ -10,6 +10,7 @@ python_PYTHON = __init__.py inifile.py properties.py \
                 log.py errors.py enums.py utils.py \
                 virtualpath.py local.py constants.py \
                 defer.py ringbuffer.py fileutils.py
+
 python_DATA =
 
 clean-local:

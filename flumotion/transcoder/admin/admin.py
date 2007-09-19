@@ -22,7 +22,7 @@ from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.diagnose import DiagnoseHelper
+from flumotion.transcoder.admin.diagnostic import Diagnostician
 from flumotion.transcoder.admin.janitor import Janitor
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admincontext import AdminContext
@@ -72,9 +72,8 @@ class TranscoderAdmin(log.Loggable,
         self._managers = ManagerSet(self._adminCtx)
         self._components = ComponentSet(self._managers)
         self._workers = WorkerSet(self._managers)
-        self._diagnose = DiagnoseHelper(self._managers,
-                                        self._workers,
-                                        self._components)
+        self._diagnostician = Diagnostician(self._adminCtx, self._managers,
+                                            self._workers, self._components)
         self._janitor = Janitor(self._adminCtx, self._components)
         self._transcoders = TranscoderSet(self._managers)
         self._monitors = MonitorSet(self._managers)
@@ -82,7 +81,7 @@ class TranscoderAdmin(log.Loggable,
         self._transcoding = Transcoding(self._workers, self._transcoders)
         self._scheduler = Scheduler(self._store.getActivityStore(),
                                     self._transCtx, self._notifier, 
-                                    self._transcoding, self._diagnose)
+                                    self._transcoding, self._diagnostician)
         self._translator = messages.Translator()
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
@@ -105,7 +104,7 @@ class TranscoderAdmin(log.Loggable,
         d.addCallback(lambda r: self._monitoring.initialize())
         d.addCallback(lambda r: self._transcoding.initialize())
         d.addCallback(lambda r: self._janitor.initialize())
-        d.addCallback(lambda r: self._diagnose.initialize())
+        d.addCallback(lambda r: self._diagnostician.initialize())
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
@@ -151,7 +150,7 @@ class TranscoderAdmin(log.Loggable,
     ## IComponentListener Overriden Methods ##
 
     def onComponentMessage(self, component, message):
-        if self._diagnose.filterComponentMessage(message):
+        if self._diagnostician.filterComponentMessage(message):
             return
         text = self._translator.translate(message)
         debug = message.debug
@@ -163,9 +162,8 @@ class TranscoderAdmin(log.Loggable,
         else:
             msg = ("Orphan component '%s' post a %s message" 
                    % (component.getLabel(), level))
-        diagnostic = self._diagnose.componentMessage(component, message)
-        documents = (diagnostic and [diagnostic]) or None
-        notifyDebug(msg, info=text, debug=debug, documents=documents)
+        diagnostics = self._diagnostician.diagnoseComponentMessage(component, message)
+        notifyDebug(msg, info=text, debug=debug, documents=diagnostics)
 
 
     ## IAdminStoreListener Overriden Methods ##

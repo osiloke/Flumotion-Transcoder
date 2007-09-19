@@ -24,7 +24,7 @@ from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.component.transcoder import compconsts
-from flumotion.component.transcoder.binmaker import makeEncodeBin
+from flumotion.component.transcoder.binmaker import makeMuxerEncodeBin
 from flumotion.component.transcoder.binmaker import makeAudioEncodeBin
 from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
 from flumotion.component.transcoder.thumbsink import ThumbnailSink
@@ -97,12 +97,17 @@ class TranscodingTarget(BaseTarget):
         self._config = config
         self._tag = tag
         self._bins = {}
+        self._pipelineInfo = {}
 
 
     ## Public Methods ##
 
+    def getPipelineInfo(self):
+        return dict(self._pipelineInfo)
+
     def getBins(self):
         return self._bins
+
 
     ## Protected Methods ##
     
@@ -167,13 +172,17 @@ class AudioTarget(FileTarget):
         return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
-        audioEncBin = makeAudioEncodeBin(self._config, discoverer, self._tag)
-        encBin = makeEncodeBin(self.getOutputPath(), self._config, 
-                                     discoverer, self._tag, audioEncBin, None)
+        audioEncBin = makeAudioEncodeBin(self._config, discoverer, self._tag,
+                                         pipelineInfo=self._pipelineInfo,
+                                         logger=self)
+        encBin = makeMuxerEncodeBin(self.getOutputPath(), self._config, 
+                                    discoverer, self._tag, audioEncBin, None,
+                                    pipelineInfo=self._pipelineInfo,
+                                    logger=self)
         pipeline.add(encBin)
         tees['audiosink'].get_pad('src%d').link(encBin.get_pad('audiosink'))
         self._bins["audio-encoder"] = audioEncBin
-
+        
         
 class VideoTarget(FileTarget):
  
@@ -198,9 +207,13 @@ class VideoTarget(FileTarget):
         return True
 
     def _updatePipeline(self, pipeline, discoverer, tees):
-        videoEncBin = makeVideoEncodeBin(self._config, discoverer, self._tag)
-        encBin = makeEncodeBin(self.getOutputPath(), self._config, 
-                                      discoverer, self._tag, None, videoEncBin)
+        videoEncBin = makeVideoEncodeBin(self._config, discoverer, self._tag,
+                                         pipelineInfo=self._pipelineInfo,
+                                         logger=self)
+        encBin = makeMuxerEncodeBin(self.getOutputPath(), self._config, 
+                                    discoverer, self._tag, None, videoEncBin,
+                                    pipelineInfo=self._pipelineInfo,
+                                    logger=self)
         pipeline.add(encBin)
         tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
         self._bins["video-encoder"] = videoEncBin
@@ -246,15 +259,21 @@ class AudioVideoTarget(FileTarget):
     def _updatePipeline(self, pipeline, discoverer, tees):
         tag = self._tag
         if discoverer.is_audio:
-            audioEncBin = makeAudioEncodeBin(self._config, discoverer, tag)
+            audioEncBin = makeAudioEncodeBin(self._config, discoverer, tag, 
+                                             pipelineInfo=self._pipelineInfo,
+                                             logger=self)
         else:
             audioEncBin = None
         if discoverer.is_video:
-            videoEncBin = makeVideoEncodeBin(self._config, discoverer, tag)
+            videoEncBin = makeVideoEncodeBin(self._config, discoverer, tag,
+                                             pipelineInfo=self._pipelineInfo,
+                                             logger=self)
         else:
             videoEncBin = None
-        encBin = makeEncodeBin(self.getOutputPath(), self._config, 
-                                      discoverer, tag, audioEncBin, videoEncBin)
+        encBin = makeMuxerEncodeBin(self.getOutputPath(), self._config, 
+                                    discoverer, tag, audioEncBin, videoEncBin,
+                                    pipelineInfo=self._pipelineInfo,
+                                    logger=self)
         pipeline.add(encBin)
         if videoEncBin:
             tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
@@ -356,7 +375,10 @@ class ThumbnailsTarget(TranscodingTarget):
         self._buffer_prob_callback = probMethods[unit]
 
         encoderConf = self.EncoderConfig(self._config)        
-        videoEncBin = makeVideoEncodeBin(encoderConf, discoverer, self._tag, False)
+        videoEncBin = makeVideoEncodeBin(encoderConf, discoverer, self._tag,
+                                         withRateControl=False, 
+                                         pipelineInfo=self._pipelineInfo,
+                                         logger=self)
         thumbsBin = gst.Bin("thumbnailing-%s" % self._tag)
         self._sink = ThumbnailSink(self._template, "thumbsink-%s" % self._tag)
         thumbsBin.add(videoEncBin, self._sink)

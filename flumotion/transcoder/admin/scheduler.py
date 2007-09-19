@@ -70,13 +70,13 @@ class Scheduler(log.Loggable,
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, activityStore, transCtx, notifier, transcoding, diagnose):
+    def __init__(self, activityStore, transCtx, notifier, transcoding, diagnostician):
         EventSource.__init__(self, ISchedulerListener)
         self._transCtx = transCtx
         self._store = activityStore
         self._notifier = notifier
         self._transcoding = transcoding
-        self._diagnose = diagnose
+        self._diagnostician = diagnostician
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
         self._activities = {} # {TranscodingTask: Activity}
@@ -184,25 +184,26 @@ class Scheduler(log.Loggable,
         docs = transcoder and transcoder.getDocuments()
         trigger = NotificationTriggerEnum.failed
         profCtx = task.getProfileContext()
-        diagnostic = self._diagnose.transcodingFailure(task, transcoder)
-        if diagnostic:
+        diagnostics = self._diagnostician.diagnoseTranscodingFailure(task, transcoder)
+        if diagnostics:
             if docs:
-                docs.append(diagnostic)
+                docs.extend(diagnostics)
             else:
-                docs = [diagnostic]
+                docs = diagnostics
         self.__notify(label, trigger, profCtx, report, docs)
     
     def onTranscodingDone(self, task, transcoder):
-        activity = self._activities[task]
-        activity.setState(ActivityStateEnum.done)
-        activity.store()
-        self._fireEvent(task, "TranscodingDone")
-        label = task.getLabel()
-        report = transcoder and transcoder.getReport()
-        docs = transcoder and transcoder.getDocuments()
-        trigger = NotificationTriggerEnum.done
-        profCtx = task.getProfileContext()
-        self.__notify(label, trigger, profCtx, report, docs)
+        self.onTranscodingFailed(task, transcoder)
+#        activity = self._activities[task]
+#        activity.setState(ActivityStateEnum.done)
+#        activity.store()
+#        self._fireEvent(task, "TranscodingDone")
+#        label = task.getLabel()
+#        report = transcoder and transcoder.getReport()
+#        docs = transcoder and transcoder.getDocuments()
+#        trigger = NotificationTriggerEnum.done
+#        profCtx = task.getProfileContext()
+#        self.__notify(label, trigger, profCtx, report, docs)
 
     def onTranscodingTerminated(self, task, succeed):
         self.info("Transcoding task '%s' %s", task.getLabel(), 

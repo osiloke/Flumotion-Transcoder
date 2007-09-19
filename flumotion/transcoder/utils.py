@@ -17,6 +17,8 @@ import md5
 import time
 import random
 import datetime
+import commands
+import string
 from email.Utils import parseaddr, formataddr
 
 from twisted.internet import reactor
@@ -100,6 +102,17 @@ def filterFormat(format, vars):
         result.append('')
         result.append(p)
     return '%'.join(result)        
+
+_safeChars = set(string.letters + string.digits
+                 + '!#$%*+,-./:<=>?@[\\]^_{}~')
+
+def mkCmdArg(*args):
+    base = ''.join(args)
+    # Check if the ' chars are necessaries
+    # to prevent ugly looking command lines
+    if reduce(bool.__and__, map(_safeChars.__contains__, base)):
+        return " " + base
+    return commands.mkarg(base)
 
 def splitEscaped(regex, s):
     """

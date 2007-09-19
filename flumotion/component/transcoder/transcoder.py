@@ -38,14 +38,16 @@ class MultiTranscoder(log.LoggerProxy):
     @type logger: L{flumotion.transcoder.log.Loggable}
     """    
     def __init__(self, logger, sourcePath, timeout=30,
+                 initializedCallback=None,
                  progressCallback=None,
                  discoveredCallback=None, 
-                 pipelineCallback=None):
+                 playingCallback=None):
         log.LoggerProxy.__init__(self, logger)
         self._sourcePath = sourcePath
         self._timeout = timeout
+        self._initializedCallback = initializedCallback
         self._discoveredCallback = discoveredCallback
-        self._pipelineCallback = pipelineCallback
+        self._playingCallback = playingCallback
         self._progressCallback = progressCallback
         self._progressTimeout = None
         self._targets = []
@@ -141,6 +143,9 @@ class MultiTranscoder(log.LoggerProxy):
             self._bus.add_signal_watch()
             self._bus.connect("message", self._bus_message_callback)
             
+            if self._initializedCallback:
+                self._initializedCallback(self._pipeline, list(self._targets))
+            
             ret = self._pipeline.set_state(gst.STATE_PLAYING)
             if ret == gst.STATE_CHANGE_FAILURE:
                 self._waitingError = reactor.callLater(PLAY_ERROR_TIMEOUT,
@@ -168,9 +173,9 @@ class MultiTranscoder(log.LoggerProxy):
                     old, new, pending = message.parse_state_changed()
                     if new == gst.STATE_PLAYING:
                         self.__startProgress()
-                        if self._pipelineCallback:
-                            self._pipelineCallback(self._pipeline, 
-                                                   list(self._targets))
+                        if self._playingCallback:
+                            self._playingCallback(self._pipeline, 
+                                                  list(self._targets))
             elif message.type == gst.MESSAGE_ERROR:
                 if self._waitingError:
                     self._waitingError.cancel()
@@ -308,6 +313,11 @@ class MultiTranscoder(log.LoggerProxy):
         dbin = gst.element_factory_make("decodebin")
         pipeline.add(src, dbin)
         src.link(dbin)
+
+        if discoverer.audiocaps:
+            self.debug("Source audio caps: '%s'" % discoverer.audiocaps.to_string())
+        if discoverer.videocaps:
+            self.debug("Source video caps: '%s'" % discoverer.videocaps.to_string())
 
         tees = {}
         if discoverer.is_audio:
