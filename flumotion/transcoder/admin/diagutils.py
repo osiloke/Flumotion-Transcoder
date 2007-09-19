@@ -260,7 +260,7 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
         targFile = targetInfo['filename']
         
         if targAudio and withAudio:
-            if lastReference != audioReference:
+            if audioReference and (lastReference != audioReference):
                 pipeline += space + audioReference
             pipeline += pipe + changeLoc(targAudio, targFile)
             if targVideo and targMuxer:
@@ -268,7 +268,7 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
             lastReference = None
         
         if targVideo and withVideo:
-            if lastReference != videoReference:
+            if videoReference and (lastReference != videoReference):
                 pipeline += space + videoReference
             pipeline += pipe + changeLoc(targVideo, targFile)
             lastReference = None
