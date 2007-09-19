@@ -238,12 +238,14 @@ class Diagnostician(object):
 
     def __sourceFileDiagnostic(self, transcoder, workerName=None):
         if not transcoder: return []
-        diagnostic = ["SOURCE FILE INFO\n----------------"]
         report = self.__lookupReport(transcoder)
+        if not report: return []
         pathInfo = self.__lookupInputPath(transcoder, workerName)
         inputVirtPath, inputLocalPath, inputRemotePath = pathInfo
         workerInfo = self.__lookupWorker(transcoder, workerName)
         workerName, workerHost = workerInfo[1:3]
+        
+        diagnostic = ["SOURCE FILE INFO\n----------------"]
         
         # File Path
         diagnostic.append("Virtual Path:   %s" % (inputVirtPath or "Unknown"))
