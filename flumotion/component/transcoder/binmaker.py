@@ -107,9 +107,9 @@ def makeAudioEncodeBin(config, discoverer, tag, withRateControl=True,
             capsList.append("channels=%d" % config.audioChannels)
         elif discoverer.audiochannels:
             capsList.append("channels=%d" % discoverer.audiochannels)
-        caps = ",".join(capsList)        
+        caps = ", ".join(capsList)        
         if caps:
-            fullcaps = ("audio/x-raw-int,%s;audio/x-raw-float,%s" 
+            fullcaps = ("audio/x-raw-int, %s;audio/x-raw-float, %s" 
                         % (caps, caps))
             logger.debug("Audio capsfilter: '%s'", fullcaps)
             pipelineParts.append("'%s'" % fullcaps)
@@ -361,7 +361,7 @@ def _getOutputVideoCaps(config, discoverer, outputSize):
     else:
         rate = discoverer.videorate
         
-    svtempl = ("width=%d,height=%d,pixel-aspect-ratio=%d/%d,framerate=%d/%d" 
+    svtempl = ("width=%d, height=%d, pixel-aspect-ratio=%d/%d, framerate=%d/%d" 
                % (width, height, par.num, par.denom, rate.num, rate.denom))
-    fvtempl = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (svtempl, svtempl)
+    fvtempl = "video/x-raw-yuv, %s;video/x-raw-rgb, %s" % (svtempl, svtempl)
     return fvtempl
