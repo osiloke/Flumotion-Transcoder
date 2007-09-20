@@ -343,22 +343,23 @@ class Diagnostician(object):
                         diagnostic.append("  Pipeline Audit:")
                         diagnostic.append("    " + gstlaunch + pipeAudit)
 
-        pipeInfo = diagutils.extractTransPipeline(config, report,
-                                                  onlyForTargets=allTargets,
-                                                  sourcePath=inputPath,
-                                                  targetFileTemplate=targetFileTemplate)
-        pipeAudit = diagutils.extractTransPipeline(config, report, fromAudit=True,
-                                                   onlyForTargets=allTargets,
-                                                   sourcePath=inputPath,
-                                                   targetFileTemplate=targetFileTemplate)
-        if pipeInfo or pipeAudit:
-            diagnostic.append("TRANSCODE ALL TARGETS")
-            if pipeInfo:
-                diagnostic.append("  Pipeline Command:")
-                diagnostic.append("    " + gstlaunch + pipeInfo)
-            if pipeAudit:
-                diagnostic.append("  Pipeline Audit:")
-                diagnostic.append("    " + gstlaunch + pipeAudit)
+        if allTargets:
+            pipeInfo = diagutils.extractTransPipeline(config, report,
+                                                      onlyForTargets=allTargets,
+                                                      sourcePath=inputPath,
+                                                      targetFileTemplate=targetFileTemplate)
+            pipeAudit = diagutils.extractTransPipeline(config, report, fromAudit=True,
+                                                       onlyForTargets=allTargets,
+                                                       sourcePath=inputPath,
+                                                       targetFileTemplate=targetFileTemplate)
+            if pipeInfo or pipeAudit:
+                diagnostic.append("TRANSCODE ALL TARGETS")
+                if pipeInfo:
+                    diagnostic.append("  Pipeline Command:")
+                    diagnostic.append("    " + gstlaunch + pipeInfo)
+                if pipeAudit:
+                    diagnostic.append("  Pipeline Audit:")
+                    diagnostic.append("    " + gstlaunch + pipeAudit)
 
         if diagnostic:
             return ["PIPELINE INFO\n-------------"] + diagnostic
