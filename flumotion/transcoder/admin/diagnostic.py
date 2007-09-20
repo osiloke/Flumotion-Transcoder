@@ -40,11 +40,11 @@ class Diagnostician(object):
         
     def filterComponentMessage(self, message):
         debug = message.debug
+        if "twisted.internet.error.ConnectionLost" in debug:
+            return True
+        if "twisted.internet.error.ConnectionLost" in debug:
+            return True
         if message.level == 2: # WARNING
-            if "twisted.internet.error.ConnectionDone" in debug:
-                return True
-            if "twisted.internet.error.ConnectionLost" in debug:
-                return True
             if "is not a known media" in debug:
                 return True
             if "output file stalled during transcoding" in debug:
@@ -296,8 +296,10 @@ class Diagnostician(object):
         inputPath = os.path.basename(virtInputPath.getPath())
         
         diagnostic = []
-        sourceHasAudio = report.source.analyse.hasAudio
-        sourceHasVideo = report.source.analyse.hasVideo
+        analyse = report.source.analyse
+        # If the discover fail, assume the source has audio and video
+        sourceHasAudio = analyse.hasAudio or (not analyse.mimeType)
+        sourceHasVideo = analyse.hasVideo or (not analyse.mimeType)
         pipeInfo = diagutils.extractPlayPipeline(config, report,
                                                  sourcePath=inputPath,
                                                  playAudio=sourceHasAudio,
@@ -316,11 +318,13 @@ class Diagnostician(object):
                 diagnostic.append("    " + gstlaunch + pipeAudit)
         
         allTargets = []
-        for name in report.targets:
+        for name, targReport in report.targets.iteritems():
             type = config.targets[name].type
             if type in set([TargetTypeEnum.audio,
                             TargetTypeEnum.video,
                             TargetTypeEnum.audiovideo]):
+                if not targReport.pipelineInfo:
+                    continue
                 allTargets.append(name)
                 pipeInfo = diagutils.extractTransPipeline(config, report,
                                                           onlyForTargets=[name],
