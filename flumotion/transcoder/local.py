@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from flumotion.transcoder import utils
+
 
 class Local(object):
     
@@ -50,7 +52,7 @@ class Local(object):
     
     def asLaunchArguments(self):
         args = []
-        args.append("local-name=%s" % self._name)
+        args.append(utils.mkCmdArg(str(self._name), "local-name="))
         for root, value in self._roots.iteritems():
-            args.append("local-root=%s:%s" % (root, value))
+            args.append(utils.mkCmdArg("%s:%s" % (root, value), "local-root="))
         return args

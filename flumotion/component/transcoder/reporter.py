@@ -84,7 +84,6 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     
     def _elem2str(self, element):
         desc = ""
-        type = self._getElementType(element)
         factory = element.get_factory()
         if factory:
             name = factory.get_name()

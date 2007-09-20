@@ -16,7 +16,7 @@ from zope.interface import implements
 
 from flumotion.common import log
 
-from flumotion.transcoder import fileutils
+from flumotion.transcoder import utils, fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.utils import digestParameters
 from flumotion.transcoder.admin.errors import PropertiesError
@@ -80,9 +80,9 @@ class MonitorProperties(ComponentPropertiesMixin):
         args = []
         local = workerContext.getLocal()
         for d in self._directories:
-            args.append("directory=%s" % d)
+            args.append(utils.mkCmdArg(str(d), "directory="))
         if self._scanPeriod:
-            args.append("scan-period=%d" % self._scanPeriod)
+            args.append(utils.mkCmdArg(str(self._scanPeriod), "scan-period="))
         if self._pathAttr:
             args.extend(self._pathAttr.asLaunchArguments())
         args.extend(local.asLaunchArguments())

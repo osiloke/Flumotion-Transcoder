@@ -945,7 +945,7 @@ class Octal(ValueProperty):
         return int(strval, 8)
     
     def val2str(self, value):
-        return oct(value, 8).rstrip('L')
+        return oct(value).rstrip('L')
 
 
 class Float(ValueProperty):

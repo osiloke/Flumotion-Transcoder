@@ -10,8 +10,6 @@
 
 # Headers in this file shall remain intact.
 
-import re
-
 from zope.interface import implements
 from twisted.internet import reactor
 

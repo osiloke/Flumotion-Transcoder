@@ -17,7 +17,7 @@ import grp
 import pwd
 import re
 
-from flumotion.transcoder import log
+from flumotion.transcoder import utils, log
 from flumotion.transcoder.errors import SystemError
 
 
@@ -83,13 +83,13 @@ class PathAttributes(object):
     def asLaunchArguments(self):
         result = []
         if self._userName:
-            result.append("force-user=%s" % self._userName)
+            result.append(utils.mkCmdArg(str(self._userName), "force-user="))
         if self._groupName:
-            result.append("force-group=%s" % self._groupName)
+            result.append(utils.mkCmdArg(str(self._groupName), "force-group="))
         if self._dirMode != None:
-            result.append("force-dir-mode=%s" % oct(self._dirMode))
+            result.append(utils.mkCmdArg(oct(self._dirMode), "force-dir-mode="))
         if self._fileMode:
-            result.append("force-file-mode=%s" % oct(self._fileMode))
+            result.append(utils.mkCmdArg(oct(self._fileMode), "force-file-mode="))
         return result
 
 

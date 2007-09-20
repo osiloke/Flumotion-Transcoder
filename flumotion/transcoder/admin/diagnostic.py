@@ -103,14 +103,14 @@ class Diagnostician(object):
     ## Private Methods ##
     
     def __buildSUCommand(self, command, args):
-        cmd = "%s%s" % (command, reduce(str.__add__, map(utils.mkCmdArg, args)))
+        cmd = "%s %s" % (command, " ".join(args))
         return "su -s /bin/bash - flumotion -c" + utils.mkCmdArg(cmd)
     
     def __buildSCPCommand(self, host, file, dest='.'):
-        remote = utils.mkCmdArg(file).strip(' ')
-        source = utils.mkCmdArg(host, ':', remote)
+        remote = utils.mkCmdArg(file, '')
+        source = utils.mkCmdArg(remote, host + ':')
         dest = utils.mkCmdArg(dest)
-        return "scp" + source + " " + dest
+        return "scp " + source + dest
     
     def __lookupProperties(self, component):
         if not component: return None
@@ -208,7 +208,8 @@ class Diagnostician(object):
             diagnostic.append("    " + origCmd)
         
         if reportVirtPath:
-            args = ["diagnose=" + reportVirtPath.localize(workerLocal)]
+            reportPath = reportVirtPath.localize(workerLocal)
+            args = [utils.mkCmdArg(reportPath, "diagnose=")]
             diagCmd = self.__buildSUCommand("GST_DEBUG=2 flumotion-launch -d 4 "
                                             "file-transcoder", args)
             diagnostic.append("  Diagnose Command:")

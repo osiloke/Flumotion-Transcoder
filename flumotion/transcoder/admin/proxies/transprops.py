@@ -203,9 +203,9 @@ class TranscoderProperties(ComponentPropertiesMixin):
     def asLaunchArguments(self, workerContext):
         args = []
         local = workerContext.getLocal()
-        args.append("config=%s" % self._configPath)
+        args.append(utils.mkCmdArg(str(self._configPath), "config="))
         if self._niceLevel:
-            args.append("nice-level=%d" % self._niceLevel)
+            args.append(utils.mkCmdArg(str(self._niceLevel), "nice-level="))
         if self._pathAttr:
             args.extend(self._pathAttr.asLaunchArguments())
         args.append("wait-acknowledge=True")

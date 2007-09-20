@@ -106,13 +106,13 @@ def filterFormat(format, vars):
 _safeChars = set(string.letters + string.digits
                  + '!#$%*+,-./:<=>?@[\\]^_{}~')
 
-def mkCmdArg(*args):
-    base = ''.join(args)
-    # Check if the ' chars are necessaries
+def mkCmdArg(arg, prefix=" "):
+    # Check if escaping is necessary
     # to prevent ugly looking command lines
-    if reduce(bool.__and__, map(_safeChars.__contains__, base)):
-        return " " + base
-    return commands.mkarg(base)
+    if reduce(bool.__and__, map(_safeChars.__contains__, arg)):
+        return prefix + arg
+    # Replace the space added by commands.mkarg by the specified prefix
+    return prefix + commands.mkarg(arg)[1:]
 
 def splitEscaped(regex, s):
     """

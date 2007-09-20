@@ -143,8 +143,8 @@ def __applyFileTemplate(tmpl, path):
 def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
     
     def changeLoc(s, f):
-        l = utils.mkCmdArg("location=", f)
-        return s.replace(" location=$FILE_PATH", l)
+        l = utils.mkCmdArg(f, "location=")
+        return s.replace("location=$FILE_PATH", l)
     
     sourceDemuxer = sourceInfo.get("demuxer", None)
     sourceVideo = sourceInfo.get("video", None)
@@ -214,8 +214,8 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
     else:
         audioReference = ""
         videoReference = ""
-        sourceLocation = utils.mkCmdArg("location=", sourceFile)
-        pipeline += "filesrc" + sourceLocation + " ! decodebin"
+        sourceLocation = utils.mkCmdArg(sourceFile, "location=")
+        pipeline += "filesrc " + sourceLocation + " ! decodebin"
         if not isTranscodingPipline:
             if withVideo:
                 if withAudio:

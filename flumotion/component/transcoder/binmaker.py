@@ -245,7 +245,7 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
         videobox.props.right = box[2]
         videobox.props.bottom = box[3]
         pipelineParts.append("videobox left=%d top=%d "
-                                "right=%d bottom=%d" % box)
+                             "right=%d bottom=%d" % box[:4])
         if crop != (0, 0, 0, 0):
             logger.debug("makeVideoEncodeBin - Output Video Cropping: %r" % (crop,))
             videocrop = gst.element_factory_make("videocrop",
@@ -255,7 +255,7 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
             videocrop.props.right = crop[2]
             videocrop.props.bottom = crop[3]
             pipelineParts.append("videocrop left=%d top=%d "
-                                    "right=%d bottom=%d" % crop)
+                                 "right=%d bottom=%d" % crop[:4])
     
     
     # encoder elements
