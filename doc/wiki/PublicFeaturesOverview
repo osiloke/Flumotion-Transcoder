@@ -1,0 +1,59 @@
+= Flumotion Transcoding Platform =
+
+== Public Features Overview ==
+
+=== Distributed Transcoding ===
+
+The transcoding jobs are automatically distributed amongst a set of servers.
+If any server was disconnected for a certain amount of time or crashed, the jobs
+would be automatically restarted on another server.
+Another big advantage is the scalability of the platform,
+if more transcoding power is needed, just add a server and the platform
+will be able to process more media files.
+
+=== Prioritized Transcoding ===
+
+There is two different kind of priority management:
+ * '''Transcoding Queue Priority'''.[[br]]
+ The transcoding queue priority define the order in witch the transcoding job are started.
+ When a transcoder task can be started, the profiles with higher transcoding queue priority
+ will be chosen first. This could be used to create a set of profiles with different priority
+ and choose when dropping a file the relative order of transcodification.
+ Each transcoding profile has its own transcoding priority value.
+
+ * '''Transcoding Task Priority'''.[[br]]
+ This define the priority of transcoding task to use server CPU resources.
+ When two transcoding tasks are running at the same time on a server,
+ the one with higher task priority will have a bigger share of CPU time
+ meaning that it will run and terminate faster. This could be used
+ for testing profiles, to prevent a transcoding test to slow down
+ production transcoding.
+ Each transcoding profile has its own transcoding priority value.
+
+
+=== Integrated Thumbnailing ===
+
+The thumbnail generation is integrated inside the transcoding process,
+it's not an external postprocessing. It means that if a file can be
+transcoded the thumbnails extraction is guaranteed, and that the full
+quality of the source media file will be used for the thumbnail creation.
+
+=== Media Dimension Control ===
+
+=== Frame Sampling ===
+
+=== Stateless Monitoring ===
+
+=== Subdirectory Replication ===
+
+=== Multiple Notification ===
+
+=== Notification Queue ===
+
+=== Notification Customization ===
+
+=== Target Postprocessing ===
+
+=== Identity Target ===
+
+
