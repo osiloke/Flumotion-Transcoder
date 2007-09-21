@@ -14,14 +14,14 @@ will be able to process more media files.
 === Prioritized Transcoding ===
 
 There is two different kind of priority management:
- * '''Transcoding Queue Priority'''.[[br]]
+ * '''Transcoding Queue Priority:'''[[br]]
  The transcoding queue priority define the order in witch the transcoding job are started.
  When a transcoder task can be started, the profiles with higher transcoding queue priority
  will be chosen first. This could be used to create a set of profiles with different priority
  and choose when dropping a file the relative order of transcodification.
  Each transcoding profile has its own transcoding priority value.
 
- * '''Transcoding Task Priority'''.[[br]]
+ * '''Transcoding Task Priority:'''[[br]]
  This define the priority of transcoding task to use server CPU resources.
  When two transcoding tasks are running at the same time on a server,
  the one with higher task priority will have a bigger share of CPU time
@@ -38,7 +38,38 @@ it's not an external postprocessing. It means that if a file can be
 transcoded the thumbnails extraction is guaranteed, and that the full
 quality of the source media file will be used for the thumbnail creation.
 
-=== Media Dimension Control ===
+=== Video Dimensions Control ===
+
+There is various options to specify the dimensions of the output files:
+
+ * '''Without Specification:'''[[br]]
+ When only the output pixel aspect ratio is specified, the transcoder
+ will deduce the output dimension respecting the source display aspect ratio.
+ The profile can be configurated to preserve the input video height or width,
+ or prefer to upscale or downscale the input video.
+
+ * '''Partial Specification:'''[[br]]
+ Only one of the dimension is specied. The other one is deduced by
+ the transcoder in respect to the source dimensions and pixel aspect ratio.
+
+ * '''Complete Specification:'''[[br]]
+ The width and height can be specified directly. If the source dimensions
+ and pixel aspect ratio is not compatible with the specified dimensions,
+ black bands will be added on top and bottom or left and right to respect
+ the specified dimensions without deforming the source video.
+
+In addition, there is options to control the deduced dimensions:
+ * '''Maximum Dimensions:'''[br]]
+ The maximum width and height of the outpu video can be specified.
+ In allow at the same time to not upscale low resolution video
+ by not specifying static dimensions, but control the maximum
+ dimensions to prevent very high resolution videos.
+
+=== Thumbnail Dimensions Control ===
+
+In the same way as for the video targets, the thumbnail dimensions
+can be specified partially or completly adding black bands to
+respect the display aspect ratio of the source video.
 
 === Frame Sampling ===
 
