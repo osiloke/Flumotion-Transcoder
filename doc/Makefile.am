@@ -15,4 +15,4 @@ EXTRA_DIST = requirments-specifications.txt \
              examples/transcoder-data.ini \
              examples/customers/fluendo.ini \
              examples/customers/bigclient.ini \
-             examples/workers/worker-config.xml
+             examples/workers/trans-worker.xml
