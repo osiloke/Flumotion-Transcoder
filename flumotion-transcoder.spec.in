@@ -83,15 +83,10 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%docdir %{_datadir}/doc/flumotion-transcoder
 %doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
+%doc doc/examples doc/wiki
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
-%{_datadir}/doc/flumotion-transcoder/examples/transcoder-admin.ini
-%{_datadir}/doc/flumotion-transcoder/examples/transcoder-data.ini
-%{_datadir}/doc/flumotion-transcoder/examples/customers/bigclient.ini
-%{_datadir}/doc/flumotion-transcoder/examples/customers/fluendo.ini
-%{_datadir}/doc/flumotion-transcoder/examples/workers/trans-worker.xml
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin
 %attr(750,root,flumotion) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
