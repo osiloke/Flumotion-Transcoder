@@ -7,7 +7,7 @@ customers_DATA = examples/customers/fluendo.ini \
                  examples/customers/bigclient.ini
                  
 workersdir = $(docdir)/examples/workers
-workers_DATA = examples/workers/trans-worker.xml
+workers_DATA = examples/workers/transcoder.xml
 
 EXTRA_DIST = requirments-specifications.txt \
              design.odt specifications.odt \
@@ -15,4 +15,4 @@ EXTRA_DIST = requirments-specifications.txt \
              examples/transcoder-data.ini \
              examples/customers/fluendo.ini \
              examples/customers/bigclient.ini \
-             examples/workers/trans-worker.xml
+             examples/workers/transcoder.xml
