@@ -64,6 +64,7 @@ install -m 644 \
 install -d $RPM_BUILD_ROOT%{_localstatedir}/tmp/flumotion/transcoder
 install -d $RPM_BUILD_ROOT%{_localstatedir}/cache/flumotion/transcoder/activities
 
+
 %post
 /sbin/chkconfig --add flumotion-transcoder-admin
 
@@ -82,10 +83,15 @@ fi
 
 %files
 %defattr(-,root,root,-)
+%docdir %{_datadir}/doc/flumotion-transcoder
 %doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
-%{_docdir}/examples
+%{_datadir}/doc/flumotion-transcoder/examples/transcoder-admin.ini
+%{_datadir}/doc/flumotion-transcoder/examples/transcoder-data.ini
+%{_datadir}/doc/flumotion-transcoder/examples/customers/bigclient.ini
+%{_datadir}/doc/flumotion-transcoder/examples/customers/fluendo.ini
+%{_datadir}/doc/flumotion-transcoder/examples/workers/trans-worker.xml
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin
 %attr(750,root,flumotion) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
@@ -93,6 +99,7 @@ fi
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-data.ini
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-admin
+
 %dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder
 %dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder/customers
 %dir %attr(770,root,flumotion) %{_localstatedir}/tmp/flumotion/transcoder
