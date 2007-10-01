@@ -1,5 +1,5 @@
 <worker name="trans-worker">
-	<!-- debug>3</debug -->
+	<!-- debug>4</debug -->
 	<manager>
 		<host>manager.dev.fluendo.lan</host>
 		<port>7632</port>
