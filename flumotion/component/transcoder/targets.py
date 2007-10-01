@@ -439,7 +439,7 @@ class ThumbnailsTarget(TranscodingTarget):
         self._percent = self._config.periodValue
         self._nextTimestamp = None
         self.log("Setup to create a thumbnail each %s percent of total "
-                 "length %s sconds %s", str(self._percent), 
+                 "length %s seconds %s", str(self._percent), 
                  str(self._length / gst.SECOND), self._max
                  and ("to a maximum of %s thumbnails" % str(self._max))
                  or "without limitation")

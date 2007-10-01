@@ -20,6 +20,7 @@ from flumotion.component.base.admin_gtk import BaseAdminGtk, BaseAdminGtkNode
 from flumotion.transcoder import enums
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
+from flumotion.transcoder.virtualpath import VirtualPath
 
 _ = common.gettexter('flumotion-transcoder')
 

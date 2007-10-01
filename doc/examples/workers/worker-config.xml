@@ -1,0 +1,14 @@
+<worker name="trans-worker">
+	<!-- debug>3</debug -->
+	<manager>
+		<host>manager.dev.fluendo.lan</host>
+		<port>7632</port>
+		<transport>ssl</transport>
+		<!-- certificate>default.pem</certificate -->
+	</manager>
+	<authentication type="plaintext">
+		<username>user</username>
+		<password>test</password>
+	</authentication>
+	<!-- feederports></feederports -->
+</worker>

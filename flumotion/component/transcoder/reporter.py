@@ -42,6 +42,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
                         "audiorate":        set(["in", "out", "drop", "add"]),
                         "videorate":        set(["in", "out", "drop", "add", "duplicate"]),
                         "vorbisenc":        set(["last-message"]),
+                        "mp3parse":         set(["bitrate"]),
                         "lame":             set(["mode", "force-ms", "free-format",
                                                  "error-protection", "padding-type",
                                                  "extension", "strict-iso",

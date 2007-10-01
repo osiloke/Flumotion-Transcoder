@@ -1,3 +1,23 @@
+2007-10-01  Sebastien Merle  <sebastien@fluendo.com>
+
+	* TODO:
+	* conf/Makefile.am:
+	* conf/managers/transcoder/planet.xml:
+	* conf/redhat/flumotion-transcoder-manager:
+	* conf/redhat/flumotion-transcoder-manager.sysconfig:
+	* conf/redhat/flumotion-transcoder-worker:
+	* conf/redhat/flumotion-transcoder-worker.sysconfig:
+	* conf/transcoder/customers/fluendo.ini.template:
+	* doc/Makefile.am:
+	* doc/examples/transcoder-data.ini:
+	* doc/examples/workers/worker-config.xml:
+	* doc/wiki/Overview/PublicFeatures:
+	* flumotion-transcoder.spec.in:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/component/transcoder/targets.py:
+	Changed to use the standard flumotion way of starting manager and workers.
+
 2007-09-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/binmaker.py:

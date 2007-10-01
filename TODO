@@ -42,6 +42,8 @@ Bugs:
   has just been moved to done or failed, the monitor think the file has not
   been moved and that it's the same file so it doesn't inform the admin
   that a new file has been added and it's never transcoded. (#1303)
+- The diagnostic document (diagnostic.py) do not contains the audit
+  pipelines if the source file do not has a demuxer (mp3).
 
 Tests:
 - Write manual test procedures (like for FSP)
@@ -62,4 +64,5 @@ Refactoring:
 - Workout a solution to remove the deep references in contexts and stores.
 - Better retry count handling for task's components to make the diffrence
   between actively stopped components and crashed components.
-
+- Change the logging call to use the 'logName' insteed of having
+  the name in the message.

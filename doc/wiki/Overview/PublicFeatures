@@ -45,11 +45,11 @@ There is various options to specify the dimensions of the output files:
  * '''Without Specification:'''[[br]]
  When only the output pixel aspect ratio is specified, the transcoder
  will deduce the output dimension respecting the source display aspect ratio.
- The profile can be configurated to preserve the input video height or width,
+ The profile can be configured to preserve the input video height or width,
  or prefer to upscale or downscale the input video.
 
  * '''Partial Specification:'''[[br]]
- Only one of the dimension is specied. The other one is deduced by
+ Only one of the dimension is specified. The other one is deduced by
  the transcoder in respect to the source dimensions and pixel aspect ratio.
 
  * '''Complete Specification:'''[[br]]
@@ -59,21 +59,40 @@ There is various options to specify the dimensions of the output files:
  the specified dimensions without deforming the source video.
 
 In addition, there is options to control the deduced dimensions:
- * '''Maximum Dimensions:'''[br]]
- The maximum width and height of the outpu video can be specified.
+ * '''Maximum Dimensions:'''[[br]]
+ The maximum width and height of the output video can be specified.
  In allow at the same time to not upscale low resolution video
  by not specifying static dimensions, but control the maximum
  dimensions to prevent very high resolution videos.
 
 === Thumbnail Dimensions Control ===
 
-In the same way as for the video targets, the thumbnail dimensions
-can be specified partially or completly adding black bands to
+In the same way as for the video targets, the thumbnails dimensions
+can be specified partially or completely adding black bands to
 respect the display aspect ratio of the source video.
 
 === Frame Sampling ===
 
+More than one thumbnail can be extracted from an input video
+by specifying an period value, an period unit and the maximum
+number of thumbnail to extrace.[[br]]
+The period unit can be:
+ * Video Frames
+ * Seconds
+ * Duration Percentage
+For example, the profile can be setup to generate a maximum of
+9 thumbnails each 10 percents of the input video. This would
+sample 9 thumbnails evenly independently of the input video
+duration.
+
 === Stateless Monitoring ===
+
+The transcoder monitor a directory usualy named *incoming*.
+When a file is drop in this directory, it schedule a transcoding job
+for it. When the transcoding job terminate, the input file is moved
+either to the *done* or *failed* directory.
+
+This behavior make possible to transcode again a file regar
 
 === Subdirectory Replication ===
 
