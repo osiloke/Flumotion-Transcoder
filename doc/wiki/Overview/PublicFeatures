@@ -7,6 +7,7 @@
 The transcoding jobs are automatically distributed amongst a set of servers.
 If any server was disconnected for a certain amount of time or crashed, the jobs
 would be automatically restarted on another server.
+
 Another big advantage is the scalability of the platform,
 if more transcoding power is needed, just add a server and the platform
 will be able to process more media files.
@@ -34,7 +35,7 @@ There is two different kind of priority management:
 === Integrated Thumbnailing ===
 
 The thumbnail generation is integrated inside the transcoding process,
-it's not an external postprocessing. It means that if a file can be
+it's not an external post-processing. It means that if a file can be
 transcoded the thumbnails extraction is guaranteed, and that the full
 quality of the source media file will be used for the thumbnail creation.
 
@@ -75,7 +76,7 @@ respect the display aspect ratio of the source video.
 
 More than one thumbnail can be extracted from an input video
 by specifying an period value, an period unit and the maximum
-number of thumbnail to extrace.[[br]]
+number of thumbnail to extract.[[br]]
 The period unit can be:
  * Video Frames
  * Seconds
@@ -87,23 +88,103 @@ duration.
 
 === Stateless Monitoring ===
 
-The transcoder monitor a directory usualy named *incoming*.
+The transcoder monitor a directory usually named ''incoming''.
 When a file is drop in this directory, it schedule a transcoding job
 for it. When the transcoding job terminate, the input file is moved
-either to the *done* or *failed* directory.
+either to the ''done'' or ''failed'' directory.
 
-This behavior make possible to transcode again a file regar
+This behavior make possible to transcode media files with identical name
+more than one time, note that the new output files will overwrite the
+old ones. This could be used to update a video that content change
+without modifying all the references to it.
+
+=== Flexible Output Structure ===
+
+The transcoding targets can be configured to add change the name
+of the output file or store in in a sub-directory.
+
+For example, with the input file {{{incoming/test.avi}}},
+the output file could be:
+ * {{{outgoing/test.flv}}}
+ * {{{outgoing/test.avi.flv}}}
+ * {{{outgoing/test.hq.flv}}}
+ * {{{outgoing/high/test.flv}}}
+ * {{{outgoing/high/test.avi.flv}}}
+ * {{{other/high/test.hq.flv}}}
+ * ...
 
 === Subdirectory Replication ===
 
+If the input file is uploaded in a sub-directory of the profile's monitored
+directories, usually named ''incoming'', the sub-directory will be automatically
+replicated in the ''outgoing'', ''done'', and ''failed'' directories.
+
+For example, with the incoming file {{{incoming/video/test.avi}}}:
+ * Outgoing:[[br]]
+ {{{outgoing/video/high/test.flv}}}
+ * Done :[[br]]
+ {{{done/video/test.avi}}}
+ * Failed :[[br]]
+ {{{failed/video/test.avi}}}
+
 === Multiple Notification ===
+
+The transcoder can notify external application by performing GET requests.
+A list of URLs can be specified to be triggered by:
+ * Profile's Transcoding Done
+ * Profile's Transcoding Fail
+ * Target's Transcoding Done
+ * Target's Transcoding Fail
 
 === Notification Queue ===
 
+The notifications are queued, and if the transcoder fail to perform them,
+it will retry later. The number of retry intents and the time between intents
+are parameters that can be changed.
+
 === Notification Customization ===
 
-=== Target Postprocessing ===
+The GET request URL can contain variables that will be substituted at runtime
+with information about the transcoding session.
+
+For example, following are some of the variables that can be specified:
+ ||Input File||{{{test.avi}}}||
+ ||Output File||{{{test.flv}}}||
+ ||Input Relative Path||{{{video/test.avi}}}||
+ ||Output Relative Path||{{{video/high/test.flv}}}||
+ ||Success||{{{0}}} or {{{1}}}||
+ ||Trigger||{{{done}}} or {{{failed}}}||
+ ||Profile Name||{{{video}}}||
+ ||Target Name||{{{Flash High Quality}}}||
+ ||Media Duration||{{{123.54}}}||
+ ||Source Height||{{{480}}}||
+ ||Target Width||{{{174}}}||
+ ||...||...||
+
+There is more than 35 different variables that could be substituted
+when performing GET requests. Not all are available for all kind
+of requests, for example the target-related variables are not available
+when performing a profile-level notification, and informations about
+the media may not be available for the failure notifications.
+
+=== Target Post-Processing ===
+
+A post-processing command can be specified for each target.
+For example, this can be used perform some special indexing.
 
 === Identity Target ===
+
+If the input files can be used as is or only a post-processing
+is needed, an identity target can be used. This special kind
+of target will not transcode anything, it will just check
+the input file is a valid media file, execute the post-processing
+if any has been specified, and copy it to the outgoing directory.
+
+This could be used at the same time as real transcoding profiles,
+for example if all the input files are final WMV files but flash
+files are wanted too, the transcoding profile can be setup with
+an identity target that will only copy the WMV file to the correct
+outgoing directory, and a transcoding target that will transcode
+the WMV to flash video and put it in the outgoing directory.
 
 
