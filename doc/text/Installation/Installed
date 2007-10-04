@@ -1,0 +1,27 @@
+
+
+If theese dependencies are installed with RPM build at Flumotion,
+the exaustive list of packages for all transcoding features is:
+ * flumotion
+ * gstreamer
+ * gstreamer-plugins-base
+ * gstreamer-plugins-good
+ * gstreamer-plugins-bad
+ * gstreamer-plugins-ugly
+ * gstreamer-plugins-amrwb
+ * gstreamer-python
+ * gstreamer-tools
+ * gstreamer-ffmpeg
+ * gstreamer-pitfdll
+ * win32-codecs
+ * win32-codecs-encoders
+ * gstreamer-fluendo-asfdemux
+ * gstreamer-fluendo-asfmux
+ * gstreamer-fluendo-flvmux
+ * gstreamer-fluendo-isodemux
+ * gstreamer-fluendo-mpeg2video
+ * gstreamer-fluendo-mpegdemux
+ * gstreamer-fluendo-qcp
+ * gstreamer-fluendo-wmadec
+ * gstreamer-fluendo-wmaenc
+ * gstreamer-fluendo-wmvdec

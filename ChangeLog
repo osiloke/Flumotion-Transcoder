@@ -1,3 +1,9 @@
+2007-10-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Updated documentation / More documentation.
+    * Adopted reStructuredText Format for documentation.
+    * Changed components to work with last flumotion trunk
+	
 2007-10-01  Sebastien Merle  <sebastien@fluendo.com>
 
 	* TODO:

@@ -16,7 +16,7 @@ must be properly setup.
   $ ./autogen.sh
 
 
-Seting up an uninstalled environment:
+Setting up an uninstalled environment:
 
 If the transcoder is not installed on the admin and manager machine,
 the environment should be setup to use an unstalled version.
@@ -63,15 +63,15 @@ The bootstrap command has more optional parameters to tweak the conversion proce
 
 Transcoding Manager:
 
-The transcoding manager should load the plug 'transcoderenvironment'.
-For an example of configuration see conf/planet.xml
+The transcoding manager should load the plug 'transcoder-environment'.
+For an example of configuration see conf/managers/transcoder/planet.xml
 The transcoder should be installed on the manager machine,
 or an uninstalled environment should be setup (see before).
 
   To start a manager with debug logging:
   $ . bin/transcoder-uninstalled-environment
   [TRANS] $ flumotion-manager -d 4 -T tcp -H manager.dev -P 7632 \
-  > -n transcoder conf/planet.xml
+  > -n transcoder conf/managers/transcoder/planet.xml
 
 
 Transcoding Workers:
@@ -91,14 +91,14 @@ Transcoder Admin:
 The transcoder admin machine need the transcoder to be installed,
 or the uninstalled environment to be setup properly.
 It need a configuration file (typically named transcoder-admin.ini).
-For an example of configuration see conf/transcoder-admin.ini
+For an example of configuration see conf/transcoder/transcoder-admin.ini
 For more information about transcoder configuration,
 see section 3 of doc/specification.odt
 NOTE THAT THE CONFIGURATION EXAMPLE SHOULD BE MODIFIED TO WORK.
 
   To start the transcoder admin with debug logging:
   $ . bin/transcoder-uninstalled-environment
-  [TRANS] $ bin/flumotion-transcoder-admin -d 4 conf/transcoder-admin.ini
+  [TRANS] $ bin/flumotion-transcoder-admin -d 4 conf/transcoder/transcoder-admin.ini
 
 
 Start as Daemons:

@@ -87,7 +87,9 @@ class Janitor(log.Loggable,
                     self.debug("Worker '%s' disposal bag is full; dumping "
                                "component '%s'", workerName, component.getLabel())
                     self._deleted.add(old)
-                    old.forceDelete()
+                    d = old.forceDelete()
+                    # Catch all failures
+                    d.addErrback(defer.resolveFailure)
     
 
     ## Private Methods ##

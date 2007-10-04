@@ -189,8 +189,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             self.__unexpectedError(task="component checks")
         
     def do_setup(self):
-        
-        def transcoder_setup(result):
+        try:
             localConfigPath = self._configPath
             configPath = VirtualPath.virtualize(localConfigPath, self._local)
             self.debug("Loading configuration from '%s'", localConfigPath)
@@ -224,35 +223,14 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                             moveInputFile=moveInputFile, 
                             altInputDir=altInputDir,
                             niceLevel=self._niceLevel)
-            return result
-        
-        try:
-            self._fireStatusChanged(TranscoderStatusEnum.setting_up)
-            d = component.BaseComponent.do_setup(self)
-            d.addCallback(transcoder_setup)
-            d.addErrback(self.__ebErrorFilter, "component setup")
-            return d
-        except:
-            self.__unexpectedError(task="component setup")
-
-    def do_start(self, *args, **kwargs):
-        
-        def transcoder_start(result):
             d = self._job.start()
             self._reportDefaultPath = self._job.getDoneReportPath()
             self.__syncReport(self._report)
             d.addCallbacks(self.__cbJobDone, self.__ebJobFailed)
-            return result
-        
-        try:
-            self._fireStatusChanged(TranscoderStatusEnum.working)
-            d = component.BaseComponent.do_start(self)
-            d.addCallback(transcoder_start)
-            d.addErrback(self.__ebErrorFilter, "component startup")
-            return d
+            return None
         except:
-            self.__unexpectedError(task="component startup")
-            
+            self.__unexpectedError(task="component setup")
+
     def do_stop(self, *args, **kwargs):
         
         def component_stop(result):

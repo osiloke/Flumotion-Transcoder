@@ -116,8 +116,7 @@ class FileMonitor(component.BaseComponent):
             self.__unexpectedError(task="component checking")
 
     def do_setup(self):
-        
-        def monitor_setup(result):
+        try:
             props = self.config["properties"]
             self._scanPeriod = props["scan-period"]
             self._pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
@@ -128,21 +127,6 @@ class FileMonitor(component.BaseComponent):
                 localDir = virtDir.localize(self._local)
                 fileutils.ensureDirExists(localDir, "monitored",
                                           self._pathAttr)
-            return result
-    
-        try:
-            d = component.BaseComponent.do_setup(self)
-            d.addCallback(monitor_setup)
-            d.addErrback(self.__ebErrorFilter, "component setup")
-            return d
-        except:
-            self.__unexpectedError(task="component setup")
-
-    def do_start(self, *args, **kwargs):
-        
-        def monitor_startup(result):
-            for virtDir in self._directories:
-                localDir = virtDir.localize(self._local)
                 watcher = DirectoryWatcher(self, localDir, 
                                            timeout=self._scanPeriod)
                 watcher.connect('file-added', 
@@ -153,14 +137,10 @@ class FileMonitor(component.BaseComponent):
                                 self._file_removed, virtDir)
                 watcher.start()
                 self.watchers.append(watcher)
-            return result
+            return None
+        except:
+            self.__unexpectedError(task="component setup")
 
-        d = component.BaseComponent.do_start(self)
-        d.addCallback(monitor_startup)
-        d.addErrback(self.__ebErrorFilter, "component startup")
-        return d
-        
-    
     def do_stop(self, *args, **kwargs):
         for w in self.watchers:
             w.stop()
