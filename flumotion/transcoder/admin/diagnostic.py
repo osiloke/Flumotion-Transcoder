@@ -42,7 +42,7 @@ class Diagnostician(object):
         debug = message.debug
         if "twisted.internet.error.ConnectionLost" in debug:
             return True
-        if "twisted.internet.error.ConnectionLost" in debug:
+        if "twisted.internet.error.ConnectionDone" in debug:
             return True
         if message.level == 2: # WARNING
             if "is not a known media" in debug:
