@@ -1,5 +1,19 @@
 2007-10-04  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/managers/transcoder/planet.xml:
+	* conf/transcoder/transcoder-admin.ini:
+	* doc/Makefile.am:
+	* doc/examples/transcoder-admin.ini:
+	* doc/text/Configuration/AdminConfig:
+	* doc/text/Configuration/FileSource/CustomerConfig:
+	* doc/text/Configuration/FileSource/TranscoderConfig:
+	* doc/text/Installation/Build:
+	* doc/text/Installation/Installed:
+	* doc/text/Installation/Uninstalled:
+	More documentation.
+
+2007-10-04  Sebastien Merle  <sebastien@fluendo.com>
+
 	* Updated documentation / More documentation.
     * Adopted reStructuredText Format for documentation.
     * Changed components to work with last flumotion trunk

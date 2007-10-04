@@ -1,7 +1,7 @@
 <planet>
     <manager name="transcoder">
         <!-- host>localhost</host -->
-        <!-- debug>3</debug -->
+        <!-- debug>4</debug -->
         <port>7632</port>
         <transport>ssl</transport>
         <!-- certificate>default.pem</certificate -->

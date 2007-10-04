@@ -14,7 +14,12 @@ The transcoder needs other software in order to properly work:
   - Twisted >= 2.4
   - Flumotion > 0.4.2.1
 
-The exaustive list of packages installed on the flumotion platform is:
+
+Fluendo Packages
+----------------
+
+When using the RPM packages build at Fluendo, the exaustive list 
+of packages installed on the flumotion platform is:
 
   - flumotion
   - gstreamer

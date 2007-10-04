@@ -10,4 +10,7 @@ EXTRA_DIST = requirments-specifications.txt \
              text/Overview/FutureFeatures \
              text/Installation/Build \
              text/Installation/Uninstalled \
-             text/Installation/Installed
+             text/Installation/Installed \
+             text/Configuration/AdminConfig \
+             text/Configuration/FileSource/TranscoderConfig \
+             text/Configuration/FileSource/CustomerConfig

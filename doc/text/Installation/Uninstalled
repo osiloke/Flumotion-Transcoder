@@ -5,8 +5,8 @@ Flumotion Transcoder Instalation
 Running an Uninstalled Transcoder
 =============================
 
-Setting Up an Uninstalled Environment
--------------------------------------
+Uninstalled Environment
+-----------------------
 
 If the transcoder is not installed on the admin and manager machine,
 the environment should be setup to use an uninstalled version.
@@ -33,22 +33,22 @@ To use the uninstalled version in ``$TRANSCODER_BASE/test``::
   $ . bin/transcoder-uninstalled-environment test
   [TRANS test] $
 
-Starting the Transcoding Manager
---------------------------------
+Transcoding Manager
+-------------------
 
 The transcoding manager should load the plug *transcoder-environment*.
 For an example of configuration see ``conf/managers/transcoder/planet.xml``
 The transcoder should be installed on the manager machine,
 or an uninstalled environment should be setup (see before).
 
-To start a manager with debug logging::
+Start a manager with debug logging::
 
   $ . bin/transcoder-uninstalled-environment
   [TRANS] $ flumotion-manager -d 4 -T tcp -H manager.dev -P 7632 \
   > -n transcoder conf/managers/transcoder/planet.xml
 
-Starting Transcoding Workers
----------------------------
+Transcoding Workers
+-------------------
 
 The transcoding workers are independent of the transcoding installation.
 The transcoder do not have to be installed on the workers' machines,
@@ -56,13 +56,13 @@ and the uninstalled environment is not needed.
 
 **WORKERS MUST HAVE DIFFERENT NAMES.**
 
-To start a worker with debug logging::
+Start a worker with debug logging::
 
   $ flumotion-worker -d 4 -T tcp -H manager.dev -P 7632 -n worker1 \
   > -u user -p test
 
-Starting the Transcoder Admin
------------------------------
+Transcoder Administration
+-------------------------
 
 The transcoder admin machine need the transcoder to be installed,
 or the uninstalled environment to be setup properly.
@@ -73,7 +73,9 @@ see section 3 of ``doc/specification.odt``.
 
 **NOTE THAT THE CONFIGURATION EXAMPLE SHOULD BE MODIFIED TO WORK.**
 
-To start the transcoder admin with debug logging::
+So first, :trac:`wiki:Transcoder/Documentation/Configuration/AdminConfig configure the transcoder administration`.
+
+Start the transcoder admin with debug logging::
 
   $ . bin/transcoder-uninstalled-environment
   [TRANS] $ bin/flumotion-transcoder-admin -d 4 conf/transcoder/transcoder-admin.ini
