@@ -4,4 +4,10 @@ EXTRA_DIST = requirments-specifications.txt \
              examples/transcoder-data.ini \
              examples/customers/fluendo.ini \
              examples/customers/bigclient.ini \
-             examples/workers/transcoder.xml
+             examples/workers/transcoder.xml \
+             text/Overview/CustomerFeatures \
+             text/Overview/AdminFeatures \
+             text/Overview/FutureFeatures \
+             text/Installation/Build \
+             text/Installation/Uninstalled \
+             text/Installation/Installed

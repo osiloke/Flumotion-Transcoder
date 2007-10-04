@@ -84,7 +84,8 @@ fi
 %files
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
-%doc doc/examples doc/wiki
+%doc doc/examples
+%doc doc/text
 %{_libdir}/flumotion
 %{_libdir}/python?.?/site-packages/transcoder
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
