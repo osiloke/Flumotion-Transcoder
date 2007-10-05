@@ -1017,10 +1017,10 @@ class String(ValueProperty):
         return isinstance(value, str)
 
     def str2val(self, strval):
-        return strval.decode('string_escape')
+        return strval
     
     def val2str(self, value):
-        return value.encode('string_escape')
+        return value
 
 class Enum(ValueProperty):
     """

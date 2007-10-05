@@ -74,11 +74,18 @@ class ConfigParserAdapter(properties.PropertySourceAdapter):
     def getProperty(self, locator, descriptor):
         section = self._loc2sec(locator)
         option = self._des2opt(descriptor)
-        return self.parser.get(section, option, True)
+        value = self.parser.get(section, option, True)
+        if value.startswith("'") and value.endswith("'"):
+            value = value[1:-1].decode('string_escape')
+        return value
     
     def setProperty(self, locator, descriptor, value):
         section = self._loc2sec(locator)
         option = self._des2opt(descriptor)
+        escaped = value.encode('string_escape')
+        striped = value.strip()
+        if (escaped != value) or (value != striped):
+            value = "'%s'" % escaped
         self.parser.set(section, option, value)
 
 

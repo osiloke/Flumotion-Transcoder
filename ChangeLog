@@ -1,3 +1,10 @@
+2007-10-05  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/inifile.py:
+	* flumotion/transcoder/properties.py:
+	Fixed a bug where the string properties value
+	was striped of spaces characters leading to invalid values.
+
 2007-10-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/managers/transcoder/planet.xml:
