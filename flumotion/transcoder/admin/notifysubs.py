@@ -15,13 +15,13 @@ from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 
 class NotificationVariables(Variables):
     
-    def __init__(self, parent, prefix, analyseReport):
+    def __init__(self, parent, prefix, analysisReport):
         Variables.__init__(self, parent)
-        self._addAnalyseResult(prefix, analyseReport)
+        self._addAnalysisResult(prefix, analysisReport)
 
     ## Protected Methods ##
             
-    def _addAnalyseResult(self, p, a):
+    def _addAnalysisResult(self, p, a):
         mimeType = ""
         hasVideo = 0
         hasAudio = 0
@@ -82,9 +82,9 @@ class NotificationVariables(Variables):
 class SourceNotificationVariables(NotificationVariables):
     
     def __init__(self, profCtx, trigger, report):
-        analyseReport = report and report.source.analyse
+        analysisReport = report and report.source.analysis
         NotificationVariables.__init__(self, None,
-                                       "source", analyseReport)
+                                       "source", analysisReport)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)
@@ -124,9 +124,9 @@ class SourceNotificationVariables(NotificationVariables):
 class TargetNotificationVariables(NotificationVariables):
     
     def __init__(self, sourceVars, targCtx, trigger, targetReport):
-        analyseReport = targetReport and targetReport.analyse
+        analysisReport = targetReport and targetReport.analysis
         NotificationVariables.__init__(self, sourceVars,
-                                       "target", analyseReport)
+                                       "target", analysisReport)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)

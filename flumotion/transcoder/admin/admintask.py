@@ -127,6 +127,7 @@ class AdminTask(LoggerProxy, EventSource):
         self._properties = properties
         self._retry = 0
         self._holdTimeout = None
+        self._processInterruptions = 0
     
 
     ## IAdminTask Implementation ##
@@ -136,6 +137,9 @@ class AdminTask(LoggerProxy, EventSource):
     
     def getProperties(self):
         return self._properties
+
+    def getProcessInterruptionCount(self):
+        return self._processInterruptions
 
     def isStarted(self):
         return self._state == TaskStateEnum.started
@@ -366,6 +370,9 @@ class AdminTask(LoggerProxy, EventSource):
 
     
     ## Protected Methods ##
+    
+    def _processInterruptionDetected(self):
+        self._processInterruptions += 1
     
     def _terminate(self, result):
         """
@@ -606,6 +613,9 @@ class AdminTask(LoggerProxy, EventSource):
         
     def __abortComponentStartup(self, component=None):
         if component:
+            if not component.isRunning():
+                # Probably segfault or killed
+                self._processInterruptionDetected()
             self._stopComponent(component)
             self._onComponentStartupCanceled(component)
         self._pendingName = None

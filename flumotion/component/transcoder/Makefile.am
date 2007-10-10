@@ -2,9 +2,9 @@ include $(top_srcdir)/common/python.mk
 
 component_PYTHON = __init__.py binmaker.py gstutils.py videosize.py \
                    filemonitor.py filemonitor_admin_gtk.py watcher.py \
-                   job.py transcoder.py targets.py reporter.py context.py \
+                   job.py transcoder.py basetargets.py reporter.py context.py \
                    thumbsink.py filetranscoder.py filetranscoder_admin_gtk.py \
-                   compconsts.py
+                   compconsts.py analyst.py varsets.py transtargets.py thumbtargets.py
                    
 
 componentdir = $(libdir)/flumotion/python/flumotion/component/transcoder

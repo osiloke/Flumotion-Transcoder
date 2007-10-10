@@ -58,6 +58,7 @@ Refactoring:
   Ex: The admin should be able to only implement IComponentListener
       and register as listnener of a ComponentSet without implementing
       all component interfaces (ITranscoderListener and IMonitorListener)
+- Maybe use a gobject-like signal events insteed of the actual interfaces.
 - Refactor file transcoder contexts to match the admin standard 
   for fileFile, fileDir, fileBase, filePath, fileRelPath, 
   profileName, customerName, targetName.

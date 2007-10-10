@@ -39,14 +39,16 @@ class Variables(object):
             
     def __getitem__(self, name):
         return self._variables[name]
+    
+    def __setitem__(self, name, value):
+        if not name in self._variables:
+            raise KeyError(name)
+        self._variables[name] = value
         
     def __contains__(self, name):
         return name in self._variables
         
     def addVar(self, name, value):
-        self._variables[name] = value
-        
-    def updateVar(self, name, value):
         self._variables[name] = value
         
     def addFileVars(self, filePath, kind, extension=None):

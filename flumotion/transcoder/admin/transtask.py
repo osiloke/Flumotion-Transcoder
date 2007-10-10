@@ -107,6 +107,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         # because if it was not sad yet, it would be stopped and deleted.
         # And we want it to be keeped for later investigations
         if transcoder.getMood() == moods.sad:
+            self._processInterruptionDetected()
             self._abort()
             return
     
@@ -127,6 +128,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
             if mood == moods.sad:
                 if not transcoder.isRunning():
                     # The transcoder has been killed or segfaulted
+                    self._processInterruptionDetected()
                     self._abort()
                     return
                 # The transcoder can be a zombie or waiting for acknowledge.
@@ -232,7 +234,8 @@ class TranscodingTask(AdminTask, TranscoderListener):
     
     def _doAborted(self):
         # We tried but there nothing to do...
-        self.__transcodingFailed()
+        lastComponent = self.getActiveComponent()
+        self.__transcodingFailed(lastComponent)
     
     def _doSelectPotentialComponent(self, components):
         selected = None

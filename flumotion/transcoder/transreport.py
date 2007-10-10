@@ -47,7 +47,7 @@ class TaskReport(properties.PropertyBag):
     errors = properties.List(properties.String('errors'))
 
 
-class DiscoverReport(properties.PropertyBag):
+class AnalysisReport(properties.PropertyBag):
     mimeType = properties.String('mime-type')
 
     hasAudio = properties.Boolean("has-audio", False)
@@ -80,7 +80,7 @@ class SourceReport(properties.PropertyBag):
     inputPath = VirtualPathProperty('input-path')
     donePath = VirtualPathProperty('done-path')
     failedPath = VirtualPathProperty('failed-path')
-    analyse = properties.Child('analyse', DiscoverReport)
+    analysis = properties.Child('analysis', AnalysisReport)
     pipelineAudit = properties.Dict(properties.String("pipeline-audit"))
     fileType = properties.String("file-type")
     fileHeader = properties.List(properties.String("file-header"))
@@ -92,11 +92,11 @@ class TargetReport(TaskReport):
     state = properties.Enum('state', TargetStateEnum, TargetStateEnum.pending)
     workFiles = properties.List(VirtualPathProperty('files-work'))
     outputFiles = properties.List(VirtualPathProperty('files-output'))
-    analyse = properties.Child('analyse', DiscoverReport)
+    analysis = properties.Child('analysis', AnalysisReport)
     pipelineAudit = properties.Dict(properties.String("pipeline-audit"))
     pipelineInfo = properties.Dict(properties.String("pipeline-info"))
     cpuUsagePostprocess = UsageProperty('cpu-usage-postprocess')
-    cpuUsageAnalyse = UsageProperty('cpu-usage-analyse')
+    cpuUsageAnalysis = UsageProperty('cpu-usage-analysis')
     fileSize = properties.Integer('file-size')
 
 

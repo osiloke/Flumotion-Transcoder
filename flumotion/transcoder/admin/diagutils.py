@@ -40,40 +40,40 @@ def formatDuration(sec, default=None):
     if ms: result.append("%d" % ms)
     return " ".join(result)
 
-def extractAudioBrief(analyse):
-    if not analyse.hasAudio:
+def extractAudioBrief(analysis):
+    if not analysis.hasAudio:
         return None
-    otherCodec = analyse.otherTags.get("audio-codec", "Unknown Codec")
-    audioCodec = analyse.audioTags.get("audio-codec", None)
+    otherCodec = analysis.otherTags.get("audio-codec", "Unknown Codec")
+    audioCodec = analysis.audioTags.get("audio-codec", None)
     brief = audioCodec or otherCodec
-    brief += ", %s" % formatDuration(analyse.audioDuration,
+    brief += ", %s" % formatDuration(analysis.audioDuration,
                                      "Unknown Duration")
-    brief += ", %d channels(s) : %dHz @ %dbits" % (analyse.audioChannels,
-                                                  analyse.audioRate,
-                                                  analyse.audioDepth)
-    for tag, val in analyse.audioTags.items():
+    brief += ", %d channels(s) : %dHz @ %dbits" % (analysis.audioChannels,
+                                                  analysis.audioRate,
+                                                  analysis.audioDepth)
+    for tag, val in analysis.audioTags.items():
         if tag in set(["bitrate"]):
             brief += ", %s: %s" % (tag, val)
     return brief
     
-def extractVideoBrief(analyse):
-    if not analyse.hasVideo:
+def extractVideoBrief(analysis):
+    if not analysis.hasVideo:
         return None
-    otherCodec = analyse.otherTags.get("video-codec", "Unknown Codec")
-    audioCodec = analyse.audioTags.get("video-codec", None)
+    otherCodec = analysis.otherTags.get("video-codec", "Unknown Codec")
+    audioCodec = analysis.audioTags.get("video-codec", None)
     brief = audioCodec or otherCodec
-    brief += ", %s" % formatDuration(analyse.videoDuration,
+    brief += ", %s" % formatDuration(analysis.videoDuration,
                                      "Unknown Duration")
     rate = ""
-    if analyse.videoRate:
-        rate += "@ %d/%d fps" % analyse.videoRate
-        if analyse.videoRate[1] != 1:
-            rate +=  " (~ %d fps)" % int(round(analyse.videoRate[0]
-                                               / analyse.videoRate[1]))
-    brief += ", %d x %d %s" % (analyse.videoWidth,
-                              analyse.videoHeight,
+    if analysis.videoRate:
+        rate += "@ %d/%d fps" % analysis.videoRate
+        if analysis.videoRate[1] != 1:
+            rate +=  " (~ %d fps)" % int(round(analysis.videoRate[0]
+                                               / analysis.videoRate[1]))
+    brief += ", %d x %d %s" % (analysis.videoWidth,
+                              analysis.videoHeight,
                               rate)
-    for tag, val in analyse.audioTags.items():
+    for tag, val in analysis.audioTags.items():
         if tag in set(["bitrate"]):
             brief += ", %s: %s" % (tag, val)
     return brief

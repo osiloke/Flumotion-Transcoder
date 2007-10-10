@@ -21,7 +21,7 @@ from flumotion.component.transcoder import gstutils
 DEFAULT_WIDTH_MULTIPLE = 2
 DEFAULT_HEIGHT_MULTIPLE = 2
 
-def makeMuxerEncodeBin(file, config, dicoverer, tag,
+def makeMuxerEncodeBin(file, config, analysis, tag,
                        audioEncodeBin, videoEncodeBin,
                        pipelineInfo=None, logger=None):
     logger = logger or log
@@ -61,7 +61,7 @@ def makeMuxerEncodeBin(file, config, dicoverer, tag,
     
     return encBin
 
-def makeAudioEncodeBin(config, discoverer, tag, withRateControl=True,
+def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
                        pipelineInfo=None, logger=None):
     logger = logger or log
     pipelineParts = list()
@@ -95,18 +95,18 @@ def makeAudioEncodeBin(config, discoverer, tag, withRateControl=True,
     # capsfilter element
     capsfilter = gst.element_factory_make("capsfilter", 
                                           "audiocapsfilter-%s" % tag)
-    # Because the discoverer not reliably give channel
+    # Because the analysis not reliably give channel
     # and rate info, do not not rely on it.
     if config.audioRate or config.audioChannels:
         capsList = []
         if config.audioRate:
             capsList.append("rate=%d" % config.audioRate)
-        elif discoverer.audiorate:
-            capsList.append("rate=%d" % discoverer.audiorate)
+        elif analysis.audioRate:
+            capsList.append("rate=%d" % analysis.audioRate)
         if config.audioChannels:
             capsList.append("channels=%d" % config.audioChannels)
-        elif discoverer.audiochannels:
-            capsList.append("channels=%d" % discoverer.audiochannels)
+        elif analysis.audioChannels:
+            capsList.append("channels=%d" % analysis.audioChannels)
         caps = ", ".join(capsList)        
         if caps:
             fullcaps = ("audio/x-raw-int, %s;audio/x-raw-float, %s" 
@@ -176,7 +176,7 @@ def _logPreferredSize(logFunc, config, msg):
         maxs = ""
     logFunc("%s %sx%s%s%s", msg, ws, hs, maxs, pars)
 
-def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
+def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
                        pipelineInfo=None, logger=None):
     logger = logger or log
     pipelineParts = list()
@@ -210,17 +210,17 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
     # capsfilter element
     capsfilter = gst.element_factory_make("capsfilter", 
                                           "videocapsfilter-%s" % tag)
-    inputSize = _getInputVideoSize(config, discoverer)
+    inputSize = _getInputVideoSize(config, analysis)
     logger.debug("makeVideoEncodeBin - Input Video Size: %dx%d %d/%d"
                  % (inputSize[0], inputSize[1], 
                     inputSize[2].num, inputSize[2].denom))
     _logPreferredSize(logger.debug, config,
                       "makeVideoEncodeBin - Preferred Video Size:")                    
-    outputSize = _getOutputVideoSize(config, discoverer, inputSize)
+    outputSize = _getOutputVideoSize(config, analysis, inputSize)
     logger.debug("makeVideoEncodeBin - Output Video Size: %dx%d %d/%d"
                  % (outputSize[0], outputSize[1], 
                     outputSize[2].num, outputSize[2].denom))
-    caps = _getOutputVideoCaps(config, discoverer, outputSize)
+    caps = _getOutputVideoCaps(config, analysis, outputSize)
     if caps:
         logger.debug("Video capsfilter: '%s'", caps)
         capsfilter.props.caps = gst.caps_from_string(caps)
@@ -229,7 +229,7 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
         logger.debug("No video capsfilter")
     
     # videobox and videocrop elements
-    box = _getOutputVideoBox(config, discoverer, outputSize)
+    box = _getOutputVideoBox(config, analysis, outputSize)
     videocrop = None
     videobox = None
     if box != (0, 0, 0, 0):
@@ -297,17 +297,17 @@ def makeVideoEncodeBin(config, discoverer, tag, withRateControl=True,
 
     return bin
 
-def _getInputVideoSize(config, discoverer):
-    icaps = dict(discoverer.videocaps[0])
+def _getInputVideoSize(config, analysis):
+    icaps = dict(analysis.videoCaps[0])
     ipar = icaps.get('pixel-aspect-ratio', gst.Fraction(1,1))
-    iw = discoverer.videowidth
-    ih = discoverer.videoheight
+    iw = analysis.videoWidth
+    ih = analysis.videoHeight
     return iw, ih, ipar
     
-def _getOutputVideoSize(config, discoverer, inputSize):
+def _getOutputVideoSize(config, analysis, inputSize):
     """
     Returns the output video (width, height, PAR)
-    according to the information from the discoverer.
+    according to the information from the analysis.
     """
     iw, ih, ipar = inputSize
     ow, oh, opar = videosize.getVideoSize(iw, ih, (ipar.num, ipar.denom),
@@ -319,10 +319,10 @@ def _getOutputVideoSize(config, discoverer, inputSize):
                                           config.videoScaleMethod)
     return ow, oh, gst.Fraction(*opar)
 
-def _getOutputVideoBox(config, discoverer, outputSize):
+def _getOutputVideoBox(config, analysis, outputSize):
     """
     Returns the ouput video box according 
-    to the information from the discoverer 
+    to the information from the analysis 
     and the configuration as (left, top, right, bottom).
     """
     width, height = outputSize[:2]
@@ -347,10 +347,10 @@ def _getOutputVideoBox(config, discoverer, outputSize):
     top = hdiff - bottom
     return (left, top, right, bottom)
 
-def _getOutputVideoCaps(config, discoverer, outputSize):
+def _getOutputVideoCaps(config, analysis, outputSize):
     """
     Returns the output video caps according 
-    to the information from the discoverer 
+    to the information from the analysis 
     and the configuration.    
     """
     width, height, par = outputSize
@@ -359,7 +359,7 @@ def _getOutputVideoCaps(config, discoverer, outputSize):
     if config.videoFramerate:
         rate = gst.Fraction(*config.videoFramerate)
     else:
-        rate = discoverer.videorate
+        rate = analysis.videoRate
         
     svtempl = ("width=%d, height=%d, pixel-aspect-ratio=%d/%d, framerate=%d/%d" 
                % (width, height, par.num, par.denom, rate.num, rate.denom))

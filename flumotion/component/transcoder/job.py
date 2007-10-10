@@ -22,7 +22,6 @@ import gst
 from twisted.internet import reactor, error
 from twisted.python.failure import Failure
 
-#from gst.extend.discoverer import Discoverer
 from flumotion.common import common
 from flumotion.common import enum
 from flumotion.transcoder import process, log, defer, enums, utils, fileutils
@@ -30,16 +29,13 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.component.transcoder.targets import *
+from flumotion.component.transcoder import analyst, varsets, compconsts
+from flumotion.component.transcoder import basetargets, transtargets, thumbtargets
 from flumotion.component.transcoder.context import Context, TaskContext
 from flumotion.component.transcoder.context import TargetContext
-from flumotion.component.transcoder.gstutils import Discoverer, DiscovererError
-from flumotion.component.transcoder.transcoder import MultiTranscoder
+from flumotion.component.transcoder.transcoder import MediaTranscoder
 
-
-CORTADO_DEFAULT_WIDTH = 320
-CORTADO_DEFAULT_HEIGHT = 40
-
+#FIXME: get ride of having to set a TaskContext as TranscoderError data
 
 class JobEventSink(object):
     
@@ -77,12 +73,6 @@ class JobEventSink(object):
         pass
 
 
-class HandledTranscoderError(TranscoderError):
-    
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
 def _stopMeasureCallback(result, reporter, measureName):
     """
     Helper callback to properly stop usage measurments.
@@ -90,24 +80,25 @@ def _stopMeasureCallback(result, reporter, measureName):
     reporter.stopUsageMeasure(measureName)
     return result
 
+
 RunningState = enum.EnumClass('StopState', ('initializing', 'running', 
                                             'waiting', 'acknowledged',
                                             'terminated', 'stopped'))
 
-class TranscoderJob(log.LoggerProxy):
+
+class TranscodingJob(log.LoggerProxy):
     
     def __init__(self, logger, eventSink=None, pathAttr=None):
         log.LoggerProxy.__init__(self, logger)
         self._context = None
         self._moveInputFile = True
-        self._unrecognizedOutputs = {}
-        self._failedPostProcesses = {}
         self._processes = []
         self._eventSink = eventSink
         self._ack = None
         self._ackList = None
         self._readyForAck = None
         self._acknowledged = False
+        self._analyst = analyst.MediaAnalyst()
         self._transcoder = None
         self._runningState = RunningState.initializing
         self._stopping = False
@@ -174,13 +165,13 @@ class TranscoderJob(log.LoggerProxy):
             except:
                 pass
         
-        self._unrecognizedOutputs = {}
-        self._failedPostProcesses = {}
         self._processes = []
         self._setJobState(JobStateEnum.starting)
         context.reporter.startUsageMeasure("job")
         
-        d = defer.Deferred()            
+        d = defer.Deferred()
+        d.addCallback(self.__cbAnalyseSourceFile, context)
+        d.addErrback(self.__ebFatalFailure, context, "source analysis")
         if sourceCtx.config.preProcess:
             #Setup pre-processing
             d.addCallback(self.__cbPerformPreProcessing, context)
@@ -243,19 +234,21 @@ class TranscoderJob(log.LoggerProxy):
         self._context.info("Stopping transcoding job")
         self._setJobState(JobStateEnum.stopping)
         self._stopping = True
-        #If already tell to stop, do nothing
+        # If already tell to stop, do nothing
         if self._stoppingDefer:
             return self._stoppingDefer
-        #If the job has been acknowledged, wait until completion
+        # If the job has been acknowledged, wait until completion
         if self._runningState == RunningState.acknowledged:
             self._stoppingDefer = defer.Deferred()
             self._ackList.addBoth(self._stoppingDefer.callback)
         else:
             abortDefs = []
-            #if there is a transcoder, try to abort it
+            # if there is a transcoder, try to abort it
             if self._transcoder:
                 abortDefs.append(self._transcoder.abort())
-            #if there is running process, try to abort them
+            # if there is pending analysis, try to abort them
+            abortDefs.append(self._analyst.abort())
+            # if there is running process, try to abort them
             for process in self._processes:
                 abortDefs.append(process.abort())
             if len(abortDefs) > 0:
@@ -329,7 +322,7 @@ class TranscoderJob(log.LoggerProxy):
             name = name[0:14] + "..." + name[-14:]
         self.logName = name
 
-    def _transcoderProgressCallback(self, percent):
+    def _transcoderProgressCallback(self, transcoder, percent):
         if percent == None:
             self.info("Progression not supported")
             self._fireProgress(None)
@@ -337,27 +330,12 @@ class TranscoderJob(log.LoggerProxy):
             self._context.log("Progress: %d %%" % int(percent))
             self._fireProgress(percent)
 
-    def _transcoderDiscoveredCallback(self, discoverer, ismedia):
+    def _transcoderPreparedCallback(self, transcoder, pipeline):
         try:
             #FIXME: Don't reference the global context
             context = self._context
-            sourceCtx = context.getSourceContext()
-            sourceCtx.reporter.doAnalyse(discoverer)
-            for otherstream in discoverer.otherstreams:
-                context.info("Source file contains unknown stream type : %s" 
-                          % otherstream)
-            self._fireSourceInfo(context.getSourceContext())
-            self._fireSyncReport()
-        except Exception, e:
-            log.notifyException(context, e,
-                                "Exception during source analyse reporting")
-    
-    def _transcoderInitializedCallback(self, pipeline, transcodingTargets):
-        try:
-            #FIXME: Don't reference the global context
-            context = self._context
-            for transTarget in transcodingTargets:
-                targetCtx = transTarget.getData()
+            for transTarget in transcoder.getProducers():
+                targetCtx = transTarget.getContext()
                 info = transTarget.getPipelineInfo()
                 targetCtx.reporter.updatePipelineInfo(info)
             self._fireSyncReport()
@@ -365,13 +343,13 @@ class TranscoderJob(log.LoggerProxy):
             log.notifyException(context, e, "Exception during "
                                 "transcoder initialization reporting")
     
-    def _transcoderPlayingCallback(self, pipeline, transcodingTargets):
+    def _transcoderPlayingCallback(self, transcoder, pipeline):
         try:
             #FIXME: Don't reference the global context
             context = self._context
             targetsBins = {}
-            for transTarget in transcodingTargets:
-                targetCtx = transTarget.getData()
+            for transTarget in transcoder.getProducers():
+                targetCtx = transTarget.getContext()
                 bins = transTarget.getBins()            
                 if len(bins) > 0:
                     targetsBins[targetCtx.key] = bins
@@ -381,177 +359,6 @@ class TranscoderJob(log.LoggerProxy):
             log.notifyException(context, e,
                                 "Exception during pipeline reporting")
 
-    def _getPreProcessVars(self, context):
-        reporter = context.reporter
-        config = context.config
-        sourceCtx = context.getSourceContext()        
-        sourceAnalyse = reporter.report.source.analyse
-        vars = dict()
-        
-        vars['outputBase'] = context.getOutputDir()
-        vars['inputBase'] = context.getInputDir()
-        vars['linkBase'] = context.getLinkDir()
-        vars['outputWorkBase'] = context.getOutputWorkDir()
-        vars['linkWorkBase'] = context.getLinkWorkDir()
-        vars['doneBase'] = context.getDoneDir()
-        vars['failedBase'] = context.getFailedDir()
-
-        vars['inputRelPath'] = sourceCtx.getInputFile()
-        vars['inputFile'] = os.path.basename(vars['inputRelPath'])
-        vars['inputPath'] = sourceCtx.getInputPath()
-        vars['inputDir'] = os.path.basename(os.path.join(vars['inputBase'],
-                                                         vars['inputRelPath']))
-        vars['customerName'] = config.customer.name
-        vars['profileName'] = config.profile.label
-        vars['sourceMime'] = sourceAnalyse.mimeType
-        if sourceAnalyse.hasVideo:
-            vars['sourceHasVideo'] = 1
-            vars['sourceVideoWidth'] = sourceAnalyse.videoWidth
-            vars['sourceVideoHeight'] = sourceAnalyse.videoHeight
-        else:
-            vars['sourceHasVideo'] = 0
-            vars['sourceVideoWidth'] = 0
-            vars['sourceVideoHeight'] = 0
-        if sourceAnalyse.hasAudio:
-            vars['sourceHasAudio'] = 1
-        else:
-            vars['sourceHasAudio'] = 0
-
-        duration = sourceCtx.reporter.getMediaDuration() or -1
-        length = sourceCtx.reporter.getMediaLength()
-        vars['sourceDuration'] = duration
-        vars['sourceLength'] = length
-        # PyChecker isn't smart enough to see I first convert to int
-        __pychecker__ = "no-intdivide"
-        s = int(round(duration))
-        m = s / 60
-        s -= m * 60
-        h = m / 60
-        m -= h * 60        
-        vars['sourceHours'] = h
-        vars['sourceMinutes'] = m
-        vars['sourceSeconds'] = s
-        return vars
-
-    def _getPostProcessVars(self, targetCtx):
-        targetConfig = targetCtx.config
-        targetReporter = targetCtx.reporter
-        targetAnalyse = targetCtx.reporter.report.analyse
-        
-        #FIXME: Don't reference the global context
-        vars = self._getPreProcessVars(self._context)
-
-        vars['outputRelPath'] = targetCtx.getOutputFile()
-        vars['outputFile'] = os.path.basename(vars['outputRelPath'])
-        vars['outputPath'] = targetCtx.getOutputPath()
-        vars['outputDir'] = os.path.basename(os.path.join(vars['outputBase'],
-                                                          vars['outputRelPath']))
-        
-        vars['outputWorkRelPath'] = targetCtx.getOutputWorkFile()
-        vars['outputWorkFile'] = os.path.basename(vars['outputWorkRelPath'])
-        vars['outputWorkPath'] = targetCtx.getOutputWorkPath()
-        vars['outputWorkDir'] = os.path.basename(os.path.join(vars['outputWorkBase'],
-                                                              vars['outputWorkRelPath']))
-        
-        vars['linkRelPath'] = targetCtx.getLinkFile()
-        vars['linkFile'] = os.path.basename(vars['linkRelPath'])
-        vars['linkPath'] = targetCtx.getLinkPath()
-        vars['linkDir'] = os.path.basename(os.path.join(vars['linkBase'],
-                                                          vars['linkRelPath']))
-        
-        vars['linkWorkRelPath'] = targetCtx.getLinkWorkFile()
-        vars['linkWorkFile'] = os.path.basename(vars['linkWorkRelPath'])
-        vars['linkWorkPath'] = targetCtx.getLinkWorkPath()
-        vars['linkWorkDir'] = os.path.basename(os.path.join(vars['linkWorkBase'],
-                                                              vars['linkWorkRelPath']))
-        
-        vars['targetName'] = targetConfig.label
-        vars['targetType'] = targetConfig.type.name
-        vars['targetMime'] = targetAnalyse.mimeType
-        if targetAnalyse.hasVideo:
-            vars['targetHasVideo'] = 1
-            vars['targetVideoWidth'] = targetAnalyse.videoWidth
-            vars['targetVideoHeight'] = targetAnalyse.videoHeight
-        else:
-            vars['targetHasVideo'] = 0
-            vars['targetVideoWidth'] = 0
-            vars['targetVideoHeight'] = 0
-        if targetAnalyse.hasAudio:
-            vars['targetHasAudio'] = 1
-        else:
-            vars['targetHasAudio'] = 0
-
-        duration = targetReporter.getMediaDuration() or 0.0
-        length = targetReporter.getMediaLength() or 0
-        vars['targetDuration'] = duration
-        vars['targetLength'] = length
-        # PyChecker isn't smart enough to see I first convert to int
-        __pychecker__ = "no-intdivide"
-        s = int(round(duration))
-        m = s / 60
-        s -= m * 60
-        h = m / 60
-        m -= h * 60        
-        vars['targetHours'] = h
-        vars['targetMinutes'] = m
-        vars['targetSeconds'] = s
-        
-        if duration > 0:
-            vars['mediaDuration'] = vars["targetDuration"]
-            vars['mediaLength'] = vars["targetLength"]
-            vars['mediaHours'] = vars["targetHours"]
-            vars['mediaMinutes'] = vars["targetMinutes"]
-            vars['mediaSeconds'] = vars["targetSeconds"]
-        else:
-            vars['mediaDuration'] = vars["sourceDuration"]
-            vars['mediaLength'] = vars["sourceLength"]
-            vars['mediaHours'] = vars["sourceHours"]
-            vars['mediaMinutes'] = vars["sourceMinutes"]
-            vars['mediaSeconds'] = vars["sourceSeconds"]
-        
-        return vars
-
-    def _getLinkTemplateVars(self, targetCtx):
-        return self._getPostProcessVars(targetCtx)
-        
-    def _getCortadoArgs(self, targetCtx):
-        targetAnalyse = targetCtx.reporter.report.analyse
-        args = dict()
-        duration = targetCtx.reporter.getMediaDuration()
-        if duration and (duration > 0):
-            # let buffer time be at least 5 seconds
-            output = targetCtx.getOutputWorkPath()
-            bytesPerSecond = os.stat(output).st_size / duration
-            # specified in Kb
-            bufferSize = int(bytesPerSecond * 5 / 1024)
-        else:
-            # Default if we couldn't figure out duration
-            bufferSize = 128
-        args['c-bufferSize'] = str(bufferSize)
-        # cortado doesn't handle Theora cropping, so we need to round
-        # up width and height for display
-        rounder = lambda i: (i + (16 - 1)) / 16 * 16
-        if targetAnalyse.videoWidth:
-            args['c-width'] = str(rounder(targetAnalyse.videoWidth))
-        else:
-            args['c-width'] = CORTADO_DEFAULT_WIDTH
-        if targetAnalyse.videoHeight:
-            args['c-height'] = str(rounder(targetAnalyse.videoHeight))
-        else:
-            args['c-height'] = CORTADO_DEFAULT_HEIGHT
-        if duration:
-            args['c-duration'] = str(duration)
-            args['c-seekable'] = 'true'
-        if targetAnalyse.audioCaps:        
-            args['c-audio'] = 'true'
-        else:
-            args['c-audio'] = 'false'
-        if targetAnalyse.videoCaps:
-            args['c-video'] = 'true'
-        else:
-            args['c-video'] = 'false'
-        return args
-    
     def _fireProgress(self, percent):
         if self._eventSink:
             self._eventSink.onProgress(percent)
@@ -560,17 +367,17 @@ class TranscoderJob(log.LoggerProxy):
         if self._eventSink:
             self._eventSink.onJobStateChanged(state)
     
-    def _addAnalyseInfo(self, info, analyseData):
-        if analyseData.mimeType != None:    
-            info["mime-type"] = analyseData.mimeType
-        if analyseData.hasVideo:
-            info["video-size"] = (analyseData.videoWidth, 
-                                  analyseData.videoHeight)
-            info["video-rate"] = analyseData.videoRate
-            info["video-encoder"] = analyseData.videoTags.get("encoder", None)
-        if analyseData.hasAudio:
-            info["audio-rate"] = analyseData.audioRate
-            info["audio-encoder"] = analyseData.audioTags.get("encoder", None)
+    def _addAnalysisInfo(self, info, analysisData):
+        if analysisData.mimeType != None:    
+            info["mime-type"] = analysisData.mimeType
+        if analysisData.hasVideo:
+            info["video-size"] = (analysisData.videoWidth, 
+                                  analysisData.videoHeight)
+            info["video-rate"] = analysisData.videoRate
+            info["video-encoder"] = analysisData.videoTags.get("encoder", None)
+        if analysisData.hasAudio:
+            info["audio-rate"] = analysisData.audioRate
+            info["audio-encoder"] = analysisData.audioTags.get("encoder", None)
         return info
     
     def _addFileInfo(self, info, file):
@@ -593,7 +400,7 @@ class TranscoderJob(log.LoggerProxy):
             duration = sourceCtx.reporter.getMediaDuration()
             if duration != None:
                 info["duration"] = duration
-            self._addAnalyseInfo(info, sourceCtx.reporter.report.analyse)
+            self._addAnalysisInfo(info, sourceCtx.reporter.report.analysis)
             self._addFileInfo(info, sourceCtx.getInputPath())
             info["input-file"] = sourceCtx.getInputPath()
             self._eventSink.onSourceInfo(info)
@@ -609,7 +416,7 @@ class TranscoderJob(log.LoggerProxy):
             duration = targetCtx.reporter.getMediaDuration()
             if duration != None:
                 info["duration"] = duration
-            self._addAnalyseInfo(info, targetCtx.reporter.report.analyse)            
+            self._addAnalysisInfo(info, targetCtx.reporter.report.analysis)            
             info["output-file"] = targetCtx.getOutputFile()
             info["type"] = targetCtx.config.type.name
             if targetCtx.config.type == TargetTypeEnum.thumbnails:
@@ -676,7 +483,7 @@ class TranscoderJob(log.LoggerProxy):
         context = self.__lookupContext(context, failure)
         if context.reporter.hasFatalError():
             context.debug("Skipping %s because of fatal error during %s"
-                          % (task, context.reporter.report.state))
+                          % (task, context.reporter.report.state.name))
             return failure
         context.reporter.addError(failure)
         errMsg = failure.getErrorMessage()
@@ -694,12 +501,13 @@ class TranscoderJob(log.LoggerProxy):
         context = self.__lookupContext(context, failure)
         if context.reporter.hasFatalError():
             context.debug("Skipping %s because of fatal error during %s"
-                         % (task, context.reporter.report.state))
+                         % (task, context.reporter.report.state.name))
             return failure
         context.reporter.addError(failure)
         warMsg = failure.getErrorMessage()
         log.notifyFailure(context, failure, "Recoverable error during %s", task)
         self._fireWarning(context, warMsg)
+        # The error is resolved
         return result
         
     ### Called by Deferreds ###
@@ -741,6 +549,47 @@ class TranscoderJob(log.LoggerProxy):
             return context.reporter.report
 
     ### Called by Deferreds ###
+    def __cbAnalyseSourceFile(self, result, context):
+        # If stopping don't do anything
+        if self._isStopping(): return
+        context.debug("Analyzing source file")
+        self._setJobState(JobStateEnum.analyzing)
+        sourceCtx = context.getSourceContext()
+        inputPath = sourceCtx.getInputPath()
+        analyseTimeout = compconsts.SOURCE_ANALYSE_TIMEOUT
+        d = self._analyst.analyse(inputPath, timeout=analyseTimeout)
+        args = (context,)
+        d.addCallbacks(self.__cbSourceFileAnalyzed,
+                       self.__ebSourceFileNotAMedia,
+                       callbackArgs=args, errbackArgs=args)
+        return d
+        
+    ### Called by Deferreds ###
+    def __cbSourceFileAnalyzed(self, analyse, context):
+        sourceCtx = context.getSourceContext()
+        sourceCtx.reporter.setMediaAnalysis(analyse)
+        for desc in analyse.otherStreams:
+            context.info("Source file contains unknown stream type : %s" 
+                         % desc)
+        self._fireSourceInfo(context.getSourceContext())
+        self._fireSyncReport()
+        return analyse
+    
+    ### Called by Deferreds ###
+    def __ebSourceFileNotAMedia(self, failure, context):
+        # If stopping don't do anything
+        if self._isStopping(): return
+        if failure.check(analyst.MediaAnalysisUnknownTypeError):
+            raise TranscoderError("Source file is not a known media type",
+                                  data=context, cause=failure)
+        if failure.check(analyst.MediaAnalysisTimeoutError):
+            raise TranscoderError("Source file analysis timeout",
+                                  data=context, cause=failure)
+        raise TranscoderError(str(failure.value),
+                              data=context, cause=failure)
+
+
+    ### Called by Deferreds ###
     def __cbPerformPreProcessing(self, result, context):
         # If stopping don't do anything
         if self._isStopping(): return
@@ -753,7 +602,7 @@ class TranscoderJob(log.LoggerProxy):
                             sourceCtx.config.preProcess, 
                             context)
         self._processes.append(p)
-        vars = self._getPreProcessVars(context)
+        vars = varsets.getPreProcessVars(context)
         context.reporter.startUsageMeasure("preprocess")
         d = p.execute(vars, timeout=context.config.preProcessTimeout)        
         d.addBoth(_stopMeasureCallback, context.reporter, "preprocess")
@@ -762,66 +611,61 @@ class TranscoderJob(log.LoggerProxy):
         d.addCallback(lambda state, res: res, result)
         return d
 
-    _targetClassForType = {TargetTypeEnum.audio:      AudioTarget,
-                           TargetTypeEnum.video:      VideoTarget,
-                           TargetTypeEnum.audiovideo: AudioVideoTarget,
-                           TargetTypeEnum.thumbnails: ThumbnailsTarget,
-                           TargetTypeEnum.identity:   IdentityTarget}
+    _targetsLookup = {TargetTypeEnum.audio:      transtargets.AudioTarget,
+                      TargetTypeEnum.video:      transtargets.VideoTarget,
+                      TargetTypeEnum.audiovideo: transtargets.AudioVideoTarget,
+                      TargetTypeEnum.thumbnails: thumbtargets.ThumbnailTarget,
+                      TargetTypeEnum.identity:   basetargets.IdentityTarget}
     
     ### Called by Deferreds ###
-    def __cbInitiateTargetsProcessing(self, result, context):
+    def __cbInitiateTargetsProcessing(self, sourceAnalysis, context):
         # If stopping don't do anything
         if self._isStopping(): return
+        assert isinstance(sourceAnalysis, analyst.MediaAnalysis)
         sourceCtx = context.getSourceContext()
         context.debug("Transcoding source file '%s'", 
                       sourceCtx.getInputPath())
         self._setJobState(JobStateEnum.transcoding)
-        transcoder = MultiTranscoder(self, sourceCtx.getInputPath(),
-                                     context.config.transcodingTimeout,
-                                     self._transcoderInitializedCallback,
-                                     self._transcoderProgressCallback,
-                                     self._transcoderDiscoveredCallback,
-                                     self._transcoderPlayingCallback)
-        startTranscoder = False
+        transcoder = MediaTranscoder(self,
+                                     preparedCB=self._transcoderPreparedCallback,
+                                     playingCB=self._transcoderPlayingCallback,
+                                     progressCB=self._transcoderProgressCallback)
+
+        d = defer.succeed(None)
         targets = []
-        d = defer.succeed(result)
         for targetCtx in context.getTargetContexts():
-            targetConfig = targetCtx.config
-            TargetClass = self._targetClassForType[targetConfig.type]
-            if issubclass(TargetClass, TranscodingTarget):
-                startTranscoder = True
-                target = TargetClass(targetCtx, targetConfig.label,
-                                     targetConfig.config, 
-                                     targetCtx.getOutputWorkPath(),
-                                     targetConfig.label, targetCtx)
-                transcoder.addTarget(target)
-                targets.append(target)
-            elif issubclass(TargetClass, ProcessingTarget):
-                target = TargetClass(targetCtx, targetConfig.label, targetCtx)
-                d.addCallback(self.__cbProcessTarget, target, context, targetCtx)
-                targets.append(target)
+            target = self._targetsLookup[targetCtx.config.type](targetCtx)
+            if isinstance(target, basetargets.TranscodingTarget):
+                transcoder.addProducer(target)
+            elif isinstance(target, basetargets.TargetProcessing):
+                # The processing targets like IdentityTarget
+                # will be processed before starting the transcoder.
+                d.addCallback(defer.dropResult, target.process)
             else:
-                pass
+                self.warning("Unknown target-processing class '%s'",
+                             target.__class__.__name__)
+                continue
+            targets.append(target)
         
-        if startTranscoder:
-            d.addCallback(self.__cbStartupTranscoding, transcoder, context)
-        
+        d.addCallback(self.__cbStartupTranscoder, context, transcoder, sourceAnalysis)
         d.addCallback(defer.overrideResult, targets)
         return d
     
     ### Called by Deferreds ###
-    def __cbStartupTranscoding(self, result, transcoder, context):
+    def __cbStartupTranscoder(self, result, context, transcoder, sourceAnalysis):
+        # If stopping don't do anything
+        if self._isStopping(): return
+        assert isinstance(sourceAnalysis, analyst.MediaAnalysis)
+        sourceCtx = context.getSourceContext()
         context.reporter.startUsageMeasure("transcoding")
+        stallTimeout = context.config.transcodingTimeout
+        d = transcoder.start(sourceCtx.getInputPath(), sourceAnalysis,
+                             timeout=stallTimeout)
         self._transcoder = transcoder
-        d = transcoder.start()
         d.addBoth(_stopMeasureCallback, context.reporter, "transcoding")
+        d.addCallback(defer.overrideResult, result)
         return d
     
-    ### Called by Deferreds ###
-    def __cbProcessTarget(self, result, target, context, targetCtx):
-        targetCtx.debug("Processing target")
-        return target.process(context, targetCtx)
-
     ### Called by Deferreds ###
     def __cbTargetsProcessed(self, targets, context):
         # If stopping don't do anything
@@ -830,11 +674,8 @@ class TranscoderJob(log.LoggerProxy):
         self._setJobState(JobStateEnum.target_processing)
         d = defer.Deferred()
         for target in targets:
-            targetCtx = target.getData()
-            if targetCtx == None or not isinstance(targetCtx, TargetContext):
-                raise TranscoderError("The transcoder mixed-up "
-                                      + "the provided context", data=context)
-            for wp in target.getOutputs():
+            targetCtx = target.getContext()
+            for wp in target.getOutputFiles():
                 op = targetCtx.getOutputFromWork(wp)
                 targetCtx.reporter.addFile(wp, op)
             d.addCallback(self.__cbInitiateTargetPostProcessings, targetCtx)
@@ -852,7 +693,7 @@ class TranscoderJob(log.LoggerProxy):
         d = defer.Deferred()
         if targetCtx.shouldBeAnalyzed():
             #Setup target output file analysis
-            d.addCallback(self.__cbTargetAnalyseOutputFile, targetCtx)
+            d.addCallback(self.__cbTargetAnalysisOutputFile, targetCtx)
             d.addErrback(self.__ebFatalFailure, targetCtx, "target analysis")
         if targetCtx.config.postProcess:
             #Setup target post-processing
@@ -970,37 +811,36 @@ class TranscoderJob(log.LoggerProxy):
         return succeedOrFailure
 
     ### Called by Deferreds ###
-    def __cbTargetAnalyseOutputFile(self, result, targetCtx):
+    def __cbTargetAnalysisOutputFile(self, result, targetCtx):
         # If stopping don't do anything
         if self._isStopping(): return
         targetCtx.debug("Analysing target output file '%s'",
                         targetCtx.getOutputWorkPath())
-        self._setTargetState(targetCtx, TargetStateEnum.analysis)
+        self._setTargetState(targetCtx, TargetStateEnum.analyzing)
         
         outputPath = targetCtx.getOutputWorkPath()
         if os.path.exists(outputPath):
             targetCtx.reporter.report.fileSize = os.stat(outputPath).st_size
         self._fireSyncReport()
             
-        discoverer = Discoverer(outputPath)
-        targetCtx.reporter.startUsageMeasure("analyse")
-        d = discoverer.discover()
-        d.addBoth(_stopMeasureCallback, targetCtx.reporter, "analyse")
+        targetCtx.reporter.startUsageMeasure("analysis")
+        d = self._analyst.analyse(outputPath)
+        d.addBoth(_stopMeasureCallback, targetCtx.reporter, "analysis")
         d.addCallbacks(self.__cbTargetIsAMedia, self.__ebTargetIsNotAMedia,
                        callbackArgs=(targetCtx,),
                        errbackArgs=(targetCtx,))
         return d
     
     ### Called by Deferreds ###
-    def __cbTargetIsAMedia(self, discoverer, targetCtx, result=None):
+    def __cbTargetIsAMedia(self, analysis, targetCtx, result=None):
         # If stopping don't do anything
         if self._isStopping(): return
-        targetCtx.reporter.doAnalyse(discoverer)
+        targetCtx.reporter.setMediaAnalysis(analysis)
         self._fireTargetInfo(targetCtx)
         expa = targetCtx.shouldHaveAudio()
         expv = targetCtx.shouldHaveVideo()
-        gota = discoverer.is_audio
-        gotv = discoverer.is_video
+        gota = analysis.hasAudio
+        gotv = analysis.hasVideo
         
         if ((expa and (gota != expa)) or (expv and (gotv != expv))):
             expChunks = []
@@ -1033,11 +873,16 @@ class TranscoderJob(log.LoggerProxy):
     def __ebTargetIsNotAMedia(self, failure, targetCtx):
         # If stopping don't do anything
         if self._isStopping(): return
-        if failure.check(DiscovererError):
-            raise TranscoderError("Target '%s' output file is not a known media"
+        if failure.check(analyst.MediaAnalysisUnknownTypeError):
+            raise TranscoderError("Target '%s' output file is not a known "
+                                  "media type"  % targetCtx.config.label,
+                                  data=targetCtx, cause=failure)
+        if failure.check(analyst.MediaAnalysisTimeoutError):
+            raise TranscoderError("Target '%s' output file analysis timeout"
                                   % targetCtx.config.label,
                                   data=targetCtx, cause=failure)
-        raise TranscoderError(str(failure.value), data=targetCtx, cause=failure)
+        raise TranscoderError(str(failure.value),
+                              data=targetCtx, cause=failure)
     
     ### Called by Deferreds ###
     def __cbTargetPerformPostProcessing(self, result, targetCtx):
@@ -1050,7 +895,7 @@ class TranscoderJob(log.LoggerProxy):
                             targetCtx.config.postProcess, 
                             targetCtx)
         self._processes.append(p)
-        vars = self._getPostProcessVars(targetCtx)
+        vars = varsets.getPostProcessVars(targetCtx)
         #FIXME: Don't reference the global context
         timeout = self._context.config.postProcessTimeout
         targetCtx.reporter.startUsageMeasure("postprocess")
@@ -1068,17 +913,17 @@ class TranscoderJob(log.LoggerProxy):
         targetCtx.debug("Generating target's link file '%s'",
                         targetCtx.getLinkWorkPath())
         self._setTargetState(targetCtx, TargetStateEnum.link_file_generation)
-        mimeType = targetCtx.reporter.report.analyse.mimeType
+        mimeType = targetCtx.reporter.report.analysis.mimeType
         if mimeType != 'application/ogg':
             self.warning("Target output not an ogg file, "
                          "not writing link")
             return result
-        cortadoArgs = self._getCortadoArgs(targetCtx)
+        cortadoArgs = varsets.getCortadoArgs(targetCtx)
         cortadoArgString = "&".join("%s=%s" % (urllib.quote(str(k)), 
                                                urllib.quote(str(v)))
                                     for (k, v) in cortadoArgs.items())
         link = targetCtx.getLinkURL(cortadoArgString)
-        templateVars = self._getLinkTemplateVars(targetCtx)
+        templateVars = varsets.getLinkTemplateVars(targetCtx)
         templateVars.update(cortadoArgs)
         for k, v in templateVars.items():
             templateVars[k] = urllib.quote(str(v))

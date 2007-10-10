@@ -65,6 +65,16 @@ class Deferred(defer.Deferred):
 
 ## Utility Callback Functions ##
 
+def isDeferred(obj):
+    """
+    Return if a value is a kind of deferred.
+    In practice if it inherit from twisted.internet.defer.Deferred
+    but because we overrided it, we can't only check if a defered 
+    inherit from our own Deferred class, because uncontrolled code
+    can return deferred too.
+    """
+    return isinstance(obj, defer.Deferred)
+
 def delayedSuccess(result, delay):
     """
     Return a deferred wich callback will be called after a specified
@@ -95,7 +105,21 @@ def bridgeResult(result, callable, *args, **kwargs):
     Simply call the given callable, ignore it's result
     and return the old callback result.
     """
-    callable(*args, **kwargs)
+    d = callable(*args, **kwargs)
+    if isDeferred(d):
+        d.addCallback(overrideResult, result)
+        return d
+    return result
+
+def keepResult(result, callable, *args, **kwargs):
+    """
+    Simply call the given callable, with the normal result,
+    but keep the same result after the call.
+    """
+    d = callable(result, *args, **kwargs)
+    if isDeferred(d):
+        d.addCallback(overrideResult, result)
+        return d
     return result
 
 def resolveFailure(failure, result=None, *args):

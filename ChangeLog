@@ -1,3 +1,53 @@
+2007-10-10  Sebastien Merle  <sebastien@fluendo.com>
+
+	* TODO:
+	* flumotion/component/transcoder/Makefile.am:
+	* flumotion/component/transcoder/analyst.py:
+	* flumotion/component/transcoder/basetargets.py:
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/context.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/filetranscoder.xml:
+	* flumotion/component/transcoder/gstutils.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/component/transcoder/targets.py:
+	* flumotion/component/transcoder/thumbtargets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/component/transcoder/transtargets.py:
+	* flumotion/component/transcoder/varsets.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/admin/diagutils.py:
+	* flumotion/transcoder/admin/notifysubs.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/substitution.py:
+	* flumotion/transcoder/admin/transtask.py:
+	* flumotion/transcoder/defer.py:
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/transreport.py:
+	Components:
+ 	 Do not use the gst-python discoverer directly anymore,
+	 the MediaAnalyst that use deferred and return
+	 MediaAnalysis instance is use insteed.
+	 The Transcoder core has been refactored to use producer
+	 interfaces insteed of target instances.
+	 The transcoder core has been refactored to allow
+	 the producers/targets to return deferred during 
+	 prepare and pipelineUpdate calls.
+	 The transcoder core now call the finalize method
+	 of the producers that can return a deferred before
+	 terminating the transcoding process.
+	 Splited targets.py in targets.py, transtargets.py and thumbtargets.py.
+	 Separated the source file analysis from the source file transcoding,
+	 now the analysis is done before pre-processing.
+	Admin:
+	 Try to detect the transcoder component segfault and
+	 if no error message is present, inform of the segfaults.
+	 Various bugfixes.
+	
+
 2007-10-05  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/inifile.py:

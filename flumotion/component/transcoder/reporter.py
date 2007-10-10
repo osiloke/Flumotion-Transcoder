@@ -12,10 +12,9 @@
 
 # Headers in this file shall remain intact.
 
-import gobject
-import gst
 import time
 import datetime
+import gobject
 
 from twisted.python.failure import Failure
 
@@ -186,62 +185,58 @@ def _addTaskError(task, error=None):
     else:
         task.errors.append(error)
 
-def _getMediaLength(analyse):
-    if analyse.videoLength and analyse.audioLength:
-        return max(analyse.videoLength, analyse.audioLength)
-    if analyse.videoLength:
-        return analyse.videoLength
-    if analyse.audioLength:
-        return analyse.audioLength
+def _getMediaLength(analysis):
+    if analysis.videoLength and analysis.audioLength:
+        return max(analysis.videoLength, analysis.audioLength)
+    if analysis.videoLength:
+        return analysis.videoLength
+    if analysis.audioLength:
+        return analysis.audioLength
     return -1
 
-def _getMediaDuration(analyse):
-    if (analyse.videoDuration == None) and (analyse.audioDuration == None):
+def _getMediaDuration(analysis):
+    if (analysis.videoDuration == None) and (analysis.audioDuration == None):
         return None
-    if analyse.videoDuration and analyse.audioDuration:
-        return max(analyse.videoDuration, analyse.audioDuration)
-    if analyse.videoDuration:
-        return analyse.videoDuration
-    if analyse.audioDuration:
-        return analyse.audioDuration
+    if analysis.videoDuration and analysis.audioDuration:
+        return max(analysis.videoDuration, analysis.audioDuration)
+    if analysis.videoDuration:
+        return analysis.videoDuration
+    if analysis.audioDuration:
+        return analysis.audioDuration
     return -1
 
-def _loadDiscoverer(analyse, discoverer):
-    analyse.reset()
-    analyse.mimeType = discoverer.mimetype
-    analyse.hasAudio = discoverer.is_audio
-    if analyse.hasAudio:
-        if discoverer.audiocaps:
-            analyse.audioCaps = discoverer.audiocaps.to_string()
-        analyse.audioFloat = discoverer.audiofloat
-        analyse.audioRate = discoverer.audiorate
-        analyse.audioDepth = discoverer.audiodepth
-        analyse.audioWidth = discoverer.audiowidth
-        analyse.audioChannels = discoverer.audiochannels
-        if discoverer.audiolength:
-            analyse.audioLength = discoverer.audiolength
-            analyse.audioDuration = float(discoverer.audiolength 
-                                       / gst.SECOND)
-    analyse.hasVideo = discoverer.is_video
-    if analyse.hasVideo:
-        if discoverer.videocaps:
-            analyse.videoCaps = discoverer.videocaps.to_string()
-        analyse.videoWidth = discoverer.videowidth
-        analyse.videoHeight = discoverer.videoheight
-        analyse.videoRate = (discoverer.videorate.num, 
-                          discoverer.videorate.denom)
-        if discoverer.videolength:
-            analyse.videoLength = discoverer.videolength
-            analyse.videoDuration = float(discoverer.videolength 
-                                       / gst.SECOND)
-    for s in discoverer.otherstreams:
-        analyse.otherStreams.append(str(s))
-    for t, v in discoverer.audiotags.iteritems():
-        analyse.audioTags[str(t)] = str(v)
-    for t, v in discoverer.videotags.iteritems():
-        analyse.videoTags[str(t)] = str(v)
-    for t, v in discoverer.othertags.iteritems():
-        analyse.otherTags[str(t)] = str(v)
+def _loadAnalysis(report, analysis):
+    report.reset()
+    report.mimeType = analysis.mimeType
+    report.hasAudio = analysis.hasAudio
+    if report.hasAudio:
+        report.audioCaps = analysis.getAudioCapsAsString()
+        report.audioFloat = analysis.audioFloat
+        report.audioRate = analysis.audioRate
+        report.audioDepth = analysis.audioDepth
+        report.audioWidth = analysis.audioWidth
+        report.audioChannels = analysis.audioChannels
+        report.audioLength = analysis.audioLength
+        report.audioDuration = analysis.getAudioDuration()
+        
+    report.hasVideo = analysis.hasVideo
+    if report.hasVideo:
+        report.videoCaps = analysis.getVideoCapsAsString()
+        report.videoWidth = analysis.videoWidth
+        report.videoHeight = analysis.videoHeight
+        report.videoRate = (analysis.videoRate.num, 
+                            analysis.videoRate.denom)
+        report.videoLength = analysis.videoLength
+        report.videoDuration = analysis.getVideoDuration()
+        
+    for s in analysis.otherStreams:
+        report.otherStreams.append(str(s))
+    for t, v in analysis.audioTags.iteritems():
+        report.audioTags[str(t)] = str(v)
+    for t, v in analysis.videoTags.iteritems():
+        report.videoTags[str(t)] = str(v)
+    for t, v in analysis.otherTags.iteritems():
+        report.otherTags[str(t)] = str(v)
 
 
 class CPUUsageMixin(object):
@@ -275,13 +270,13 @@ class SourceReporter(object):
         self.report = rootReport.source
         
     def getMediaLength(self):
-        return _getMediaLength(self.report.analyse)
+        return _getMediaLength(self.report.analysis)
     
     def getMediaDuration(self):
-        return _getMediaDuration(self.report.analyse)
+        return _getMediaDuration(self.report.analysis)
     
-    def doAnalyse(self, discoverer):
-        _loadDiscoverer(self.report.analyse, discoverer)
+    def setMediaAnalysis(self, analysis):
+        _loadAnalysis(self.report.analysis, analysis)
         
 
 class TargetReporter(CPUUsageMixin):
@@ -290,7 +285,7 @@ class TargetReporter(CPUUsageMixin):
         report = rootReport.targets[targetKey]
         CPUUsageMixin.__init__(self, report, 
                                {"postprocess": "cpuUsagePostprocess",
-                                "analyse": "cpuUsageAnalyse"})
+                                "analysis": "cpuUsageAnalysis"})
         self.local = local
         self.report = report
         self._postprocessStartTime = None
@@ -305,13 +300,13 @@ class TargetReporter(CPUUsageMixin):
         return self.report.fatalError != None
     
     def getMediaLength(self):
-        return _getMediaLength(self.report.analyse)
+        return _getMediaLength(self.report.analysis)
     
     def getMediaDuration(self):
-        return _getMediaDuration(self.report.analyse)
+        return _getMediaDuration(self.report.analysis)
 
-    def doAnalyse(self, discoverer):
-        _loadDiscoverer(self.report.analyse, discoverer)    
+    def setMediaAnalysis(self, analysis):
+        _loadAnalysis(self.report.analysis, analysis)
 
     def updatePipelineInfo(self, pipelineInfo):
         self.report.pipelineInfo.update(pipelineInfo)

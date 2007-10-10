@@ -182,6 +182,13 @@ class Scheduler(log.Loggable,
         label = task.getLabel()
         report = transcoder and transcoder.getReport()
         docs = transcoder and transcoder.getDocuments()
+        # It possible create an alternative error message for
+        # when there is no report or no error message in the report
+        altErrorMessage = None
+        sigv = task.getProcessInterruptionCount()
+        if (sigv > 0):
+            altErrorMessage = ("Transcoding Job seems to have segfaulted "
+                               "%d time(s)" % sigv)
         trigger = NotificationTriggerEnum.failed
         profCtx = task.getProfileContext()
         diagnostics = self._diagnostician.diagnoseTranscodingFailure(task, transcoder)
@@ -190,7 +197,8 @@ class Scheduler(log.Loggable,
                 docs.extend(diagnostics)
             else:
                 docs = diagnostics
-        self.__notify(label, trigger, profCtx, report, docs)
+        self.__notify(label, trigger, profCtx, report,
+                      docs, altErrorMessage=altErrorMessage)
     
     def onTranscodingDone(self, task, transcoder):
         activity = self._activities[task]
@@ -223,8 +231,11 @@ class Scheduler(log.Loggable,
         
     ## Private Methods ##
     
-    def __notify(self, label, trigger, profCtx, report, docs):
+    def __notify(self, label, trigger, profCtx, report,
+                 docs, altErrorMessage=None):
         sourceVars = SourceNotificationVariables(profCtx, trigger, report)
+        if altErrorMessage and (not sourceVars["errorMessage"]):
+            sourceVars["errorMessage"] = altErrorMessage
         # Global notifications
         transCtx = profCtx.getTranscodingContext()
         notifications = transCtx.store.getNotifications(trigger)

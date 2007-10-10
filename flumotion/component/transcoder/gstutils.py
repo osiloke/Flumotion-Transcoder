@@ -13,42 +13,7 @@
 # Headers in this file shall remain intact.
 
 import gst
-from gst.extend import discoverer
 
-from flumotion.transcoder import defer
-from flumotion.transcoder.errors import TranscoderError
-from flumotion.component.transcoder import compconsts, videosize
-
-
-class DiscovererError(TranscoderError):
-    def __init__(self, msg, file, *args, **kwargs):
-        TranscoderError.__init__(self, msg, *args, **kwargs)
-        self.file = file
-    
-
-class Discoverer(discoverer.Discoverer):
-    """
-    A deferred version of the discoverer.
-    """
-    def __init__(self, filePath):
-        discoverer.Discoverer.__init__(self, filePath, 
-                                       max_interleave=compconsts.MAX_INTERLEAVE)
-        self.filePath = filePath
-        
-    def discover(self):
-        d = defer.Deferred()
-        self.connect('discovered', self._discoverer_callback, d)
-        discoverer.Discoverer.discover(self)
-        return d
-                  
-    
-    def _discoverer_callback(self, discoverer, is_media, deferred):
-        if is_media:
-            deferred.callback(discoverer)
-        else:
-            error = DiscovererError("Discovered file is not a known media", self.filePath)
-            deferred.errback(error)
-    
 
 def parse_bin_from_description(description, ghost_unconnected_pads):
     """

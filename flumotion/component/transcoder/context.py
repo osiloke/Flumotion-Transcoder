@@ -17,7 +17,7 @@ import re
 import urllib
 import random
 
-from flumotion.transcoder import utils
+from flumotion.transcoder import utils, fileutils
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.log import LoggerProxy
@@ -29,27 +29,30 @@ WORK_FILE_PATTERN = "(.*)\.%s\.tmp"
 
 class BaseContext(LoggerProxy):
     
-    def __init__(self, logger, tag=None):
+    def __init__(self, logger, label=None):
         LoggerProxy.__init__(self, logger, context=self)
-        self.tag = tag
+        self._label = label
+        
+    def getLabel(self):
+        return self._label
         
     def getTag(self):
-        return self.tag
+        return "(%s) " % self.getLabel()
 
 
 class TaskContext(BaseContext):
     
-    def __init__(self, logger, reporter, tag):
-        BaseContext.__init__(self, logger, tag)
+    def __init__(self, logger, reporter, label):
+        BaseContext.__init__(self, logger, label)
         self.reporter = reporter
     
 
 class SourceContext(BaseContext):
     
     def __init__(self, context):
-        tag = "(%s:%s) " % (context.config.customer.name, 
-                            context.config.profile.label)
-        BaseContext.__init__(self, context._logger, tag)
+        label = "%s:%s" % (context.config.customer.name, 
+                           context.config.profile.label)
+        BaseContext.__init__(self, context._logger, label)
         self.local = context.local
         self._profile = context.config.profile
         self.config = context.config.source    
@@ -103,17 +106,24 @@ class TargetContext(TaskContext):
                  TargetTypeEnum.identity:   (None, None,   False, True)}
     
     def __init__(self, context, targetKey):
-        tag = "(%s:%s:%s) " % (context.config.customer.name,
-                               context.config.profile.label,
-                               context.config.targets[targetKey].label)
+        label = "%s:%s:%s" % (context.config.customer.name,
+                              context.config.profile.label,
+                              context.config.targets[targetKey].label)
+        self.context = context
         reporter = context.reporter.getTargetReporter(targetKey)
-        TaskContext.__init__(self, context._logger, reporter, tag)
+        TaskContext.__init__(self, context._logger, reporter, label)
         self.local = context.local
         self._profile = context.config.profile
         self.config = context.config.targets[targetKey]
         self.key = targetKey
         self._random = "%d-%04d" % (os.getpid(),
                                     int(random.random()*10000))
+
+    def getName(self):
+        return self.config.label
+
+    def getTranscodingConfig(self):
+        return self.config.config
 
     def hasLinkConfig(self):
         return self._profile.linkDir and self.config.linkFile        
@@ -165,18 +175,10 @@ class TargetContext(TaskContext):
             return linkDir.append(linkFile).localize(self.local)
         return None
     
-    def _escapeForRegex(self, s):
-        s = s.replace("\\", "\\\\")
-        s = s.replace(".", "\\.")
-        return s
-    
     def _getFileFromWork(self, path):
         workDir = self.getWorkDir().localize(self.local)
-        #May have more than one separator
-        workDir = workDir.replace(os.sep, os.sep + "+")
-        workDir = self._escapeForRegex(workDir)
-        #to be sure it end by a path separator
-        workDir +=  os.sep + "*"
+        workDir = fileutils.ensureAbsDirPath(workDir)
+        workDir = re.escape(workDir)
         pattern = "^%s%s" % (workDir, WORK_FILE_PATTERN % self._random)
         regex = re.compile(pattern)
         match = regex.match(os.path.realpath(path))
@@ -243,20 +245,15 @@ class TargetContext(TaskContext):
 class Context(TaskContext):
     
     def __init__(self, logger, local, config, report):
-        tag = "(%s:%s) " % (config.customer.name, 
-                               config.profile.label)
+        label = "%s:%s" % (config.customer.name, 
+                           config.profile.label)
         reporter = Reporter(local, report)
-        TaskContext.__init__(self, logger, reporter, tag)
+        TaskContext.__init__(self, logger, reporter, label)
         self.local = local
         self.config = config
         self._sourceCtx = SourceContext(self)
         self._altInputDir = None
         reporter.init(self)
-        
-    def getTag(self):
-        cust = self.config.customer.name
-        prof = self.config.profile.label
-        return "(%s:%s) " % (cust, prof)
         
     def setAltInputDir(self, altInputDir):
         self._altInputDir = altInputDir

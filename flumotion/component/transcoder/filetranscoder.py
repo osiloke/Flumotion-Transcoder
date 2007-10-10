@@ -218,7 +218,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                 self.info("Entering diagnose mode")
                 moveInputFile = False
             
-            self._job = job.TranscoderJob(self, self, self._pathAttr)
+            self._job = job.TranscodingJob(self, self, self._pathAttr)
             self._job.setup(self._local, self._config, self._report,
                             moveInputFile=moveInputFile, 
                             altInputDir=altInputDir,

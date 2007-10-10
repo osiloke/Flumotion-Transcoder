@@ -267,12 +267,12 @@ class Diagnostician(object):
                           + (report.source.fileType or "Unknown"))
         # Mime Type
         diagnostic.append("Mime Type:      "
-                          + (report.source.analyse.mimeType or "Unknown"))
+                          + (report.source.analysis.mimeType or "Unknown"))
         # Discovered Audio
-        audioBrief = diagutils.extractAudioBrief(report.source.analyse)
+        audioBrief = diagutils.extractAudioBrief(report.source.analysis)
         diagnostic.append("Audio Info:     " + (audioBrief or "Not Discovered"))
         # Discovered Video
-        videoBrief = diagutils.extractVideoBrief(report.source.analyse)
+        videoBrief = diagutils.extractVideoBrief(report.source.analysis)
         diagnostic.append("Video Info:     " + (videoBrief or "Not Discovered"))
         # Source Header
         if report.source.fileHeader:
@@ -296,10 +296,10 @@ class Diagnostician(object):
         inputPath = os.path.basename(virtInputPath.getPath())
         
         diagnostic = []
-        analyse = report.source.analyse
+        analysis = report.source.analysis
         # If the discover fail, assume the source has audio and video
-        sourceHasAudio = analyse.hasAudio or (not analyse.mimeType)
-        sourceHasVideo = analyse.hasVideo or (not analyse.mimeType)
+        sourceHasAudio = analysis.hasAudio or (not analysis.mimeType)
+        sourceHasVideo = analysis.hasVideo or (not analysis.mimeType)
         pipeInfo = diagutils.extractPlayPipeline(config, report,
                                                  sourcePath=inputPath,
                                                  playAudio=sourceHasAudio,

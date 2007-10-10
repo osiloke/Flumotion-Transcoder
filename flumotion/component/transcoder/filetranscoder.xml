@@ -55,9 +55,13 @@
           <filename location="reporter.py" />
           <filename location="context.py" />
           <filename location="job.py" />
+          <filename location="varsets.py" />
           <filename location="filetranscoder.py" />
           <filename location="transcoder.py" />
-          <filename location="targets.py" />
+          <filename location="analyst.py" />
+          <filename location="basetargets.py" />
+          <filename location="transtargets.py" />
+          <filename location="thumbtargets.py" />
           <filename location="gstutils.py" />
           <filename location="videosize.py" />
           <filename location="binmaker.py" />
