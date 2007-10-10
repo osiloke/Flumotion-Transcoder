@@ -45,7 +45,7 @@ class Diagnostician(object):
         if "twisted.internet.error.ConnectionDone" in debug:
             return True
         if message.level == 2: # WARNING
-            if "is not a known media" in debug:
+            if "is not a known media type" in debug:
                 return True
             if "output file stalled during transcoding" in debug:
                 return True
@@ -54,6 +54,8 @@ class Diagnostician(object):
             if "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video" in debug:
                 return True
             if "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream" in debug:
+                return True
+            if "flumotion.transcoder.errors.TranscoderError: Transcoder pipeline stalled at prerolling" in debug:
                 return True
         if message.level == 1: # ERROR
             if "Source file not found" in debug:
