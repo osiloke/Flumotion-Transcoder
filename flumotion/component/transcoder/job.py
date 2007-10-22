@@ -323,12 +323,7 @@ class TranscodingJob(log.LoggerProxy):
         self.logName = name
 
     def _transcoderProgressCallback(self, transcoder, percent):
-        if percent == None:
-            self.info("Progression not supported")
-            self._fireProgress(None)
-        else:
-            self._context.log("Progress: %d %%" % int(percent))
-            self._fireProgress(percent)
+        self._fireProgress(percent)
 
     def _transcoderPreparedCallback(self, transcoder, pipeline):
         try:

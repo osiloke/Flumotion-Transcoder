@@ -13,7 +13,7 @@
 from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.utils import LazyEncapsulationIterator
-from flumotion.transcoder.admin.substitution import Variables
+from flumotion.transcoder.substitution import Variables
 from flumotion.transcoder.admin.context.targetcontext import TargetContext
 
 #TODO: Do some value caching

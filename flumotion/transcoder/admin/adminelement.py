@@ -15,11 +15,11 @@ from twisted.python.failure import Failure
 
 from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.log import LoggerProxy
+from flumotion.transcoder.waiters import PassiveWaiters
+from flumotion.transcoder.waiters import CounterWaiters
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
-from flumotion.transcoder.admin.waiters import PassiveWaiters
-from flumotion.transcoder.admin.waiters import CounterWaiters
 
 
 _idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)    

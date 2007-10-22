@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.admin.substitution import Variables
+from flumotion.transcoder.substitution import Variables
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 
 class NotificationVariables(Variables):

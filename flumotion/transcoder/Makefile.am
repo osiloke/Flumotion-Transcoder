@@ -9,7 +9,8 @@ python_PYTHON = __init__.py inifile.py properties.py \
                 process.py pipelinecrawler.py \
                 log.py errors.py enums.py utils.py \
                 virtualpath.py local.py constants.py \
-                defer.py ringbuffer.py fileutils.py
+                defer.py ringbuffer.py fileutils.py \
+                substitution.py waiters.py 
 
 python_DATA =
 

@@ -28,10 +28,6 @@ from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder import analyst
 from flumotion.component.transcoder.watcher import FilesWatcher
 
-# Time maximum to wait for error when the pipeline fail to play
-PLAY_ERROR_TIMEOUT = 8
-
-
 class ITranscoderProducer(Interface):
     
     def getLabel(self):
@@ -140,6 +136,8 @@ class MediaTranscoder(log.LoggerProxy):
         self.__checkIfStarted()
         self._started = True
         
+        self.log("Starting media transcoder")
+        
         if not os.path.exists(sourcePath):
             error = TranscoderError("Source file '%s' does not exists"
                                     % sourcePath)
@@ -166,7 +164,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def abort(self):
         if self._aborted: return
-        self.debug('Aborting Transcoding')
+        self.debug("Aborting media transcoder")
         self._aborted = True
         d = defer.succeed(self)
         for producer in self._producers:
@@ -188,13 +186,16 @@ class MediaTranscoder(log.LoggerProxy):
                     new = message.parse_state_changed()[1]
                     if new == gst.STATE_PLAYING:
                         self.__onPipelinePlaying()
-            elif message.type == gst.MESSAGE_ERROR:
-                gstgerror, debug = message.parse_error()
-                self.__onPipelineError(gstgerror, debug)
-            elif message.type == gst.MESSAGE_EOS:
+                return
+            if message.type == gst.MESSAGE_EOS:
                 self.__finalizeProducers()
-            else:
-                self.log('Unhandled GStreamer message %r', message)
+                return
+            if message.type == gst.MESSAGE_ERROR:
+                gstgerror, debug = message.parse_error()
+                self.__onPipelineError(gstgerror.message, debug)
+                return
+            self.log("Unhandled GStreamer message in transcoding "
+                     "pipeline:  %s", message)
         except TranscoderError, e:
             self.__failed(e)
         except:
@@ -288,7 +289,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __failed(self, error=None, cause=None):
         if self._aborted: return
-        self.log('Transcoding failed')
+        self.log('Media Transcoding failed')
         if error == None:
             error = Failure()
         if not isinstance(error, (Exception, Failure)):
@@ -302,7 +303,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __done(self):
         if self._aborted: return
-        self.log('Transcoding done')
+        self.log('Media Transcoding done')
         self.__fireProgressCallback(100.0)
         self.__shutdownPipeline()
         if self._analyst:
@@ -311,18 +312,16 @@ class MediaTranscoder(log.LoggerProxy):
             producer.onTranscodingDone()
         self._deferred.callback(self)
 
-    def __onPipelineError(self, gstgerror, debug):
-        if self._playErrorTimeout:
-            # If we are waiting for an error, disable the timeout.
-            self._playErrorTimeout.cancel()
-            self._playErrorTimeout = None
-        msg = ("GStreamer error during transcoding: %s" 
-               % gstgerror.message)
+    def __onPipelineError(self, message, debug):
+        self.log('Media transcoder error: %s', message)
+        utils.cancelTimeout(self._playErrorTimeout)
+        msg = ("GStreamer error during transcoding: " + message)
         self.debug(msg)
         self.debug("Additional debug info: %s", debug)
         self.__failed(msg)
 
     def __playPipelineTimeout(self):
+        self.log('Media transcoder pipeline stalled at prerolling')
         error = TranscoderError("Transcoder pipeline stalled at prerolling")
         self.__failed(error)
 
@@ -332,7 +331,7 @@ class MediaTranscoder(log.LoggerProxy):
         self.__firePlayingCallback()
 
     def __shutdownPipeline(self):
-        self.log('Shutdown Transcoding Pipeline')
+        self.log('Shutting down media transcoder pipeline')
         self.__cleanupProgress()
         if self._bus:
             self._bus.remove_signal_watch()
@@ -362,6 +361,8 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __ebSourceAnalysisError(self, failure):
         if self._aborted: return
+        self.log('Media transcoder source analysis failed: %s',
+                 log.getFailureMessage(failure))
         self.__fireAnalyzedCallback(None)
         error = TranscoderError("Source file is not a known media",
                                 cause=failure)
@@ -371,6 +372,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __cbCheckSourceAnalysis(self, sourceAnalysis):
         if self._aborted: return
+        self.log('Checking source analysis')
         self.__fireAnalyzedCallback(sourceAnalysis)
         
         if sourceAnalysis.hasAudio:
@@ -396,7 +398,7 @@ class MediaTranscoder(log.LoggerProxy):
         d.addCallbacks(self.__cbSetupPipeline,
                        self.__ebProducersSetupFailed)
         d.addErrback(self.__failed)
-            
+
     def __ebProducersSetupFailed(self, failure):
         if self._aborted: return
         self.debug("Producers setup failed: %s", 
@@ -405,9 +407,10 @@ class MediaTranscoder(log.LoggerProxy):
                      % (self._sourcePath, str(failure.value)), cause=failure)
         # The error has been deal with, resolve the errback
         return None
-            
+
     def __cbSetupPipeline(self, _):
         if self._aborted: return
+        self.log('Setting up transcoding pipeline')
         pipelineName = "transcoder-%s" % self._sourcePath
         pipeline = gst.Pipeline(pipelineName)
         src = gst.element_factory_make("filesrc")
@@ -448,6 +451,7 @@ class MediaTranscoder(log.LoggerProxy):
     
     def __cbStartupPipeline(self, pipeline):
         if self._aborted: return
+        self.log('Starting up transcoding pipeline')
         self._pipeline = pipeline
         self._bus = self._pipeline.get_bus()
         self._bus.add_signal_watch()
@@ -457,8 +461,9 @@ class MediaTranscoder(log.LoggerProxy):
         
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
-            self._playErrorTimeout = reactor.callLater(PLAY_ERROR_TIMEOUT,
-                                                       self.__errorNotReceived)
+            timeout = compconsts.PLAY_ERROR_TIMEOUT
+            to = utils.createTimeout(timeout, self.__errorNotReceived)
+            self._playErrorTimeout = to
             return
         
         timeout = compconsts.TRANSCODER_PLAYING_TIMEOUT
@@ -480,6 +485,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __finalizeProducers(self):
         if self._aborted: return
+        self.log('Finalizing transcoding pipeline')
         d = defer.succeed(None)
         for producer in self._producers:
             d.addCallback(defer.dropResult,

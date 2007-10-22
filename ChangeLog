@@ -1,3 +1,40 @@
+2007-10-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/Makefile.am:
+	* flumotion/component/transcoder/base.xml:
+	* flumotion/component/transcoder/basetargets.py:
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/thumbsamplers.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/component/transcoder/thumbsrc.py:
+	* flumotion/component/transcoder/thumbtargets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/context/customercontext.py:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	* flumotion/transcoder/admin/context/targetcontext.py:
+	* flumotion/transcoder/admin/datastore/basestore.py:
+	* flumotion/transcoder/admin/errors.py:
+	* flumotion/transcoder/admin/notifysubs.py:
+	* flumotion/transcoder/admin/proxies/componentproxy.py:
+	* flumotion/transcoder/admin/proxies/fluproxy.py:
+	* flumotion/transcoder/admin/proxies/managerproxy.py:
+	* flumotion/transcoder/admin/proxies/managerset.py:
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py:
+	* flumotion/transcoder/admin/substitution.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/waiters.py:
+	* flumotion/transcoder/errors.py:
+	* flumotion/transcoder/waiters.py:
+	Rewrite from scratch of the thumbnailer.
+	Fix #1379
+
 2007-10-10  Sebastien Merle  <sebastien@fluendo.com>
 
 	* TODO:

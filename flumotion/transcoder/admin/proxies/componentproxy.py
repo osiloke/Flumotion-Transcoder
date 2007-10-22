@@ -24,9 +24,9 @@ from flumotion.common.planet import moods
 
 from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import TranscoderError, OperationAbortedError
+from flumotion.transcoder.waiters import AssignWaiters, ValueWaiters
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
-from flumotion.transcoder.admin.waiters import AssignWaiters, ValueWaiters
 from flumotion.transcoder.admin.errors import OrphanComponentError
 from flumotion.transcoder.admin.proxies.compprops import GenericComponentProperties
 from flumotion.transcoder.admin.proxies.fluproxy import FlumotionProxy

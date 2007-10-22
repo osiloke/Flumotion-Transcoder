@@ -29,22 +29,10 @@ class BaseTarget(log.LoggerProxy):
     def __init__(self, targetContext):
         log.LoggerProxy.__init__(self, targetContext)
         self._context = targetContext
-        self._waiters = []
         self._outcome = None
 
 
     ## Public Methods ##
-
-    def wait(self):
-        if self._outcome:
-            succeed, result = self._outcome
-            if succeed:
-                return defer.succeed(result)
-            else:
-                return defer.failed(result)
-        d = defer.Deferred()
-        self._waiters.append(d)
-        return d
 
     def getContext(self):
         return self._context
@@ -58,17 +46,11 @@ class BaseTarget(log.LoggerProxy):
 
     ## Protected Methods ##
     
-    def _fireFailed(self, failure):
-        self._outcome = (False, failure)
-        for d in self._waiters:
-            d.errback(failure)
-        del self._waiters[:]
+    def _targetFailed(self, failure):
+        pass
 
-    def _fireDone(self, result=None):
-        self._outcome = (True, result)
-        for d in self._waiters:
-            d.callback(result)
-        del self._waiters[:]
+    def _targetDone(self):
+        pass
 
 
 class TargetProcessing(BaseTarget):
@@ -76,7 +58,6 @@ class TargetProcessing(BaseTarget):
     def __init__(self, targetContext):
         BaseTarget.__init__(self, targetContext)
         self._outputs = []
-
 
     ## Public Methods ##
 
@@ -87,14 +68,15 @@ class TargetProcessing(BaseTarget):
         try:
             result = self._doProcessing()
             if defer.isDeferred(result):
-                result.addCallbacks(self._fireDone, self._fireFailed)
+                result.addCallbacks(defer.dropResult, self._targetFailed,
+                                    callbackArgs=(self._targetDone,))
                 return result
             else:
-                self._fireDone(self)
+                self._targetDone()
                 return defer.succeed(self)
         except:
             f = Failure()
-            self._fireFailed(f)
+            self._targetFailed(f)
             return defer.fail(f)
         
     
@@ -158,11 +140,11 @@ class TranscodingTarget(BaseTarget):
 
     def onTranscodingFailed(self, failure):
         self._transcoder = None
-        self._fireFailed(failure)
+        self._targetFailed(failure)
     
     def onTranscodingDone(self):
         self._transcoder = None
-        self._fireDone(self)
+        self._targetDone()
         
     
     ## Protected Methods ##

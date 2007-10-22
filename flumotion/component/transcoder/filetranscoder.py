@@ -263,6 +263,12 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.uiState.setitem('job-data', "job-warning", warning)
 
     def onProgress(self, percent):
+        if percent == None:
+            self.info("Progression not supported")
+        elif self._diagnoseMode:
+            self.info("Progress: %d %%" % int(percent))
+        else:
+            self.log("Progress: %d %%" % int(percent))
         self.uiState.setitem('job-data', "progress", percent)
     
     def onJobStateChanged(self, state):

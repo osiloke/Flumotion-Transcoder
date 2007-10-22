@@ -11,22 +11,36 @@
 
 # Headers in this file shall remain intact.
 
+import os
 import gst
+import threading
 
+from zope.interface import Interface, implements
+
+from flumotion.transcoder import log, defer, utils, fileutils
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
+from flumotion.transcoder.waiters import PassiveWaiters
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.basetargets import TranscodingTarget
-from flumotion.component.transcoder.thumbsink import ThumbnailSink
+from flumotion.component.transcoder.thumbsink import ThumbSink
+from flumotion.component.transcoder.thumbsrc import ThumbSrc
+from flumotion.component.transcoder.thumbsamplers import IThumbnailer
+from flumotion.component.transcoder.thumbsamplers import FrameSampler
+from flumotion.component.transcoder.thumbsamplers import KeyFrameSampler
+from flumotion.component.transcoder.thumbsamplers import TimeSampler
+from flumotion.component.transcoder.thumbsamplers import PercentSampler
 from flumotion.component.transcoder.binmaker import makeMuxerEncodeBin
 from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
 
 
 
 class ThumbnailTarget(TranscodingTarget):
+    
+    implements(IThumbnailer)
     
     class EncoderConfig(object):
         def __init__(self, config):
@@ -52,6 +66,7 @@ class ThumbnailTarget(TranscodingTarget):
         """
         The filename may contain template variables:
             %(frame)d  => frame number (starting at 1)
+            %(keyframe)d  => key-frame number (starting at 1)
             %(index)d  => index of the thumbnail (starting at 1)
             %(timestamp)d => timestamp of the thumbnail
             %(time)s => composed time of the thumbnail, 
@@ -66,10 +81,21 @@ class ThumbnailTarget(TranscodingTarget):
             thumbsWidth
             thumbsHeight
             outputFormat Enum(jpg, png)
-            smartThumbs
         """
         TranscodingTarget.__init__(self, targetContext)
-        self._sink = None
+        self._pipeline = None
+        self._bus = None
+        self._thumbSink = None
+        self._thumbSrc = None
+        self._fileSink = None
+        self._working = False
+        self._finalizing = False
+        self._pending = [] # [(gst.Buffer, Variables)]
+        self._thumbnails = {} # {filename: None}
+        self._waiters = PassiveWaiters("Thumbnailer Finalization")
+        self._prerollTimeout = None
+        self._playErrorTimeout = None
+        self._startLock = threading.Lock()
         self._checkConfAttr("periodValue")
         self._checkConfAttr("periodUnit")
         self._checkConfAttr("maxCount")
@@ -81,9 +107,7 @@ class ThumbnailTarget(TranscodingTarget):
     ## Public Overriden Methods ##
 
     def getOutputFiles(self):
-        if self._sink:
-            return self._sink.getFiles()
-        return None
+        return self._thumbnails.keys()
         
 
     ## ITranscoderProducer Overriden Methods ##
@@ -91,159 +115,232 @@ class ThumbnailTarget(TranscodingTarget):
     def checkSourceMedia(self, sourcePath, sourceAnalysis):
         if not sourceAnalysis.hasVideo:
             self.raiseError("Source media doesn't have video stream")
+        return True
+
+    def updatePipeline(self, pipeline, analysis, tees, timeout=None):
+        tag = self._getTranscodingTag()
+        self.log("Updating transcoding pipeline for thumbnail target '%s'", tag)
+        # First connect the custom thumbnail sink
         config = self._getTranscodingConfig()
-        if ((config.periodUnit == PeriodUnitEnum.percent)
-            and not (sourceAnalysis.getMediaLength() > 0)):
+        unit = config.periodUnit
+        value = config.periodValue
+        maxCount = config.maxCount
+        sampler = self.__createSampler(maxCount, unit, value, analysis)
+        thumbSink = ThumbSink(sampler, "ThumbSink-" + tag)
+        queue = gst.element_factory_make("queue", "thumbqueue-%s" % tag)
+        pipeline.add(queue, thumbSink)
+        gst.element_link_many(tees['videosink'], queue, thumbSink)
+        
+        # Then create the thumbnailing pipeline with a custom thumnail source
+        config = self._getTranscodingConfig()
+        thumbPipeName = "thumbnailing-" + tag
+        thumbPipeline = gst.Pipeline(thumbPipeName)
+        thumbSrc = ThumbSrc("ThumbSrc-" + tag)
+        encoderConf = self.EncoderConfig(config)
+        videoEncBin = makeVideoEncodeBin(encoderConf, analysis, tag,
+                                         withRateControl=False, 
+                                         logger=self)
+        fileSink = gst.element_factory_make("filesink", "filesink-%s" % tag)
+        thumbPipeline.add(thumbSrc, videoEncBin, fileSink)
+        gst.element_link_many(thumbSrc, videoEncBin, fileSink)
+        self._thumbSink = thumbSink
+        self._thumbSrc = thumbSrc
+        self._pipeline = thumbPipeline
+        self._fileSink = fileSink
+        self._bus = self._pipeline.get_bus()
+        self._bus.add_signal_watch()
+        self._bus.connect("message", self._bus_message_callback)
+
+    def finalize(self, timeout=None):
+        self._finalizing = True
+        if self._working or self._pending:
+            return self._waiters.wait(timeout)
+        return defer.succeed(self)
+    
+    def abort(self, timeout=None):
+        self.log("Aborting thumbnail target '%s'", self._getTranscodingTag())
+        self.__shutdownPipeline()
+        return defer.succeed(self)
+
+
+    ## IThumbnailer Methods ##
+    
+    def push(self, buffer, vars):
+        """
+        Warning, this is not called from the main thread.
+        """
+        self._pending.append((buffer, vars))
+        self.__startThumbnailer()
+
+    ## Protected GObject Callback Methods ##
+
+    def _bus_message_callback(self, bus, message):
+        try:
+            if message.type == gst.MESSAGE_STATE_CHANGED:
+                if (message.src == self._pipeline):
+                    new = message.parse_state_changed()[1]
+                    if new == gst.STATE_PAUSED:
+                        self.__onPipelinePrerolled()
+                return
+            if message.type == gst.MESSAGE_EOS:
+                self.__onPipelineEOS()
+                return
+            if message.type == gst.MESSAGE_ERROR:
+                gstgerror, debug = message.parse_error()
+                self.__onPipelineError(gstgerror.message, debug)
+                return            
+            self.log("Unhandled GStreamer message in thumbnailing pipeline "
+                     "'%s': %s", self._getTranscodingTag(), message)
+        except Exception, e:
+            msg = ("Error during thumbnailing pipeline "
+                   "message handling: " + str(e))
+            debug = log.getExceptionMessage(e)
+            self.__postError(msg, debug)
+
+
+    ## Private Methods ##
+    
+    def __shutdownPipeline(self):
+        self.log("Shutting down thumbnailing pipeline '%s'",
+                 self._getTranscodingTag())
+        if self._bus:
+            self._bus.remove_signal_watch()
+        self._bus = None
+        if self._pipeline:
+            self._pipeline.set_state(gst.STATE_NULL)
+        self._pipeline = None
+
+    def __resetPipeline(self):
+        assert self._pipeline != None
+        self.log("Resetting thumbnailing pipeline '%s'",
+                 self._getTranscodingTag())
+        self._pipeline.set_state(gst.STATE_NULL)
+        self._working = False
+
+    def __startupPipeline(self, buffer, thumbPath):
+        assert not self._working
+        assert self._pipeline != None
+        self.log("Starting up thumbnailing pipeline '%s'",
+                 self._getTranscodingTag())
+        self._thumbSrc.addBuffer(buffer)
+        self._fileSink.props.location = thumbPath
+        
+        ret = self._pipeline.set_state(gst.STATE_PLAYING)
+        if ret == gst.STATE_CHANGE_FAILURE:
+            timeout = compconsts.PLAY_ERROR_TIMEOUT
+            to = utils.createTimeout(timeout, self.__errorNotReceived)
+            self._playErrorTimeout = to
+            return
+        
+        timeout = compconsts.THUMBNAILER_PLAYING_TIMEOUT
+        to = utils.createTimeout(timeout, self.__playPipelineTimeout)
+        self._prerollTimeout = to
+
+        self._working = True
+
+    def __startThumbnailer(self):
+        self._startLock.acquire()
+        try:
+            if self._working: return
+            while True:
+                if not self._pending:
+                    if self._finalizing:
+                        self._waiters.fireCallbacks(self)
+                        self.__shutdownPipeline()
+                    return
+                buffer, vars = self._pending.pop(0)
+                template = self._getOutputPath()
+                thumbPath = vars.substitute(template)
+                if thumbPath in self._thumbnails:
+                    self.warning("Thumbnail file '%s' already created, "
+                                 "keeping the first one")
+                    continue
+                fileutils.ensureDirExists(os.path.dirname(thumbPath), "thumbnail")
+                self.__startupPipeline(buffer, thumbPath)
+                return
+        finally:
+            self._startLock.release()
+
+    def __postError(self, message, debug=None):
+        self._thumbSink.postError(message, debug)
+        self.__shutdownPipeline()
+        
+    def __errorNotReceived(self):
+        msg = "Could not play thumbnailing pipeline"
+        self.__postError(msg)
+
+    def __playPipelineTimeout(self):
+        self.log("Thumbnailing pipeline '%s' stalled at prerolling",
+                 self._getTranscodingTag())        
+        msg = "Thumbnailing pipeline stalled at prerolling"
+        self.__postError(msg)
+
+    def __onPipelineError(self, message, debug):
+        self.log("Thumbnailing pipeline '%s' error: %s",
+                 self._getTranscodingTag(), message)
+        utils.cancelTimeout(self._playErrorTimeout)
+        msg = "Thumbnailing pipeline error: " + message
+        self.__postError(msg, debug)
+
+    def __onPipelinePrerolled(self):
+        self.log("Thumbnailing pipeline '%s' prerolled",
+                 self._getTranscodingTag())   
+        utils.cancelTimeout(self._prerollTimeout)
+
+    def __onPipelineEOS(self):
+        self.log("Thumbnailing pipeline '%s' reach end of stream",
+                 self._getTranscodingTag())        
+        self._thumbnails[self._fileSink.props.location] = None
+        self.__resetPipeline()
+        self.__startThumbnailer()
+
+    def __createFrameSampler(self, maxCount, length, period):
+        self.log("Sample thumbnails each %s frames %s", str(period),
+                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
+                 or "without limitation")
+        return FrameSampler(self, maxCount, length, period)
+        
+    def __createKeyFrameSampler(self, maxCount, length, period):
+        self.log("Sample thumbnails each %s keyframes %s", str(period), 
+                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
+                 or "without limitation")
+        return KeyFrameSampler(self, maxCount, length, period)
+
+    def __createTimeSampler(self, maxCount, length, period):
+        self.log("Sample thumbnails each %d seconds %s", int(period / gst.SECOND),
+                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
+                 or "without limitation")
+        return TimeSampler(self, maxCount, length, period)
+
+    def __createPercentSampler(self, maxCount, length, period):
+        self.log("Setup to creates thumbnails each %s percent of total "
+                 "length %s seconds %s", str(period), 
+                 str(length / gst.SECOND), (maxCount
+                 and ("to a maximum of %s thumbnails" % str(maxCount)))
+                 or "without limitation")
+        return PercentSampler(self, maxCount, length, period)
+
+    def __createSampler(self, maxCount, unit, value, analysis):
+        length = analysis.getMediaLength()
+        if unit == PeriodUnitEnum.frames:
+            return self.__createFrameSampler(maxCount, length, value)
+        elif unit == PeriodUnitEnum.keyframes:
+            return self.__createKeyFrameSampler(maxCount, length, value)
+        elif unit == PeriodUnitEnum.seconds:
+            return self.__createTimeSampler(maxCount, length, value * gst.SECOND)
+        elif unit == PeriodUnitEnum.percent:
+            if length and (length > 0):
+                value = max(min(value, 100), 0)
+                return self.__createPercentSampler(maxCount, length, value)
             self.warning("Cannot generate percent-based thumbnails with a "
                          "source media without known duration, "
                          "falling back to second-based thumbnailing.")
             # PyChecker tells mi 100 / 10 may result to a float ? ?
             __pychecker__ = "no-intdivide"
-            newMax = max((100 / (int(config.periodValue) or 10)) - 1, 1)
-            if config.maxCount:
-                config.maxCount = min(config.maxCount, newMax)
+            newMax = max((100 / (int(value) or 10)) - 1, 1)
+            if maxCount:
+                newMax = min(maxCount, newMax)
             else:
-                config.maxCount = newMax
-            config.periodUnit = PeriodUnitEnum.seconds
-            config.periodValue = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
-        return True
-
-    def updatePipeline(self, pipeline, analysis, tees, timeout=None):
-        setupMethods = {PeriodUnitEnum.seconds: self._setupThumbnailBySeconds,
-                        PeriodUnitEnum.frames: self._setupThumbnailByFrames,
-                        PeriodUnitEnum.keyframes: self._setupThumbnailByKeyFrames,
-                        PeriodUnitEnum.percent: self._setupThumbnailByPercent}
-        probMethods = {PeriodUnitEnum.seconds: self._thumbnail_prob_by_seconds,
-                       PeriodUnitEnum.frames: self._thumbnail_prob_by_frames,
-                       PeriodUnitEnum.keyframes: self._thumbnail_prob_by_keyframes,
-                       PeriodUnitEnum.percent: self._thumbnail_prob_by_percent}
-        tag = self._getTranscodingTag()
-        config = self._getTranscodingConfig()
-        template = self._getOutputPath()
-        unit = config.periodUnit
-        self._setupThumbnail = setupMethods[unit]
-        self._buffer_prob_callback = probMethods[unit]
-
-        encoderConf = self.EncoderConfig(config)        
-        videoEncBin = makeVideoEncodeBin(encoderConf, analysis, tag,
-                                         withRateControl=False, 
-                                         pipelineInfo=self._pipelineInfo,
-                                         logger=self)
-        thumbsBin = gst.Bin("thumbnailing-%s" % tag)
-        self._sink = ThumbnailSink(template, "thumbsink-%s" % tag)
-        thumbsBin.add(videoEncBin, self._sink)
-        videoEncBin.link(self._sink)
-        encPad = videoEncBin.get_pad("sink")
-        encPad.add_buffer_probe(self._buffer_prob_callback)        
-        pad = gst.GhostPad("videosink", encPad)
-        thumbsBin.add_pad(pad)
-        pipeline.add(thumbsBin)
-        tees['videosink'].get_pad('src%d').link(thumbsBin.get_pad('videosink'))
-        self._bins["thumbnailer"] = videoEncBin
-        self._setupThumbnail(analysis)
-
-    
-    ## Private Methods ##
-    
-    def _setupThumbnailByFrames(self, analysis):
-        config = self._getTranscodingConfig()
-        self._frame = 0
-        self._count = 0
-        self._period = config.periodValue
-        self._max = config.maxCount
-        self._nextFrame = config.periodValue
-        self.log("Setup to create a thumbnail each %s frames %s",
-                 str(self._nextFrame), self._max
-                 and ("to a maximum of %s thumbnails" % str(self._max))
-                 or "without limitation")
-    
-    def _thumbnail_prob_by_frames(self, pad, buffer):
-        self._frame += 1
-        if (not self._max) or (self._count < self._max):
-            if self._frame >= self._nextFrame:
-                self._count += 1
-                self._nextFrame += self._period
-                return True
-        return False
-
-    def _setupThumbnailByKeyFrames(self, analysis):
-        config = self._getTranscodingConfig()
-        self._keyframe = 0
-        self._count = 0
-        self._period = config.periodValue
-        self._max = config.maxCount
-        self._nextKeyFrame = config.periodValue
-        self.log("Setup to create a thumbnail each %s keyframes %s",
-                 str(self._nextKeyFrame), self._max
-                 and ("to a maximum of %s thumbnails" % str(self._max))
-                 or "without limitation")
-        
-    
-    def _thumbnail_prob_by_keyframes(self, pad, buffer):
-        if not buffer.flag_is_set(gst.BUFFER_FLAG_DELTA_UNIT):
-            self._keyframe += 1
-            if (not self._max) or (self._count < self._max):
-                if self._keyframe >= self._nextKeyFrame:
-                    self._count += 1
-                    self._nextKeyFrame += self._period
-                    return True
-        return False
-
-    def _setupThumbnailByPercent(self, analysis):
-        config = self._getTranscodingConfig()
-        self._count = 0
-        self._length = analysis.getMediaLength()
-        self._max = config.maxCount
-        self._percent = config.periodValue
-        self._nextTimestamp = None
-        self.log("Setup to create a thumbnail each %s percent of total "
-                 "length %s seconds %s", str(self._percent), 
-                 str(self._length / gst.SECOND), self._max
-                 and ("to a maximum of %s thumbnails" % str(self._max))
-                 or "without limitation")
-    
-    def _percent_get_next(self, timestamp):
-        return timestamp + (self._length * self._percent) / 100
-    
-    def _thumbnail_prob_by_percent(self, pad, buffer):
-        next = self._nextTimestamp
-        curr = buffer.timestamp
-        if next == None:
-            next = self._percent_get_next(curr)
-            self._nextTimestamp = next
-        if (not self._max) or (self._count < self._max):
-            if (curr >= next):
-                self._count += 1
-                next = self._percent_get_next(curr)
-                self._nextTimestamp = next
-                return True
-        return False
-    
-    def _setupThumbnailBySeconds(self, analysis):
-        config = self._getTranscodingConfig()
-        self._max = config.maxCount
-        self._count = 0
-        self._interval = config.periodValue
-        self._nextTimestamp = None        
-        self.log("Setup to create a thumbnail each %s seconds %s",
-                 str(self._interval), self._max
-                 and ("to a maximum of %s thumbnails" % str(self._max))
-                 or "without limitation")
-    
-    def _seconds_get_next(self, timestamp):
-        return timestamp + self._interval * gst.SECOND
-    
-    def _thumbnail_prob_by_seconds(self, pad, buffer):
-        next = self._nextTimestamp
-        curr = buffer.timestamp
-        if next == None:
-            next = self._seconds_get_next(curr)
-            self._nextTimestamp = next
-        if (not self._max) or (self._count < self._max):
-            if buffer.timestamp >= self._nextTimestamp:
-                self._count += 1
-                next = self._seconds_get_next(curr)
-                self._nextTimestamp = next
-                return True
-        return False
-    
+                newMax = newMax
+            newValue = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
+            return self.__createTimeSampler(newMax, length, newValue * gst.SECOND)

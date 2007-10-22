@@ -74,6 +74,14 @@ class VirtualPathError(LocalizationError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
+class WaiterError(TranscoderError):
+    """
+    A wait operation couldn't be completed.
+    """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
 class OperationTimedOutError(TranscoderError):
     """
     An asynchronous operation timed out.

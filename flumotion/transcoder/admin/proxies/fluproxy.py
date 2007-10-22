@@ -15,8 +15,8 @@ from twisted.internet import reactor
 from flumotion.transcoder import log, defer, utils
 from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
+from flumotion.transcoder.waiters import IWaiters
 from flumotion.transcoder.admin import adminelement
-from flumotion.transcoder.admin.waiters import IWaiters
 
 #TODO: Rewrite this... It's a mess
 

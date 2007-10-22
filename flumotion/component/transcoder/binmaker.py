@@ -34,8 +34,11 @@ def makeMuxerEncodeBin(file, config, analysis, tag,
     
     # filesink element
     filesink = gst.element_factory_make("filesink", "filesink-%s" % tag)
-    filesink.props.location = file    
-    pipelineParts.append("filesink location=$FILE_PATH")
+    if file:
+        filesink.props.location = file    
+        pipelineParts.append("filesink location=$FILE_PATH")
+    else:
+        pipelineParts.append("filesink")
     
     # Add and link elements
     encBin.add(muxer, filesink)

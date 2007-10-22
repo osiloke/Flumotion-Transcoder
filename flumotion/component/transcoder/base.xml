@@ -15,9 +15,11 @@
           <filename location="constants.py" />
           <filename location="local.py" />
           <filename location="virtualpath.py" />
+          <filename location="substitution.py" />
           <filename location="utils.py" />
           <filename location="fileutils.py" />          
           <filename location="defer.py" />
+          <filename location="waiters.py" />          
           <filename location="properties.py" />
           <filename location="inifile.py" />                    
         </directory>

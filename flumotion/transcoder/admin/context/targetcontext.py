@@ -12,7 +12,7 @@
 
 from flumotion.transcoder import fileutils
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.substitution import Variables
+from flumotion.transcoder.substitution import Variables
 
 
 def _buildRelPathGetter(storeGetterName):

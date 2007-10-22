@@ -15,7 +15,7 @@ from twisted.internet import reactor
 
 from flumotion.transcoder import defer, utils
 from flumotion.transcoder.errors import OperationTimedOutError
-from flumotion.transcoder.admin.errors import WaiterError
+from flumotion.transcoder.errors import WaiterError
 
 
 class IWaiters(Interface):

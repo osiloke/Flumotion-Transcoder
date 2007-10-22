@@ -43,14 +43,6 @@ class OrphanComponentError(TranscoderError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
-class WaiterError(TranscoderError):
-    """
-    A wait operation couldn't be completed.
-    """
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
 class NotificationError(TranscoderError):
     """
     A Notification couldn't be performed.

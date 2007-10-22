@@ -20,13 +20,13 @@ from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.waiters import AssignWaiters
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
-from flumotion.transcoder.admin.waiters import AssignWaiters
 from flumotion.transcoder.admin.document import FileDocument
 
 

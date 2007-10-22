@@ -12,27 +12,27 @@
 
 # Headers in this file shall remain intact.
 
-import os
-import gst
 import gobject
+import gst
 
-from flumotion.common import common
-from flumotion.transcoder import log, utils, fileutils
+from zope.interface import Interface
 
-class ThumbnailSink(gst.BaseSink):
-    """
-    Saves each buffer it receive in a different file.
-    The image encoder used MUST encode a full frame by buffer.
-    The specified file template can have the following
-    variables:
-            %(index)d  => index of the thumbnail (starting at 1)
-            %(timestamp)d => timestamp of the thumbnail
-            %(time)s => composed time of the thumbnail, 
-                        like %(hours)02d:%(minutes)02d:%(seconds)02d
-            %(hours)d => hours from start
-            %(minutes)d => minutes from start
-            %(seconds)d => seconds from start
-    """
+from flumotion.transcoder import log
+
+
+class IThumbnailSampler(Interface):
+    
+    def prepare(self, startTime):
+        pass
+        
+    def update(self, streamTime, buffer):
+        pass
+
+    def finalize(self):
+        pass
+
+
+class ThumbSink(gst.BaseSink):
 
     __gsttemplates__ = (
         gst.PadTemplate("sink",
@@ -41,59 +41,54 @@ class ThumbnailSink(gst.BaseSink):
                         gst.caps_new_any()),
         )
 
-    def __init__(self, filePathTemplate, name=None):
+    def __init__(self, sampler, name=None):
         gst.BaseSink.__init__(self)
+        assert IThumbnailSampler.providedBy(sampler)
+        self._sampler = sampler
+        if name: self.props.name = name
         self.set_sync(False)
-        self._filePathTemplate = filePathTemplate
-        self._firstTimestamp = 0
-        self._index = 0
-        self._files = []
-        if name:
-            self.props.name = name
+        self._error = False
+        self._prepared = False
+        self._segment = None
 
-    def getFiles(self):
-        return self._files
 
-    def _getFilePath(self, timestamp, index):
-        seconds = timestamp / gst.SECOND
-        minutes = seconds / 60
-        hours = minutes / 60
-        seconds = seconds % 60
-        minutes = minutes % 60
-        time = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        vars = {"seconds": seconds,
-                "minutes": minutes,
-                "hours": hours,
-                "index": index,
-                "time": time,
-                "timestamp": timestamp}
-        format = utils.filterFormat(self._filePathTemplate, vars)
-        return format % vars        
+    ## Public Methods ##
+    
+    def postError(self, msg, debug=None):
+        error = gst.GError(gst.STREAM_ERROR,
+                           gst.STREAM_ERROR_FAILED, msg)
+        message = gst.message_new_error(self, error, debug or "")
+        self.post_message(message)
+        self._error = True
+
+    
+    ## Overriden Methods ##
+
+    def do_event(self, event):
+        if event.type == gst.EVENT_NEWSEGMENT:
+            segInfo = gst.Event.parse_new_segment(event)
+            if not self._segment:
+                self._segment = gst.Segment()
+                startTime = None
+                if segInfo[2] == gst.FORMAT_TIME:
+                    startTime = segInfo[3]
+                self._sampler.prepare(startTime)
+            self._segment.set_newsegment(*segInfo)
+        return True
 
     def do_render(self, buffer):
-        self._index += 1
-        filePath = None
+        if self._error or not self._segment:
+            return gst.FLOW_ERROR
         try:
-            filePath = self._getFilePath(buffer.timestamp, self._index)
-            fileutils.ensureDirExists(os.path.dirname(filePath),
-                                      "thumbnail output")
-            f = open(filePath, "w")
-            try:
-                f.write(buffer.data)
-                self._files.append(filePath)
-            finally:
-                f.close()
+            streamTime = self._segment.to_stream_time(gst.FORMAT_TIME,
+                                                      buffer.timestamp)
+            self._sampler.update(streamTime, buffer)
             return gst.FLOW_OK
         except Exception, e:
-            msg = "Failed to save thumbnail"
-            if filePath:
-                msg += " '%s'" % filePath
-            msg += ": %s" % str(e)
-            error = gst.GError(gst.STREAM_ERROR, 
-                               gst.STREAM_ERROR_FAILED, msg)
-            message = gst.message_new_error(self, error, log.getExceptionMessage(e))
-            self.post_message(message)
+            msg = "Failure during thumbnail sampling: " + str(e)
+            debug = log.getExceptionMessage(e)
+            self.postError(msg, debug)
             return gst.FLOW_ERROR
 
 
-gobject.type_register(ThumbnailSink)
+gobject.type_register(ThumbSink)
