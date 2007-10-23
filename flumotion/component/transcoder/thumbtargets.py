@@ -253,7 +253,7 @@ class ThumbnailTarget(TranscodingTarget):
                 thumbPath = vars.substitute(template)
                 if thumbPath in self._thumbnails:
                     self.warning("Thumbnail file '%s' already created, "
-                                 "keeping the first one")
+                                 "keeping the first one", thumbPath)
                     continue
                 fileutils.ensureDirExists(os.path.dirname(thumbPath), "thumbnail")
                 self.__startupPipeline(buffer, thumbPath)

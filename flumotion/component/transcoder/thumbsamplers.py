@@ -158,7 +158,8 @@ class TimeSampler(BaseSampler):
     ## Overriden Protected Methods ##
     
     def _onKeepThumbnail(self):
-        if self._frameDuration != None:
+        start, end = None, None
+        if self._frameDuration:
             # Do the correct calculation
             # The delta is to prevent keeping a fram when
             # (streameTime + frameDuration) % period == 0
@@ -167,16 +168,13 @@ class TimeSampler(BaseSampler):
             t = max(0, self._frameTime - delta)
             start = t / self._period
             end = (t + self._frameDuration) / self._period
-            self._lastTime = self._frameTime
-            return start != end
         elif self._lastTime != None:
             # Do an aproximation using the last frame stream time
             # It will keep the frame just after the correct one
             start = self._lastTime / self._period
             end = self._frameTime / self._period
-            self._lastTime = self._frameTime
-            return start != end
-        return False
+        self._lastTime = self._frameTime
+        return start != end
 
 
 class PercentSampler(TimeSampler):

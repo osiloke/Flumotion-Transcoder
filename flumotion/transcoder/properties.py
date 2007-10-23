@@ -12,7 +12,7 @@
 
 # Headers in this file shall remain intact.
 
-MAX_LIST_INCREMENT = 10
+MAX_LIST_INCREMENT = 100
 
 import weakref
 import re

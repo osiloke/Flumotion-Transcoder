@@ -1,3 +1,11 @@
+2007-10-23  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/thumbsamplers.py:
+	* flumotion/component/transcoder/thumbtargets.py:
+	* flumotion/transcoder/properties.py:
+	Fix the thumbnail time sampling when the frames
+	do not have duration.
+
 2007-10-22  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/Makefile.am:
