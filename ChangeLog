@@ -1,6 +1,11 @@
 2007-10-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/thumbsamplers.py:
+	Fixed the percent sampler.
+
+2007-10-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/thumbsamplers.py:
 	* flumotion/component/transcoder/thumbsink.py:
 	* flumotion/component/transcoder/thumbtargets.py:
 	* flumotion/transcoder/admin/datasource/dataprops.py:

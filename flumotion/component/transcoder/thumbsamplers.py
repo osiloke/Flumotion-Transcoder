@@ -229,6 +229,8 @@ class TimeSampler(BaseSampler):
     
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
+        # Check if the nanosecond before the frame and the last
+        # nanosecond of the frame are in different sections
         start = max(0, streamTime - 1) / self._period
         end = (streamTime + frameDuration) / self._period
         return start != end
@@ -258,7 +260,8 @@ class PercentSampler(BaseSampler):
                 newMax = min(self._maxThumb, newMax)
             else:
                 newMax = newMax
-            self._period = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
+            fallbackSeconds = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
+            self._period = fallbackSeconds * gst.SECOND
             self._maxThumb = newMax 
             self.log("Sample thumbnails each %d seconds %s",
                      int(self._period / gst.SECOND),
@@ -271,6 +274,8 @@ class PercentSampler(BaseSampler):
     
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
-        start = streamTime / self._period
+        # Check if the nanosecond before the frame and the last
+        # nanosecond of the frame are in different sections
+        start = max(0, streamTime - 1) / self._period
         end = (streamTime + frameDuration) / self._period
         return start != end    
