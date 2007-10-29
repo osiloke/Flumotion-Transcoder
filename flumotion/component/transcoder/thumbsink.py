@@ -74,6 +74,9 @@ class ThumbSink(gst.BaseSink):
                     startTime = segInfo[3]
                 self._sampler.prepare(startTime)
             self._segment.set_newsegment(*segInfo)
+            return
+        if event.type == gst.EVENT_EOS:
+            self._sampler.finalize()
         return True
 
     def do_render(self, buffer):

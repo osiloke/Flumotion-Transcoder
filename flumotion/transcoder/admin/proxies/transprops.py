@@ -99,6 +99,7 @@ def createTranscodingConfigFromContext(profileCtx):
             tc.config.thumbsWidth = cs.getThumbsWidth()
             tc.config.thumbsHeight = cs.getThumbsHeight()
             tc.config.outputFormat = cs.getFormat()
+            tc.config.ensureOne = cs.getEnsureOne()
     return conf
 
 

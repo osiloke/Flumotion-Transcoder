@@ -1,3 +1,19 @@
+2007-10-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/thumbsamplers.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/component/transcoder/thumbtargets.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/configstore.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/transconfig.py:
+	Simplified the thumbnail samplers.
+	Added a property to ensure at least one thumbnail
+	by keeping fixed frames. This properly is enable
+	by default and keep the last frame of the index set
+	[1, 25, 50, 100, 200, 400, 800].
+
 2007-10-23  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/thumbsamplers.py:

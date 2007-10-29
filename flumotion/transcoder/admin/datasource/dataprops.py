@@ -71,6 +71,7 @@ class ThumbnailsData(properties.PropertyBag):
     format = properties.Enum('output-format',
                              ThumbOutputTypeEnum,
                              ThumbOutputTypeEnum.jpg)
+    ensureOne = properties.Boolean('ensure-one', True)
     
 
 class TargetData(properties.PropertyBag):

@@ -125,7 +125,9 @@ class ThumbnailTarget(TranscodingTarget):
         unit = config.periodUnit
         value = config.periodValue
         maxCount = config.maxCount
-        sampler = self.__createSampler(maxCount, unit, value, analysis)
+        ensureOne = config.ensureOne
+        sampler = self.__createSampler(maxCount, unit, value, ensureOne,
+                                       analysis)
         thumbSink = ThumbSink(sampler, "ThumbSink-" + tag)
         queue = gst.element_factory_make("queue", "thumbqueue-%s" % tag)
         pipeline.add(queue, thumbSink)
@@ -255,8 +257,9 @@ class ThumbnailTarget(TranscodingTarget):
                     self.warning("Thumbnail file '%s' already created, "
                                  "keeping the first one", thumbPath)
                     continue
-                fileutils.ensureDirExists(os.path.dirname(thumbPath), "thumbnail")
-                self.__startupPipeline(buffer, thumbPath)
+                fileutils.ensureDirExists(os.path.dirname(thumbPath),
+                                          "thumbnails")
+                self.__startupPipeline(buffer, thumbPath) 
                 return
         finally:
             self._startLock.release()
@@ -294,53 +297,12 @@ class ThumbnailTarget(TranscodingTarget):
         self.__resetPipeline()
         self.__startThumbnailer()
 
-    def __createFrameSampler(self, maxCount, length, period):
-        self.log("Sample thumbnails each %s frames %s", str(period),
-                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
-                 or "without limitation")
-        return FrameSampler(self, maxCount, length, period)
-        
-    def __createKeyFrameSampler(self, maxCount, length, period):
-        self.log("Sample thumbnails each %s keyframes %s", str(period), 
-                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
-                 or "without limitation")
-        return KeyFrameSampler(self, maxCount, length, period)
+    _samplerLookup = {PeriodUnitEnum.frames:    FrameSampler,
+                      PeriodUnitEnum.keyframes: KeyFrameSampler,
+                      PeriodUnitEnum.seconds:   TimeSampler,
+                      PeriodUnitEnum.percent:   PercentSampler}
 
-    def __createTimeSampler(self, maxCount, length, period):
-        self.log("Sample thumbnails each %d seconds %s", int(period / gst.SECOND),
-                 (maxCount and ("to a maximum of %s thumbnails" % str(maxCount)))
-                 or "without limitation")
-        return TimeSampler(self, maxCount, length, period)
-
-    def __createPercentSampler(self, maxCount, length, period):
-        self.log("Setup to creates thumbnails each %s percent of total "
-                 "length %s seconds %s", str(period), 
-                 str(length / gst.SECOND), (maxCount
-                 and ("to a maximum of %s thumbnails" % str(maxCount)))
-                 or "without limitation")
-        return PercentSampler(self, maxCount, length, period)
-
-    def __createSampler(self, maxCount, unit, value, analysis):
-        length = analysis.getMediaLength()
-        if unit == PeriodUnitEnum.frames:
-            return self.__createFrameSampler(maxCount, length, value)
-        elif unit == PeriodUnitEnum.keyframes:
-            return self.__createKeyFrameSampler(maxCount, length, value)
-        elif unit == PeriodUnitEnum.seconds:
-            return self.__createTimeSampler(maxCount, length, value * gst.SECOND)
-        elif unit == PeriodUnitEnum.percent:
-            if length and (length > 0):
-                value = max(min(value, 100), 0)
-                return self.__createPercentSampler(maxCount, length, value)
-            self.warning("Cannot generate percent-based thumbnails with a "
-                         "source media without known duration, "
-                         "falling back to second-based thumbnailing.")
-            # PyChecker tells mi 100 / 10 may result to a float ? ?
-            __pychecker__ = "no-intdivide"
-            newMax = max((100 / (int(value) or 10)) - 1, 1)
-            if maxCount:
-                newMax = min(maxCount, newMax)
-            else:
-                newMax = newMax
-            newValue = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
-            return self.__createTimeSampler(newMax, length, newValue * gst.SECOND)
+    def __createSampler(self, maxCount, unit, value, ensureOne, analysis):
+        samplerClass = self._samplerLookup.get(unit, None)
+        assert samplerClass != None
+        return samplerClass(self, self, analysis, ensureOne, maxCount, value)  

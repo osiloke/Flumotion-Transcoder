@@ -103,6 +103,7 @@ class ThumbnailsConfig(BaseConfig):
     periodUnit (str) in ['seconds', 'frames', 'keyframes', 'percent']
     maxCount (int)
     format (str) in ['png', 'jpg']
+    ensureOne (bool)
     """    
     
     # MetaStore metaclass will create getters for these properties
@@ -112,6 +113,7 @@ class ThumbnailsConfig(BaseConfig):
                        "getPeriodValue":  ("periodValue", None),
                        "getPeriodUnit":   ("periodUnit", None),
                        "getMaxCount":     ("maxCount", None),
+                       "getEnsureOne":    ("ensureOne", None),
                        "getFormat":       ("format", None)}}
     
     def __init__(self, data):

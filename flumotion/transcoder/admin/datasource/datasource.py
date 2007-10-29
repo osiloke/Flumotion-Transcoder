@@ -133,42 +133,42 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           name (str) : The customer name used by the transcoder.
-           subdir (str) can be None : The sub-directory where the transcoder
-               root is. If not specified, it will be deduced from the customer name.
-         Overriding fields:
-           inputDir (str) can be None
-           outputDir (str) can be None
-           failedDir (str) can be None
-           doneDir (str) can be None
-           linkDir (str) can be None
-           workDir (str) can be None
-           configDir (str) can be None
-           failedRepDir (str) can be None
-           doneRepDir (str) can be None
-           outputMediaTemplate (str)
-           outputThumbTemplate (str)
-           linkFileTemplate (str)
-           configFileTemplate (str)
-           reportFileTemplate (str)
-           linkTemplate (str) can be None
-           linkURLPrefix (str) can be None
-           enablePostprocessing (bool) can be None
-           enablePreprocessing (bool) can be None
-           enableLinkFiles (bool) can be None
-           customerPriority (int) can be None
-           transcodingPriority (int) can be None
-           processPriority (int) can be None
-           preprocessCommand (str) can be None
-           postprocessCommand (str) can be None
-           preprocesstimeout (int) can be None
-           postprocessTimeout (int) can be None
-           transcodingTimeout (int) can be None
-           monitoringPeriod (int) can be None
-           accessForceGroup (str) can be None
-           accessForceUser (str) can be None
-           accessForceDirMode (int) can be None
-           accessForceFileMode (int) can be None
+            name (str) : The customer name used by the transcoder.
+            subdir (str) can be None : The sub-directory where the transcoder
+                root is. If not specified, it will be deduced from the customer name.
+        Overriding fields:
+            inputDir (str) can be None
+            outputDir (str) can be None
+            failedDir (str) can be None
+            doneDir (str) can be None
+            linkDir (str) can be None
+            workDir (str) can be None
+            configDir (str) can be None
+            failedRepDir (str) can be None
+            doneRepDir (str) can be None
+            outputMediaTemplate (str)
+            outputThumbTemplate (str)
+            linkFileTemplate (str)
+            configFileTemplate (str)
+            reportFileTemplate (str)
+            linkTemplate (str) can be None
+            linkURLPrefix (str) can be None
+            enablePostprocessing (bool) can be None
+            enablePreprocessing (bool) can be None
+            enableLinkFiles (bool) can be None
+            customerPriority (int) can be None
+            transcodingPriority (int) can be None
+            processPriority (int) can be None
+            preprocessCommand (str) can be None
+            postprocessCommand (str) can be None
+            preprocesstimeout (int) can be None
+            postprocessTimeout (int) can be None
+            transcodingTimeout (int) can be None
+            monitoringPeriod (int) can be None
+            accessForceGroup (str) can be None
+            accessForceUser (str) can be None
+            accessForceDirMode (int) can be None
+            accessForceFileMode (int) can be None
         """
         
     def retrieveCustomerInfo(self, customerData):
@@ -188,36 +188,36 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           name (str)
-           subdir (str)  can be None
-         Overriding fields:
-           inputDir (str) can be None
-           outputDir (str) can be None
-           failedDir (str) can be None
-           doneDir (str) can be None
-           linkDir (str) can be None
-           workDir (str) can be None
-           configDir (str) can be None
-           failedRepDir (str) can be None
-           doneRepDir (str) can be None
-           outputMediaTemplate (str) can be None
-           outputThumbTemplate (str) can be None
-           linkFileTemplate (str) can be None
-           configFileTemplate (str) can be None
-           reportFileTemplate (str) can be None
-           linkTemplate (str) can be None
-           linkURLPrefix (str) can be None
-           enablePostprocessing (bool) can be None
-           enablePreprocessing (bool) can be None
-           enableLinkFiles (bool) can be None
-           transcodingPriority (int) can be None
-           processPriority (int) can be None
-           preprocessCommand (str) can be None
-           postprocessCommand (str) can be None
-           preprocesstimeout (int) can be None
-           postprocessTimeout (int) can be None
-           transcodingTimeout (int) can be None
-           monitoringPeriod (int) can be None
+            name (str)
+            subdir (str)  can be None
+        Overriding fields:
+            inputDir (str) can be None
+            outputDir (str) can be None
+            failedDir (str) can be None
+            doneDir (str) can be None
+            linkDir (str) can be None
+            workDir (str) can be None
+            configDir (str) can be None
+            failedRepDir (str) can be None
+            doneRepDir (str) can be None
+            outputMediaTemplate (str) can be None
+            outputThumbTemplate (str) can be None
+            linkFileTemplate (str) can be None
+            configFileTemplate (str) can be None
+            reportFileTemplate (str) can be None
+            linkTemplate (str) can be None
+            linkURLPrefix (str) can be None
+            enablePostprocessing (bool) can be None
+            enablePreprocessing (bool) can be None
+            enableLinkFiles (bool) can be None
+            transcodingPriority (int) can be None
+            processPriority (int) can be None
+            preprocessCommand (str) can be None
+            postprocessCommand (str) can be None
+            preprocesstimeout (int) can be None
+            postprocessTimeout (int) can be None
+            transcodingTimeout (int) can be None
+            monitoringPeriod (int) can be None
         """
         
     def retrieveTargets(self, profileData):
@@ -225,21 +225,21 @@ class IDataSource(Interface):
         Returns a deferred.
         The result on success is a list of "container" objects
         with the following fields:
-           name (str)
-           extension (str)
-           subdir (str) can be None
-         Overriding fields:
-           linkTemplate (str) can be None
-           linkURLPrefix (str) can be None
-           outputDir (str) can be None
-           linkDir (str) can be None
-           workDir (str) can be None
-           outputFileTemplate (str) can be None
-           linkFileTemplate (str) can be None
-           enablePostprocessing (bool) can be None
-           enableLinkFiles (bool) can be None
-           postprocessCommand (str) can be None
-           postprocessTimeout (int) can be None
+            name (str)
+            extension (str)
+            subdir (str) can be None
+        Overriding fields:
+            linkTemplate (str) can be None
+            linkURLPrefix (str) can be None
+            outputDir (str) can be None
+            linkDir (str) can be None
+            workDir (str) can be None
+            outputFileTemplate (str) can be None
+            linkFileTemplate (str) can be None
+            enablePostprocessing (bool) can be None
+            enableLinkFiles (bool) can be None
+            postprocessCommand (str) can be None
+            postprocessTimeout (int) can be None
         """
        
     def retrieveTargetConfig(self, targetData):
@@ -275,6 +275,7 @@ class IDataSource(Interface):
             periodUnit (PeriodUnitEnum)
             maxCount (int)
             format (ThumbOutputTypeEnum)
+            ensureOne (bool)
         """
         
     def retrieveGlobalNotifications(self):
