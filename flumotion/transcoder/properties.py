@@ -923,7 +923,7 @@ class Integer(ValueProperty):
         self._unsigned = unsigned
     
     def checkValue(self, value):
-        return ((isinstance(value, int) or isinstance(value, long))
+        return (isinstance(value, (long, int))
                 and ((not self._unsigned) or (value >= 0)))
     
     def str2val(self, strval):
@@ -939,7 +939,7 @@ class Octal(ValueProperty):
         ValueProperty.__init__(self, descriptor, default, required)
     
     def checkValue(self, value):
-        return isinstance(value, int) or isinstance(value, long)
+        return isinstance(value, (int, long))
     
     def str2val(self, strval):
         return int(strval, 8)
@@ -994,8 +994,8 @@ class Fraction(ValueProperty):
     def checkValue(self, value):
         return (isinstance(value, tuple) 
                 and (len(value) == 2)
-                and (isinstance(value[0], int) or isinstance(value[0], long))
-                and (isinstance(value[1], int) or isinstance(value[1], long))
+                and isinstance(value[0], (int, long))
+                and isinstance(value[1], (int, long))
                 and (value[1] > 0)
                 and ((not self._unsigned) or (value[0] >= 0)))
     

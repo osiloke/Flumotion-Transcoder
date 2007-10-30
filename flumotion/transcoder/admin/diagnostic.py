@@ -40,6 +40,7 @@ class Diagnostician(object):
         
     def filterComponentMessage(self, message):
         debug = message.debug
+        if not debug: return False        
         if "twisted.internet.error.ConnectionLost" in debug:
             return True
         if "twisted.internet.error.ConnectionDone" in debug:

@@ -28,9 +28,9 @@ class UsageProperty(properties.ValueProperty):
     def checkValue(self, value):
         return (isinstance(value, tuple) 
                 and (len(value) == 3)
-                and isinstance(value[0], float)
-                and isinstance(value[1], float)
-                and isinstance(value[2], float))
+                and isinstance(value[0], (float, int, long))
+                and isinstance(value[1], (float, int, long))
+                and isinstance(value[2], (float, int, long)))
 
     def str2val(self, strval):
         ratio, percent = strval.split(' ~ ')
