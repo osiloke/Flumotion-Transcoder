@@ -233,14 +233,8 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
     
     # videobox and videocrop elements
     box = _getOutputVideoBox(config, analysis, outputSize)
-    videocrop = None
     videobox = None
     if box != (0, 0, 0, 0):
-        #FIXME: Crop is a temporary hack to fix wrong behaviors
-        #       of the platform version of videobox with odd parameteres.
-        #       gstreamer-0.10.12, gstreamer-plugins-good-0.10.5
-        crop = tuple([v % 2 for v in box])
-        box = tuple([v - (v % 2) for v in box])
         logger.debug("makeVideoEncodeBin - Output Video Boxing: %r" % (box,))
         videobox = gst.element_factory_make("videobox", "videobox-%s" % tag)
         videobox.props.left = box[0]
@@ -249,17 +243,6 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
         videobox.props.bottom = box[3]
         pipelineParts.append("videobox left=%d top=%d "
                              "right=%d bottom=%d" % box[:4])
-        if crop != (0, 0, 0, 0):
-            logger.debug("makeVideoEncodeBin - Output Video Cropping: %r" % (crop,))
-            videocrop = gst.element_factory_make("videocrop",
-                                                 "videocrop-%s" % tag)
-            videocrop.props.left = crop[0]
-            videocrop.props.top = crop[1]
-            videocrop.props.right = crop[2]
-            videocrop.props.bottom = crop[3]
-            pipelineParts.append("videocrop left=%d top=%d "
-                                 "right=%d bottom=%d" % crop[:4])
-    
     
     # encoder elements
     encode = gstutils.parse_bin_from_description(config.videoEncoder, True)
@@ -280,11 +263,7 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
         gst.element_link_many(inqueue, cspace, scale, capsfilter)
     if videobox:
         bin.add(videobox)
-        if videocrop:
-            bin.add(videocrop)
-            gst.element_link_many(capsfilter, videobox, videocrop, encode)
-        else:
-            gst.element_link_many(capsfilter, videobox, encode)
+        gst.element_link_many(capsfilter, videobox, encode)
     else:
         gst.element_link_many(capsfilter, encode)
     gst.element_link_many(encode, outqueue)   
