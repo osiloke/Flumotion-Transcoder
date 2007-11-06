@@ -1,6 +1,14 @@
 2007-11-06  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/binmaker.py:
+	Reverted back the crop hack because of videobox
+	element still beeing buggy with odd parameteres.
+	Still need the patch gst-plugins-good.videobox-20071105.patch
+	to correct some video corruptions.
+
+2007-11-06  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/binmaker.py:
     Removed the videocrop hack.
     Need the patch gst-plugins-good.videobox-20071105.patch
 
