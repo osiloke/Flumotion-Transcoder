@@ -441,7 +441,7 @@ class MediaTranscoder(log.LoggerProxy):
                           producer.updatePipeline,
                           self._sourceAnalysis, tees,
                           compconsts.TRANSCODER_UPDATE_TIMEOUT)
-        d.addCallback(defer.keepResult, self.__cbEnsureHaveSink, tees)
+        d.addCallback(defer.bridgeResult, self.__cbEnsureHaveSink, tees)
         d.addCallbacks(self.__cbStartupPipeline,
                        self.__ebPipelineSetupFailed)
         d.addErrback(self.__failed)
