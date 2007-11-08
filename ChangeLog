@@ -1,3 +1,19 @@
+2007-11-08  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/thumbsamplers.py:
+	* flumotion/component/transcoder/thumbsink.py:
+	* flumotion/component/transcoder/thumbsrc.py:
+	* flumotion/component/transcoder/thumbtargets.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/properties.py:
+	Bigger timeouts to prevent triggering during eavy load.
+	Fixed some pychecker stuff.
+	Accept  long and int as values for float properties.
+	Automaticaly create fakesinks for decodebin pads when not used
+	to prevent filling queues and log messages.
+
 2007-11-06  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/binmaker.py:

@@ -246,6 +246,7 @@ class MediaTranscoder(log.LoggerProxy):
                                  "audio stream. Using the first one.")
                 else:
                     pad.link(peer)
+                    return
             elif str(pad.get_caps()).startswith('video/x-raw'):
                 if not ('videosink' in tees):
                     self.warning("Found a video pad not previously "
@@ -262,9 +263,13 @@ class MediaTranscoder(log.LoggerProxy):
                                  "video stream. Using the first one.")
                 else:
                     pad.link(peer)
+                    return
             else:
                 self.debug('Unknown pad from decodebin: %r (caps %s)',
                            pad, pad.get_caps())
+            # Link to a fakesink to prevent filling queues and warnings messages
+            fake = gst.element_factory_make('fakesink')
+            pad.link(fake.get_pad('sink'))
         except Exception, e:
             self.__postErrorMessage(str(e), log.getExceptionMessage(e))
 
@@ -436,9 +441,17 @@ class MediaTranscoder(log.LoggerProxy):
                           producer.updatePipeline,
                           self._sourceAnalysis, tees,
                           compconsts.TRANSCODER_UPDATE_TIMEOUT)
+        d.addCallback(defer.keepResult, self.__cbEnsureHaveSink, tees)
         d.addCallbacks(self.__cbStartupPipeline,
                        self.__ebPipelineSetupFailed)
         d.addErrback(self.__failed)
+        
+    def __cbEnsureHaveSink(self, tees):
+        for tee in tees:
+            if len(list(tee.src_pads())) == 0:
+                # Link to a fakesink to prevent filling queues and warnings messages
+                fake = gst.element_factory_make('fakesink')
+                tee.link(fake)
         
     def __ebPipelineSetupFailed(self, failure):
         if self._aborted: return
@@ -461,7 +474,7 @@ class MediaTranscoder(log.LoggerProxy):
         
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
-            timeout = compconsts.PLAY_ERROR_TIMEOUT
+            timeout = compconsts.TRANSCODER_PLAY_ERROR_TIMEOUT
             to = utils.createTimeout(timeout, self.__errorNotReceived)
             self._playErrorTimeout = to
             return

@@ -32,14 +32,22 @@ PROGRESS_PERIOD = 1
 SOURCE_ANALYSE_TIMEOUT = 60
 TARGET_ANALYSE_TIMEOUT = 60
 
-# Transcoder timeouts
-PLAY_ERROR_TIMEOUT = 8
-TRANSCODER_PLAYING_TIMEOUT = 20
+# Maximum time to wait for an error message when changing
+# transcoding pipeline state to PLAYING failed 
+TRANSCODER_PLAY_ERROR_TIMEOUT = 20
+# Maximum time to wait for the transcoding pipeline to change to PLAYING state
+TRANSCODER_PLAYING_TIMEOUT = 60
+# Maximum time producers have to prepare the transcoding task
 TRANSCODER_PREPARE_TIMEOUT = 60
+# Maximum time producers have to update the transcoding pipeline
 TRANSCODER_UPDATE_TIMEOUT = 60
+# Maximum time producers have to finalize the transcoding task
 TRANSCODER_FINALIZE_TIMEOUT = 60
+# Maximum time producers have to abort the transcoding task
 TRANSCODER_ABORT_TIMEOUT = 60
 
-# Thumbnailer timeouts
-PLAY_ERROR_TIMEOUT = 5
-THUMBNAILER_PLAYING_TIMEOUT = 8
+# Maximum time to wait for an error message when changing
+# thumbnailing pipeline state to PLAYING failed 
+THUMBNAILER_PLAY_ERROR_TIMEOUT = 20
+# Maximum time to wait for the thumbnailing pipeline to change to PLAYING state
+THUMBNAILER_PLAYING_TIMEOUT = 30

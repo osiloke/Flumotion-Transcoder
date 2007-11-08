@@ -258,8 +258,6 @@ class PercentSampler(BaseSampler):
             newMax = max((100 / (int(percents) or 10)) - 1, 1)
             if self._maxThumb:
                 newMax = min(self._maxThumb, newMax)
-            else:
-                newMax = newMax
             fallbackSeconds = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
             self._period = fallbackSeconds * gst.SECOND
             self._maxThumb = newMax 

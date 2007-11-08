@@ -229,7 +229,7 @@ class ThumbnailTarget(TranscodingTarget):
         
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
-            timeout = compconsts.PLAY_ERROR_TIMEOUT
+            timeout = compconsts.THUMBNAILER_PLAY_ERROR_TIMEOUT
             to = utils.createTimeout(timeout, self.__errorNotReceived)
             self._playErrorTimeout = to
             return

@@ -12,7 +12,6 @@
 
 # Headers in this file shall remain intact.
 
-import os
 import gst
 import gobject
 

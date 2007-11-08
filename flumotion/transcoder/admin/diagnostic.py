@@ -38,29 +38,27 @@ class Diagnostician(object):
     def initialize(self):
         return defer.succeed(self)
         
+    _debugFilter = {None: # Any message level
+                      ("twisted.internet.error.ConnectionLost",
+                       "twisted.internet.error.ConnectionDone"),
+                    1: # ERROR level 
+                      ("Source file not found"),
+                    2: # WARNING level
+                      ("is not a known media type",
+                       "output file stalled during transcoding",
+                       "Source file not found",
+                       "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video"
+                       "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream",
+                       "flumotion.transcoder.errors.TranscoderError: Transcoder pipeline stalled at prerolling")}
+        
     def filterComponentMessage(self, message):
         debug = message.debug
         if not debug: return False        
-        if "twisted.internet.error.ConnectionLost" in debug:
-            return True
-        if "twisted.internet.error.ConnectionDone" in debug:
-            return True
-        if message.level == 2: # WARNING
-            if "is not a known media type" in debug:
-                return True
-            if "output file stalled during transcoding" in debug:
-                return True
-            if "Source file not found" in debug:
-                return True
-            if "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video" in debug:
-                return True
-            if "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream" in debug:
-                return True
-            if "flumotion.transcoder.errors.TranscoderError: Transcoder pipeline stalled at prerolling" in debug:
-                return True
-        if message.level == 1: # ERROR
-            if "Source file not found" in debug:
-                return True
+        for level in self._debugFilter:
+            if (level == None) or (level == message.level):
+                for substr in self._debugFilter[level]:
+                    if substr in debug:
+                        return True 
         return False
 
     _crashMessagePattern = re.compile("The core dump is '([^']*)' on the host running '([^']*)'")

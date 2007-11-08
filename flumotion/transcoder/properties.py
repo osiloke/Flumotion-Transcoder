@@ -954,7 +954,7 @@ class Float(ValueProperty):
         ValueProperty.__init__(self, descriptor, default, required)
     
     def checkValue(self, value):
-        return (isinstance(value, float))
+        return isinstance(value, (float, long, int))
     
     def str2val(self, strval):
         return float(strval)
