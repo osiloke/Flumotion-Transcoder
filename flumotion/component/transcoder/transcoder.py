@@ -267,10 +267,6 @@ class MediaTranscoder(log.LoggerProxy):
             else:
                 self.debug('Unknown pad from decodebin: %r (caps %s)',
                            pad, pad.get_caps())
-            # Link to a fakesink to prevent filling queues and warnings messages
-            fake = gst.element_factory_make('fakesink')
-            self._pipeline.add(fake)
-            pad.link(fake.get_pad('sink'))
         except Exception, e:
             self.__postErrorMessage(str(e), log.getExceptionMessage(e))
 
@@ -442,19 +438,9 @@ class MediaTranscoder(log.LoggerProxy):
                           producer.updatePipeline,
                           self._sourceAnalysis, tees,
                           compconsts.TRANSCODER_UPDATE_TIMEOUT)
-        d.addCallback(self.__cbEnsureHaveSink, tees)
         d.addCallbacks(self.__cbStartupPipeline,
                        self.__ebPipelineSetupFailed)
         d.addErrback(self.__failed)
-        
-    def __cbEnsureHaveSink(self, pipeline, tees):
-        for tee in tees.values():
-            if len(list(tee.src_pads())) == 0:
-                # Link to a fakesink to prevent filling queues and warnings messages
-                fake = gst.element_factory_make('fakesink')
-                pipeline.add(fake)
-                tee.link(fake)
-        return pipeline
         
     def __ebPipelineSetupFailed(self, failure):
         if self._aborted: return

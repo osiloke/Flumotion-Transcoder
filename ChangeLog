@@ -1,3 +1,9 @@
+2007-11-12  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/transcoder.py:
+	Do not link fakesink anymore, it was half the cause
+	of stalling at prerolling. 
+
 2007-11-09  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/transcoder.py:
