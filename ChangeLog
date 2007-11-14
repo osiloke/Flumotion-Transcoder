@@ -1,3 +1,25 @@
+2007-11-14  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/context.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/test/test_transcontext.py:
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/context/customercontext.py:
+	* flumotion/transcoder/admin/context/profilecontext.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/customerstore.py:
+	* flumotion/transcoder/admin/datastore/profilestore.py:
+	* flumotion/transcoder/admin/proxies/transprops.py:
+	* flumotion/transcoder/transconfig.py:
+	Made the trasncoder element keep the temporary reports
+	in a different directory, and then move it to the
+	'failed' or 'done' directory.
+	This prevent having report of failed transcoding in
+	the 'done' report directory.
+	Fixes #1081
+
 2007-11-12  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/transcoder.py:

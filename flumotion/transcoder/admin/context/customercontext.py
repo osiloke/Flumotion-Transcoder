@@ -39,6 +39,7 @@ class CustomerContext(object):
                 getLinkBase: default:/fluendo/files/links/
                 getWorkBase: temp:/fluendo/working/
                 getConfBase: default:/fluendo/configs/
+                getTempRepBase: default:/fluendo/reports/pending/
                 getFailedRepBase: default:/fluendo/reports/failed/
                 getDoneRepBase: default:/fluendo/reports/done/
     
@@ -165,6 +166,11 @@ class CustomerContext(object):
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_CONFIG_DIR)
     
+    def getTempRepBase(self):
+        folder = self.store.getTempRepDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                            adminconsts.DEFAULT_TEMPREP_DIR)
+
     def getFailedRepBase(self):
         folder = self.store.getFailedRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 

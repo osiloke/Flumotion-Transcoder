@@ -144,6 +144,7 @@ class IDataSource(Interface):
             linkDir (str) can be None
             workDir (str) can be None
             configDir (str) can be None
+            tempRepDir (str) can be None
             failedRepDir (str) can be None
             doneRepDir (str) can be None
             outputMediaTemplate (str)
@@ -198,6 +199,7 @@ class IDataSource(Interface):
             linkDir (str) can be None
             workDir (str) can be None
             configDir (str) can be None
+            tempRepDir (str) can be None
             failedRepDir (str) can be None
             doneRepDir (str) can be None
             outputMediaTemplate (str) can be None

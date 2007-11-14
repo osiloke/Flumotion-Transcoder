@@ -224,7 +224,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
                             altInputDir=altInputDir,
                             niceLevel=self._niceLevel)
             d = self._job.start()
-            self._reportDefaultPath = self._job.getDoneReportPath()
+            self._reportDefaultPath = self._job.getTempReportPath()
             self.__syncReport(self._report)
             d.addCallbacks(self.__cbJobDone, self.__ebJobFailed)
             return None
@@ -377,6 +377,23 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.__writeReport(report)
         self._fireTranscodingReport(self._reportDefaultPath)
     
+    def __deleteTempReport(self):
+        if self._reportForcedPath:
+            return
+        current = self._reportDefaultPath
+        temp = self._job.getTempReportPath()
+        if ((current != temp)
+            and os.path.isfile(current)
+            and os.path.isfile(temp)):
+            try:
+                os.remove(temp)
+            except OSError, e:
+                msg = "Fail to delete temporary report"
+                self.warning("%s '%s'", msg, temp)
+                info = "File path: '%s'" % temp
+                debug = log.getExceptionMessage(e)
+                self.__notifyDebug(msg, info=info, debug=debug, exception=e)
+    
     def __cbJobDone(self, report):
         try:
             assert report == self._report, ("Job creates it's own report "
@@ -384,6 +401,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             # FIXME: Very ugly, should not ask the job for this
             self._reportDefaultPath = self._job.getDoneReportPath()
             self.__syncReport(report)
+            self.__deleteTempReport() 
             self._fireStatusChanged(TranscoderStatusEnum.done)
             self.__finalize(report, True)
         except Exception, e:
@@ -403,6 +421,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             # FIXME: Very ugly, should not ask the job for this
             self._reportDefaultPath = self._job.getFailedReportPath()
             self.__syncReport(report)
+            self.__deleteTempReport()
             self._fireStatusChanged(TranscoderStatusEnum.failed)
             self.__finalize(report, False)
         except Exception, e:

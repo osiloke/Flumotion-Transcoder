@@ -107,7 +107,12 @@ class TranscodingJob(log.LoggerProxy):
 
         
     ## Public Methods ##
-        
+    
+    #FIXME: Should have a better way to expose context info
+    def getTempReportPath(self):
+        sourceCtx = self._context.getSourceContext()
+        return sourceCtx.getTempReportPath()
+    
     #FIXME: Should have a better way to expose context info
     def getDoneReportPath(self):
         sourceCtx = self._context.getSourceContext()

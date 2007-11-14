@@ -56,6 +56,7 @@ class CustomerStore(BaseStore):
                        "getLinkDir":          ("linkDir", None),
                        "getWorkDir":          ("workDir", None),
                        "getConfigDir":        ("configDir", None),
+                       "getTempRepDir":       ("tempRepDir", None),
                        "getFailedRepDir":     ("failedRepDir", None),
                        "getDoneRepDir":       ("doneRepDir", None),
                        "getCustomerPriority": ("customerPriority",

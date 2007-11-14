@@ -33,6 +33,7 @@ class ProfileConfig(properties.PropertyBag):
     outputDir = VirtualPathProperty('output-dir', None, True)
     linkDir = VirtualPathProperty('link-dir', None)
     workDir = VirtualPathProperty('work-dir', None, True)
+    tempReportsDir = VirtualPathProperty('temp-reports-dir', None, True)
     failedDir = VirtualPathProperty('failed-dir', None, True)
     failedReportsDir = VirtualPathProperty('failed-reports-dir', None, True)
     doneDir = VirtualPathProperty('done-dir', None, True)

@@ -72,6 +72,11 @@ class SourceContext(BaseContext):
         format = utils.filterFormat(template, vars)
         return format % vars
         
+    def getTempReportPath(self):
+        file = self.getReportFile()
+        path = self._profile.tempReportsDir.append(file)
+        return path.localize(self.local)
+        
     def getFailedReportPath(self):
         file = self.getReportFile()
         path = self._profile.failedReportsDir.append(file)

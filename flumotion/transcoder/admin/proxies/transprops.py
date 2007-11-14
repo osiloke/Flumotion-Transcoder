@@ -43,6 +43,7 @@ def createTranscodingConfigFromContext(profileCtx):
     conf.profile.workDir = prof.getWorkBase()
     conf.profile.doneDir = prof.getDoneBase()
     conf.profile.failedDir = prof.getFailedBase()
+    conf.profile.tempReportsDir = prof.getTempRepBase()
     conf.profile.failedReportsDir = prof.getFailedRepBase()
     conf.profile.doneReportsDir = prof.getDoneRepBase()
     conf.profile.linkTemplate = prof.store.getLinkTemplate()

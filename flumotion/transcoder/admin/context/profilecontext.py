@@ -73,6 +73,7 @@ class UnboundProfileContext(object):
                 getLinkBase: default:/fluendo/files/links/ogg/
                 getWorkBase: temp:/fluendo/working/ogg/
                 getConfBase: default:/fluendo/configs/ogg/
+                getTempRepBase: default:/fluendo/reports/pending/ogg/
                 getFailedRepBase: default:/fluendo/reports/failed/ogg/
                 getDoneRepBase: default:/fluendo/reports/done/ogg/
     """
@@ -81,7 +82,7 @@ class UnboundProfileContext(object):
     # will be created by the metaclass
     __base_getters__ = ["Output", "Link", "Work",
                         "Input", "Failed", "Done", 
-                        "Config", "FailedRep", "DoneRep"]
+                        "Config", "TempRep", "FailedRep", "DoneRep"]
     
     class __metaclass__(type):
         
@@ -165,6 +166,7 @@ class ProfileContext(UnboundProfileContext):
                 getLinkBase: default:/fluendo/files/links/ogg/
                 getWorkBase: temp:/fluendo/working/ogg/
                 getConfBase: default:/fluendo/configs/ogg/
+                getTempRepBase: default:/fluendo/reports/pending/ogg/
                 getFailedRepBase: default:/fluendo/reports/failed/ogg/
                 getDoneRepBase: default:/fluendo/reports/done/ogg/
                 
@@ -172,21 +174,25 @@ class ProfileContext(UnboundProfileContext):
                 getFailedDir: default:/fluendo/files/failed/ogg/subdir/
                 getDoneDir: default:/fluendo/files/done/ogg/subdir/
                 getConfDir: default:/fluendo/configs/ogg/subdir/
+                getTempRepDir: default:/fluendo/reports/pending/ogg/subdir/
                 getFailedRepDir: default:/fluendo/reports/failed/ogg/subdir/
                 getDoneRepDir: default:/fluendo/reports/done/ogg/subdir/
                 
                 getInputFile: file.avi
                 getConfFile: file.avi.conf
+                getTempRepFile: file.avi.rep
                 getFailedRepFile: file.avi.rep
                 getDoneRepFile: file.avi.rep
                 
                 getInputRelPath: /subdir/file.avi
                 getConfRelPath: /subdir/file.avi.conf
+                getTempRepRelPath: /subdir/file.avi.rep
                 getFailedRepRelPath: /subdir/file.avi.rep
                 getDoneRepRelPath: /subdir/file.avi.rep
                 
                 getInputPath: default:/fluendo/files/incoming/ogg/subdir/file.avi
                 getConfPath: default:/fluendo/configs/ogg/subdir/file.avi.conf
+                getTempRepPath: default:/fluendo/reports/pending/ogg/subdir/file.avi.rep
                 getFailedRepPath: default:/fluendo/reports/failed/ogg/subdir/file.avi.rep
                 getDoneRepPath: default:/fluendo/reports/done/ogg/subdir/file.avi.rep
     """
@@ -194,7 +200,7 @@ class ProfileContext(UnboundProfileContext):
     # Getters get...Dir(), get...File(), get...Path()
     # will be created by the metaclass
     __file_getters__ = ["Input", "Failed", "Done", 
-                        "Config", "FailedRep", "DoneRep"]
+                        "Config", "TempRep", "FailedRep", "DoneRep"]
 
 
     def __init__(self, profileStore, customerContext, inputAbstractPath):
@@ -235,6 +241,11 @@ class ProfileContext(UnboundProfileContext):
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
+    def getTempRepRelPath(self):
+        path = self._vars.substitute(self.store.getReportFileTemplate())
+        path = fileutils.ensureRelPath(path)
+        return fileutils.cleanupPath(path)
+
     def getFailedRepRelPath(self):
         path = self._vars.substitute(self.store.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
