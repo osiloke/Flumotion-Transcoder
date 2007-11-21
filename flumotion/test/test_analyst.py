@@ -150,7 +150,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
         d.addBoth(self.bbRemoveTempFile, generator)
         return d
     
-    def cbAnalyse(self, generator, analyst, timeout, oldResult):
+    def cbAnalyse(self, generator, analyst, timeout=None, oldResult=None):
         if not analyst:
             analyst = MediaAnalyst()
         d = analyst.analyse(generator.path, timeout)
@@ -176,6 +176,12 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
     def bbRemoveTempFile(self, result, generator):
         if os.path.isfile(generator.path):
             os.remove(generator.path)
+        return result
+    
+    def bbRemoveTempFiles(self, result, generators):
+        for generator in generators:
+            if os.path.isfile(generator.path):
+                os.remove(generator.path)
         return result
     
     def multipleSerialTests(self, times, analyst, vcodec, acodec, muxer, duration,
@@ -223,60 +229,70 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
         d.addBoth(self.bbRemoveTempFile, generator)
         return d
     
+    def genTestFiles(self, codecs, durations, widths, heights,
+                     pars, vrates, arates, channels):
+        generators = []
+        for vc, ac, mux in codecs:
+            for d in durations:
+                for w in widths:
+                    for h in heights:
+                        for par in pars:
+                            for vr in vrates:
+                                for ar in arates:
+                                    for ch in channels:
+                                        gen = gsttestutils.MediaGenerator(
+                                                            duration=d,
+                                                            videoCodec=vc,
+                                                            audioCodec=ac,
+                                                            muxer=mux,
+                                                            videoWidth=w,
+                                                            videoHeight=h,
+                                                            videoPAR=par,
+                                                            videoRate=vr,
+                                                            audioRate=ar,
+                                                            audioChannels=ch)
+                                        generators.append(gen)
+        d = defer.Deferred()
+        for gen in generators:
+            d.addCallback(lambda r, g: g.generate(), gen)
+        d.addCallback(lambda r: generators)
+        d.addErrback(self.bbRemoveTempFiles, generators)
+        d.callback(None)
+        return d
+    
     def serialTests(self, analyst, codecs, durations, widths, heights,
                     pars, vrates, arates, channels):
-        result = defer.Deferred()
-        for vc, ac, mux in codecs:
-            for d in durations:
-                for w in widths:
-                    for h in heights:
-                        for par in pars:
-                            for vr in vrates:
-                                for ar in arates:
-                                    for ch in channels:
-                                        result.addCallback(self.checkMedia,
-                                                           analyst=analyst,
-                                                           duration=d,
-                                                           videoCodec=vc,
-                                                           audioCodec=ac,
-                                                           muxer=mux,
-                                                           videoWidth=w,
-                                                           videoHeight=h,
-                                                           videoPAR=par,
-                                                           videoRate=vr,
-                                                           audioRate=ar,
-                                                           audioChannels=ch)
-        result.callback(None)
-        return result
+        
+        def generated(generators, analyst):
+            d = defer.Deferred()
+            for gen in generators:
+                d.addCallback(lambda r, g, a: self.cbAnalyse(g, a), gen, analyst)
+            d.addBoth(self.bbRemoveTempFiles, generators)
+            d.callback(None)
+            return d
+        
+        d = self.genTestFiles(codecs, durations, widths, heights, pars,
+                              vrates, arates, channels)
+        d.addCallback(generated, analyst)
+        return d
 
     def parallelTests(self, analyst, codecs, durations, widths, heights,
-                    pars, vrates, arates, channels):
-        deferreds = []
-        for vc, ac, mux in codecs:
-            for d in durations:
-                for w in widths:
-                    for h in heights:
-                        for par in pars:
-                            for vr in vrates:
-                                for ar in arates:
-                                    for ch in channels:
-                                        deferreds.append(self.checkMedia(
-                                                           analyst=analyst,
-                                                           duration=d,
-                                                           videoCodec=vc,
-                                                           audioCodec=ac,
-                                                           muxer=mux,
-                                                           videoWidth=w,
-                                                           videoHeight=h,
-                                                           videoPAR=par,
-                                                           videoRate=vr,
-                                                           audioRate=ar,
-                                                           audioChannels=ch))
-        result = defer.DeferredList(deferreds, fireOnOneCallback=False,
-                                    fireOnOneErrback=True, consumeErrors=False)
-        result.addErrback(lambda f: f.value.subFailure)
-        return result
+                      pars, vrates, arates, channels):
+
+        def generated(generators, analyst):
+            defs = []
+            for gen in generators:
+                defs.append(self.cbAnalyse(gen, analyst))
+            d = defer.DeferredList(defs, fireOnOneCallback=False,
+                                   fireOnOneErrback=True, consumeErrors=False)
+            d.addBoth(self.bbRemoveTempFiles, generators)
+            d.addErrback(lambda f: f.value.subFailure)
+            return d
         
+        d = self.genTestFiles(codecs, durations, widths, heights, pars,
+                              vrates, arates, channels)
+        d.addCallback(generated, analyst)
+        return d
     
     def testSerializedWithDifferentAnalyst(self):
         return self.serialTests(None,
@@ -303,7 +319,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
     def testParallelizedWithDifferentAnalyst(self):
         return self.parallelTests(None,
                                   (("theoraenc", "vorbisenc", "oggmux"),),
-                                  (3,),
+                                  (3, 7),
                                   (104, 296),
                                   (104, 296),
                                   ((1, 1),),
@@ -314,7 +330,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
     def testParallelizedWithSameAnalyst(self):
         return self.parallelTests(MediaAnalyst(),
                                   (("theoraenc", "vorbisenc", "oggmux"),),
-                                  (3,),
+                                  (3, 7),
                                   (104, 296),
                                   (104, 296),
                                   ((1, 1),),

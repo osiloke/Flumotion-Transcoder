@@ -1,5 +1,10 @@
 2007-11-21  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/test/test_analyst.py:
+	Do not generate the files in parallel, it's too much for gstreamer.
+
+2007-11-21  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/analyst.py:
 	Added a printInfo method to the MediaAnalysis class.
 	Fixed a bug in the getMediaDuration method.
