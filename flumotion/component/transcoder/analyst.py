@@ -31,7 +31,7 @@ class MediaAnalysisTimeoutError(MediaAnalysisError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
-class MediaAnalysisUnknownTypeError(TranscoderError):
+class MediaAnalysisUnknownTypeError(MediaAnalysisError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 
@@ -85,8 +85,59 @@ class MediaAnalysis(object):
     def getMediaDuration(self):
         length = self.getMediaLength()
         if length and (length > 0):
-            return float(length / gst.SECOND)
+            return float(length) / gst.SECOND
         return length
+
+    def printInfo(self):
+        if not self.mimeType:
+            print "Unknown media type"
+            return
+        print "Mime Type :\t", self.mimeType
+        if not self.hasVideo and not self.hasAudio:
+            return
+        print "Length :\t", self.__time2Str(self.getMediaLength())
+        print "\tAudio:", self.__time2Str(self.audioLength), "\tVideo:", self.__time2Str(self.videoLength)
+        if self.hasVideo and self.videoRate:
+            print "Video :"
+            print "\t%d x %d @ %d/%d fps" % (self.videoWidth,
+                                            self.videoHeight,
+                                            self.videoRate.num, self.videoRate.denom)
+            if self.videoTags.has_key("video-codec"):
+                print "\tCodec :", self.videoTags.pop("video-codec")
+        if self.hasAudio:
+            print "Audio :"
+            if self.audioFloat:
+                print "\t%d channels(s) : %dHz @ %dbits (float)" % (self.audioChannels,
+                                                                    self.audioRate,
+                                                                    self.audioWidth)
+            else:
+                print "\t%d channels(s) : %dHz @ %dbits (int)" % (self.audioChannels,
+                                                                  self.audioRate,
+                                                                  self.audioDepth)
+            if self.audioTags.has_key("audio-codec"):
+                print "\tCodec :", self.audioTags.pop("audio-codec")
+        for stream in self.otherStreams:
+            if not stream == self.mimeType:
+                print "Other unsuported Multimedia stream :", stream
+        if self.audioTags or self.videoTags or self.otherTags:
+            print "Additional information :"
+            for tag in self.audioTags.keys():
+                print "%20s :\t" % tag, self.audioTags[tag]
+            for tag in self.videoTags.keys():
+                print "%20s :\t" % tag, self.videoTags[tag]
+            for tag in self.otherTags.keys():
+                print "%20s :\t" % tag, self.otherTags[tag]
+       
+       
+    ## Private Methods ##
+       
+    def __time2Str(self, value):
+        ms = value / gst.MSECOND
+        sec = ms / 1000
+        ms = ms % 1000
+        min = sec / 60
+        sec = sec % 60
+        return "%2dm %2ds %3d" % (min, sec, ms)
 
 
 class MediaAnalyst(object):

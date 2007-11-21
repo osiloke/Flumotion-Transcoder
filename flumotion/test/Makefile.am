@@ -2,9 +2,10 @@ include $(top_srcdir)/common/python.mk
 include $(top_srcdir)/common/trial.mk
 TRIAL_ENV=$(top_builddir)/env
 
-EXTRA_DIST = 	__init__.py common.py \
+EXTRA_DIST = 	__init__.py common.py gsttestutils.py \
                 test_transcontext.py test_utils.py test_videosize.py \
-                test_timeouts.py test_ringbuffer.py test_fileutils.py
+                test_timeouts.py test_ringbuffer.py test_fileutils.py \
+                test_analyst.py
 
 check-local: trial
 

@@ -1,3 +1,13 @@
+2007-11-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/analyst.py:
+	Added a printInfo method to the MediaAnalysis class.
+	Fixed a bug in the getMediaDuration method.
+	* flumotion/test/Makefile.am:
+	* flumotion/test/gsttestutils.py:
+	* flumotion/test/test_analyst.py:
+	Added a testsuit for the MediaAnalyst.
+
 2007-11-14  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/context.py:
