@@ -19,6 +19,7 @@
 
 # Headers in this file shall remain intact.
 
+import os
 import sys
 
 from twisted.internet import gtk2reactor
@@ -32,9 +33,11 @@ except AssertionError:
 
 import gobject
 gobject.threads_init()
-import gst
+
 import pygst
-import os
+pygst.require('0.10')
+import gst
+
 import tempfile 
 
 from twisted.internet import defer

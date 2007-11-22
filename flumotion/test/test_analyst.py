@@ -24,8 +24,8 @@
 
 import os
 import common
-import gst
 import gsttestutils
+import gst
 import tempfile
 import random
 
