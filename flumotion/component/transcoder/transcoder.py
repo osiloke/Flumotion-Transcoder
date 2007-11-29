@@ -417,7 +417,7 @@ class MediaTranscoder(log.LoggerProxy):
         pipeline = gst.Pipeline(pipelineName)
         src = gst.element_factory_make("filesrc")
         src.props.location = self._sourcePath
-        dbin = gst.element_factory_make("decodebin")
+        dbin = gst.element_factory_make("decodebin2")
         pipeline.add(src, dbin)
         src.link(dbin)
         

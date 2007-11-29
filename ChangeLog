@@ -1,3 +1,10 @@
+2007-11-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/transcoder.py:
+	Changed to use decodebin2. It resolve lots of problems
+	with flvdemux and flumpsdemux where the pipeline 
+	never go to playing state and the transcoder timeout. 
+	
 2007-11-22  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/test/gsttestutils.py:	
