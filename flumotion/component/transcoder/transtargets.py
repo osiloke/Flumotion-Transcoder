@@ -44,6 +44,9 @@ class AudioTarget(TranscodingTarget):
     
     ## ITranscoderProducer Overriden Methods ##
 
+    def getMonitoredFiles(self):
+        return self.getOutputFiles()
+
     def checkSourceMedia(self, sourcePath, sourceAnalysis):
         if not sourceAnalysis.hasAudio:
             self.raiseError("Source media doesn't have audio stream")
@@ -98,6 +101,9 @@ class VideoTarget(TranscodingTarget):
 
 
     ## ITranscoderProducer Overriden Methods ##
+
+    def getMonitoredFiles(self):
+        return self.getOutputFiles()
 
     def checkSourceMedia(self, sourcePath, sourceAnalysis):
         if not sourceAnalysis.hasVideo:
@@ -159,6 +165,9 @@ class AudioVideoTarget(TranscodingTarget):
 
 
     ## ITranscoderProducer Overriden Methods ##
+
+    def getMonitoredFiles(self):
+        return self.getOutputFiles()
 
     def checkSourceMedia(self, sourcePath, sourceAnalysis):
         tolerance = self._getTranscodingConfig().tolerance

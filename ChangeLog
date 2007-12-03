@@ -1,5 +1,11 @@
 2007-12-03  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/transtargets.py:
+	Fixed a bug where the transcoded files were not
+	monitored anymore.  
+
+2007-12-03  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/transconfig.py:
 	Raised the version number because of the addition of temp-reports-dir.
 
