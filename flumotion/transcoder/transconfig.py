@@ -28,6 +28,10 @@ class CustomerConfig(properties.PropertyBag):
 
 
 class ProfileConfig(properties.PropertyBag):
+    """
+        Changes from version 1.0 to 1.1:
+            Added temp-reports-dir
+    """
     label = properties.String('label', None, True)
     inputDir = VirtualPathProperty('input-dir', None, True)
     outputDir = VirtualPathProperty('output-dir', None, True)
@@ -109,7 +113,7 @@ class TargetConfig(properties.PropertyBag):
 
 class TranscodingConfig(properties.RootPropertyBag):
     
-    VERSION = (1,0)
+    VERSION = (1,1)
     
     creationTime = properties.DateTime('creation-time')
     transcodingTimeout = properties.Integer('transcoding-timeout', 4)

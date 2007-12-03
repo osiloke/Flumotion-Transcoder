@@ -1,3 +1,8 @@
+2007-12-03  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/transconfig.py:
+	Raised the version number because of the addition of temp-reports-dir.
+
 2007-11-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/transcoder.py:
