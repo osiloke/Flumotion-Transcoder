@@ -1,0 +1,9 @@
+# the standard variables don't make sense for an uninstalled copy
+prefix=
+exec_prefix=
+
+flumotiontranscoderdir=${pcfiledir}/..
+
+Name: Flumotion Transcoder Uninstalled
+Description: Distributed Transcoding Platform, Not Installed
+Version: @VERSION@

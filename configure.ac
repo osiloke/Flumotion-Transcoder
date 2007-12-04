@@ -78,6 +78,9 @@ flumotion/component/Makefile
 flumotion/component/transcoder/Makefile
 flumotion/project/Makefile
 flumotion/project/transcoder.py
+pkgconfig/Makefile
+pkgconfig/flumotion-transcoder.pc
+pkgconfig/flumotion-transcoder-uninstalled.pc
 tests/Makefile
 flumotion-transcoder.spec
 )

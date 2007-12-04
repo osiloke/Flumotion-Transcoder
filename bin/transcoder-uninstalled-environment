@@ -13,6 +13,7 @@ if test x$TRANSCODER_ENV != x1; then
         export TRANSCODER_REV=${1:-"trunk"}
         export TRANSCODER_ROOT="$TRANSCODER_BASE/$TRANSCODER_REV"
         export TRANSCODER_ENV=1
+        export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$TRANSCODER_ROOT/pkgconfig"
         if test -n "$FLU_PROJECT_PATH"; then
             export FLU_PROJECT_PATH=$TRANSCODER_ROOT:$FLU_PROJECT_PATH
         else

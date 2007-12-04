@@ -1,3 +1,13 @@
+2007-12-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Makefile.am:
+	* bin/transcoder-uninstalled-environment:
+	* configure.ac:
+	* pkgconfig/Makefile.am:
+	* pkgconfig/flumotion-transcoder-uninstalled.pc.in:
+	* pkgconfig/flumotion-transcoder.pc.in:
+	Added pkgconfig support.
+
 2007-12-03  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/transtargets.py:

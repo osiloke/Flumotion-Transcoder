@@ -7,7 +7,7 @@ include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 include $(srcdir)/common/rpm.mk
 
-SUBDIRS = . common conf misc bin doc transcoder flumotion tests
+SUBDIRS = . common conf misc bin doc pkgconfig transcoder flumotion tests
 
 PYCHECKER_WHITELIST = \
 	flumotion/transcoder/*.py \
