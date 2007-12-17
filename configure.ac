@@ -1,6 +1,6 @@
 AC_INIT(README)
 
-AS_VERSION(flumotion-transcoder, FLUTRANS, 0, 1, 0, 1)
+AS_VERSION(flumotion-transcoder, FLUTRANS, 0, 1, 1, 0)
 AC_SUBST(RELEASE, $FLUTRANS_RELEASE)
 
 AC_SUBST_FILE(AUTHORS)
