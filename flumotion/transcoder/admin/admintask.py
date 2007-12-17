@@ -406,7 +406,7 @@ class AdminTask(LoggerProxy, EventSource):
             self.warning("Admin task '%s' reach the maximum attempts (%s) "
                          "of starting a component on worker '%s'", 
                          self.getLabel(), str(self.__getRetryCount() + 1),
-                         self._worker.getName())
+                         self._worker and self._worker.getName())
             self._doAborted()
             self.__relieveComponent()
             return

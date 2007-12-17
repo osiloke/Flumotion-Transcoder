@@ -38,6 +38,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
                                                  "max-size-buffers",
                                                  "max-size-bytes",
                                                  "max-size-time"]),
+                        "filesink":         set(["last-buffer"]),
                         "audiorate":        set(["in", "out", "drop", "add"]),
                         "videorate":        set(["in", "out", "drop", "add", "duplicate"]),
                         "vorbisenc":        set(["last-message"]),

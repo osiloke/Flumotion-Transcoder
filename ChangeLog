@@ -1,3 +1,10 @@
+2007-12-17  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/reporter.py:
+	* flumotion/transcoder/admin/admintask.py:
+	Fixed a bug when the worker is None.
+	Updated the component notification filter.
+
 2007-12-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* Makefile.am:
