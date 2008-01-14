@@ -42,7 +42,7 @@ class Diagnostician(object):
                       ("twisted.internet.error.ConnectionLost",
                        "twisted.internet.error.ConnectionDone"),
                     1: # ERROR level 
-                      ("Source file not found"),
+                      ("Source file not found",),
                     2: # WARNING level
                       ("is not a known media type",
                        "output file stalled during transcoding",

@@ -1,3 +1,10 @@
+2008-01-14  Sebastien Merle  <sebastien@fluendo.com>
+
+	* configure.ac:
+	* flumotion/transcoder/admin/diagnostic.py:
+	Fixed a bug that filter out all components error messages.
+	Back to trunk.
+
 === release 1.1.0 ===
 
 2007-12-17  Sebastien Merle  <sebastien@fluendo.com>
