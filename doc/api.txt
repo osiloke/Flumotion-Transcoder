@@ -1,0 +1,96 @@
+Transcoder API Design Draft
+===========================
+
+The responsibilities to provide an API for the transcoder
+are split in four parts:
+
+  - Low-level PB API
+  - Low-level HTTP API
+  - Authentication/Authorization
+  - High-level HTTP API
+
+
+Low-Level PB API
+----------------
+
+The low-level PB API is directly provided by the transcoder administration.
+The authentication is made by user login and password like for the flumotion
+manager, and the user is granteed full access to the API.
+Accessing to the transcoder-admin with PB should be restricted.
+
+
+Low-level HTTP API
+------------------
+
+The low-level HTTP API is provided by an independent process which task
+is to publish the transcoder admin PB API with the HTTP protocol.
+This server should be granted full access to the transcoder admin PB API,
+and will be in charge to enforce authentication and right management
+thanks to the Authentication/Authorization server explained later.
+The REST oriented server support document type negotiation allowing
+at the same time humman readable API with HTML documents or machine
+readable with XML documents. 
+
+
+Authentication/Authorization
+----------------------------
+
+An independent process is in charge of authenticating users and authorizing
+them to perform actions. The authentication and authorization protocol is
+stateless to allow multiple servers at the same time. Each server have
+there own certificate and private key emitted by a controlled
+Certification Authority.
+
+The idea is to use the same servers for the web frontend, the backoffice
+and the transcoder API 
+
+Authentication protocol:
+
+  - The client ask the portal for authentication.
+  - The portal send a user identifier and a salt to the server.
+  - The server create a token that contains the user identifier,
+    the token expiration time and the user roles, and sign it
+    with it's private key as a standard PKCS7 with it's certificate
+    embedded in the signature.
+  - The the server encrypt the token with for key the SHA1 hash of
+    the user identifier plus the hash of the user password and
+    for salt the SHA1 hash of the client specified salt.
+  - Then the server sign the response, and return it to the portal.
+  - The client verify that the response comes from a valid server
+    by verifying the signature with the CA certificate.
+  - The portal decrypt the token with the user identifier, password,
+    and the specified salt.
+  - The portal verify the token not expired.
+  - The portal returns the token to the client as a session-encrypted
+    cookie using a variation of the protocol: 
+        http://www.cse.msu.edu/~alexliu/publications/Cookie/cookie.pdf
+
+Authorization Protocol:
+
+  - The client perform an action on the portal (GET, POST, PUT, DELETE).
+  - The portal check for the cookie generated during authentication.
+  - The portal validate the cookie using the protocol:
+        http://www.cse.msu.edu/~alexliu/publications/Cookie/cookie.pdf
+  - The portal request the authorization server with the token extracted
+    from the cookie, the requested action, the domain name of the portal
+    and the URL path.
+  - The server verify the token signature with the CA certificate.
+  - The server verify the token didn't expire.
+  - The server check against it's database if the user can perform the action.
+  - The server sign the response, and return it to the portal.
+  - The portal verify the response with the CA certificate,
+    and if the user is authorized perform the requested action.
+
+In the past protocol descriptions, the portal is the controlled software part
+that enforce the authentication and the rights. It's the transcoder API
+or the Web frontend for examples.
+
+
+High-Level API
+--------------
+
+The high-level API will be provided by the web frontend.
+It will communicate to the transcoder low-level API and
+provide high-level functions like profile-based configuration...
+
+
