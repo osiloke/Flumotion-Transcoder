@@ -87,6 +87,7 @@ fi
 %doc doc/examples
 %doc doc/text
 %{_libdir}/flumotion
+%{_libdir}/pkgconfig/flumotion-transcoder.pc
 %{_libdir}/python?.?/site-packages/transcoder
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin

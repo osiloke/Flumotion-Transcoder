@@ -1,3 +1,14 @@
+2008-02-11  Sebastien Merle  <sebastien@fluendo.com>
+
+	* configure.ac:
+	* flumotion-transcoder.spec.in:
+	Jumped to release 0.5.2 at thomas' request.
+	Tried to synchronized to the platform-4 release,
+	because of the release tag made from the branche.
+	Anyway, "back" to trunk.  
+
+=== release 0.5.2 ===
+
 2008-01-14  Sebastien Merle  <sebastien@fluendo.com>
 
 	* configure.ac:
