@@ -1,5 +1,10 @@
 2008-02-14  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filetranscoder.py:
+	Fixed some forgotten imports
+
+2008-02-14  Sebastien Merle  <sebastien@fluendo.com>
+
 	Moved utility modules out of the project to flumotion-inhouse.
 
 2008-02-11  Sebastien Merle  <sebastien@fluendo.com>

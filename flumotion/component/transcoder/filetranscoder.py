@@ -25,6 +25,7 @@ from flumotion.inhouse import log, defer, properties
 from flumotion.inhouse import utils, fileutils
 from flumotion.inhouse.inifile import IniFile
 from flumotion.inhouse.errors import FlumotionError
+from flumotion.inhouse.properties import PropertyError
 
 from flumotion.component.transcoder import job, compconsts
 from flumotion.transcoder import constants
@@ -34,7 +35,6 @@ from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.transconfig import TranscodingConfig
 from flumotion.transcoder.transreport import TranscodingReport
-from flumotion.transcoder.properties import PropertyError
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.local import Local
 
