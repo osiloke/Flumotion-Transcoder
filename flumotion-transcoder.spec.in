@@ -13,11 +13,12 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 Requires:       %{gstreamer}
 Requires:       flumotion
+Requires:       flumotion-inhouse
 
 # sigh, libtool
 BuildRequires:  gcc-c++
-
 BuildRequires:	flumotion >= @FLUMOTION_REQ@
+BuildRequires:  flumotion-inhouse
 
 %description
 Flumotion Transcoder.

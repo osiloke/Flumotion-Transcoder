@@ -10,8 +10,6 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
-
 
 class NotifierContext(object):
     

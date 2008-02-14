@@ -5,23 +5,17 @@
       <dependencies>
         <dependency name="component" />
         <dependency name="component-base" />
+        <dependency name="inhouse-base" />
       </dependencies>
       <directories>
         <directory name="flumotion/transcoder">
           <filename location="__init__.py" />
           <filename location="errors.py" />
           <filename location="enums.py" />
-          <filename location="log.py" /> 
           <filename location="constants.py" />
           <filename location="local.py" />
           <filename location="virtualpath.py" />
           <filename location="substitution.py" />
-          <filename location="utils.py" />
-          <filename location="fileutils.py" />          
-          <filename location="defer.py" />
-          <filename location="waiters.py" />          
-          <filename location="properties.py" />
-          <filename location="inifile.py" />                    
         </directory>
         <directory name="flumotion/component/transcoder">
           <filename location="__init__.py" />

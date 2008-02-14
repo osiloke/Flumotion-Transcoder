@@ -21,9 +21,13 @@ from flumotion.component import component
 from flumotion.component.component import moods
 from flumotion.common import errors, messages
 
+from flumotion.inhouse import log, defer, properties
+from flumotion.inhouse import utils, fileutils
+from flumotion.inhouse.inifile import IniFile
+from flumotion.inhouse.errors import FlumotionError
+
 from flumotion.component.transcoder import job, compconsts
-from flumotion.transcoder import log, defer, constants, properties
-from flumotion.transcoder import utils, fileutils
+from flumotion.transcoder import constants
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import TranscoderStatusEnum
@@ -31,7 +35,6 @@ from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.transconfig import TranscodingConfig
 from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.properties import PropertyError
-from flumotion.transcoder.inifile import IniFile
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.local import Local
 
@@ -339,7 +342,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         self.addMessage(m)
     
     def __ebErrorFilter(self, failure, task=None):
-        if failure.check(TranscoderError, PropertyError):
+        if failure.check(FlumotionError, PropertyError):
             return self.__transcodingError(failure, task)
         return self.__unexpectedError(failure, task)
 
@@ -414,7 +417,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
     def __ebJobFailed(self, failure):
         try:
             report = self._report
-            if not failure.check(TranscoderError):
+            if not failure.check(FlumotionError):
                 m = messages.Error(T_(failure.getErrorMessage()),
                                    debug=log.getFailureMessage(failure))
                 self.addMessage(m)

@@ -17,13 +17,14 @@ import threading
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import log, defer, utils, fileutils
+from flumotion.inhouse import log, defer, utils, fileutils
+from flumotion.inhouse.waiters import PassiveWaiters
+
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
-from flumotion.transcoder.waiters import PassiveWaiters
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.basetargets import TranscodingTarget
 from flumotion.component.transcoder.thumbsink import ThumbSink

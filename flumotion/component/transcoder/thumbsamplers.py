@@ -16,7 +16,8 @@ import gst
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
+
 from flumotion.transcoder.substitution import Variables
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.thumbsink import IThumbnailSampler

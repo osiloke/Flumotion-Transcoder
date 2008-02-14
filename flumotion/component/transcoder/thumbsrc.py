@@ -16,7 +16,8 @@ import gst
 import gobject
 
 from flumotion.common import common
-from flumotion.transcoder import log, utils, fileutils
+
+from flumotion.inhouse import log, utils, fileutils
 
 
 class ThumbSrc(gst.BaseSrc):

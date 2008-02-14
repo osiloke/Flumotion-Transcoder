@@ -18,11 +18,12 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.log import LoggerProxy
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.log import LoggerProxy
+from flumotion.inhouse.waiters import AssignWaiters
+from flumotion.inhouse.waiters import PassiveWaiters
+
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.waiters import AssignWaiters
-from flumotion.transcoder.waiters import PassiveWaiters
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.eventsource import EventSource

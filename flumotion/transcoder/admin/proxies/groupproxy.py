@@ -11,9 +11,10 @@
 
 from flumotion.common import common
 
-from flumotion.transcoder import defer, utils
-from flumotion.transcoder.errors import OperationTimedOutError
+from flumotion.inhouse import defer, utils
+
 from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import componentproxy
 

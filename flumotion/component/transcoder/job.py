@@ -24,7 +24,11 @@ from twisted.python.failure import Failure
 
 from flumotion.common import common
 from flumotion.common import enum
-from flumotion.transcoder import process, log, defer, enums, utils, fileutils
+
+from flumotion.inhouse import process, log, defer, utils, fileutils
+from flumotion.inhouse.errors import FlumotionError 
+
+from flumotion.transcoder import enums 
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
@@ -470,7 +474,7 @@ class TranscodingJob(log.LoggerProxy):
         """
         If the error has a context, use it inplace of the default one.
         """
-        if failure and failure.value and isinstance(error, TranscoderError):
+        if failure and failure.value and isinstance(error, FlumotionError):
             data = failure.value.data
             if data and isinstance(data, TaskContext):
                 return data
@@ -490,7 +494,7 @@ class TranscodingJob(log.LoggerProxy):
         context.reporter.setFatalError(errMsg)
         log.notifyFailure(context, failure, "Fatal error during %s", task)
         self._fireError(context, errMsg)
-        if not failure.check(TranscoderError):
+        if not failure.check(FlumotionError):
             raise TranscoderError(errMsg, data=context, cause=failure)
         return failure
 

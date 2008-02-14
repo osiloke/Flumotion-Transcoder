@@ -16,11 +16,12 @@ import re
 import optparse
 import shutil
 
+from flumotion.inhouse import fileutils, log, inifile
+
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
-from flumotion.transcoder import fileutils, log, inifile
 from flumotion.transcoder.tools import oldconfig
 from flumotion.transcoder.admin import adminconfig
 from flumotion.transcoder.admin.datasource import dataprops

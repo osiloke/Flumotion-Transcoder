@@ -17,7 +17,7 @@ import gst
 
 from zope.interface import Interface
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
 
 
 class IThumbnailSampler(Interface):

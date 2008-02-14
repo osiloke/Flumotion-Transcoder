@@ -12,7 +12,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import properties
+from flumotion.inhouse import properties
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.enums import TranscoderStatusEnum

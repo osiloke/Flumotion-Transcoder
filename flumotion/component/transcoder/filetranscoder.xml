@@ -46,7 +46,6 @@
       </dependencies>
       <directories>
         <directory name="flumotion/transcoder">
-          <filename location="process.py" />
           <filename location="transconfig.py" />
           <filename location="transreport.py" />
           <filename location="pipelinecrawler.py" />

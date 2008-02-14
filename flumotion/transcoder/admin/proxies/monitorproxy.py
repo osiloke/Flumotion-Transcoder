@@ -12,7 +12,8 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder import utils, defer, log
+from flumotion.inhouse import utils, defer, log
+
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts

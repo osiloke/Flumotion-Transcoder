@@ -15,7 +15,8 @@ from twisted.internet import reactor
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask

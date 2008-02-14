@@ -15,7 +15,8 @@ from twisted.internet import reactor
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.admin import adminconsts

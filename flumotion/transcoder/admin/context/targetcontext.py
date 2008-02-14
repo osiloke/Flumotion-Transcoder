@@ -10,7 +10,8 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import fileutils
+from flumotion.inhouse import fileutils
+
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.substitution import Variables
 

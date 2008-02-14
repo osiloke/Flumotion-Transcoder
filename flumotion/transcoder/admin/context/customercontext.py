@@ -10,12 +10,13 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import fileutils
-from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.inhouse import fileutils
+from flumotion.inhouse.utils import LazyEncapsulationIterator
+
 from flumotion.transcoder import constants
+from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.substitution import Variables
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.utils import LazyEncapsulationIterator
 from flumotion.transcoder.admin.context.profilecontext import ProfileContext
 from flumotion.transcoder.admin.context.profilecontext import UnboundProfileContext
 

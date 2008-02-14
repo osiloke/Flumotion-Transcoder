@@ -15,10 +15,12 @@ import re
 from twisted.python.reflect import qual
 from twisted.spread import jelly
 
-from flumotion.transcoder import fileutils
+from flumotion.inhouse import fileutils
+from flumotion.inhouse.properties import ValueProperty
+
 from flumotion.transcoder import constants
 from flumotion.transcoder.errors import VirtualPathError
-from flumotion.transcoder.properties import ValueProperty
+
 
 
 _rootPattern = re.compile("(\w*):(.*)")

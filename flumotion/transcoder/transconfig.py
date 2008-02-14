@@ -14,7 +14,9 @@
 
 import datetime
 
-from flumotion.transcoder import properties, constants
+from flumotion.inhouse import properties
+
+from flumotion.transcoder import constants
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum

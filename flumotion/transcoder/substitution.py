@@ -12,7 +12,7 @@
 
 import urllib
 
-from flumotion.transcoder import utils, fileutils
+from flumotion.inhouse import utils, fileutils
 
 
 class Variables(object):

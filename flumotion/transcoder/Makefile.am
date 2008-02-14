@@ -4,13 +4,11 @@ SUBDIRS = admin manager tools
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder
 
-python_PYTHON = __init__.py inifile.py properties.py \
-                transconfig.py transreport.py \
-                process.py pipelinecrawler.py \
-                log.py errors.py enums.py utils.py \
-                virtualpath.py local.py constants.py \
-                defer.py ringbuffer.py fileutils.py \
-                substitution.py waiters.py 
+python_PYTHON = __init__.py transconfig.py transreport.py \
+                pipelinecrawler.py substitution.py \
+                errors.py enums.py \
+                virtualpath.py local.py constants.py
+                 
 
 python_DATA =
 

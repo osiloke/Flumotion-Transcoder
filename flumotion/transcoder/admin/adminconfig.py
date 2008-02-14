@@ -123,8 +123,10 @@
     
     ------------------------------------------------------------"""
 
-from flumotion.transcoder import properties
+from flumotion.inhouse import properties
+
 from flumotion.transcoder.admin import adminconsts
+
 
 class ManagerConfig(properties.PropertyBag):
     host = properties.String('host', None, True)

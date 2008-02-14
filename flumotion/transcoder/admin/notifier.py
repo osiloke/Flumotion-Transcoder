@@ -22,7 +22,8 @@ from twisted.internet import reactor
 from twisted.web import client
 from twisted.mail.smtp import ESMTPSenderFactory
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import NotificationError
 from flumotion.transcoder.admin.enums import ActivityTypeEnum

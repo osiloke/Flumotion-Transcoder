@@ -14,7 +14,8 @@
 
 import gst
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
+
 from flumotion.component.transcoder import videosize
 from flumotion.component.transcoder import gstutils
 

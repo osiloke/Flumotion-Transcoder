@@ -18,7 +18,8 @@ from twisted.python import failure
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, defer, inifile, utils, fileutils
+from flumotion.inhouse import log, defer, inifile, utils, fileutils
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.enums import ActivityTypeEnum

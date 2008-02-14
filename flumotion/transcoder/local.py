@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import utils
+from flumotion.inhouse import utils
 
 
 class Local(object):

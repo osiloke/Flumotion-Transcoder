@@ -15,7 +15,9 @@ import datetime
 from zope.interface import Interface, implements
 from twisted.internet import reactor
 
-from flumotion.transcoder import constants, log, defer
+from flumotion.inhouse import log, defer
+
+from flumotion.transcoder import constants
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum

@@ -18,7 +18,9 @@ import gobject
 
 from twisted.python.failure import Failure
 
-from flumotion.transcoder import log, pipelinecrawler
+from flumotion.inhouse import log
+
+from flumotion.transcoder import pipelinecrawler
 from flumotion.transcoder.virtualpath import VirtualPath
 
 

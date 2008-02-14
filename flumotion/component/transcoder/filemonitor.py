@@ -22,7 +22,10 @@ from flumotion.common import common, messages
 from flumotion.component import component
 from flumotion.component.component import moods
 
-from flumotion.transcoder import log, defer, constants, fileutils
+from flumotion.inhouse import log, defer, fileutils
+from flumotion.inhouse.errors import FlumotionError
+
+from flumotion.transcoder import constants
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
@@ -229,7 +232,7 @@ class FileMonitor(component.BaseComponent):
         self.addMessage(m)
     
     def __ebErrorFilter(self, failure, task=None):
-        if failure.check(TranscoderError):
+        if failure.check(FlumotionError):
             return self.__monitorError(failure, task)
         return self.__unexpectedError(failure, task)
 

@@ -10,9 +10,10 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.waiters import CounterWaiters
+
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.waiters import CounterWaiters
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.adminelement import AdminElement
 from flumotion.transcoder.admin.datasource import datasource

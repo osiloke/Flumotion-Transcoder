@@ -13,8 +13,9 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.errors import OperationTimedOutError
+from flumotion.inhouse import log, defer, utils
+
+from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener

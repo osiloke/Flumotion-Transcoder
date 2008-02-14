@@ -15,8 +15,9 @@
 import gst
 from gst.extend.discoverer import Discoverer
 
+from flumotion.inhouse import defer, utils
+
 from flumotion.component.transcoder import compconsts
-from flumotion.transcoder import defer, utils
 from flumotion.transcoder.errors import TranscoderError
 
 

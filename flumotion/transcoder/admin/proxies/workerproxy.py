@@ -12,7 +12,8 @@
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
+
 from flumotion.transcoder.admin.proxies import fluproxy
 
 

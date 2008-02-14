@@ -12,9 +12,10 @@
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import defer, utils
-from flumotion.transcoder.waiters import AssignWaiters
-from flumotion.transcoder.waiters import ItemWaiters
+from flumotion.inhouse import defer, utils
+from flumotion.inhouse.waiters import AssignWaiters
+from flumotion.inhouse.waiters import ItemWaiters
+
 from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies import workerproxy
 from flumotion.transcoder.admin.proxies import flowproxy

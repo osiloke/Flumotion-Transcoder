@@ -13,10 +13,11 @@
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.log import LoggerProxy
-from flumotion.transcoder.waiters import PassiveWaiters
-from flumotion.transcoder.waiters import CounterWaiters
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.log import LoggerProxy
+from flumotion.inhouse.waiters import PassiveWaiters
+from flumotion.inhouse.waiters import CounterWaiters
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource

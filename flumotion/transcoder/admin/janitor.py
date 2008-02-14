@@ -13,8 +13,9 @@
 
 from flumotion.component.component import moods
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.ringbuffer import RingBuffer
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.ringbuffer import RingBuffer
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentset import ComponentSetListener

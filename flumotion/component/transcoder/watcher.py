@@ -15,8 +15,10 @@
 import gobject
 import os
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
+
 from flumotion.component.transcoder import compconsts
+
 
 class Watcher(gobject.GObject, log.LoggerProxy):
     """

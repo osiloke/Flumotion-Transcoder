@@ -14,20 +14,22 @@ import os
 
 from zope.interface import implements
 
-from flumotion.transcoder import utils, inifile, log, defer
+from flumotion.inhouse import utils, inifile, log, defer
+from flumotion.inhouse.waiters import AssignWaiters
+
 from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.waiters import AssignWaiters
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
+from flumotion.transcoder.admin.document import FileDocument
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
-from flumotion.transcoder.admin.document import FileDocument
+
 
 
 class ITranscoderListener(IComponentListener):

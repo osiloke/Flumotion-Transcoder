@@ -22,12 +22,14 @@ from flumotion.common.errors import UnknownComponentError
 from flumotion.common.errors import ComponentError, BusyComponentError
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.errors import TranscoderError, OperationAbortedError
-from flumotion.transcoder.waiters import AssignWaiters, ValueWaiters
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.waiters import AssignWaiters, ValueWaiters
+
+from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.errors import OrphanComponentError
+from flumotion.transcoder.admin.errors import OperationAbortedError
 from flumotion.transcoder.admin.proxies.compprops import GenericComponentProperties
 from flumotion.transcoder.admin.proxies.fluproxy import FlumotionProxy
 

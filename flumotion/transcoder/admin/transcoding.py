@@ -16,8 +16,9 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.transcoder import log, defer, utils
-from flumotion.transcoder.errors import OperationTimedOutError
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.errors import TimeoutError
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.taskmanager import TaskManager
 from flumotion.transcoder.admin.transbalancer import TranscoderBalancer
@@ -161,7 +162,7 @@ class Transcoding(TaskManager, WorkerSetListener,
     
     def __cbStartResumeTranscoding(self, result):
         if (isinstance(result, Failure) 
-            and not result.check(OperationTimedOutError)):
+            and not result.check(TimeoutError)):
             log.notifyFailure(self, result,
                               "Failure waiting transcoder set "
                               "to become idle")

@@ -7,6 +7,7 @@ AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
 AC_SUBST(FLUMOTION_REQ, 0.5.0.1)
+AC_SUBST(INHOUSE_REQ, 0.5.2.1)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 
@@ -44,6 +45,12 @@ PKG_CHECK_MODULES(FLUMOTION, flumotion >= $FLUMOTION_REQ)
 FLUMOTION_DIR="`$PKG_CONFIG --variable=flumotiondir flumotion`"
 AC_MSG_NOTICE([Flumotion code base directory is $FLUMOTION_DIR])
 AC_SUBST(FLUMOTION_DIR)
+
+dnl check for in-house library
+PKG_CHECK_MODULES(INHOUSE, flumotion-inhouse >= $INHOUSE_REQ)
+INHOUSE_DIR="`$PKG_CONFIG --variable=flumotioninhousedir flumotion-inhouse`"
+AC_MSG_NOTICE([Flumotion in-house library directory is $INHOUSE_DIR])
+AC_SUBST(INHOUSE_DIR)
 
 dnl output stuff
 PREAMBLE=`cat $srcdir/misc/preamble.py`

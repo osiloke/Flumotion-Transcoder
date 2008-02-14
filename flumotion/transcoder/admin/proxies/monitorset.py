@@ -12,7 +12,8 @@
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import utils
+from flumotion.inhouse import utils
+
 from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
 

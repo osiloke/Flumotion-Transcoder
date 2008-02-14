@@ -12,10 +12,11 @@
 
 from twisted.internet import reactor
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.waiters import IWaiters
+
 from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
-from flumotion.transcoder.waiters import IWaiters
 from flumotion.transcoder.admin import adminelement
 
 #TODO: Rewrite this... It's a mess

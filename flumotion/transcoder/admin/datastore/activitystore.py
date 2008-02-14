@@ -13,7 +13,7 @@
 import datetime
 from cStringIO import StringIO
 
-from flumotion.transcoder import log, utils
+from flumotion.inhouse import log, utils
 
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum

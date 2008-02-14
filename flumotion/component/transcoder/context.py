@@ -17,10 +17,11 @@ import re
 import urllib
 import random
 
-from flumotion.transcoder import utils, fileutils
+from flumotion.inhouse import utils, fileutils
+from flumotion.inhouse.log import LoggerProxy
+
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
-from flumotion.transcoder.log import LoggerProxy
 from flumotion.component.transcoder.reporter import Reporter
 
 

@@ -22,7 +22,8 @@ from zope.interface import Interface
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder import analyst
@@ -196,7 +197,7 @@ class MediaTranscoder(log.LoggerProxy):
                 return
             self.log("Unhandled GStreamer message in transcoding "
                      "pipeline:  %s", message)
-        except TranscoderError, e:
+        except FlumotionError, e:
             self.__failed(e)
         except:
             self.__failed()
@@ -221,7 +222,7 @@ class MediaTranscoder(log.LoggerProxy):
             else:
                 self.__failed("Unknown producer output file stalled during "
                               "transcoding: '%s'" % file)
-        except TranscoderError, e:
+        except FlumotionError, e:
             self.__failed(e)
         except:
             self.__failed()
@@ -548,7 +549,7 @@ class MediaTranscoder(log.LoggerProxy):
             self.__fireProgressCallback(position * 100.0 / self._duration)
             self._progressTimeout = reactor.callLater(compconsts.PROGRESS_PERIOD,
                                                       self.__updateProgress)
-        except TranscoderError, e:
+        except FlumotionError, e:
             self.__failed(e)
         except:
             self.__failed()

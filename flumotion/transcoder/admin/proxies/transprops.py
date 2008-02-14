@@ -16,11 +16,13 @@ from zope.interface import implements
 
 from flumotion.common import common
 
-from flumotion.transcoder import log, inifile, constants, utils, fileutils
+from flumotion.inhouse import log, inifile, utils, fileutils
+from flumotion.inhouse.utils import digestParameters
+
+from flumotion.transcoder import constants
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.transconfig import TranscodingConfig, TargetConfig
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.utils import digestParameters
 from flumotion.transcoder.admin.errors import PropertiesError
 from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
 from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin

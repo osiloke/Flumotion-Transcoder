@@ -10,7 +10,8 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder import log, utils
+from flumotion.inhouse import log, utils
+
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.datastore.basestore import MetaStore
 

@@ -15,13 +15,15 @@ import re
 
 from flumotion.common import messages
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin import diagutils
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.document import StringDocument
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
+
 
 class Diagnostician(object):
     

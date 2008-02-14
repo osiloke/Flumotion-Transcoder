@@ -12,51 +12,12 @@
 
 from twisted.python import failure
 
+from flumotion.inhouse import errors
 
-#FIXME: This class is waaayyyy too much hacky
 
-class TranscoderError(Exception):
-    """
-    An exception that keep information on the cause of its creation.
-    The cause may be other exception or a Failure.
-    """
-    
+class TranscoderError(errors.FlumotionError):
     def __init__(self, *args, **kwargs):
-        self.data = kwargs.pop('data', None)
-        self.cause = kwargs.pop('cause', None)
-        Exception.__init__(self, *args, **kwargs)
-        self.causeDetails = None
-        self.causeTraceback = None
-        if self.cause:
-            from flumotion.transcoder import log
-            if isinstance(self.cause, TranscoderError):
-                self.causeDetails = log.getExceptionMessage(self.cause)
-            if isinstance(self.cause, Exception):
-                self.causeDetails = log.getExceptionMessage(self.cause)
-            elif isinstance(self.cause, failure.Failure):
-                self.causeDetails = log.getFailureMessage(self.cause)
-            else:
-                self.causeDetails = "Unknown"            
-            if isinstance(self.cause, failure.Failure):
-                f = self.cause
-                self.cause = f.value
-                try:
-                    self.causeTraceback = f.getTraceback()
-                except:
-                    #To ignore failure.NoCurrentExceptionError if there is no current exception
-                    pass
-            else:
-                try:
-                    f = failure.Failure()
-                    if f.value == self.cause:
-                        self.causeTraceback = f.getTraceback()
-                except:
-                    #To ignore failure.NoCurrentExceptionError if there is no current exception
-                    pass
-
-class SystemError(TranscoderError):
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
+        errors.FlumotionError.__init__(self, *args, **kwargs)
 
 
 class TranscoderConfigError(TranscoderError):
@@ -70,30 +31,6 @@ class LocalizationError(TranscoderError):
 
 
 class VirtualPathError(LocalizationError):
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
-class WaiterError(TranscoderError):
-    """
-    A wait operation couldn't be completed.
-    """
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
-class OperationTimedOutError(TranscoderError):
-    """
-    An asynchronous operation timed out.
-    """
-    def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
-
-
-class OperationAbortedError(TranscoderError):
-    """
-    An asynchronous operation couldn't be done.
-    """
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 

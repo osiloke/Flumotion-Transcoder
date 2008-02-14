@@ -15,7 +15,8 @@ import gst
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder import defer
+from flumotion.inhouse import defer
+
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
 from flumotion.component.transcoder.basetargets import TranscodingTarget

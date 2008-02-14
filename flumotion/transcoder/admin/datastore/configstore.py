@@ -13,6 +13,7 @@
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.datastore.basestore import MetaStore
 
+
 class BaseConfig(object):
     
     __metaclass__ = MetaStore

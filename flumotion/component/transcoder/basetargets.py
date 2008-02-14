@@ -18,7 +18,8 @@ from zope.interface import implements
 from twisted.python.failure import Failure
 
 from flumotion.common import common
-from flumotion.transcoder import log, defer, fileutils
+from flumotion.inhouse import log, defer, fileutils
+
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.component.transcoder.transcoder import ITranscoderProducer

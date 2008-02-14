@@ -17,8 +17,9 @@ from flumotion.admin import multi
 from flumotion.common import planet
 from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
-from flumotion.transcoder import log, utils
-from flumotion.transcoder.waiters import AssignWaiters
+from flumotion.inhouse import log, utils
+from flumotion.inhouse.waiters import AssignWaiters
+
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxies import managerproxy
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy

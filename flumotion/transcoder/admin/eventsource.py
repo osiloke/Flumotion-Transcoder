@@ -12,7 +12,7 @@
 
 import weakref
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
 
 #FIXME: Find a way to not having to assume the childs classes
 #       will implement logging methods.

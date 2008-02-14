@@ -16,9 +16,10 @@ from zope.interface import implements
 
 from flumotion.common import log
 
-from flumotion.transcoder import utils, fileutils
+from flumotion.inhouse import utils, fileutils
+from flumotion.inhouse.utils import digestParameters
+
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.utils import digestParameters
 from flumotion.transcoder.admin.errors import PropertiesError
 from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
 from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin

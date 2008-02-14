@@ -19,11 +19,13 @@ import optparse
 
 from twisted.internet import reactor
 
-from flumotion.common import common, errors
+from flumotion.common import common
 from flumotion.configure import configure
 
-from flumotion.transcoder import inifile, log, defer, constants
-from flumotion.transcoder import utils, fileutils
+from flumotion.inhouse import errors, inifile, log, defer
+from flumotion.inhouse import utils, fileutils
+
+from flumotion.transcoder import constants
 from flumotion.transcoder.admin import adminconfig, adminconsts
 from flumotion.transcoder.admin import admin, notifier
 

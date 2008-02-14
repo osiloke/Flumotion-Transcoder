@@ -12,7 +12,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder import log
+from flumotion.inhouse import log
 
 from flumotion.transcoder.admin.datasource import datasource
 

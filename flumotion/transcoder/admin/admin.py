@@ -16,7 +16,8 @@ from twisted.internet import reactor
 from flumotion.common import messages
 from flumotion.common.enum import EnumClass
 
-from flumotion.transcoder import log, defer, utils
+from flumotion.inhouse import log, defer, utils
+
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts

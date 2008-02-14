@@ -12,6 +12,8 @@
 
 # Headers in this file shall remain intact.
 
+from flumotion.inhouse.errors import TimeoutError
+
 from flumotion.transcoder.errors import TranscoderError
 
 
@@ -21,6 +23,22 @@ class StoreError(TranscoderError):
 
 
 class PropertiesError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class OperationTimedOutError(TimeoutError):
+    """
+    An asynchronous operation timed out.
+    """
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
+class OperationAbortedError(TranscoderError):
+    """
+    An asynchronous operation couldn't be done.
+    """
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)
 
