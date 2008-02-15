@@ -22,54 +22,38 @@ from flumotion.inhouse.errors import TimeoutError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.taskmanager import TaskManager
 from flumotion.transcoder.admin.monbalancer import MonitorBalancer
-from flumotion.transcoder.admin.proxies.workerset import WorkerSetListener
-from flumotion.transcoder.admin.proxies.monitorset import MonitorSetListener
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
-
-#FIXME: Better handling of listener subclassing,
-# Right now, Monitoring have to inherrit from MonitorListener,
-# even if TaskManager already inherrit from ComponentListener,
-# and it only use the ComponentListener handlers.
-
-class IMonitoringListener(Interface):
-    def onMonitoringTaskAdded(self, takser, task):
-        pass
-    
-    def onMonitoringTaskRemoved(self, tasker, task):
-        pass
-
-    
-class MonitoringListener(object):
-    
-    implements(IMonitoringListener)
-
-    def onMonitoringTaskAdded(self, takser, task):
-        pass
-    
-    def onMonitoringTaskRemoved(self, tasker, task):
-        pass
 
 
-class Monitoring(TaskManager, WorkerSetListener, 
-                 MonitorSetListener, MonitorListener):
+class Monitoring(TaskManager):
     
     logCategory = adminconsts.MONITORING_LOG_CATEGORY
     
     def __init__(self, workerset, monitorset):
-        TaskManager.__init__(self, IMonitoringListener)
+        TaskManager.__init__(self)
         self._workers = workerset
         self._monitors = monitorset
         self._balancer = MonitorBalancer()
+        # Registering Events
+        self._register("task-added")
+        self._register("task-removed")
         
 
     ## Public Method ##
     
     def initialize(self):
         self.log("Initializing Monitoring Manager")
-        self._workers.addListener(self)
-        self._monitors.addListener(self)
-        self._workers.syncListener(self)
-        self._monitors.syncListener(self)
+   
+
+        self._workers.connect("worker-added",
+                              self, self.onWorkerAddedToSet)
+        self._workers.connect("worker-removed",
+                              self, self.onWorkerRemovedFromSet)
+        self._monitors.connect("monitor-added",
+                               self, self.onMonitorAddedToSet)
+        self._monitors.connect("monitor-removed",
+                               self, self.onMonitorRemovedFromSet)
+        self._workers.update(self)
+        self._monitors.update(self)
         return TaskManager.initialize(self)
 
     
@@ -100,16 +84,16 @@ class Monitoring(TaskManager, WorkerSetListener,
         if self.isStarted():
             self._balancer.addTask(task)
             self._balancer.balance()
-        self._fireEvent(task, "MonitoringTaskAdded")
+        self.emit("task-added", task)
     
     def _onTaskRemoved(self, task):
         if self.isStarted():
             self._balancer.removeTask(task)
             self._balancer.balance()
-        self._fireEvent(task, "MonitoringTaskRemoved")
+        self.emit("task-removed", task)
 
             
-    ## IWorkerSetListener Overrided Methods ##
+    ## WorkerSet Event Listeners ##
     
     def onWorkerAddedToSet(self, workerset, worker):
         self.log("Worker '%s' added to monitoring", worker.getLabel())
@@ -122,7 +106,7 @@ class Monitoring(TaskManager, WorkerSetListener,
         self._balancer.balance()
 
 
-    ## IMonitorSetListener Overrided Methods ##
+    ## MonitorSet Event Listeners ##
     
     def onMonitorAddedToSet(self, monitorset, monitor):
         self.log("Monitor '%s' added to monitoring", monitor.getLabel())
@@ -137,9 +121,9 @@ class Monitoring(TaskManager, WorkerSetListener,
 
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
+    def update(self, listener):
         for t in self._tasks.itervalues():
-            self._fireEventTo(t, listener, "MonitoringTaskAdded")
+            self.emitTo("task-added", listener, t)
 
 
     ## Private Methods ##

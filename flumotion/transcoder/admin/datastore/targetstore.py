@@ -20,15 +20,6 @@ from flumotion.transcoder.admin.datastore.configstore import ThumbnailsConfig
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
-class ITargetStoreListener(Interface):    
-    pass
-
-
-class TargetStoreListener(object):    
-    
-    implements(ITargetStoreListener)
-
-
 class TargetStore(BaseStore):
 
     # MetaStore metaclass will create getters for these properties
@@ -50,8 +41,7 @@ class TargetStore(BaseStore):
 
 
     def __init__(self, logger, parent, dataSource, targetData):
-        BaseStore.__init__(self, logger, parent, dataSource, targetData,
-                           ITargetStoreListener)
+        BaseStore.__init__(self, logger, parent, dataSource, targetData)
         self._config = None
         
 

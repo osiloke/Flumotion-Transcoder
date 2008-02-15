@@ -27,15 +27,14 @@ from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 
 
-class TaskManager(log.Loggable, EventSource, ComponentListener):
+class TaskManager(log.Loggable, EventSource):
     
     logCategory = "" # Should be set by child classes
     
-    def __init__(self, interfaces):
-        EventSource.__init__(self, interfaces)
+    def __init__(self):
+        EventSource.__init__(self)
         self._identifiers = {} # {identifiers: ComponentProperties}
         self._tasks = {} # {ComponentProperties: IAdminTask}
         self._taskless = {} # {ComponentProxy: None}
@@ -226,7 +225,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         pass
 
 
-    ## IComponentListener Overrided Methods ##
+    ## Component Event Listeners ##
     
     def onComponentMoodChanged(self, component, mood):
         if not self.isStarted(): return
@@ -296,8 +295,8 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
         self.log("Task manager '%s' takes apart taskless component '%s'",
                  self.getLabel(), component.getName())
         self._taskless[component] = None
-        component.addListener(self)
-        component.syncListener(self)
+        component.connect("mood-changed", self, self.onComponentMoodChanged)
+        component.update(self)
         self._onTasklessComponentAdded(component)
     
     def __releaseTasklessComponent(self, component):
@@ -305,7 +304,7 @@ class TaskManager(log.Loggable, EventSource, ComponentListener):
                  self.getLabel(), component.getName())
         assert component in self._taskless
         del self._taskless[component]
-        component.removeListener(self)
+        component.disconnect("mood-changed", self)
         self._onTasklessComponentRemoved(component)
     
     def __cbAddComponent(self, props, component):

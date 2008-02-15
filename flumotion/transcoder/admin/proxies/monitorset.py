@@ -18,38 +18,21 @@ from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
 
 
-class IMonitorSetListener(Interface):
-    def onMonitorAddedToSet(self, monitorset, monitor):
-        pass
-    
-    def onMonitorRemovedFromSet(self, monitorset, monitor):
-        pass
-
-
-class MonitorSetListener(object):
-    
-    implements(IMonitorSetListener)
-    
-    def onMonitorAddedToSet(self, monitorset, monitor):
-        pass
-    
-    def onMonitorRemovedFromSet(self, monitorset, monitor):
-        pass
-
-
 class MonitorSet(BaseComponentSet):
     
     def __init__(self, mgrset):
-        BaseComponentSet.__init__(self, mgrset,
-                                  IMonitorSetListener)
+        BaseComponentSet.__init__(self, mgrset)
+        # Registering Events
+        self._register("monitor-added")
+        self._register("monitor-removed")
         
     ## Public Method ##
     
 
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
-        self._syncProxies("_components", listener, "MonitorAddedToSet")
+    def update(self, listener):
+        self._updateProxies("_components", listener, "monitor-added")
 
     def _doAcceptComponent(self, component):
         if not isinstance(component, MonitorProxy):
@@ -60,12 +43,10 @@ class MonitorSet(BaseComponentSet):
         BaseComponentSet._doAddComponent(self, component)
         self.debug("Monitor component '%s' added to set",
                    component.getLabel())
-        self._fireEvent(component, "MonitorAddedToSet")
+        self.emit("monitor-added", component)
         
     def _doRemoveComponent(self, component):
         BaseComponentSet._doRemoveComponent(self, component)
         self.debug("Monitor component '%s' removed from set",
                    component.getLabel())
-        self._fireEvent(component, "MonitorRemovedFromSet")
-
-    
+        self.emit("monitor-removed", component)

@@ -25,36 +25,8 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.document import FileDocument
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
-from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
-
-
-
-class ITranscoderListener(IComponentListener):
-    def onTranscoderProgress(self, transcoder, percent):
-        pass
-    
-    def onTranscoderStatusChanged(self, transcoder, status):
-        pass
-    
-    def onTranscoderJobStateChanged(self, transcoder, jobState):
-        pass
-
-
-class TranscoderListener(ComponentListener):
-    
-    implements(ITranscoderListener)
-    
-    def onTranscoderProgress(self, transcoder, percent):
-        pass
-    
-    def onTranscoderStatusChanged(self, transcoder, status):
-        pass
-
-    def onTranscoderJobStateChanged(self, transcoder, jobState):
-        pass
 
 
 class TranscoderProxy(ComponentProxy):
@@ -76,10 +48,13 @@ class TranscoderProxy(ComponentProxy):
         ComponentProxy.__init__(self, logger, parent, 
                                 identifier, manager,
                                 componentContext, 
-                                componentState, domain,
-                                ITranscoderListener)
+                                componentState, domain)
         self._reportPath = AssignWaiters("Transcoder report")
-    
+        # Registering Events
+        self._register("progress")
+        self._register("status-changed")
+        self._register("job-state-changed")
+
         
     ## Public Methods ##
     
@@ -200,13 +175,13 @@ class TranscoderProxy(ComponentProxy):
     ## UI State Handlers Methods ##
     
     def _onTranscoderProgress(self, percent):
-        self._fireEvent(percent, "TranscoderProgress")
+        self.emit("progress", percent)
 
     def _onTranscoderStatusChanged(self, status):
-        self._fireEvent(status, "TranscoderStatusChanged")
+        self.emit("status-changed", status)
 
     def _onTranscoderJobStateChanged(self, state):
-        self._fireEvent(state, "TranscoderJobStateChanged")
+        self.emit("job-state-changed", state)
 
     def _onTranscodingReport(self, reportVirtPath):
         self._reportPath.setValue(reportVirtPath or None)

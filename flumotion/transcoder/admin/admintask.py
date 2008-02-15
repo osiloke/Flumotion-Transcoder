@@ -114,9 +114,9 @@ class AdminTask(LoggerProxy, EventSource):
     UISTATE_TIMEOUT = adminconsts.TASK_UISTATE_TIMEOUT
     MAX_RETRIES = 0
     
-    def __init__(self, logger, label, properties, interface):
+    def __init__(self, logger, label, properties):
         LoggerProxy.__init__(self, logger)
-        EventSource.__init__(self, interface)
+        EventSource.__init__(self)
         self._worker = None # WorkerProxy
         self._state = TaskStateEnum.stopped
         self._startWaiters = PassiveWaiters("Admin Task Startup/Resuming")

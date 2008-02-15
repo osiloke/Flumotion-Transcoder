@@ -1,3 +1,8 @@
+2008-02-15  Sebastien Merle  <sebastien@fluendo.com>
+
+	Changed the clumsy Interface-based event handling
+	for a gobject-like connect/emit implementation.
+
 2008-02-14  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filetranscoder.py:

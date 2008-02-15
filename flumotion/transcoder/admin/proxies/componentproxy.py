@@ -54,45 +54,13 @@ def instantiate(logger, parent, identifier, manager,
                componentContext, state, domain, *args, **kwargs)
 
 
-class IComponentListener(Interface):
-    def onComponentMoodChanged(self, component, mood):
-        pass
-    
-    def onComponentRunning(self, component, worker):
-        pass
-    
-    def onComponentOrphaned(self, component, worker):
-        pass
-
-    def onComponentMessage(self, component, message):
-        pass
-
-
-class ComponentListener(object):
-    
-    implements(IComponentListener)
-    
-    def onComponentMoodChanged(self, component, mood):
-        pass
-    
-    def onComponentRunning(self, component, worker):
-        pass
-    
-    def onComponentOrphaned(self, component, worker):
-        pass
-
-    def onComponentMessage(self, component, message):
-        pass
-
-
 class BaseComponentProxy(FlumotionProxy):
 
     properties_factory = GenericComponentProperties
 
     def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain, listenerInterfaces):
-        FlumotionProxy.__init__(self, logger, parent, identifier, 
-                                manager, listenerInterfaces)
+                 componentContext, componentState, domain):
+        FlumotionProxy.__init__(self, logger, parent, identifier, manager)
         self._context = componentContext
         self._domain = domain
         self._componentState = componentState
@@ -104,10 +72,11 @@ class BaseComponentProxy(FlumotionProxy):
         self._mood = ValueWaiters("Component Mood")
         self._properties = AssignWaiters("Component Properties")
         self._messageIds = {} # {identifier: None}
-        
+        # Registering Events
+        self._register("mood-changed")
+        self._register("running")
+        self._register("orphaned")
 
-    def addListener(self, listener):
-        FlumotionProxy.addListener(self, listener)
         
     ## Public Methods ##
     
@@ -265,12 +234,12 @@ class BaseComponentProxy(FlumotionProxy):
 
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
+    def update(self, listener):
         assert self._componentState, "Component has been removed"
         if self.isActive():
-            self._fireEventTo(self._mood.getValue(), listener, "ComponentMoodChanged")
+            self.emitTo("mood-changed", listener, self._mood.getValue())
             if self._worker:
-                self._fireEventTo(self._worker, listener, "ComponentRunning")
+                self.emitTo("running", listener, self._worker)
             if self._hasUIState():
                 self._doBroadcastUIState(self._getUIState())
 
@@ -412,7 +381,7 @@ class BaseComponentProxy(FlumotionProxy):
         self._worker = worker
         self._onComponentRunning(worker)
         if self.isActive():
-            self._fireEvent(worker, "ComponentRunning")
+            self.emit("running", worker)
         
     def __ebGetActiveWorkerFail(self, failure, name):
         currName = self._componentState.get('workerName')
@@ -447,7 +416,7 @@ class BaseComponentProxy(FlumotionProxy):
             self.__discardUIState()
             self._onComponentOrphaned(oldWorker)
             if self.isActive():
-                self._fireEvent(oldWorker, "ComponentOrphaned")
+                self.emit("orphaned", oldWorker)
         if workerName:
             timeout = adminconsts.WAIT_WORKER_TIMEOUT
             d = self._manager.waitWorkerByName(workerName, timeout)
@@ -460,7 +429,7 @@ class BaseComponentProxy(FlumotionProxy):
         mood = moods.get(moodnum)
         if mood != self._mood.getValue():
             self._mood.setValue(mood)
-            self._fireEvent(mood, "ComponentMoodChanged")
+            self.emit("mood-changed", mood)
 
     def __discardUIState(self):
         self._retrievingUIState = False
@@ -635,17 +604,17 @@ class DefaultComponentProxy(BaseComponentProxy):
     def __init__(self, logger, parent, identifier, manager, 
                  componentContext, componentState, domain):
         BaseComponentProxy.__init__(self, logger, parent, identifier, manager,
-                                    componentContext, componentState, 
-                                    domain, IComponentListener)
+                                    componentContext, componentState, domain)
 
 
 class ComponentProxy(BaseComponentProxy):
     
     def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain, listenerInterfaces):
+                 componentContext, componentState, domain):
         BaseComponentProxy.__init__(self, logger, parent, identifier, manager,
-                                    componentContext, componentState, domain, 
-                                    listenerInterfaces)
+                                    componentContext, componentState, domain)
+        # Registering Events
+        self._register("message")
 
         
     ## Virtual Methods ##
@@ -681,4 +650,4 @@ class ComponentProxy(BaseComponentProxy):
         uiState.removeListener(self)
 
     def _onComponentMessage(self, message):
-        self._fireEvent(message, "ComponentMessage")
+        self.emit("message", message)

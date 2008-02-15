@@ -18,38 +18,22 @@ from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
 
 
-class ITranscoderSetListener(Interface):
-    def onTranscoderAddedToSet(self, monitorset, monitor):
-        pass
-    
-    def onTranscoderRemovedFromSet(self, monitorset, monitor):
-        pass
-
-
-class TranscoderSetListener(object):
-    
-    implements(ITranscoderSetListener)
-    
-    def onTranscoderAddedToSet(self, monitorset, monitor):
-        pass
-    
-    def onTranscoderRemovedFromSet(self, monitorset, monitor):
-        pass
-
-
 class TranscoderSet(BaseComponentSet):
     
     def __init__(self, mgrset):
-        BaseComponentSet.__init__(self, mgrset,
-                                  ITranscoderSetListener)
+        BaseComponentSet.__init__(self, mgrset)
+        # Registering Events
+        self._register("transcoder-added")
+        self._register("transcoder-removed")
+
         
     ## Public Method ##
     
 
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
-        self._syncProxies("_components", listener, "TranscoderAddedToSet")
+    def update(self, listener):
+        self._updateProxies("_components", listener, "transcoder-added")
 
     def _doAcceptComponent(self, component):
         if not isinstance(component, TranscoderProxy):
@@ -60,12 +44,12 @@ class TranscoderSet(BaseComponentSet):
         BaseComponentSet._doAddComponent(self, component)
         self.debug("Transcoder component '%s' added to set",
                    component.getLabel())
-        self._fireEvent(component, "TranscoderAddedToSet")
+        self.emit("transcoder-added", component)
         
     def _doRemoveComponent(self, component):
         BaseComponentSet._doRemoveComponent(self, component)
         self.debug("Transcoder component '%s' removed from set",
                    component.getLabel())
-        self._fireEvent(component, "TranscoderRemovedFromSet")
+        self.emit("transcoder-removed", component)
 
     

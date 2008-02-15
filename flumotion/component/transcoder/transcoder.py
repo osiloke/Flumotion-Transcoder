@@ -23,6 +23,7 @@ from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse.errors import FlumotionError
 
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder import compconsts

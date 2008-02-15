@@ -19,34 +19,7 @@ from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxies.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.admin.proxies.componentproxy import IComponentListener
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
-
-
-class IMonitorListener(IComponentListener):
-    def onMonitorFileAdded(self, monitor, virtDir, file, state):
-        pass
-    
-    def onMonitorFileRemoved(self, monitor, virtDir, file, state):
-        pass
-    
-    def onMonitorFileChanged(self, monitor, virtDir, file, state):
-        pass
-
-
-class MonitorListener(ComponentListener):
-    
-    implements(IMonitorListener)
-    
-    def onMonitorFileAdded(self, monitor, virtDir, file, state):
-        pass
-    
-    def onMonitorFileRemoved(self, monitor, virtDir, file, state):
-        pass
-    
-    def onMonitorFileChanged(self, monitor, virtDir, file, state):
-        pass
 
 
 class MonitorProxy(ComponentProxy):
@@ -66,12 +39,15 @@ class MonitorProxy(ComponentProxy):
         ComponentProxy.__init__(self, logger, parent,  
                                 identifier, manager,
                                 componentContext, 
-                                componentState, domain,
-                                IMonitorListener)
+                                componentState, domain)
         self._alreadyAdded = {} # {file: None}
         self._stateUpdateDelta = {}
         self._stateUpdateDelay = None
         self._stateUpdateResult = None
+        # Registering Events
+        self._register("file-added")
+        self._register("file-removed")
+        self._register("file-changed")
 
         
     ## Public Methods ##
@@ -106,8 +82,7 @@ class MonitorProxy(ComponentProxy):
         if pending:
             for file, statenum in pending.iteritems():
                 virtBase, relFile = file
-                self._fireEvent((virtBase, relFile, statenum),
-                                "MonitorFileAdded")
+                self.emit("file-added", virtBase, relFile, statenum)
     
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
@@ -141,19 +116,17 @@ class MonitorProxy(ComponentProxy):
     
     def _onMonitorSetFile(self, virtBase, relFile, state):
         ident = (virtBase, relFile)
-        args = (virtBase, relFile, state)
         if ident in self._alreadyAdded:
-            self._fireEvent(args, "MonitorFileChanged")
+            self.emit("file-changed", virtBase, relFile, state)
         else:
             self._alreadyAdded[ident] = None
-            self._fireEvent(args, "MonitorFileAdded")
+            self.emit("file-added", virtBase, relFile, state)
             
     def _onMonitorDelFile(self, virtBase, relFile, state):
         ident = (virtBase, relFile)
-        args = (virtBase, relFile, state)
         if ident in self._alreadyAdded:
             del self._alreadyAdded[ident]
-            self._fireEvent(args, "MonitorFileRemoved")
+            self.emit("file-removed", virtBase, relFile, state)
 
 
     ## Overriden Methods ##

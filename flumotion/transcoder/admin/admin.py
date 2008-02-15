@@ -26,38 +26,23 @@ from flumotion.transcoder.admin.janitor import Janitor
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admincontext import AdminContext
 from flumotion.transcoder.admin.context.transcontext import TranscodingContext
-from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
-from flumotion.transcoder.admin.proxies.componentset import ComponentSet, ComponentSetListener
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet
+from flumotion.transcoder.admin.proxies.componentset import ComponentSet
 from flumotion.transcoder.admin.proxies.workerset import WorkerSet
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
 from flumotion.transcoder.admin.proxies.monitorset import MonitorSet
-from flumotion.transcoder.admin.datastore.adminstore import AdminStore, AdminStoreListener
-from flumotion.transcoder.admin.datastore.customerstore import CustomerStore, CustomerStoreListener
-from flumotion.transcoder.admin.datastore.profilestore import ProfileStore, ProfileStoreListener
-from flumotion.transcoder.admin.datastore.targetstore import TargetStore, TargetStoreListener
-from flumotion.transcoder.admin.monitoring import Monitoring, MonitoringListener
-from flumotion.transcoder.admin.montask import MonitoringTask, MonitoringTaskListener
+from flumotion.transcoder.admin.datastore.adminstore import AdminStore
+from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
+from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
+from flumotion.transcoder.admin.datastore.targetstore import TargetStore
+from flumotion.transcoder.admin.monitoring import Monitoring
+from flumotion.transcoder.admin.montask import MonitoringTask
 from flumotion.transcoder.admin.transcoding import Transcoding
-from flumotion.transcoder.admin.scheduler import Scheduler, SchedulerListener
+from flumotion.transcoder.admin.scheduler import Scheduler
 from flumotion.transcoder.admin.notifier import Notifier, notifyEmergency, notifyDebug
 
-# Should not be necessary, but right now it is
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
-class TranscoderAdmin(log.Loggable,
-                      ManagerSetListener,
-                      ComponentSetListener,
-                      #ComponentListener,
-                      TranscoderListener,
-                      MonitorListener,
-                      MonitoringListener,
-                      MonitoringTaskListener,
-                      SchedulerListener,
-                      AdminStoreListener,
-                      CustomerStoreListener,
-                      ProfileStoreListener):
+class TranscoderAdmin(log.Loggable):
     
     logCategory = adminconsts.ADMIN_LOG_CATEGORY
     
@@ -107,21 +92,28 @@ class TranscoderAdmin(log.Loggable,
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
-        self._store.addListener(self)
-        self._managers.addListener(self)
-        self._components.addListener(self)
-        self._scheduler.addListener(self)
-        self._monitoring.addListener(self)
-        self._store.syncListener(self)
-        self._managers.syncListener(self)
-        self._scheduler.syncListener(self)
-        self._monitoring.syncListener(self)
+        self._store.connect("customer-added", self, self.onCustomerAdded)
+        self._store.connect("customer-removed", self, self.onCustomerRemoved)
+        self._managers.connect("attached", self, self.onAttached)
+        self._managers.connect("detached", self, self.onDetached)
+        self._components.connect("component-added", self, self.onComponentAddedToSet)
+        self._components.connect("component-removed", self, self.onComponentRemovedFromSet)
+        self._scheduler.connect("profile-queued", self, self.onProfileQueued)
+        self._scheduler.connect("transcoding-started", self, self.onTranscodingStarted)
+        self._scheduler.connect("transcoding-failed", self, self.onTranscodingFailed)
+        self._scheduler.connect("transcoding-done", self, self.onTranscodingDone)
+        self._monitoring.connect("task-added", self, self.onMonitoringTaskAdded)
+        self._monitoring.connect("task-removed", self, self.onMonitoringTaskRemoved)
+        self._store.update(self)
+        self._managers.update(self)
+        self._scheduler.update(self)
+        self._monitoring.update(self)
         # fire the initialization
         d.callback(None)
         return d
 
 
-    ## IManagerSetListener Overriden Methods ##
+    ## ManagerSet Event Listeners ##
     
     def onDetached(self, managerset):
         if self._state == TaskStateEnum.started:
@@ -137,16 +129,16 @@ class TranscoderAdmin(log.Loggable,
             self.__resume()
 
 
-    ## IComponentSetListner Overriden Methods ##
+    ## ComponentSet Event Listners ##
 
     def onComponentAddedToSet(self, componentset, component):
-        component.addListener(self)
+        component.connect("message", self, self.onComponentMessage)
     
     def onComponentRemovedFromSet(self, componentset, component):
-        component.removeListener(self)
+        component.disconnect("message", self)
 
 
-    ## IComponentListener Overriden Methods ##
+    ## Component Event Listeners ##
 
     def onComponentMessage(self, component, message):
         if self._diagnostician.filterComponentMessage(message):
@@ -165,12 +157,13 @@ class TranscoderAdmin(log.Loggable,
         notifyDebug(msg, info=text, debug=debug, documents=diagnostics)
 
 
-    ## IAdminStoreListener Overriden Methods ##
+    ## Store Event Listeners ##
     
     def onCustomerAdded(self, admin, customer):
         self.debug("Customer '%s' Added", customer.getLabel())
-        customer.addListener(self)
-        customer.syncListener(self)
+        customer.connect("profile-added", self, self.onProfileAdded)
+        customer.connect("profile-removed", self, self.onProfileRemoved)
+        customer.update(self)
         custCtx = self._transCtx.getCustomerContext(customer)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
@@ -178,24 +171,27 @@ class TranscoderAdmin(log.Loggable,
         
     def onCustomerRemoved(self, admin, customer):
         self.debug("Customer '%s' Removed", customer.getLabel())
-        customer.removeListener(self)
+        customer.disconnect("profile-added", self)
+        customer.disconnect("profile-removed", self)
         custCtx = self._transCtx.getCustomerContext(customer)
         self._monitoring.removeTask(custCtx.getIdentifier())
         
         
-    ## ICustomerStoreListener Overriden Methods ##
+    ## CustomerStore Event Listeners ##
     
     def onProfileAdded(self, customer, profile):
         self.debug("Profile '%s' Added", profile.getLabel())
-        profile.addListener(self)
-        profile.syncListener(self)
+        profile.connect("target-added", self, self.onTargetAdded)
+        profile.connect("target-removed", self, self.onTargetRemoved)
+        profile.update(self)
         
     def onProfileRemoved(self, customer, profile):
         self.debug("Profile '%s' Removed", profile.getLabel())
-        profile.removeListener(self)
+        profile.disconnect("target-added", self)
+        profile.disconnect("target-removed", self)
         
     
-    ## IProfileStoreListener Overriden Methods ##
+    ## ProfileStore Event Listeners ##
     
     def onTargetAdded(self, profile, target):
         self.debug("Target '%s' Added", target.getLabel())
@@ -204,19 +200,25 @@ class TranscoderAdmin(log.Loggable,
         self.debug("Target '%s' Removed", target.getLabel())
 
 
-    ## IMonitoringLister Overriden Methods ##
+    ## Monitoring Event Listeners ##
     
     def onMonitoringTaskAdded(self, takser, task):
         self.debug("Monitoring task '%s' added", task.getLabel())
-        task.addListener(self)
-        task.syncListener(self)
+        task.connect("file-added", self, self.onMonitoredFileAdded)
+        task.connect("file-state-changed", self, self.onMonitoredFileStateChanged)
+        task.connect("file-removed", self, self.onMonitoredFileRemoved)
+        task.connect("fail-to-run", self, self.onFailToRunOnWorker)
+        task.update(self)
     
     def onMonitoringTaskRemoved(self, tasker, task):
         self.debug("Monitoring task '%s' removed", task.getLabel())
-        task.removeListener(self)
+        task.disconnect("file-added", self)
+        task.disconnect("file-state-changed", self)
+        task.disconnect("file-removed", self)
+        task.disconnect("fail-to-run", self)
 
 
-    ## IMonitoringTaskLister Overriden Methods ##
+    ## MonitoringTask Event Listeners ##
     
     def onMonitoredFileAdded(self, montask, profileContext, state):
         self.log("Monitoring task '%s' added profile '%s'",
@@ -240,7 +242,7 @@ class TranscoderAdmin(log.Loggable,
         notifyEmergency(msg)
         
     
-    ## ISchedulerListener Overriden Methods ##
+    ## Scheduler Event Listeners ##
     
     def onProfileQueued(self, scheduler, profileContext):
         self.__setInputFileState(profileContext,
@@ -250,7 +252,7 @@ class TranscoderAdmin(log.Loggable,
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.transcoding)
     
-    def onTranscodingFail(self, sheduler, task):
+    def onTranscodingFailed(self, sheduler, task):
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.failed)
         if not task.isAcknowledged():

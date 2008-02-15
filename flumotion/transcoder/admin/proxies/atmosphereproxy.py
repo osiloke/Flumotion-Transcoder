@@ -22,30 +22,8 @@ def instantiate(logger, parent, identifier, manager,
                            atmosphereContext, state, *args, **kwargs)
 
 
-class IAtmosphereListener(Interface):
-
-    def onAtmosphereComponentAdded(self, atmosphere, component):
-        pass
-    
-    def onAtmosphereComponentRemoved(self, atmosphere, component):
-        pass
-
-
-class AtmosphereListener(object):
-    
-    implements(IAtmosphereListener)
-    
-    def onAtmosphereComponentAdded(self, atmosphere, component):
-        pass
-    
-    def onAtmosphereComponentRemoved(self, atmosphere, component):
-        pass
-
-
 class AtmosphereProxy(groupproxy.ComponentGroupProxy):
     
-    _componentAddedEvent = "AtmosphereComponentAdded"
-    _componentRemovedEvent = "AtmosphereComponentRemoved"
     _componentDomain = ComponentDomainEnum.atmosphere
     
     def __init__(self, logger, parent, identifier, manager, 
@@ -53,6 +31,5 @@ class AtmosphereProxy(groupproxy.ComponentGroupProxy):
         groupproxy.ComponentGroupProxy.__init__(self, logger, parent, 
                                                 identifier, manager,
                                                 atmosphereContext,
-                                                atmosphereState,
-                                                IAtmosphereListener)
+                                                atmosphereState)
 

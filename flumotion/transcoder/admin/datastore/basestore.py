@@ -82,10 +82,9 @@ class BaseStore(AdminElement):
     
     __metaclass__ = MetaStore
     
-    def __init__(self, logger, parent, dataSource, data, listenerInterface):
+    def __init__(self, logger, parent, dataSource, data):
         assert datasource.IDataSource.providedBy(dataSource)
-        AdminElement.__init__(self, logger, parent, 
-                                           listenerInterface)
+        AdminElement.__init__(self, logger, parent)
         self._data = data
         self._dataSource = dataSource
         self._notifications = {} # {NotificationTriggerEnum: {identifier: BaseNotification}}

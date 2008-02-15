@@ -18,25 +18,21 @@ from flumotion.inhouse import log, defer, utils
 from flumotion.transcoder.admin.errors import OperationTimedOutError
 from flumotion.transcoder.admin.errors import ComponentRejectedError
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
-from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
-from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
-from flumotion.transcoder.admin.proxies.flowproxy import FlowListener
-from flumotion.transcoder.admin.proxies.atmosphereproxy import AtmosphereListener
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet
 
 
-class ComponentSetSkeleton(RootFlumotionProxy,
-                           ManagerSetListener,
-                           ManagerListener,
-                           FlowListener,
-                           AtmosphereListener):
+class ComponentSetSkeleton(RootFlumotionProxy):
     
-    def __init__(self, mgrset, listenerInterface):
+    def __init__(self, mgrset):
         assert isinstance(mgrset, ManagerSet)
-        RootFlumotionProxy.__init__(self, mgrset, listenerInterface)
+        RootFlumotionProxy.__init__(self, mgrset)
         self._managers = mgrset
-        self._managers.addListener(self)
         self._rejecteds = {} # {Identifier: ComponentProxy}
         self._compWaiters = {} # {Identifier: {Deferred: IDelayedCall}}
+        self._managers.connect("manager-added",
+                               self, self.onManagerAddedToSet)
+        self._managers.connect("manager-removed",
+                               self, self.onManagerRemovedFromSet)
         
         
     ## Public Methods ##
@@ -113,34 +109,52 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         raise NotImplementedError()
 
 
-    ## managerset.IManagerSetListener Implementation ##
+    ## ManagerSet Event Listeners ##
 
     def onManagerAddedToSet(self, mgrset, manager):
-        manager.addListener(self)
-        manager.syncListener(self)
+        manager.connect("atmosphere-set",
+                        self, self.onAtmosphereSet)
+        manager.connect("atmosphere-unset",
+                        self, self.onAtmosphereUnset)
+        manager.connect("flow-added",
+                        self, self.onFlowAdded)
+        manager.connect("flow-removed",
+                        self, self.onFlowRemoved)
+        manager.update(self)
         
     def onManagerRemovedFromSet(self, mgrset, manager):
-        manager.removeListener(self)
+        manager.disconnect("atmosphere-set", self)
+        manager.disconnect("atmosphere-unset", self)
+        manager.disconnect("flow-added", self)
+        manager.disconnect("flow-removed", self)
 
 
-    ## managerproxy.IManagerListener Implementation ##
+    ## Manager Event Listeners ##
     
     def onAtmosphereSet(self, manager, atmosphere):
-        atmosphere.addListener(self)
-        atmosphere.syncListener(self)
+        atmosphere.connect("component-added",
+                           self, self.onAtmosphereComponentAdded)
+        atmosphere.connect("component-removed",
+                           self, self.onAtmosphereComponentRemoved)
+        atmosphere.update(self)
     
     def onAtmosphereUnset(self, manager, atmosphere):
-        atmosphere.removeListener(self)
+        atmosphere.disconnect("component-added", self)
+        atmosphere.disconnect("component-removed", self)
     
     def onFlowAdded(self, manager, flow):
-        flow.addListener(self)
-        flow.syncListener(self)
+        flow.connect("component-added",
+                           self, self.onFlowComponentAdded)
+        flow.connect("component-removed",
+                           self, self.onFlowComponentRemoved)
+        flow.update(self)
     
     def onFlowRemoved(self, manager, flow):
-        flow.removeListener(self)
+        flow.disconnect("component-added", self)
+        flow.disconnect("component-removed", self)
 
 
-    ### flowproxy.IFlowListener Implementation ###
+    ### Flow Event Listeners ###
 
     def onFlowComponentAdded(self, flow, component):
         self.__addComponent(component)
@@ -149,7 +163,7 @@ class ComponentSetSkeleton(RootFlumotionProxy,
         self.__removeComponent(component)
     
     
-    ### atmosphereproxy.IAtmosphereListener Implementation ###
+    ### Atmosphere Event Listeners ###
     
     def onAtmosphereComponentAdded(self, atmosphere, component):
         self.__addComponent(component)
@@ -245,8 +259,8 @@ class ComponentSetSkeleton(RootFlumotionProxy,
     
 class BaseComponentSet(ComponentSetSkeleton):
     
-    def __init__(self, mgrset, listenerInterface):
-        ComponentSetSkeleton.__init__(self, mgrset, listenerInterface)
+    def __init__(self, mgrset):
+        ComponentSetSkeleton.__init__(self, mgrset)
         self._components = {} # {Identifier: ComponentProxy}
 
     ## Overriden Public Methods ##
@@ -285,42 +299,24 @@ class BaseComponentSet(ComponentSetSkeleton):
         del self._components[identifier]
 
     
-
-class IComponentSetListener(Interface):
-    def onComponentAddedToSet(self, componentset, component):
-        pass
-    
-    def onComponentRemovedFromSet(self, componentset, component):
-        pass
-
-
-class ComponentSetListener(object):
-    
-    implements(IComponentSetListener)
-    
-    def onComponentAddedToSet(self, componentset, component):
-        pass
-    
-    def onComponentRemovedFromSet(self, componentset, component):
-        pass
-
-    
 class ComponentSet(BaseComponentSet):
     
     def __init__(self, mgrset):
-        BaseComponentSet.__init__(self, mgrset, IComponentSetListener)
-        
+        BaseComponentSet.__init__(self, mgrset)
+        # Registering Events
+        self._register("component-added")
+        self._register("component-removed")
         
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
-        self._syncProxies("_components", listener, "ComponentAddedToSet")
+    def update(self, listener):
+        self._updateProxies("_components", listener, "component-added")
 
     def _doAddComponent(self, component):
         BaseComponentSet._doAddComponent(self, component)
-        self._fireEvent(component, "ComponentAddedToSet")
+        self.emit("component-added", component)
     
     def _doRemoveComponent(self, component):
         
         BaseComponentSet._doRemoveComponent(self, component)
-        self._fireEvent(component, "ComponentRemovedFromSet")
+        self.emit("component-removed", component)

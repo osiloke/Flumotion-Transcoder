@@ -20,9 +20,7 @@ from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.eventsource import EventSource
-from flumotion.transcoder.admin.transcoding import TranscodingListener
 from flumotion.transcoder.admin.transtask import TranscodingTask
-from flumotion.transcoder.admin.transtask import TranscodingTaskListener
 from flumotion.transcoder.admin.notifysubs import SourceNotificationVariables
 from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 
@@ -31,48 +29,12 @@ from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 #      higher than other customer priorities.
 
 
-
-class ISchedulerListener(Interface):
-    
-    def onProfileQueued(self, scheduler, profileContext):
-        pass
-    
-    def onTranscodingStarted(self, scheduler, task):
-        pass
-    
-    def onTranscodingFail(self, sheduler, task):
-        pass
-    
-    def onTranscodingDone(self, sheduler, task):
-        pass
-        
-
-class SchedulerListener(object):
-    
-    implements(ISchedulerListener)
-    
-    def onProfileQueued(self, scheduler, profileContext):
-        pass
-    
-    def onTranscodingStarted(self, scheduler, task):
-        pass
-    
-    def onTranscodingFail(self, sheduler, task):
-        pass
-    
-    def onTranscodingDone(self, sheduler, task):
-        pass
-
-
-class Scheduler(log.Loggable, 
-                EventSource, 
-                TranscodingListener, 
-                TranscodingTaskListener):
+class Scheduler(log.Loggable, EventSource):
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
     def __init__(self, activityStore, transCtx, notifier, transcoding, diagnostician):
-        EventSource.__init__(self, ISchedulerListener)
+        EventSource.__init__(self)
         self._transCtx = transCtx
         self._store = activityStore
         self._notifier = notifier
@@ -84,6 +46,11 @@ class Scheduler(log.Loggable,
         self._started = False
         self._paused = False
         self._startDelay = None
+        # Registering Events
+        self._register("profile-queued")
+        self._register("transcoding-started")
+        self._register("transcoding-failed")
+        self._register("transcoding-done")
         
         
     ## Public Methods ##
@@ -94,8 +61,13 @@ class Scheduler(log.Loggable,
         d = self._store.getTranscodings(states)
         d.addCallback(self.__cbRestoreTasks)
         d.addErrback(self.__ebInitializationFailed)
-        self._transcoding.addListener(self)
-        self._transcoding.syncListener(self)
+        self._transcoding.connect("task-added",
+                                  self, self.onTranscodingTaskAdded)
+        self._transcoding.connect("task-removed",
+                                  self, self.onTranscodingTaskRemoved)
+        self._transcoding.connect("slot-available",
+                                  self, self.onSlotsAvailable)
+        self._transcoding.update(self)
         return d
     
     def isStarted(self):
@@ -132,7 +104,7 @@ class Scheduler(log.Loggable,
             self.debug("Queued profile '%s'", inputPath)
             self.__queueProfile(profileContext)
             self.__startupTasks()
-            self._fireEvent(profileContext, "ProfileQueued")
+            self.emit("profile-queued", profileContext)
     
     def removeProfile(self, profileContext):
         inputPath = profileContext.getInputPath()
@@ -157,29 +129,33 @@ class Scheduler(log.Loggable,
         return defer.succeed(self)
     
     
-    ## ITranscodingLister Overriden Methods ##
+    ## ITranscoding Event Listers ##
     
     def onTranscodingTaskAdded(self, takser, task):
         self.debug("Transcoding task '%s' added", task.getLabel())
-        task.addListener(self)
-        task.syncListener(self)
+        task.connect("failed", self, self.onTranscodingFailed)
+        task.connect("done", self, self.onTranscodingDone)
+        task.connect("terminated", self, self.onTranscodingTerminated)
+        task.update(self)
     
     def onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.getLabel())
-        task.removeListener(self)
+        task.disconnect("failed", self)
+        task.disconnect("done", self)
+        task.disconnect("terminated", self)
 
     def onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)
         self.__startupTasks()
 
 
-    ## ITranscodingTaskLister Overriden Methods ##
+    ## TranscodingTask Event Listeners ##
     
     def onTranscodingFailed(self, task, transcoder):
         activity = self._activities[task]
         activity.setState(ActivityStateEnum.failed)
         activity.store()
-        self._fireEvent(task, "TranscodingFail")
+        self.emit("transcoding-failed", task)
         label = task.getLabel()
         report = transcoder and transcoder.getReport()
         docs = transcoder and transcoder.getDocuments()
@@ -205,7 +181,7 @@ class Scheduler(log.Loggable,
         activity = self._activities[task]
         activity.setState(ActivityStateEnum.done)
         activity.store()
-        self._fireEvent(task, "TranscodingDone")
+        self.emit("transcoding-done", task)
         label = task.getLabel()
         report = transcoder and transcoder.getReport()
         docs = transcoder and transcoder.getDocuments()
@@ -223,11 +199,11 @@ class Scheduler(log.Loggable,
         
     ## EventSource Overriden Methods ##
     
-    def _doSyncListener(self, listener):
+    def update(self, listener):
         for ctx in self._queue.itervalues():
-            self._fireEventTo(ctx, listener, "ProfileQueued")
+            self.emitTo("profile-queued", listener, ctx)
         for task in self._transcoding.iterTasks():
-            self._fireEventTo(task, listener, "TranscodingStarted")
+            self.emitTo("transcoding-started", listener, task)
 
         
     ## Private Methods ##
@@ -318,7 +294,7 @@ class Scheduler(log.Loggable,
         self.info("Starting transcoding task '%s'", 
                   task.getLabel())
         self._transcoding.addTask(identifier, task)
-        self._fireEvent(task, "TranscodingStarted")
+        self.emit("transcoding-started", task)
         if not activity:
             activity = self._store.newTranscoding(profCtx.getActivityLabel(),
                                                   ActivityStateEnum.started,

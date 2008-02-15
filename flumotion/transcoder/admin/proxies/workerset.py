@@ -16,37 +16,21 @@ from flumotion.inhouse import defer
 
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 from flumotion.transcoder.admin.proxies.workerproxy import WorkerProxy
-from flumotion.transcoder.admin.proxies.managerset import ManagerSet, ManagerSetListener
-from flumotion.transcoder.admin.proxies.managerproxy import ManagerListener
-
-class IWorkerSetListener(Interface):
-    def onWorkerAddedToSet(self, workerset, worker):
-        pass
-    
-    def onWorkerRemovedFromSet(self, workerset, worker):
-        pass
+from flumotion.transcoder.admin.proxies.managerset import ManagerSet
 
 
-class WorkerSetListener(object):
-    
-    implements(IWorkerSetListener)
-    
-    def onWorkerAddedToSet(self, workerset, worker):
-        pass
-    
-    def onWorkerRemovedFromSet(self, workerset, worker):
-        pass
-
-
-class WorkerSet(RootFlumotionProxy,
-                ManagerSetListener, ManagerListener):
+class WorkerSet(RootFlumotionProxy):
     
     def __init__(self, mgrset):
         assert isinstance(mgrset, ManagerSet)
-        RootFlumotionProxy.__init__(self, mgrset, IWorkerSetListener)
+        RootFlumotionProxy.__init__(self, mgrset)
         self._managers = mgrset
         self._workers = {} # {identifier: Worker}
-        self._managers.addListener(self)
+        self._managers.connect("manager-added", self, self.onManagerAddedToSet)
+        self._managers.connect("manager-removed", self, self.onManagerRemovedFromSet)
+        # Registering Events
+        self._register("worker-added")
+        self._register("worker-removed")
         
         
     ## Public Methods ##
@@ -78,18 +62,20 @@ class WorkerSet(RootFlumotionProxy,
     
     ## Overriden Methods ##
     
-    def _doSyncListener(self, listener):
-        self._syncProxies("_workers", listener, "WorkerAddedToSet")
+    def update(self, listener):
+        self._updateProxies("_workers", listener, "worker-added")
 
 
     ### managerset.IManagerSetListener Implementation ###
 
     def onManagerAddedToSet(self, mgrset, manager):
-        manager.addListener(self)
-        manager.syncListener(self)
+        manager.connect("worker-added", self, self.onWorkerAdded)
+        manager.connect("worker-removed", self, self.onWorkerRemoved)
+        manager.update(self)
         
     def onManagerRemovedFromSet(self, mgrset, manager):
-        manager.removeListener(self)
+        manager.disconnect("worker-added", self)
+        manager.disconnect("worker-removed", self)
 
 
     ### managerproxy.IManagerListener Implementation ###
@@ -98,26 +84,14 @@ class WorkerSet(RootFlumotionProxy,
         identifier = worker.getIdentifier()
         assert not (identifier in self._workers)
         self._workers[identifier] = worker
-        self._fireEvent(worker, "WorkerAddedToSet")
+        self.emit("worker-added", worker)
     
     def onWorkerRemoved(self, manager, worker):
         identifier = worker.getIdentifier()
         assert identifier in self._workers
         assert self._workers[identifier] == worker
         del self._workers[identifier]
-        self._fireEvent(worker, "WorkerRemovedFromSet")
-
-    def onAtmosphereSet(self, manager, atmosphere):
-        pass
-    
-    def onAtmosphereUnset(self, manager, atmosphere):
-        pass
-    
-    def onFlowAdded(self, manager, flow):
-        pass
-    
-    def onFlowRemoved(self, manager, flow):
-        pass
+        self.emit("worker-removed", worker)
 
     
     ## Private Methods ##

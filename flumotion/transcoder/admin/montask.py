@@ -22,67 +22,31 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask
 from flumotion.transcoder.admin.proxies.monprops import MonitorProperties
 from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
 #TODO: Schedule the component startup to prevent starting 
 #      lots of component at the same time.
 #      Because when starting lots of components, the monitors
 #      happy timeout may be triggered. For now, just using a large timeout.
 
-class IMonitoringTaskListener(Interface):
-    def onFailToRunOnWorker(self, task, worker):
-        pass
-    
-    def onMonitoringActivated(self, task, monitor):
-        pass
-    
-    def onMonitoringDeactivated(self, task, monitor):
-        pass
-    
-    def onMonitoredFileAdded(self, task, profileContext, state):
-        pass
-    
-    def onMonitoredFileStateChanged(self, task, profileContext, state):
-        pass
-    
-    def onMonitoredFileRemoved(self, task, profileContext, state):
-        pass
 
-    
-class MonitoringTaskListener(object):
-    
-    implements(IMonitoringTaskListener)
-
-    def onFailToRunOnWorker(self, task, worker):
-        pass
-
-    def onMonitoringActivated(self, task, monitor):
-        pass
-    
-    def onMonitoringDeactivated(self, task, monitor):
-        pass
-    
-    def onMonitoredFileAdded(self, task, profileContext):
-        pass
-
-    def onMonitoredFileStateChanged(self, task, profileContext, state):
-        pass
-    
-    def onMonitoredFileRemoved(self, task, profileContext):
-        pass
-    
-
-class MonitoringTask(AdminTask, MonitorListener):
+class MonitoringTask(AdminTask):
     
     MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
     
     def __init__(self, logger, customerCtx):
         AdminTask.__init__(self, logger, customerCtx.getMonitorLabel(),
-                           MonitorProperties.createFromContext(customerCtx),
-                           IMonitoringTaskListener)
+                           MonitorProperties.createFromContext(customerCtx))
         self._customerCtx = customerCtx
         self._pendingMoves = [] # [VirtualPath, VirutalPath, [str]]
         self._movingFiles = False
+        # Registering Events
+        self._register("fail-to-run")
+        self._register("monitoring-activated")
+        self._register("monitoring-deactivated")
+        self._register("file-added")
+        self._register("file-state-changed")
+        self._register("file-removed")
+        
 
     
     ## Public Methods ##
@@ -105,7 +69,7 @@ class MonitoringTask(AdminTask, MonitorListener):
             self.__asyncMovePendingFiles()        
     
 
-    ## IComponentListener Overrided Methods ##
+    ## Component Event Listeners ##
     
     def onComponentMoodChanged(self, monitor, mood):
         if not self.isStarted(): return
@@ -138,7 +102,7 @@ class MonitoringTask(AdminTask, MonitorListener):
         self._stopComponent(monitor)
 
 
-    ## IMonitorListener Overrided Methods ##
+    ## Monitor Event Listeners ##
     
     def onMonitorFileRemoved(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
@@ -149,7 +113,7 @@ class MonitoringTask(AdminTask, MonitorListener):
                          "found for customer '%s'", virtDir + file,
                          self._customerCtx.store.getName())
             return
-        self._fireEvent((profile, state), "MonitoredFileRemoved")
+        self.emit("file-removed", profile, state)
     
     def onMonitorFileAdded(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
@@ -159,7 +123,7 @@ class MonitoringTask(AdminTask, MonitorListener):
                          "found for customer '%s'", virtDir + file,
                          self._customerCtx.store.getName())
             return
-        self._fireEvent((profile, state), "MonitoredFileAdded")
+        self.emit("file-added", profile, state)
 
     def onMonitorFileChanged(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
@@ -169,24 +133,34 @@ class MonitoringTask(AdminTask, MonitorListener):
                          "profile found for customer '%s'", virtDir + file,
                          self._customerCtx.store.getName())
             return
-        self._fireEvent((profile, state), "MonitoredFileStateChanged")
+        self.emit("file-state-changed", profile, state)
 
 
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, component):
-        component.addListener(self)
-        component.syncListener(self)
+        component.connect("mood-changed",
+                          self, self.onComponentMoodChanged)
+        component.connect("file-removed",
+                          self, self.onMonitorFileRemoved)
+        component.connect("file-added",
+                          self, self.onMonitorFileAdded)
+        component.connect("file-changed",
+                          self, self.onMonitorFileChanged)
+        component.update(self)
 
     def _onComponentRemoved(self, component):
-        component.removeListener(self)
+        component.disconnect("mood-changed", self)
+        component.disconnect("file-removed", self)
+        component.disconnect("file-added", self)
+        component.disconnect("file-changed", self)
 
     def _onComponentElected(self, component):
-        self._fireEvent(component, "MonitoringActivated")
-        component.syncListener(self)
+        self.emit("monitoring-activated", component)
+        component.update(self)
 
     def _onComponentRelieved(self, component):
-        self._fireEvent(component, "MonitoringDeactivated")
+        self.emit("monitoring-deactivated", component)
 
     def _onComponentStartupCanceled(self, component):
         # Because the monitor was pending to start, 
@@ -206,7 +180,7 @@ class MonitoringTask(AdminTask, MonitorListener):
         return (worker != current) or (not monitor)
 
     def _doAborted(self):
-        self._fireEvent(self.getWorker(), "FailToRunOnWorker")
+        self.emit("fail-to-run", self.getWorker())
     
     def _doSelectPotentialComponent(self, components):
         targetWorker = self.getWorker()

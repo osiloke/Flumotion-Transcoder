@@ -32,31 +32,6 @@ class StoreLogger(log.Loggable):
     logCategory = adminconsts.STORES_LOG_CATEGORY
 
 
-class IAdminStoreListener(Interface):
-    def onCustomerAdded(self, admin, customer):
-        """
-        Call when a customer has been added and fully initialized.        
-        """
-    def onCustomerRemoved(self, admin, customer):
-        """
-        Call when a customer is about to be removed.
-        """
-
-
-class AdminStoreListener(object):
-    
-    implements(IAdminStoreListener)
-    
-    def onCustomerAdded(self, admin, customer):
-        """
-        Call when a customer has been added and fully initialized.        
-        """
-    def onCustomerRemoved(self, admin, customer):
-        """
-        Call when a customer is about to be removed.
-        """
-
-
 class AdminStore(BaseStore):
     
     # MetaStore metaclass will create getters for these properties
@@ -111,10 +86,12 @@ class AdminStore(BaseStore):
     
     def __init__(self, dataSource):
         ## Root element, no parent
-        BaseStore.__init__(self, StoreLogger(), None, dataSource, None,
-                           IAdminStoreListener) 
+        BaseStore.__init__(self, StoreLogger(), None, dataSource, None) 
         self._customers = {}
         self._activities = ActivityStore(self, self, dataSource)
+        # Registering Events
+        self._register("customer-added")
+        self._register("customer-removed")
 
         
     ## Public Methods ##
@@ -145,22 +122,22 @@ class AdminStore(BaseStore):
     
     
     ## Overridden Methods ##
+
+    def update(self, listener):
+        BaseStore.update(self, listener)
+        for customer in self._customers.itervalues():
+            if customer.isActive():
+                self.emitTo("customer-added", listener, customer)
         
     def _doGetChildElements(self):
         return self.getCustomers()
         
-    def _doSyncListener(self, listener):
-        BaseStore._doSyncListener(self, listener)
-        for customer in self._customers.itervalues():
-            if customer.isActive():
-                self._fireEventTo(listener, customer, "CustomerAdded")
-        
     def _doPrepareInit(self, chain):
         BaseStore._doPrepareInit(self, chain)
-        #Ensure that the defaults are received
-        #before customers initialization
+        # Ensure that the defaults are received
+        # before customers initialization
         chain.addCallback(self.__cbRetrieveDefaults)
-        #Retrieve and initialize the customers
+        # Retrieve and initialize the customers
         chain.addCallback(self.__cbRetrieveCustomers)
 
     def _doRetrieveNotifications(self):
@@ -201,14 +178,14 @@ class AdminStore(BaseStore):
             d.addCallbacks(self.__cbCustomerInitialized, 
                            self.__ebCustomerInitFailed,
                            errbackArgs=(customer,))
-            #Ensure no failure slips through
+            # Ensure no failure slips through
             d.addErrback(self._unexpectedError)
             deferreds.append(d)
         dl = defer.DeferredList(deferreds,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        #Preserve deferred result, drop all previous results even failures
+        # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
@@ -223,11 +200,11 @@ class AdminStore(BaseStore):
             customer._abort(error)
             return None
         self._customers[customer.getName()] = customer
-        #Send event when the customer has been activated
-        self._fireEventWhenActive(customer, "CustomerAdded")
-        #Activate the new customer store
+        # Send event when the customer has been activated
+        self.emitWhenActive("customer-added", customer)
+        # Activate the new customer store
         customer._activate()
-        #Keep the callback chain result
+        # Keep the callback chain result
         return customer
     
     def __ebCustomerInitFailed(self, failure, customer):
@@ -236,5 +213,5 @@ class AdminStore(BaseStore):
                           "Customer '%s' failed to initialize; dropping it",
                           customer.getLabel())
         customer._abort(failure)
-        #Don't propagate failures, will be dropped anyway
+        # Don't propagate failures, will be dropped anyway
         return

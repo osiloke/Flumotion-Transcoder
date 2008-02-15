@@ -23,9 +23,8 @@ from flumotion.transcoder.admin import adminelement
 
 class BaseFlumotionProxy(adminelement.AdminElement):
     
-    def __init__(self, logger, parent, identifier, listenerInterface):
-        adminelement.AdminElement.__init__(self, logger, parent, 
-                                           listenerInterface)
+    def __init__(self, logger, parent, identifier):
+        adminelement.AdminElement.__init__(self, logger, parent)
         self._identifier = identifier
         self._pendingElements = {} # {attr: {identifier: BaseFlumotionProxy}}
 
@@ -97,9 +96,9 @@ class BaseFlumotionProxy(adminelement.AdminElement):
 
     ## Protected Methods ##
     
-    def _syncProxies(self, attr, listener, addEvent):
+    def _updateProxies(self, attr, listener, addEvent):
         """
-        Utility method to synchronize a listener. 
+        Utility method to update a listener. 
         """
         value = self.__getAttrValue(attr)
         if not value: return
@@ -107,11 +106,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             for element in value.values():
                 assert isinstance(element, BaseFlumotionProxy)
                 if element.isActive():
-                    self._fireEventTo(element, listener, addEvent)
+                    self.emitTo(addEvent, listener, element)
         else:
             assert isinstance(value, BaseFlumotionProxy)
             if value.isActive():
-                self._fireEventTo(value, listener, addEvent)
+                self.emitTo(addEvent, listener, value)
     
     def _addProxyState(self, factory, attr, idfunc, addEvent, 
                        *args, **kwargs):
@@ -156,7 +155,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
                 self.__setAttrValue(attr, values)
                 assert isinstance(element, BaseFlumotionProxy)
                 element._removed()
-                self._fireEvent(element, removeEvent)
+                self.emit(removeEvent, element)
                 self._onElementRemoved(element)
             else:
                 self._onElementNotFound(identifier)
@@ -175,7 +174,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             assert isinstance(current, BaseFlumotionProxy)
             self.__setAttrValue(attr, None)
             current._removed()
-            self._fireEvent(current, unsetEvent)
+            self.emit(unsetEvent, current)
         pending = self.__getPending(attr, identifier)
         if pending:
             assert isinstance(pending, BaseFlumotionProxy)
@@ -204,11 +203,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
             for element in value.values():
                 assert isinstance(element, BaseFlumotionProxy)
                 element._removed()
-                self._fireEvent(element, removeEvent)
+                self.emit(removeEvent, element)
         else:
             assert isinstance(value, BaseFlumotionProxy)
             value._removed()
-            self._fireEvent(value, removeEvent)
+            self.emit(removeEvent, value)
     
     def _discardProxies(self, *args):
         """
@@ -348,7 +347,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         return
 
     def __cbElementActivated(self, element, event, attr):
-        self._fireEvent(element, event)
+        self.emit(event, element)
         self._onElementActivated(element)
         
     def __ebElementAborted(self, failure, element, event, attr):
@@ -359,18 +358,16 @@ class BaseFlumotionProxy(adminelement.AdminElement):
 
 class RootFlumotionProxy(BaseFlumotionProxy):
     
-    def __init__(self, logger, listenerInterface):
+    def __init__(self, logger):
         BaseFlumotionProxy.__init__(self, logger, None, 
-                                    self.__class__.__name__,
-                                    listenerInterface)
+                                    self.__class__.__name__)
 
 
 
 class FlumotionProxy(BaseFlumotionProxy):
     
-    def __init__(self, logger, parent, identifier, manager, listenerInterface):
-        BaseFlumotionProxy.__init__(self, logger, parent, identifier,
-                                    listenerInterface)
+    def __init__(self, logger, parent, identifier, manager):
+        BaseFlumotionProxy.__init__(self, logger, parent, identifier)
         self._manager = manager
         
     def getManager(self):

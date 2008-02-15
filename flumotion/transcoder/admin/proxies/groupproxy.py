@@ -21,19 +21,19 @@ from flumotion.transcoder.admin.proxies import componentproxy
 
 class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
-    _componentAddedEvent = None
-    _componentRemovedEvent = None
     _componentDomain = None
     
-    def __init__(self, logger, parent, identifier, manager,
-                 context, state, listenerInterface):
-        fluproxy.FlumotionProxy.__init__(self, logger, parent, identifier, 
-                                manager, listenerInterface)
+    def __init__(self, logger, parent, identifier, manager, context, state):
+        fluproxy.FlumotionProxy.__init__(self, logger, parent,
+                                         identifier, manager)
         self._context = context
         self._state = state
         self._components = {} # {identifier: ComponentProxy}
         self._waitCompLoaded = {} # {identifier: Deferred}
         self.__updateIdleTarget()
+        # Registering Events
+        self._register("component-added")
+        self._register("component-removed")
         
         
     ## Public Methods ##
@@ -61,13 +61,13 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     ## Overriden Methods ##
     
+    def update(self, listener):
+        assert self._state, "Element has been removed"
+        self._updateProxies("_components", listener, "component-added")
+
     def _doGetChildElements(self):
         return self.getComponents()
     
-    def _doSyncListener(self, listener):
-        assert self._state, "Element has been removed"
-        self._syncProxies("_components", listener, self._componentAddedEvent)
-
     def _onActivated(self):
         state = self._state
         state.addListener(self, None,
@@ -81,7 +81,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         if self.isActive():
             state = self._state
             state.removeListener(self)
-        self._removeProxies("_components", self._componentRemovedEvent)
+        self._removeProxies("_components", "component-removed")
     
     def _doDiscard(self):
         assert self._state, "Element has already been discarded"
@@ -163,7 +163,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         componentContext = self._context.getComponentContext(name)
         self._addProxyState(componentproxy, "_components", 
                             self.__getComponentUniqueId, 
-                            self._componentAddedEvent, self._manager,
+                            "component-added", self._manager,
                             componentContext, componentState, 
                             self._componentDomain)
         self.__updateIdleTarget()
@@ -172,7 +172,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         name = componentState.get('name')
         componentContext = self._context.getComponentContext(name)
         self._removeProxyState("_components", self.__getComponentUniqueId,
-                               self._componentRemovedEvent, self._manager,
+                               "component-removed", self._manager,
                                componentContext, componentState, 
                                self._componentDomain)
         self.__updateIdleTarget()

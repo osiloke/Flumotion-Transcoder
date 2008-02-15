@@ -17,6 +17,11 @@ from flumotion.inhouse.errors import TimeoutError
 from flumotion.transcoder.errors import TranscoderError
 
 
+class EventError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+
+
 class StoreError(TranscoderError):
     def __init__(self, *args, **kwargs):
         TranscoderError.__init__(self, *args, **kwargs)

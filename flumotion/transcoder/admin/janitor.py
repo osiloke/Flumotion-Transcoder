@@ -17,19 +17,9 @@ from flumotion.inhouse import log, defer, utils
 from flumotion.inhouse.ringbuffer import RingBuffer
 
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentListener
-from flumotion.transcoder.admin.proxies.componentset import ComponentSetListener
-
-# Should not be necessary, but right now it is
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorListener
 
 
-class Janitor(log.Loggable,
-              ComponentSetListener,
-              #ComponentListener,
-              MonitorListener,
-              TranscoderListener):
+class Janitor(log.Loggable):
     
     logCategory = adminconsts.JANITOR_LOG_CATEGORY
     
@@ -43,16 +33,19 @@ class Janitor(log.Loggable,
         self._deleted = set()
         
     def initialize(self):
-        self._components.addListener(self)
-        self._components.syncListener(self)
+        self._components.connect("component-added",
+                                 self, self.onComponentAddedToSet)
+        self._components.connect("component-removed",
+                                 self, self.onComponentRemovedFromSet)
+        self._components.update(self)
         return defer.succeed(self)
 
 
-    ## IComponentSetListener Overriden Methods ##
+    ## ComponentSet Event Listeners ##
 
     def onComponentAddedToSet(self, componentset, component):
-        component.addListener(self)
-        component.syncListener(self)
+        component.connect("mood-changed", self, self.onComponentMoodChanged)    
+        component.update(self)
     
     def onComponentRemovedFromSet(self, componentset, component):
         bag = self.__getComponentBag(component)
@@ -60,10 +53,10 @@ class Janitor(log.Loggable,
             bag.remove(component)
         if component in self._deleted:
             self._deleted.remove(component)
-        component.removeListener(self)
+        component.disconnect("mood-changed", self)
 
 
-    ## IComponentListener Overriden Methodes ##
+    ## Component Event Listeners ##
 
     def onComponentMoodChanged(self, component, mood):
         if mood == None: return

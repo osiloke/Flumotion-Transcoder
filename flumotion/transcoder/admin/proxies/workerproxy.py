@@ -23,15 +23,6 @@ def instantiate(logger, parent, identifier, manager,
                        workerContext, state, *args, **kwargs)
     
 
-class IWorkerListener(Interface):
-    pass
-
-
-class WorkerListener(object):
-    
-    implements(IWorkerListener)
-
-
 class IWorkerDefinition(Interface):
     
     def getName(self):
@@ -66,8 +57,7 @@ class WorkerProxy(fluproxy.FlumotionProxy):
     def __init__(self, logger, parent, identifier, manager, 
                  workerContext, workerState):
         fluproxy.FlumotionProxy.__init__(self, logger, parent, 
-                                         identifier, manager,
-                                         IWorkerListener)
+                                         identifier, manager)
         
         self._workerState = workerState
         self._context = workerContext

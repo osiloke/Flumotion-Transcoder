@@ -20,28 +20,6 @@ from flumotion.transcoder.admin.datastore.targetstore import TargetStore
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
-class IProfileStoreListener(Interface):    
-    def onTargetAdded(self, profile, target):
-        """
-        Call when a target has been added and fully initialized.
-        """
-    def onTargetRemoved(self, profile, target):
-        """
-        Call when a target is about to be removed.
-        """
-
-
-class ProfileStoreListener(object):    
-    
-    implements(IProfileStoreListener)
-    
-    def onTargetAdded(self, profile, target):
-        pass
-    
-    def onTargetRemoved(self, profile, target):
-        pass
-
-
 class ProfileStore(BaseStore):
     
     # MetaStore metaclass will create getters for these properties
@@ -80,9 +58,11 @@ class ProfileStore(BaseStore):
 
 
     def __init__(self, logger, parent, dataSource, profileData):
-        BaseStore.__init__(self, logger, parent, dataSource, profileData,
-                           IProfileStoreListener)
+        BaseStore.__init__(self, logger, parent, dataSource, profileData)
         self._targets = {}
+        # Registering Events
+        self._register("target-added")
+        self._register("target-removed")
     
     
     ## Public Methods ##
@@ -115,15 +95,15 @@ class ProfileStore(BaseStore):
 
     ## Overridden Methods ##
     
+    def update(self, listener):
+        BaseStore.update(self, listener)
+        for target in self._targets.itervalues():
+            if target.isActive():
+                self.emitTo("target-added", listener, target)
+            
     def _doGetChildElements(self):
         return self.getTargets()    
     
-    def _doSyncListener(self, listener):
-        BaseStore._doSyncListener(self, listener)
-        for target in self._targets.itervalues():
-            if target.isActive():
-                self._fireEventTo(listener, target, "TargetAdded")
-            
     def _doPrepareInit(self, chain):
         BaseStore._doPrepareInit(self, chain)
         # Retrieve and initialize the targets
@@ -164,14 +144,14 @@ class ProfileStore(BaseStore):
             d.addCallbacks(self.__cbTargetInitialized, 
                            self.__ebTargetInitFailed,
                            errbackArgs=(target,))
-            #Ensure no failure slips through
+            # Ensure no failure slips through
             d.addErrback(self._unexpectedError)
             deferreds.append(d)
         dl = defer.DeferredList(deferreds,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        #Preserve deferred result, drop all previous results even failures
+        # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
@@ -187,11 +167,11 @@ class ProfileStore(BaseStore):
             target._abort(error)
             return None
         self._targets[target.getName()] = target
-        #Send event when the target has been activated
-        self._fireEventWhenActive(target, "TargetAdded")
-        #Activate the new target store
+        # Send event when the target has been activated
+        self.emitWhenActive("target-added", target)
+        # Activate the new target store
         target._activate()
-        #Keep the callback chain result
+        # Keep the callback chain result
         return target
     
     def __ebTargetInitFailed(self, failure, target):
@@ -201,5 +181,5 @@ class ProfileStore(BaseStore):
                           "to initialize; dropping it", 
                           target.getLabel(), self.getLabel())
         target._abort(failure)
-        #Don't propagate failures, will be dropped anyway
+        # Don't propagate failures, will be dropped anyway
         return

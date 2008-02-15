@@ -22,35 +22,12 @@ def instantiate(logger, parent, identifier, manager,
                      flowContext, state, *args, **kwargs)
 
 
-class IFlowListener(Interface):
-    def onFlowComponentAdded(self, flow, component):
-        pass
-    
-    def onFlowComponentRemoved(self, flow, component):
-        pass
-
-
-class FlowListener(object):
-    
-    implements(IFlowListener)
-    
-    def onFlowComponentAdded(self, flow, component):
-        pass
-    
-    def onFlowComponentRemoved(self, flow, component):
-        pass
-
-
 class FlowProxy(groupproxy.ComponentGroupProxy):
     
-    _componentAddedEvent = "FlowComponentAdded"
-    _componentRemovedEvent = "FlowComponentRemoved"
     _componentDomain = ComponentDomainEnum.flow
     
     def __init__(self, logger, parent, identifier, manager, 
                  flowContext, flowState):
         groupproxy.ComponentGroupProxy.__init__(self, logger, parent, 
                                                 identifier, manager,
-                                                flowContext,
-                                                flowState,
-                                                IFlowListener)
+                                                flowContext, flowState)

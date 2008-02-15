@@ -168,17 +168,7 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
                     category=adminconsts.NOTIFIER_LOG_CATEGORY)
 
 
-class INotifierListener(Interface):
-    pass
-        
-
-class NotifierListener(object):
-    
-    implements(INotifierListener)
-    
-
-class Notifier(log.Loggable, 
-               EventSource):
+class Notifier(log.Loggable, EventSource):
     
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
     

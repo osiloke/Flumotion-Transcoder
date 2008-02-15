@@ -23,7 +23,6 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.admintask import AdminTask
 from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
 from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListener
 
 #TODO: Schedule the component startup to prevent starting
 #      lots of component at the same time.
@@ -32,54 +31,23 @@ from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderListene
 #TODO: Cancel operations when going sad or lost, do not wait 
 #      for the timeout to be triggered
 
-class ITranscodingTaskListener(Interface):
-    def onTranscoderSelected(self, task, transcoder):
-        pass
-    
-    def onTranscoderReleased(self, task, transcoder):
-        pass
-    
-    def onTranscodingFailed(self, task, transcoder):
-        pass
-    
-    def onTranscodingDone(self, task, transcoder):
-        pass
-    
-    def onTranscodingTerminated(self, task, succeed):
-        pass
 
-    
-class TranscodingTaskListener(object):
-    
-    implements(ITranscodingTaskListener)
-
-    def onTranscoderSelected(self, task, transcoder):
-        pass
-    
-    def onTranscoderReleased(self, task, transcoder):
-        pass
-    
-    def onTranscodingFailed(self, task, transcoder):
-        pass
-    
-    def onTranscodingDone(self, task, transcoder):
-        pass
-
-    def onTranscodingTerminated(self, task, succeed):
-        pass
-
-
-class TranscodingTask(AdminTask, TranscoderListener):
+class TranscodingTask(AdminTask):
     
     MAX_RETRIES = adminconsts.TRANSCODER_MAX_RETRIES
     
     def __init__(self, logger, profileCtx):
         AdminTask.__init__(self, logger, profileCtx.getTranscoderLabel(),
-                           TranscoderProperties.createFromContext(profileCtx),
-                           ITranscodingTaskListener)
+                           TranscoderProperties.createFromContext(profileCtx))
         self._profileCtx = profileCtx
         self._acknowledging = False
         self._sadTimeout = None
+        # Registering events
+        self._register("component-selected")
+        self._register("component-released")
+        self._register("failed")
+        self._register("done")
+        self._register("terminated")
         
     ## Public Methods ##
     
@@ -94,7 +62,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         return (transcoder != None) and transcoder.isAcknowledged()
 
 
-    ## IComponentListener Overrided Methods ##
+    ## Component Event Listeners ##
     
     def onComponentOrphaned(self, transcoder, worker):
         if not self.isStarted(): return
@@ -158,7 +126,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         self._stopComponent(transcoder)
 
 
-    ## ITranscoderListener Overrided Methods ##
+    ## Transcoder Event Listeners ##
 
     def onTranscoderStatusChanged(self, transcoder, status):
         if not self.isStarted(): return
@@ -199,19 +167,29 @@ class TranscodingTask(AdminTask, TranscoderListener):
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, component):
-        component.addListener(self)
-        component.syncListener(self)
+        component.connect("orphaned",
+                          self, self.onComponentOrphaned)
+        component.connect("mood-changed",
+                          self, self.onComponentMoodChanged)
+        component.connect("status-changed",
+                          self, self.onTranscoderStatusChanged)
+        component.connect("job-state-changed",
+                          self, self.onTranscoderJobStateChanged)
+        component.update(self)
 
     def _onComponentRemoved(self, component):
-        component.removeListener(self)
+        component.disconnect("orphaned", self)
+        component.disconnect("mood-changed", self)
+        component.disconnect("status-changed", self)
+        component.disconnect("job-state-changed", self)
 
     def _onComponentElected(self, component):
-        self._fireEvent(component, "TranscoderSelected")
-        component.syncListener(self)
+        self.emit("component-selected", component)
+        component.update(self)
 
     def _onComponentRelieved(self, component):
         utils.cancelTimeout(self._sadTimeout)
-        self._fireEvent(component, "TranscoderReleased")
+        self.emit("component-released", component)
 
     def _onComponentStartupCanceled(self, component):
         # Because the monitor was pending to start, 
@@ -231,7 +209,7 @@ class TranscodingTask(AdminTask, TranscoderListener):
         return (worker != current) and (not current or not transcoder)
     
     def _doTerminated(self, result):
-        self._fireEvent(result, "TranscodingTerminated")
+        self.emit("terminated", result)
     
     def _doAborted(self):
         # We tried but there nothing to do...
@@ -271,13 +249,13 @@ class TranscodingTask(AdminTask, TranscoderListener):
     def __transcodingFailed(self, transcoder=None):
         transcoder = transcoder or self.getActiveComponent()
         self.info("Transcoding task '%s' failed", self.getLabel())
-        self._fireEvent(transcoder, "TranscodingFailed")
+        self.emit("failed", transcoder)
         self._terminate(False)
     
     def __transcodingSucceed(self, transcoder=None):
         transcoder = transcoder or self.getActiveComponent()
         self.info("Transcoding task '%s' done", self.getLabel())
-        self._fireEvent(transcoder, "TranscodingDone")
+        self.emit("done", transcoder)
         self._terminate(True)
     
     def __cbJobTerminated(self, status, transcoder):

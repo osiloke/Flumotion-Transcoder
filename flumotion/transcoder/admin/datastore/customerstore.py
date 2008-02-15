@@ -21,28 +21,6 @@ from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
-class ICustomerStoreListener(Interface):    
-    def onProfileAdded(self, customer, profile):
-        """
-        Call when a profile has been added and fully initialized.
-        """
-    def onProfileRemoved(self, customer, profile):
-        """
-        Call when a profile is about to be removed.
-        """
-
-
-class CustomerStoreListener(object):    
-    
-    implements(ICustomerStoreListener)
-    
-    def onProfileAdded(self, customer, profile):
-        pass
-    
-    def onProfileRemoved(self, customer, profile):
-        pass
-
-
 class CustomerStore(BaseStore):
 
     # MetaStore metaclass will create getters for these properties
@@ -87,10 +65,12 @@ class CustomerStore(BaseStore):
     
 
     def __init__(self, logger, parent, dataSource, customerData):
-        BaseStore.__init__(self, logger, parent,  dataSource, customerData,
-                           ICustomerStoreListener)
+        BaseStore.__init__(self, logger, parent,  dataSource, customerData)
         self._customerInfo = None
         self._profiles = {}
+        # Registering Events
+        self._register("profile-added")
+        self._register("profile-removed")
         
         
     ## Public Methods ##
@@ -123,15 +103,15 @@ class CustomerStore(BaseStore):
 
     ## Overridden Methods ##
 
+    def update(self, listener):
+        BaseStore.update(self, listener)
+        for profile in self._profiles.itervalues():
+            if profile.isActive():
+                self.emitTo("profile-added", listener, profile)
+        
     def _doGetChildElements(self):
         return self.getProfiles()
     
-    def _doSyncListener(self, listener):
-        BaseStore._doSyncListener(self, listener)
-        for profile in self._profiles.itervalues():
-            if profile.isActive():
-                self._fireEventTo(listener, profile, "ProfileAdded")
-        
     def _doPrepareInit(self, chain):
         BaseStore._doPrepareInit(self, chain)
         # Ensure that the customer info are received
@@ -186,14 +166,14 @@ class CustomerStore(BaseStore):
             d.addCallbacks(self.__cbProfileInitialized, 
                            self.__ebProfileInitFailed,
                            errbackArgs=(profile,))
-            #Ensure no failure slips through
+            # Ensure no failure slips through
             d.addErrback(self._unexpectedError)
             deferreds.append(d)
         dl = defer.DeferredList(deferreds,
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        #Preserve deferred result, drop all previous results even failures
+        # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
     
@@ -209,11 +189,11 @@ class CustomerStore(BaseStore):
             profile._abort(error)
             return None
         self._profiles[profile.getName()] = profile
-        #Send event when the profile has been activated
-        self._fireEventWhenActive(profile, "ProfileAdded")
-        #Activate the new profile store
+        # Send event when the profile has been activated
+        self.emitWhenActive("profile-added", profile)
+        # Activate the new profile store
         profile._activate()
-        #Keep the callback chain result
+        # Keep the callback chain result
         return profile
     
     def __ebProfileInitFailed(self, failure, profile):
@@ -223,6 +203,6 @@ class CustomerStore(BaseStore):
                           "to initialize; dropping it",
                           profile.getLabel(), self.getLabel())
         profile._abort(failure)
-        #Don't propagate failures, will be dropped anyway
+        # Don't propagate failures, will be dropped anyway
         return
 

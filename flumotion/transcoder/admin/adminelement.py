@@ -44,9 +44,9 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     or abort all elements.
     """
     
-    def __init__(self, logger, parent, interfaces):
+    def __init__(self, logger, parent):
         assert (parent == None) or isinstance(parent, AdminElement)
-        eventsource.EventSource.__init__(self, interfaces)
+        eventsource.EventSource.__init__(self)
         LoggerProxy.__init__(self, logger)
         self._activeWaiters = PassiveWaiters("Element Activation")
         self._activeChildWaiters = PassiveWaiters("Element Child Activation")
@@ -124,7 +124,28 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
             return defer.fail(self._failure)        
         return self._activeWaiters.wait(timeout)
 
-    
+    def emitWhenActive(self, event, element):
+        """
+        Fire an event on element activation.
+        Do not support keyword arguments.
+        """
+        assert isinstance(element, AdminElement)
+        d = element.waitActive()
+        d.addCallbacks(self.emitPayload, self.__ebEventAborted,
+                       callbackArgs=(event,), errbackArgs=(event,))
+        d.addErrback(self._unexpectedError)
+        
+    def emitWhenActiveTo(self, event, listener, element):
+        """
+        Fire an event on elment activation to a specific listener.
+        """
+        assert isinstance(element, AdminElement)
+        d = element.waitActive()
+        d.addCallbacks(self.emitPayloadTo, self.__ebEventAborted,
+                       callbackArgs=(event, listener), errbackArgs=(event,))
+        d.addErrback(self._unexpectedError)
+        
+            
     ## Virtual Methods ##
     
     def _doPrepareInit(self, chain):
@@ -293,30 +314,6 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         #Don't wait for parent when aborting
         self.__ebParentAborted(failure)
 
-
-    def _fireEventWhenActive(self, payload, event, interface=None):
-        """
-        Fire an event on payload activation.
-        """
-        assert isinstance(payload, AdminElement)
-        d = payload.waitActive()
-        d.addCallbacks(self._fireEvent, 
-                       self.__ebEventAborted,
-                       callbackArgs=(event, interface),
-                       errbackArgs=(event,))
-        d.addErrback(self._unexpectedError)
-        
-    def _fireEventWhenActiveTo(self, payload, listener, event, interface=None):
-        """
-        Fire an event on payload activation to a specific listener.
-        """
-        assert isinstance(payload, AdminElement)
-        d = payload.waitActive()
-        d.addCallbacks(self._fireEventTo, 
-                       self.__ebEventAborted,
-                       callbackArgs=(listener, event, interface),
-                       errbackArgs=(event,))
-        d.addErrback(self._unexpectedError)
 
     def _childWaitActive(self, timeout=None):
         """
