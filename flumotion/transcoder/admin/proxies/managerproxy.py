@@ -87,7 +87,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     def update(self, listener):
         assert self._planetState, "Manager has been removed"
         self._updateProxies("_workers", listener, "worker-added")
-        self._updateProxies("_atmosphere", listener, "atmosphere-unset")
+        self._updateProxies("_atmosphere", listener, "atmosphere-set")
         self._updateProxies("_flows", listener, "flow-added")
 
     def _doGetChildElements(self):

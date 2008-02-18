@@ -30,19 +30,27 @@ class EventSource(object):
             raise EventError("Unknown event %s, cannot connect %s to %s"
                              % (event, callback, self))
         callbacks = self._handlers[event].setdefault(listener, dict())
-        assert not (callback in callbacks)
+        if callback in callbacks: 
+            raise EventError("Callback %s already connected to %s"
+                             % (callback, self))
         callbacks[callback] = (args, kwargs)
         
     def disconnect(self, event, listener, callback=None):
-        listeners = self._handlers.get(event, None)
-        if listeners: 
-            callbacks = listeners.get(listener, None)
-            if callbacks:
-                if callback is None:
-                    del listeners[listener]
-                else:
-                    if callback in callbacks:
-                        del callbacks[callback]
+        if event not in self._handlers:
+            raise EventError("Unknown event %s, cannot disconnect %s from %s"
+                             % (event, callback, self))
+        listeners = self._handlers[event]
+        callbacks = listeners.get(listener, None)
+        if callbacks is None:
+            raise EventError("No callback connected to %s, cannot disconnect %s"
+                             % (self, callback))
+        if callback is None:
+            del listeners[listener]
+            return
+        if callback not in callbacks:
+            raise EventError("Callback %s not connected to %s, cannot disconnect it"
+                             % (callback, self))
+        del callbacks[callback]
 
     def emit(self, event, *args, **kwargs):
         listeners = self._handlers.get(event, None)
@@ -50,7 +58,7 @@ class EventSource(object):
             raise EventError("Unknown event %s, cannot be emited by %s"
                              % (event, self))
         for callbacks in listeners.values():
-            for callback, (cbArgs, cbKWArgs) in callbacks.iteritems():
+            for callback, (cbArgs, cbKWArgs) in callbacks.items():
                 self.__callHandler(event, args, kwargs,
                                    callback, cbArgs, cbKWArgs)
 
@@ -61,7 +69,7 @@ class EventSource(object):
                              % (event, self))
         callbacks = self._handlers.get(listener, None)
         if callbacks:
-            for callback, (cbArgs, cbKWArgs) in callbacks.iteritems():
+            for callback, (cbArgs, cbKWArgs) in callbacks.items():
                 self.__callHandler(event, args, kwargs,
                                    callback, cbArgs, cbKWArgs)
 
@@ -96,7 +104,9 @@ class EventSource(object):
     ## Protected Methods ##
     
     def _register(self, event):
-        assert event not in self._handlers 
+        if event in self._handlers:
+            raise EventError("Event %s already registered by %s"
+                             % (event, self)) 
         self._handlers[event] = weakref.WeakKeyDictionary()
 
 

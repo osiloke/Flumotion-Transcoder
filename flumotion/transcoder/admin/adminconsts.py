@@ -45,6 +45,9 @@ MONITOR_LABEL_TEMPLATE = "Monitor for %(customerName)s"
 # and initialize all components stats
 WAIT_IDLE_TIMEOUT = 30
 
+# Maximum time to wait for an elemnt to be active
+WAIT_ACTIVE_TIMEOUT = 30
+
 # Maximum time to wait for a worker instance 
 # when the worker name is set to a component state
 WAIT_WORKER_TIMEOUT = 30
@@ -67,6 +70,9 @@ TASK_HOLD_TIMEOUT = 60
 TASK_POTENTIAL_COMPONENT_TIMEOUT = 20
 # Maximum time to wait when retrieving component UI State
 TASK_UISTATE_TIMEOUT = 20
+
+# Maximum time the janitor wait before forcing the component deletion
+JANITOR_WAIT_FOR_DELETE = 20
 
 MONITOR_STATE_UPDATE_PERIOD = 1
 MONITOR_MAX_RETRIES = 3

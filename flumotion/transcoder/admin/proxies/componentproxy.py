@@ -500,7 +500,10 @@ class BaseComponentProxy(FlumotionProxy):
             return
         d = self.stop()
         args = (status, label, resultDef)
-        d.addCallbacks(self.__asyncForceDelete,
+        # Call again __stopOrDelete, because flumotion do not changed
+        # sad component's mood to sleeping when stopping them,
+        # so we have to stop them again...
+        d.addCallbacks(self.__stopOrDelete,
                        self.__asyncForceStopFailed,  
                        callbackArgs=args, errbackArgs=args)
 

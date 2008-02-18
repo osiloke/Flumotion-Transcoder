@@ -173,6 +173,7 @@ class Notifier(log.Loggable, EventSource):
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
     
     def __init__(self, notifierContext, activityStore):
+        EventSource.__init__(self)
         self._activities = activityStore
         self._context = notifierContext
         self._paused = True

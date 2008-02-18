@@ -100,6 +100,7 @@ class BaseStore(AdminElement):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].itervalues()
 
+
     ## Protected Virtual Methods ##
     
     def _doRetrieveNotifications(self):

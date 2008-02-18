@@ -130,7 +130,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Do not support keyword arguments.
         """
         assert isinstance(element, AdminElement)
-        d = element.waitActive()
+        d = element.waitActive(adminconsts.WAIT_ACTIVE_TIMEOUT)
         d.addCallbacks(self.emitPayload, self.__ebEventAborted,
                        callbackArgs=(event,), errbackArgs=(event,))
         d.addErrback(self._unexpectedError)
@@ -140,7 +140,7 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
         Fire an event on elment activation to a specific listener.
         """
         assert isinstance(element, AdminElement)
-        d = element.waitActive()
+        d = element.waitActive(adminconsts.WAIT_ACTIVE_TIMEOUT)
         d.addCallbacks(self.emitPayloadTo, self.__ebEventAborted,
                        callbackArgs=(event, listener), errbackArgs=(event,))
         d.addErrback(self._unexpectedError)

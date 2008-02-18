@@ -48,12 +48,12 @@ class Janitor(log.Loggable):
         component.update(self)
     
     def onComponentRemovedFromSet(self, componentset, component):
+        component.disconnect("mood-changed", self)
         bag = self.__getComponentBag(component)
         if bag and (component in bag):
             bag.remove(component)
         if component in self._deleted:
             self._deleted.remove(component)
-        component.disconnect("mood-changed", self)
 
 
     ## Component Event Listeners ##
@@ -81,7 +81,11 @@ class Janitor(log.Loggable):
                     self.debug("Worker '%s' disposal bag is full; dumping "
                                "component '%s'", workerName, component.getLabel())
                     self._deleted.add(old)
-                    d = old.forceDelete()
+                    # Let the opportunity to components managers to cleanup,
+                    # but fix a maximum time after which the deletion will be forced
+                    utils.createTimeout(adminconsts.JANITOR_WAIT_FOR_DELETE,
+                                        self.__forceComponentDeletion, old)
+                    d = old.forceStop()
                     # Catch all failures
                     d.addErrback(defer.resolveFailure)
     
@@ -100,3 +104,11 @@ class Janitor(log.Loggable):
         bag = RingBuffer(capacity)
         self._bags[workerName] = bag
         return bag
+    
+    def __forceComponentDeletion(self, component):
+        if component not in self._deleted:
+            # Already deleted by the components managers.
+            return
+        d = component.forceDelete()
+        # Catch all failures
+        d.addErrback(defer.resolveFailure) 

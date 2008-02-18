@@ -533,7 +533,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             msg += " ** %d Fatal Error(s)" % fatal
         if total > fatal:
             msg += " ** %d Recoverable Error(s)" % (total - fatal)
-        self.info("*"*6 + " " + msg + " " + "*"*6)
+        self.info('*'*6 + " " + msg + " " + '*'*6)
         utils.callNext(reactor.stop)
         
     def __terminateStandardMode(self, report, succeed):
