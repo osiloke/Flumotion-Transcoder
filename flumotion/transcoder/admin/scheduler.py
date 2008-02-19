@@ -57,10 +57,6 @@ class Scheduler(log.Loggable, EventSource):
         
     def initialize(self):
         self.debug("Retrieve transcoding activities")
-        states = [ActivityStateEnum.started]
-        d = self._store.getTranscodings(states)
-        d.addCallback(self.__cbRestoreTasks)
-        d.addErrback(self.__ebInitializationFailed)
         self._transcoding.connect("task-added",
                                   self, self.onTranscodingTaskAdded)
         self._transcoding.connect("task-removed",
@@ -68,6 +64,10 @@ class Scheduler(log.Loggable, EventSource):
         self._transcoding.connect("slot-available",
                                   self, self.onSlotsAvailable)
         self._transcoding.update(self)
+        states = [ActivityStateEnum.started]
+        d = self._store.getTranscodings(states)
+        d.addCallback(self.__cbRestoreTasks)
+        d.addErrback(self.__ebInitializationFailed)
         return d
     
     def isStarted(self):
@@ -131,7 +131,7 @@ class Scheduler(log.Loggable, EventSource):
     
     ## ITranscoding Event Listers ##
     
-    def onTranscodingTaskAdded(self, takser, task):
+    def onTranscodingTaskAdded(self, takset, task):
         self.debug("Transcoding task '%s' added", task.getLabel())
         task.connect("failed", self, self.onTranscodingFailed)
         task.connect("done", self, self.onTranscodingDone)
