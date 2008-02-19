@@ -79,7 +79,7 @@ class Janitor(log.Loggable):
                          component.getLabel(), mood.name, workerName, len(bag))
                 if old:
                     self.debug("Worker '%s' disposal bag is full; dumping "
-                               "component '%s'", workerName, component.getLabel())
+                               "component '%s'", workerName, old.getLabel())
                     self._deleted.add(old)
                     # Let the opportunity to components managers to cleanup,
                     # but fix a maximum time after which the deletion will be forced
@@ -109,6 +109,8 @@ class Janitor(log.Loggable):
         if component not in self._deleted:
             # Already deleted by the components managers.
             return
+        self.warning("Component '%s' still not deleted, force deletion",
+                     component.getLabel())
         d = component.forceDelete()
         # Catch all failures
         d.addErrback(defer.resolveFailure) 
