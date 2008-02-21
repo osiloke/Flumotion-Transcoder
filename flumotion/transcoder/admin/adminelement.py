@@ -13,20 +13,19 @@
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, events
 from flumotion.inhouse.log import LoggerProxy
 from flumotion.inhouse.waiters import PassiveWaiters
 from flumotion.inhouse.waiters import CounterWaiters
 
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin import eventsource
 from flumotion.transcoder.admin import datasource
 
 
 _idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)    
 
 
-class AdminElement(eventsource.EventSource, LoggerProxy):
+class AdminElement(events.EventSourceMixin, LoggerProxy):
     """
     Manage element activation and initialization.
     Ensure that the activation deferreds are called 
@@ -46,7 +45,6 @@ class AdminElement(eventsource.EventSource, LoggerProxy):
     
     def __init__(self, logger, parent):
         assert (parent == None) or isinstance(parent, AdminElement)
-        eventsource.EventSource.__init__(self)
         LoggerProxy.__init__(self, logger)
         self._activeWaiters = PassiveWaiters("Element Activation")
         self._activeChildWaiters = PassiveWaiters("Element Child Activation")

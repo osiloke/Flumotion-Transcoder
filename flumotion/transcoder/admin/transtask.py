@@ -167,21 +167,17 @@ class TranscodingTask(AdminTask):
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, component):
-        component.connect("orphaned",
-                          self, self.onComponentOrphaned)
-        component.connect("mood-changed",
-                          self, self.onComponentMoodChanged)
-        component.connect("status-changed",
-                          self, self.onTranscoderStatusChanged)
-        component.connect("job-state-changed",
-                          self, self.onTranscoderJobStateChanged)
+        component.connectListener("orphaned", self, self.onComponentOrphaned)
+        component.connectListener("mood-changed", self, self.onComponentMoodChanged)
+        component.connectListener("status-changed", self, self.onTranscoderStatusChanged)
+        component.connectListener("job-state-changed", self, self.onTranscoderJobStateChanged)
         component.update(self)
 
     def _onComponentRemoved(self, component):
-        component.disconnect("orphaned", self)
-        component.disconnect("mood-changed", self)
-        component.disconnect("status-changed", self)
-        component.disconnect("job-state-changed", self)
+        component.disconnectListener("orphaned", self)
+        component.disconnectListener("mood-changed", self)
+        component.disconnectListener("status-changed", self)
+        component.disconnectListener("job-state-changed", self)
 
     def _onComponentElected(self, component):
         self.emit("component-selected", component)

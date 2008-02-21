@@ -26,8 +26,8 @@ class WorkerSet(RootFlumotionProxy):
         RootFlumotionProxy.__init__(self, mgrset)
         self._managers = mgrset
         self._workers = {} # {identifier: Worker}
-        self._managers.connect("manager-added", self, self.onManagerAddedToSet)
-        self._managers.connect("manager-removed", self, self.onManagerRemovedFromSet)
+        self._managers.connectListener("manager-added", self, self.onManagerAddedToSet)
+        self._managers.connectListener("manager-removed", self, self.onManagerRemovedFromSet)
         # Registering Events
         self._register("worker-added")
         self._register("worker-removed")
@@ -69,13 +69,13 @@ class WorkerSet(RootFlumotionProxy):
     ### managerset.IManagerSetListener Implementation ###
 
     def onManagerAddedToSet(self, mgrset, manager):
-        manager.connect("worker-added", self, self.onWorkerAdded)
-        manager.connect("worker-removed", self, self.onWorkerRemoved)
+        manager.connectListener("worker-added", self, self.onWorkerAdded)
+        manager.connectListener("worker-removed", self, self.onWorkerRemoved)
         manager.update(self)
         
     def onManagerRemovedFromSet(self, mgrset, manager):
-        manager.disconnect("worker-added", self)
-        manager.disconnect("worker-removed", self)
+        manager.disconnectListener("worker-added", self)
+        manager.disconnectListener("worker-removed", self)
 
 
     ### managerproxy.IManagerListener Implementation ###

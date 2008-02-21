@@ -29,10 +29,8 @@ class ComponentSetSkeleton(RootFlumotionProxy):
         self._managers = mgrset
         self._rejecteds = {} # {Identifier: ComponentProxy}
         self._compWaiters = {} # {Identifier: {Deferred: IDelayedCall}}
-        self._managers.connect("manager-added",
-                               self, self.onManagerAddedToSet)
-        self._managers.connect("manager-removed",
-                               self, self.onManagerRemovedFromSet)
+        self._managers.connectListener("manager-added", self, self.onManagerAddedToSet)
+        self._managers.connectListener("manager-removed", self, self.onManagerRemovedFromSet)
         
         
     ## Public Methods ##
@@ -112,46 +110,38 @@ class ComponentSetSkeleton(RootFlumotionProxy):
     ## ManagerSet Event Listeners ##
 
     def onManagerAddedToSet(self, mgrset, manager):
-        manager.connect("atmosphere-set",
-                        self, self.onAtmosphereSet)
-        manager.connect("atmosphere-unset",
-                        self, self.onAtmosphereUnset)
-        manager.connect("flow-added",
-                        self, self.onFlowAdded)
-        manager.connect("flow-removed",
-                        self, self.onFlowRemoved)
+        manager.connectListener("atmosphere-set", self, self.onAtmosphereSet)
+        manager.connectListener("atmosphere-unset", self, self.onAtmosphereUnset)
+        manager.connectListener("flow-added", self, self.onFlowAdded)
+        manager.connectListener("flow-removed", self, self.onFlowRemoved)
         manager.update(self)
         
     def onManagerRemovedFromSet(self, mgrset, manager):
-        manager.disconnect("atmosphere-set", self)
-        manager.disconnect("atmosphere-unset", self)
-        manager.disconnect("flow-added", self)
-        manager.disconnect("flow-removed", self)
+        manager.disconnectListener("atmosphere-set", self)
+        manager.disconnectListener("atmosphere-unset", self)
+        manager.disconnectListener("flow-added", self)
+        manager.disconnectListener("flow-removed", self)
 
 
     ## Manager Event Listeners ##
     
     def onAtmosphereSet(self, manager, atmosphere):
-        atmosphere.connect("component-added",
-                           self, self.onAtmosphereComponentAdded)
-        atmosphere.connect("component-removed",
-                           self, self.onAtmosphereComponentRemoved)
+        atmosphere.connectListener("component-added", self, self.onAtmosphereComponentAdded)
+        atmosphere.connectListener("component-removed", self, self.onAtmosphereComponentRemoved)
         atmosphere.update(self)
     
     def onAtmosphereUnset(self, manager, atmosphere):
-        atmosphere.disconnect("component-added", self)
-        atmosphere.disconnect("component-removed", self)
+        atmosphere.disconnectListener("component-added", self)
+        atmosphere.disconnectListener("component-removed", self)
     
     def onFlowAdded(self, manager, flow):
-        flow.connect("component-added",
-                           self, self.onFlowComponentAdded)
-        flow.connect("component-removed",
-                           self, self.onFlowComponentRemoved)
+        flow.connectListener("component-added", self, self.onFlowComponentAdded)
+        flow.connectListener("component-removed", self, self.onFlowComponentRemoved)
         flow.update(self)
     
     def onFlowRemoved(self, manager, flow):
-        flow.disconnect("component-added", self)
-        flow.disconnect("component-removed", self)
+        flow.disconnectListener("component-added", self)
+        flow.disconnectListener("component-removed", self)
 
 
     ### Flow Event Listeners ###

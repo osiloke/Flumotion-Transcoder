@@ -13,13 +13,12 @@
 from zope.interface import Interface, implements
 from twisted.internet import reactor
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, events
 
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
-from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.transtask import TranscodingTask
 from flumotion.transcoder.admin.notifysubs import SourceNotificationVariables
 from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
@@ -29,12 +28,11 @@ from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 #      higher than other customer priorities.
 
 
-class Scheduler(log.Loggable, EventSource):
+class Scheduler(log.Loggable, events.EventSourceMixin):
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
     def __init__(self, activityStore, transCtx, notifier, transcoding, diagnostician):
-        EventSource.__init__(self)
         self._transCtx = transCtx
         self._store = activityStore
         self._notifier = notifier
@@ -57,12 +55,9 @@ class Scheduler(log.Loggable, EventSource):
         
     def initialize(self):
         self.debug("Retrieve transcoding activities")
-        self._transcoding.connect("task-added",
-                                  self, self.onTranscodingTaskAdded)
-        self._transcoding.connect("task-removed",
-                                  self, self.onTranscodingTaskRemoved)
-        self._transcoding.connect("slot-available",
-                                  self, self.onSlotsAvailable)
+        self._transcoding.connectListener("task-added", self, self.onTranscodingTaskAdded)
+        self._transcoding.connectListener("task-removed", self, self.onTranscodingTaskRemoved)
+        self._transcoding.connectListener("slot-available", self, self.onSlotsAvailable)
         self._transcoding.update(self)
         states = [ActivityStateEnum.started]
         d = self._store.getTranscodings(states)
@@ -133,16 +128,16 @@ class Scheduler(log.Loggable, EventSource):
     
     def onTranscodingTaskAdded(self, takset, task):
         self.debug("Transcoding task '%s' added", task.getLabel())
-        task.connect("failed", self, self.onTranscodingFailed)
-        task.connect("done", self, self.onTranscodingDone)
-        task.connect("terminated", self, self.onTranscodingTerminated)
+        task.connectListener("failed", self, self.onTranscodingFailed)
+        task.connectListener("done", self, self.onTranscodingDone)
+        task.connectListener("terminated", self, self.onTranscodingTerminated)
         task.update(self)
     
     def onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.getLabel())
-        task.disconnect("failed", self)
-        task.disconnect("done", self)
-        task.disconnect("terminated", self)
+        task.disconnectListener("failed", self)
+        task.disconnectListener("done", self)
+        task.disconnectListener("terminated", self)
 
     def onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)

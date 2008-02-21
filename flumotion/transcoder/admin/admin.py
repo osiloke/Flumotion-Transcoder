@@ -92,18 +92,18 @@ class TranscoderAdmin(log.Loggable):
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
-        self._store.connect("customer-added", self, self.onCustomerAdded)
-        self._store.connect("customer-removed", self, self.onCustomerRemoved)
-        self._managers.connect("attached", self, self.onAttached)
-        self._managers.connect("detached", self, self.onDetached)
-        self._components.connect("component-added", self, self.onComponentAddedToSet)
-        self._components.connect("component-removed", self, self.onComponentRemovedFromSet)
-        self._scheduler.connect("profile-queued", self, self.onProfileQueued)
-        self._scheduler.connect("transcoding-started", self, self.onTranscodingStarted)
-        self._scheduler.connect("transcoding-failed", self, self.onTranscodingFailed)
-        self._scheduler.connect("transcoding-done", self, self.onTranscodingDone)
-        self._monitoring.connect("task-added", self, self.onMonitoringTaskAdded)
-        self._monitoring.connect("task-removed", self, self.onMonitoringTaskRemoved)
+        self._store.connectListener("customer-added", self, self.onCustomerAdded)
+        self._store.connectListener("customer-removed", self, self.onCustomerRemoved)
+        self._managers.connectListener("attached", self, self.onAttached)
+        self._managers.connectListener("detached", self, self.onDetached)
+        self._components.connectListener("component-added", self, self.onComponentAddedToSet)
+        self._components.connectListener("component-removed", self, self.onComponentRemovedFromSet)
+        self._scheduler.connectListener("profile-queued", self, self.onProfileQueued)
+        self._scheduler.connectListener("transcoding-started", self, self.onTranscodingStarted)
+        self._scheduler.connectListener("transcoding-failed", self, self.onTranscodingFailed)
+        self._scheduler.connectListener("transcoding-done", self, self.onTranscodingDone)
+        self._monitoring.connectListener("task-added", self, self.onMonitoringTaskAdded)
+        self._monitoring.connectListener("task-removed", self, self.onMonitoringTaskRemoved)
         self._store.update(self)
         self._managers.update(self)
         self._scheduler.update(self)
@@ -132,10 +132,10 @@ class TranscoderAdmin(log.Loggable):
     ## ComponentSet Event Listners ##
 
     def onComponentAddedToSet(self, componentset, component):
-        component.connect("message", self, self.onComponentMessage)
+        component.connectListener("message", self, self.onComponentMessage)
     
     def onComponentRemovedFromSet(self, componentset, component):
-        component.disconnect("message", self)
+        component.disconnectListener("message", self)
 
 
     ## Component Event Listeners ##
@@ -161,8 +161,8 @@ class TranscoderAdmin(log.Loggable):
     
     def onCustomerAdded(self, admin, customer):
         self.debug("Customer '%s' Added", customer.getLabel())
-        customer.connect("profile-added", self, self.onProfileAdded)
-        customer.connect("profile-removed", self, self.onProfileRemoved)
+        customer.connectListener("profile-added", self, self.onProfileAdded)
+        customer.connectListener("profile-removed", self, self.onProfileRemoved)
         customer.update(self)
         custCtx = self._transCtx.getCustomerContext(customer)
         task = MonitoringTask(self._monitoring, custCtx)
@@ -171,8 +171,8 @@ class TranscoderAdmin(log.Loggable):
         
     def onCustomerRemoved(self, admin, customer):
         self.debug("Customer '%s' Removed", customer.getLabel())
-        customer.disconnect("profile-added", self)
-        customer.disconnect("profile-removed", self)
+        customer.disconnectListener("profile-added", self)
+        customer.disconnectListener("profile-removed", self)
         custCtx = self._transCtx.getCustomerContext(customer)
         self._monitoring.removeTask(custCtx.getIdentifier())
         
@@ -181,14 +181,14 @@ class TranscoderAdmin(log.Loggable):
     
     def onProfileAdded(self, customer, profile):
         self.debug("Profile '%s' Added", profile.getLabel())
-        profile.connect("target-added", self, self.onTargetAdded)
-        profile.connect("target-removed", self, self.onTargetRemoved)
+        profile.connectListener("target-added", self, self.onTargetAdded)
+        profile.connectListener("target-removed", self, self.onTargetRemoved)
         profile.update(self)
         
     def onProfileRemoved(self, customer, profile):
         self.debug("Profile '%s' Removed", profile.getLabel())
-        profile.disconnect("target-added", self)
-        profile.disconnect("target-removed", self)
+        profile.disconnectListener("target-added", self)
+        profile.disconnectListener("target-removed", self)
         
     
     ## ProfileStore Event Listeners ##
@@ -204,18 +204,18 @@ class TranscoderAdmin(log.Loggable):
     
     def onMonitoringTaskAdded(self, takser, task):
         self.debug("Monitoring task '%s' added", task.getLabel())
-        task.connect("file-added", self, self.onMonitoredFileAdded)
-        task.connect("file-state-changed", self, self.onMonitoredFileStateChanged)
-        task.connect("file-removed", self, self.onMonitoredFileRemoved)
-        task.connect("fail-to-run", self, self.onFailToRunOnWorker)
+        task.connectListener("file-added", self, self.onMonitoredFileAdded)
+        task.connectListener("file-state-changed", self, self.onMonitoredFileStateChanged)
+        task.connectListener("file-removed", self, self.onMonitoredFileRemoved)
+        task.connectListener("fail-to-run", self, self.onFailToRunOnWorker)
         task.update(self)
     
     def onMonitoringTaskRemoved(self, tasker, task):
         self.debug("Monitoring task '%s' removed", task.getLabel())
-        task.disconnect("file-added", self)
-        task.disconnect("file-state-changed", self)
-        task.disconnect("file-removed", self)
-        task.disconnect("fail-to-run", self)
+        task.disconnectListener("file-added", self)
+        task.disconnectListener("file-state-changed", self)
+        task.disconnectListener("file-removed", self)
+        task.disconnectListener("fail-to-run", self)
 
 
     ## MonitoringTask Event Listeners ##

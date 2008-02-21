@@ -16,7 +16,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, events
 from flumotion.inhouse.waiters import AssignWaiters
 from flumotion.inhouse.waiters import PassiveWaiters
 
@@ -24,17 +24,15 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.errors import ComponentRejectedError
-from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.admintask import IAdminTask
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 
 
-class TaskManager(log.Loggable, EventSource):
+class TaskManager(log.Loggable, events.EventSourceMixin):
     
     logCategory = "" # Should be set by child classes
     
     def __init__(self):
-        EventSource.__init__(self)
         self._identifiers = {} # {identifiers: ComponentProperties}
         self._tasks = {} # {ComponentProperties: IAdminTask}
         self._taskless = {} # {ComponentProxy: None}
@@ -295,7 +293,7 @@ class TaskManager(log.Loggable, EventSource):
         self.log("Task manager '%s' takes apart taskless component '%s'",
                  self.getLabel(), component.getName())
         self._taskless[component] = None
-        component.connect("mood-changed", self, self.onComponentMoodChanged)
+        component.connectListener("mood-changed", self, self.onComponentMoodChanged)
         component.update(self)
         self._onTasklessComponentAdded(component)
     
@@ -304,7 +302,7 @@ class TaskManager(log.Loggable, EventSource):
                  self.getLabel(), component.getName())
         assert component in self._taskless
         del self._taskless[component]
-        component.disconnect("mood-changed", self)
+        component.disconnectListener("mood-changed", self)
         self._onTasklessComponentRemoved(component)
     
     def __cbAddComponent(self, props, component):

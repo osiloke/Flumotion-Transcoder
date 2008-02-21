@@ -139,21 +139,17 @@ class MonitoringTask(AdminTask):
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, component):
-        component.connect("mood-changed",
-                          self, self.onComponentMoodChanged)
-        component.connect("file-removed",
-                          self, self.onMonitorFileRemoved)
-        component.connect("file-added",
-                          self, self.onMonitorFileAdded)
-        component.connect("file-changed",
-                          self, self.onMonitorFileChanged)
+        component.connectListener("mood-changed", self, self.onComponentMoodChanged)
+        component.connectListener("file-removed", self, self.onMonitorFileRemoved)
+        component.connectListener("file-added", self, self.onMonitorFileAdded)
+        component.connectListener("file-changed", self, self.onMonitorFileChanged)
         component.update(self)
 
     def _onComponentRemoved(self, component):
-        component.disconnect("mood-changed", self)
-        component.disconnect("file-removed", self)
-        component.disconnect("file-added", self)
-        component.disconnect("file-changed", self)
+        component.disconnectListener("mood-changed", self)
+        component.disconnectListener("file-removed", self)
+        component.disconnectListener("file-added", self)
+        component.disconnectListener("file-changed", self)
 
     def _onComponentElected(self, component):
         self.emit("monitoring-activated", component)

@@ -22,7 +22,7 @@ from twisted.internet import reactor
 from twisted.web import client
 from twisted.mail.smtp import ESMTPSenderFactory
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, events
 
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import NotificationError
@@ -30,7 +30,6 @@ from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.enums import MailAddressTypeEnum
-from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.datastore.activitystore import BaseNotifyActivity
 from flumotion.transcoder.admin.datastore.activitystore import MailNotifyActivity
 from flumotion.transcoder.admin.datastore.activitystore import GETRequestNotifyActivity
@@ -168,12 +167,11 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
                     category=adminconsts.NOTIFIER_LOG_CATEGORY)
 
 
-class Notifier(log.Loggable, EventSource):
+class Notifier(log.Loggable, events.EventSourceMixin):
     
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
     
     def __init__(self, notifierContext, activityStore):
-        EventSource.__init__(self)
         self._activities = activityStore
         self._context = notifierContext
         self._paused = True

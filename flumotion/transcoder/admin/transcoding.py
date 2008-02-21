@@ -45,15 +45,11 @@ class Transcoding(TaskManager):
 
     def initialize(self):
         self.log("Initializing Transcoding Manager")
-        self._workers.connect("worker-added",
-                              self, self.onWorkerAddedToSet)
-        self._workers.connect("worker-removed",
-                              self, self.onWorkerRemovedFromSet)
+        self._workers.connectListener("worker-added", self, self.onWorkerAddedToSet)
+        self._workers.connectListener("worker-removed", self, self.onWorkerRemovedFromSet)
+        self._transcoders.connectListener("transcoder-added", self, self.onTranscoderAddedToSet)
+        self._transcoders.connectListener("transcoder-removed", self, self.onTranscoderRemovedFromSet)
         self._workers.update(self)
-        self._transcoders.connect("transcoder-added",
-                                  self, self.onTranscoderAddedToSet)
-        self._transcoders.connect("transcoder-removed",
-                                  self, self.onTranscoderRemovedFromSet)
         self._transcoders.update(self)
         return TaskManager.initialize(self)
 

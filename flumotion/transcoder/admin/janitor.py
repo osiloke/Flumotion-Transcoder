@@ -33,10 +33,8 @@ class Janitor(log.Loggable):
         self._deleted = set()
         
     def initialize(self):
-        self._components.connect("component-added",
-                                 self, self.onComponentAddedToSet)
-        self._components.connect("component-removed",
-                                 self, self.onComponentRemovedFromSet)
+        self._components.connectListener("component-added", self, self.onComponentAddedToSet)
+        self._components.connectListener("component-removed", self, self.onComponentRemovedFromSet)
         self._components.update(self)
         return defer.succeed(self)
 
@@ -44,11 +42,11 @@ class Janitor(log.Loggable):
     ## ComponentSet Event Listeners ##
 
     def onComponentAddedToSet(self, componentset, component):
-        component.connect("mood-changed", self, self.onComponentMoodChanged)    
+        component.connectListener("mood-changed", self, self.onComponentMoodChanged)    
         component.update(self)
     
     def onComponentRemovedFromSet(self, componentset, component):
-        component.disconnect("mood-changed", self)
+        component.disconnectListener("mood-changed", self)
         bag = self.__getComponentBag(component)
         if bag and (component in bag):
             bag.remove(component)

@@ -44,14 +44,10 @@ class Monitoring(TaskManager):
         self.log("Initializing Monitoring Manager")
    
 
-        self._workers.connect("worker-added",
-                              self, self.onWorkerAddedToSet)
-        self._workers.connect("worker-removed",
-                              self, self.onWorkerRemovedFromSet)
-        self._monitors.connect("monitor-added",
-                               self, self.onMonitorAddedToSet)
-        self._monitors.connect("monitor-removed",
-                               self, self.onMonitorRemovedFromSet)
+        self._workers.connectListener("worker-added", self, self.onWorkerAddedToSet)
+        self._workers.connectListener("worker-removed", self, self.onWorkerRemovedFromSet)
+        self._monitors.connectListener("monitor-added", self, self.onMonitorAddedToSet)
+        self._monitors.connectListener("monitor-removed", self, self.onMonitorRemovedFromSet)
         self._workers.update(self)
         self._monitors.update(self)
         return TaskManager.initialize(self)

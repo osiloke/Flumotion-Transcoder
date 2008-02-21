@@ -18,7 +18,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, events
 from flumotion.inhouse.log import LoggerProxy
 from flumotion.inhouse.waiters import AssignWaiters
 from flumotion.inhouse.waiters import PassiveWaiters
@@ -26,7 +26,6 @@ from flumotion.inhouse.waiters import PassiveWaiters
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import TaskStateEnum
-from flumotion.transcoder.admin.eventsource import EventSource
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 
 
@@ -101,7 +100,7 @@ class IAdminTask(Interface):
         """
 
 
-class AdminTask(LoggerProxy, EventSource):
+class AdminTask(LoggerProxy, events.EventSourceMixin):
     
     implements(IAdminTask)
 
@@ -116,7 +115,6 @@ class AdminTask(LoggerProxy, EventSource):
     
     def __init__(self, logger, label, properties):
         LoggerProxy.__init__(self, logger)
-        EventSource.__init__(self)
         self._worker = None # WorkerProxy
         self._state = TaskStateEnum.stopped
         self._startWaiters = PassiveWaiters("Admin Task Startup/Resuming")

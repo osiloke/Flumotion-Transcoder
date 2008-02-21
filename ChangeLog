@@ -1,3 +1,25 @@
+2008-02-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/errors.py:
+	* flumotion/transcoder/admin/eventsource.py:
+	* flumotion/transcoder/admin/janitor.py:
+	* flumotion/transcoder/admin/monitoring.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/proxies/componentset.py:
+	* flumotion/transcoder/admin/proxies/workerset.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/transcoding.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Moved the eventsource out to flumotion-inhouse,
+	and changed the method name when using the listener
+	argument to connectListener to keep the connect name
+	for gobject-like behaviors.
+
 2008-02-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* Makefile.am:
