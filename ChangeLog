@@ -1,5 +1,11 @@
 2008-02-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/Makefile.am:
+	* flumotion/transcoder/admin/context/apicontext.py:
+	Added forgoten api context module.
+
+2008-02-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* conf/transcoder/transcoder-admin.ini:
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/admin.py:
