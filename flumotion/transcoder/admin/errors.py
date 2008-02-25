@@ -27,6 +27,11 @@ class PropertiesError(TranscoderError):
         TranscoderError.__init__(self, *args, **kwargs)
 
 
+class APIError(TranscoderError):
+    def __init__(self, *args, **kwargs):
+        TranscoderError.__init__(self, *args, **kwargs)
+    
+
 class OperationTimedOutError(TimeoutError):
     """
     An asynchronous operation timed out.

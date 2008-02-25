@@ -88,3 +88,7 @@ DocumentTypeEnum = EnumClass("DocumentTypeEnum",
                               "Transcoding Configuration",
                               "Transcoding Log",
                               "Error Diagnostic"))
+
+APIBouncerEnum = EnumClass("APIBouncerEnum",
+                           ("saltedsha256",),
+                           ("salted-sha256",))

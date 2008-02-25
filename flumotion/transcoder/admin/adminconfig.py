@@ -81,6 +81,26 @@
     mail-emergency-recipients = emergency-list@fluendo.com, sebastien@fluendo.com
     mail-debug-recipients = debug-list@fluendo.com, sebastien@fluendo.com
     
+    # API Properties
+    [admin:api]
+    # host and port to listen for low-level API client connections
+    #host = localhost
+    #port = 7667
+    
+    # Use SSL
+    #use-ssl = True
+    #certificate = default.pem
+    
+    # API Bouncer data
+    [admin:api:bouncer]
+    
+    # Bouncer type, supported: salted-sha256
+    #type = salted-sha256
+    
+    # salted-sha256 user declaration
+    users#user = salt:1bc1a361f17092bc7af4b2f82bf9194ea9ee2ca49eb2e53e39f555bc1eeaed74
+    users#toto = spam:f4b155f44fe27b2ba037ac2e13477b9624350d4b0584f31a0bb4ef19986c7601
+    
     # Manager Properties
     [manager]
     
@@ -127,6 +147,8 @@ from flumotion.inhouse import properties
 
 from flumotion.transcoder.admin import adminconsts
 
+from flumotion.transcoder.admin.api.config import APIConfig
+
 
 class ManagerConfig(properties.PropertyBag):
     host = properties.String('host', None, True)
@@ -147,6 +169,7 @@ class WorkerConfig(properties.PropertyBag):
 class DataSourceConfig(properties.PropertyBag):
     dataFile = properties.String('data-file', None, True)
 
+
 class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
     smtpPort = properties.Integer('smtp-port', 25, False, True)
@@ -159,10 +182,13 @@ class NotifierConfig(properties.PropertyBag):
     mailDebugSender = properties.String('mail-debug-sender', None, True)
     mailDebugRecipients = properties.String('mail-debug-recipients', None, True)
 
+
 class AdminConfig(properties.PropertyBag):
     datasource = properties.Child("data-source", DataSourceConfig)
     notifier = properties.Child("notifier", NotifierConfig)
+    api = properties.Child("api", APIConfig)
     roots = properties.Dict(properties.String('roots'))
+
 
 class ClusterConfig(properties.RootPropertyBag):
     

@@ -15,6 +15,7 @@ from flumotion.transcoder.admin.context.managercontext import ManagerContext
 from flumotion.transcoder.admin.datasource import filesource
 from flumotion.transcoder.admin.context.workercontext import WorkerContext
 from flumotion.transcoder.admin.context.notifiercontext import NotifierContext
+from flumotion.transcoder.admin.context.apicontext import APIContext
 
 
 class AdminContext(object):
@@ -39,4 +40,6 @@ class AdminContext(object):
         return WorkerContext(self, workername, 
                              self.config.workers.get(workername, None),
                              self.config.workerDefaults)
-            
+    
+    def getAPIContext(self):
+        return APIContext(self.config.admin.api)

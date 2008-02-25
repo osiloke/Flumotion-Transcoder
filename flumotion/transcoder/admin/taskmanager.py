@@ -409,8 +409,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        dl.addCallback(defer.logFailures, self, self, 
-                       "task synchronization")
+        dl.addCallback(defer.propagateFailure, self)
         self._doChainWaitIdle(dl)
         return dl
     
@@ -420,8 +419,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
                                 fireOnOneCallback=False,
                                 fireOnOneErrback=False,
                                 consumeErrors=True)
-        dl.addCallback(defer.logFailures, self, self, 
-                       "task '%s' activation" % self.getLabel())
+        dl.addCallback(defer.propagateFailure, self)
         self._doChainWaitActive(dl)
         return dl
     

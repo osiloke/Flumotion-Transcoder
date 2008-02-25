@@ -349,16 +349,8 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
                                fireOnOneCallback=False,
                                fireOnOneErrback=False, 
                                consumeErrors=True)
-        d.addCallback(self.__cbLogFailures, self)
+        d.addCallback(defer.propagateFailure, self)
         return d
-    
-    def __cbLogFailures(self, results, newResult):
-        for succeed, result in results:
-            if not succeed:
-                log.notifyFailure(self, result,
-                                  "Failure waiting for element "
-                                  "'%s' to become idle", self.getLabel())
-        return newResult
     
     def __cbInitializationSucceed(self, result):
         self.log("%s successfully initialized", 

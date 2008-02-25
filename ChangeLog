@@ -1,3 +1,22 @@
+2008-02-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder/transcoder-admin.ini:
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/api/Makefile.am:
+	* flumotion/transcoder/admin/api/api.py:
+	* flumotion/transcoder/admin/api/config.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/context/admincontext.py:
+	* flumotion/transcoder/admin/enums.py:
+	* flumotion/transcoder/admin/errors.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	Added the low-level PB API server.
+	Fixed bugs where timeout exception were lost.
+
 2008-02-21  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:

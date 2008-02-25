@@ -16,7 +16,7 @@ from twisted.internet import reactor
 from flumotion.common import messages
 from flumotion.common.enum import EnumClass
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, errors
 
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.enums import MonitorFileStateEnum
@@ -40,6 +40,7 @@ from flumotion.transcoder.admin.montask import MonitoringTask
 from flumotion.transcoder.admin.transcoding import Transcoding
 from flumotion.transcoder.admin.scheduler import Scheduler
 from flumotion.transcoder.admin.notifier import Notifier, notifyEmergency, notifyDebug
+from flumotion.transcoder.admin.api import api  
 
 
 class TranscoderAdmin(log.Loggable):
@@ -67,6 +68,7 @@ class TranscoderAdmin(log.Loggable):
                                     self._transCtx, self._notifier, 
                                     self._transcoding, self._diagnostician)
         self._translator = messages.Translator()
+        self._api = api.Server(self._adminCtx.getAPIContext(), self)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 
@@ -76,19 +78,20 @@ class TranscoderAdmin(log.Loggable):
     def initialize(self):
         self.info("Initializing Transcoder Administration")
         d = defer.Deferred()
-        d.addCallback(lambda r: self._datasource.initialize())
-        d.addCallback(lambda r: self._store.initialize())
-        d.addCallback(lambda r: self._notifier.initialize())
-        d.addCallback(lambda r: self._managers.initialize())
-        d.addCallback(lambda r: self._components.initialize())
-        d.addCallback(lambda r: self._workers.initialize())
-        d.addCallback(lambda r: self._monitors.initialize())
-        d.addCallback(lambda r: self._transcoders.initialize())
-        d.addCallback(lambda r: self._scheduler.initialize())
-        d.addCallback(lambda r: self._monitoring.initialize())
-        d.addCallback(lambda r: self._transcoding.initialize())
-        d.addCallback(lambda r: self._janitor.initialize())
-        d.addCallback(lambda r: self._diagnostician.initialize())
+        d.addCallback(defer.dropResult, self._datasource.initialize)
+        d.addCallback(defer.dropResult, self._store.initialize)
+        d.addCallback(defer.dropResult, self._notifier.initialize)
+        d.addCallback(defer.dropResult, self._managers.initialize)
+        d.addCallback(defer.dropResult, self._components.initialize)
+        d.addCallback(defer.dropResult, self._workers.initialize)
+        d.addCallback(defer.dropResult, self._monitors.initialize)
+        d.addCallback(defer.dropResult, self._transcoders.initialize)
+        d.addCallback(defer.dropResult, self._scheduler.initialize)
+        d.addCallback(defer.dropResult, self._monitoring.initialize)
+        d.addCallback(defer.dropResult, self._transcoding.initialize)
+        d.addCallback(defer.dropResult, self._janitor.initialize)
+        d.addCallback(defer.dropResult, self._diagnostician.initialize)
+        d.addCallback(defer.dropResult, self._api.initialize)
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
@@ -350,6 +353,7 @@ class TranscoderAdmin(log.Loggable):
                       "Waiting for monitoring to become active")
         d.addCallback(defer.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
+        d.addErrback(self.__ebMonitoringNotReady)
         d.addCallback(defer.bridgeResult, self.debug,
                       "Starting transcoding manager")
         d.addCallback(defer.dropResult, self._transcoding.start,
@@ -386,6 +390,7 @@ class TranscoderAdmin(log.Loggable):
                       "Waiting for monitoring to become active")
         d.addCallback(defer.dropResult, self._monitoring.waitActive,
                       adminconsts.MONITORING_ACTIVATION_TIMEOUT)
+        d.addErrback(self.__ebMonitoringNotReady)
         d.addCallback(defer.bridgeResult, self.debug,
                       "Resuming transcoding manager")
         d.addCallback(defer.dropResult, self._transcoding.resume,
@@ -395,7 +400,7 @@ class TranscoderAdmin(log.Loggable):
         d.addCallback(defer.dropResult, self._scheduler.resume,
                       adminconsts.SCHEDULER_RESUME_TIMEOUT)
         d.addCallbacks(self.__cbResumingSucceed, self.__ebResumingFailed)
-        d.callback(None)
+        return d.callback(None)
         
     def __pause(self):
         if not (self._state == TaskStateEnum.started):
@@ -460,12 +465,18 @@ class TranscoderAdmin(log.Loggable):
         d.addErrback(defer.bridgeResult, self.warning,
                      "Scheduler didn't became idle; trying to continue")
         d.addBoth(defer.dropResult, self.__startup)
-        return self
+        return d.addCallback(defer.overrideResult, self)
     
     def __ebAdminInitializationFailed(self, failure):
         log.notifyFailure(self, failure,
                           "Failure during Transcoder Administration Initialization")
         reactor.stop()
+
+    def __ebMonitoringNotReady(self, failure):
+        if failure.check(errors.TimeoutError):
+            log.notifyFailure(self, failure, "Monitoring fail to activate, no worker ?")
+            return None
+        return failure
 
     def __cbSartupSucceed(self, result):
         self.info("Transcoder Administration Successfully Started")
