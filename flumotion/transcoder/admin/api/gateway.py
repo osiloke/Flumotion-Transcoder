@@ -10,14 +10,17 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import classProvides
+from zope.interface import classProvides, implements
 
 from flumotion.inhouse.spread import avatars
+
+from flumotion.transcoder.admin.api import shared
 
 
 class Avatar(avatars.Avatar):
     
     classProvides(avatars.IAvatarFactory)
+    implements(shared.ITranscoderGateway)
     
     def __init__(self, service, avatarId, mind):
         avatars.Avatar.__init__(self, service, avatarId, mind)

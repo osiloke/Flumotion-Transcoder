@@ -18,7 +18,7 @@ from flumotion.inhouse import defer, log
 from flumotion.inhouse.spread import bouncers, pbserver
 
 from flumotion.transcoder.admin import errors
-from flumotion.transcoder.admin.api import interfaces, gateway
+from flumotion.transcoder.admin.api import shared, gateway
 from flumotion.transcoder.admin.enums import APIBouncerEnum
 
 
@@ -50,8 +50,7 @@ class Server(log.Loggable):
         return self._server 
 
     def __cbRegisterGatewayService(self, server):
-        server.registerService(_ServiceFactory(self),
-                               interfaces.ITranscoderGateway)
+        server.registerService(_ServiceFactory(self))
         return server
         
     def __cbInitializeServer(self, server):
@@ -104,3 +103,5 @@ class _ServiceFactory(object):
         ident = identifier or "api-server"
         return _Service(server, self._admin, identifier=ident)
  
+    def getServiceInterfaces(self):
+        return gateway.Avatar.getMediumInterfaces()
