@@ -149,7 +149,6 @@ class UpgradeConfig(Loggable):
         adminConfig.manager.username = "user"
         adminConfig.manager.password = "test"
         adminConfig.manager.useSSL = None
-        adminConfig.manager.certificate = None
 
         # Default worker configuration
         adminConfig.workerDefaults.roots["default"] = self._rootDir

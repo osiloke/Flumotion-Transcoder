@@ -112,9 +112,8 @@
     username = user
     password = test
     
-    # Properties to use SSL to connect to the manager
+    # Property to use SSL to connect to the manager
     #use-ssl = False
-    #certificate = 
     
     # Default Worker Properties
     [worker-defaults]
@@ -156,7 +155,6 @@ class ManagerConfig(properties.PropertyBag):
     username = properties.String('username', None, True)
     password = properties.String('password', None, True)
     useSSL = properties.Boolean('use-ssl', False)
-    certificate = properties.String('certificate', None)
 
 
 class WorkerConfig(properties.PropertyBag):
@@ -184,6 +182,10 @@ class NotifierConfig(properties.PropertyBag):
 
 
 class AdminConfig(properties.PropertyBag):
+    """
+        Changes from version 1.0 to 1.1:
+            Added api child section. 
+    """
     datasource = properties.Child("data-source", DataSourceConfig)
     notifier = properties.Child("notifier", NotifierConfig)
     api = properties.Child("api", APIConfig)
@@ -192,7 +194,7 @@ class AdminConfig(properties.PropertyBag):
 
 class ClusterConfig(properties.RootPropertyBag):
     
-    VERSION = (1, 0)
+    VERSION = (1, 1)
     COMMENTS = __doc__.split('\n')
     
     debug = properties.String("debug")

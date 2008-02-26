@@ -46,7 +46,7 @@ FLUMOTION_DIR="`$PKG_CONFIG --variable=flumotiondir flumotion`"
 AC_MSG_NOTICE([Flumotion code base directory is $FLUMOTION_DIR])
 AC_SUBST(FLUMOTION_DIR)
 
-dnl check for in-house library
+dnl check for flumotion-inhouse library
 PKG_CHECK_MODULES(INHOUSE, flumotion-inhouse >= $INHOUSE_REQ)
 INHOUSE_DIR="`$PKG_CONFIG --variable=flumotioninhousedir flumotion-inhouse`"
 AC_MSG_NOTICE([Flumotion in-house library directory is $INHOUSE_DIR])

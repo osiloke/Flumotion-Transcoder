@@ -40,7 +40,7 @@ from flumotion.transcoder.admin.montask import MonitoringTask
 from flumotion.transcoder.admin.transcoding import Transcoding
 from flumotion.transcoder.admin.scheduler import Scheduler
 from flumotion.transcoder.admin.notifier import Notifier, notifyEmergency, notifyDebug
-from flumotion.transcoder.admin.api import api  
+from flumotion.transcoder.admin.api import apiserver
 
 
 class TranscoderAdmin(log.Loggable):
@@ -68,7 +68,7 @@ class TranscoderAdmin(log.Loggable):
                                     self._transCtx, self._notifier, 
                                     self._transcoding, self._diagnostician)
         self._translator = messages.Translator()
-        self._api = api.Server(self._adminCtx.getAPIContext(), self)
+        self._api = apiserver.Server(self._adminCtx.getAPIContext(), self)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 

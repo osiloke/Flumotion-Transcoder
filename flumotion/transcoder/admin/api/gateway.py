@@ -21,4 +21,4 @@ class Avatar(avatars.Avatar):
     
     def __init__(self, service, avatarId, mind):
         avatars.Avatar.__init__(self, service, avatarId, mind)
-        self._admin = service.getServer().getAdmin()
+        self._admin = service.getAdmin()
