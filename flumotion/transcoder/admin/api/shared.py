@@ -26,7 +26,6 @@ class Identity(flavors.Copyable, flavors.RemoteCopy):
         self._identifier = identifier
     
     def getStateToCopyFor(self, perspective):
-        print "#"*40, "getStateToCopyFor", perspective
         return {"identifier": self._identifier}
 
     def setCopyableState(self, state):
