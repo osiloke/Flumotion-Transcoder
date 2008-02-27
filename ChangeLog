@@ -1,3 +1,17 @@
+2008-02-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* Makefile.am:
+	* configure.ac:
+	* flumotion/transcoder/admin/api/Makefile.am:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/api/mediums/Makefile.am:
+	* flumotion/transcoder/admin/api/mediums/__init__.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/api/shared.py:
+	* flumotion/transcoder/admin/api/types.py:
+	Added a medium for the workers.
+
 2008-02-26  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/api/Makefile.am:

@@ -18,6 +18,7 @@ PYCHECKER_WHITELIST = \
 	flumotion/transcoder/admin/datastore/*.py \
 	flumotion/transcoder/admin/proxies/*.py \
 	flumotion/transcoder/admin/api/*.py \
+	flumotion/transcoder/admin/api/mediums/*.py \
 	flumotion/component/transcoder/*.py
 
 PYCHECKER_BLACKLIST = 

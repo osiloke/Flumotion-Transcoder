@@ -14,14 +14,29 @@ from zope.interface import classProvides, implements
 
 from flumotion.inhouse.spread import avatars
 
-from flumotion.transcoder.admin.api import shared
+from flumotion.transcoder.admin.api import interfaces
 
 
 class Avatar(avatars.Avatar):
     
     classProvides(avatars.IAvatarFactory)
-    implements(shared.ITranscoderGateway)
+    implements(interfaces.ITranscoderGateway)
     
     def __init__(self, service, avatarId, mind):
         avatars.Avatar.__init__(self, service, avatarId, mind)
         self._admin = service.getAdmin()
+
+
+    ## ITranscoderGateway Methodes ##
+
+    def getWorkers(self):
+        pass
+    
+    def getWorker(self, identifier):
+        pass
+    
+    
+    ## Make methodes remote ##
+    
+    perspective_getWorkers = getWorkers
+    perspective_getWorker = getWorker

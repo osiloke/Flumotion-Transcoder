@@ -10,30 +10,25 @@
 
 # Headers in this file shall remain intact.
 
-from twisted.spread import flavors
-from twisted.python.reflect import qual
-
 from flumotion.inhouse.spread import mediums 
 
 
 class ITranscoderGateway(mediums.IServerMedium):
-    pass
-
-
-class Identity(flavors.Copyable, flavors.RemoteCopy):
     
-    def __init__(self, identifier):
-        self._identifier = identifier
+    def getWorkers(self):
+        pass
     
-    def getStateToCopyFor(self, perspective):
-        return {"identifier": self._identifier}
-
-    def setCopyableState(self, state):
-        self._identifier = state["identifier"]
+    def getWorker(self, identifier):
+        pass
 
 
-## Private ##
+class IWorkerMedium(mediums.IServerMedium):
 
-from twisted.spread import jelly
-
-jelly.setUnjellyableForClass(qual(Identity), Identity)
+    def getIdentifier(self):
+        pass
+    
+    def getName(self):
+        pass
+    
+    def getHost(self):
+        pass

@@ -1,10 +1,11 @@
 include $(top_srcdir)/common/python.mk
 
-SUBDIRS = 
+SUBDIRS = mediums 
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/api
 
-python_PYTHON = __init__.py shared.py config.py server.py gateway.py apiserver.py
+python_PYTHON = __init__.py config.py server.py gateway.py apiserver.py \
+                interfaces.py types.py
 
 python_DATA =
 
