@@ -18,7 +18,7 @@ from flumotion.inhouse import defer, log
 from flumotion.inhouse.spread import bouncers, pbserver
 
 from flumotion.transcoder.admin import errors
-from flumotion.transcoder.admin.api import shared, gateway
+from flumotion.transcoder.admin.api import gateway
 from flumotion.transcoder.admin.enums import APIBouncerEnum
 
 

@@ -4,7 +4,7 @@ SUBDIRS =
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/api/mediums
 
-python_PYTHON = __init__.py worker.py
+python_PYTHON = __init__.py basemedium.py workermedium.py
 
 python_DATA =
 

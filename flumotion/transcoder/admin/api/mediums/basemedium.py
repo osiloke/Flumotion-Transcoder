@@ -16,32 +16,32 @@ from zope.interface import implements
 
 from flumotion.inhouse.spread import mediums 
 
-from flumotion.transcoder.api import interfaces 
+from flumotion.transcoder.admin.proxies import fluproxy
+from flumotion.transcoder.admin.api import interfaces 
 
 
-class WorkerMedium(mediums.ServerMedium):
+class BaseMedium(mediums.ServerMedium):
     
-    implements(interfaces.IWorkerMEdium)
+    implements(interfaces.IBaseMedium)
     
-    
-    def __init__(self, worker):
-        self._worker = worker
+    def __init__(self, ref):
+        self.ref = ref
         
     
-    ## IWorkerMedium Methodes ##
+    ## IBaseMedium Methodes ##
     
     def getIdentifier(self):
-        self._worker.getIdentifier()
+        self.ref.getIdentifier()
     
     def getName(self):
-        self._worker.getName()
-    
-    def getHost(self):
-        self._worker.getHost()
+        self.ref.getName()
+
+    def getLabel(self):
+        self.ref.getLabel()
     
     
     ## Make the Methodes remote ##
     
     remote_getIdentifier = getIdentifier
     remote_getName = getName
-    remote_getHost = getHost
+    remote_getLabel = getLabel

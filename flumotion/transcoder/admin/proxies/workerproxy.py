@@ -32,6 +32,10 @@ class IWorkerDefinition(Interface):
         pass
 
 
+class IWorker(IWorkerDefinition, fluproxy.IFlumotionProxy):
+    pass
+
+
 class WorkerDefinition(object):
     """
     Used to represent non-running workers.
@@ -42,17 +46,20 @@ class WorkerDefinition(object):
     def __init__(self, workerName, workerContext):
         self._context = workerContext
         self._name = workerName
-        
+    
+    
+    ## IWorkerDefinition Methodes ##
+    
     def getName(self):
         return self._name
     
     def getContext(self):
         return self._context
-    
-
+ 
+ 
 class WorkerProxy(fluproxy.FlumotionProxy):
     
-    implements(IWorkerDefinition)
+    implements(IWorker)
     
     def __init__(self, logger, parent, identifier, manager, 
                  workerContext, workerState):
@@ -63,7 +70,7 @@ class WorkerProxy(fluproxy.FlumotionProxy):
         self._context = workerContext
         
         
-    ## Public Methods ##
+    ## IWorkerDefinition and IFlumotionProxxyRO Methods ##
     
     def getName(self):
         assert self._workerState, "Worker has been removed"

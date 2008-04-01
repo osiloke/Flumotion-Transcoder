@@ -1,3 +1,18 @@
+2008-04-01  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/apiserver.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/api/mediums/Makefile.am:
+	* flumotion/transcoder/admin/api/mediums/__init__.py:
+	* flumotion/transcoder/admin/api/mediums/basemedium.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/api/mediums/workermedium.py:
+	* flumotion/transcoder/admin/proxies/fluproxy.py:
+	* flumotion/transcoder/admin/proxies/workerproxy.py:
+	Fixed the PB API.
+
 2008-02-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* Makefile.am:

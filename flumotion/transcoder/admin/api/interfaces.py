@@ -22,7 +22,7 @@ class ITranscoderGateway(mediums.IServerMedium):
         pass
 
 
-class IWorkerMedium(mediums.IServerMedium):
+class IBaseMedium(mediums.IServerMedium):
 
     def getIdentifier(self):
         pass
@@ -30,5 +30,11 @@ class IWorkerMedium(mediums.IServerMedium):
     def getName(self):
         pass
     
+    def getLabel(self):
+        pass
+
+
+class IWorkerMedium(IBaseMedium):
+
     def getHost(self):
         pass

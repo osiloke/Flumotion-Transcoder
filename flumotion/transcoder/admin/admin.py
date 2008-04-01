@@ -115,6 +115,12 @@ class TranscoderAdmin(log.Loggable):
         d.callback(None)
         return d
 
+    def getWorkers(self):
+        return self._workers.getWorkers()
+        
+    def getWorker(self, identifier):
+        return None
+
 
     ## ManagerSet Event Listeners ##
     

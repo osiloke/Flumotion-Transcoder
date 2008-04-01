@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements
+
 from twisted.internet import reactor
 
 from flumotion.inhouse import log, defer, utils
@@ -19,9 +21,37 @@ from flumotion.transcoder.errors import HandledTranscoderFailure
 from flumotion.transcoder.errors import HandledTranscoderError
 from flumotion.transcoder.admin import adminelement
 
+
+class IBaseFlumotionProxy(Interface):
+
+    def getIdentifier(self):
+        """
+        The identifier is unique in a manager context.
+        """
+
+    def getName(self):
+        """
+        The name is unique in a component group context (flow and atmosphere)
+        """
+    
+    def getLabel(self):
+        """
+        The label is a description without uniqueness constraints.
+        By default the label is the name.
+        """
+
+
+class IFlumotionProxy(IBaseFlumotionProxy):
+    
+    def getManager(self):
+        pass
+
+
 #TODO: Rewrite this... It's a mess
 
 class BaseFlumotionProxy(adminelement.AdminElement):
+    
+    implements(IBaseFlumotionProxy)
     
     def __init__(self, logger, parent, identifier):
         adminelement.AdminElement.__init__(self, logger, parent)
@@ -29,25 +59,15 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         self._pendingElements = {} # {attr: {identifier: BaseFlumotionProxy}}
 
 
-    ## Public Methods ##
+    ## IFlumotionProxyRO Methods ##
 
     def getIdentifier(self):
-        """
-        The identifier is unique in a manager context.
-        """
         return self._identifier
 
     def getName(self):
-        """
-        The name is unique in a component group context (flow and atmosphere)
-        """
         return self._identifier
     
     def getLabel(self):
-        """
-        The label is a description without uniquness constraints.
-        By default the label is the name.
-        """
         return self.getName()
     
 
@@ -365,6 +385,8 @@ class RootFlumotionProxy(BaseFlumotionProxy):
 
 
 class FlumotionProxy(BaseFlumotionProxy):
+    
+    implements(IFlumotionProxy)
     
     def __init__(self, logger, parent, identifier, manager):
         BaseFlumotionProxy.__init__(self, logger, parent, identifier)
