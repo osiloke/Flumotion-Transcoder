@@ -41,7 +41,10 @@ class WorkerSet(RootFlumotionProxy):
     def getWorkers(self):
         return self._workers.values()
     
-    def getWorker(self, name):
+    def getWorker(self, identifier):
+        return self._workers[identifier]
+    
+    def getWorkerByName(self, name):
         for worker in self._workers.itervalues():
             if worker.getName() == name:
                 return worker

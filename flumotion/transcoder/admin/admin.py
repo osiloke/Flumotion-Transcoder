@@ -119,7 +119,7 @@ class TranscoderAdmin(log.Loggable):
         return self._workers.getWorkers()
         
     def getWorker(self, identifier):
-        return None
+        return self._workers.getWorker(identifier)
 
 
     ## ManagerSet Event Listeners ##

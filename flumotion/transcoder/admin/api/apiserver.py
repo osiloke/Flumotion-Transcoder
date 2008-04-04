@@ -50,7 +50,7 @@ class Server(log.Loggable):
         return self._server 
 
     def __cbRegisterGatewayService(self, server):
-        server.registerService(_ServiceFactory(self))
+        server.registerService(_ServiceFactory(self._admin))
         return server
         
     def __cbInitializeServer(self, server):

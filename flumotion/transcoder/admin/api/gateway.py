@@ -36,10 +36,13 @@ class Avatar(avatars.Avatar):
     
     def getWorker(self, identifier):
         worker = self._admin.getWorker(identifier)
-        return worker or mediums.IServerMedium(worker)
+        return worker and mediums.IServerMedium(worker)
     
     
     ## Make methodes remote ##
     
     perspective_getWorkers = getWorkers
     perspective_getWorker = getWorker
+    
+    def perspective_getTest(self):
+        return 666

@@ -29,7 +29,7 @@ class WorkerMedium(basemedium.BaseMedium):
     ## IWorkerMedium Methodes ##
     
     def getHost(self):
-        self.ref.getHost()
+        return self.ref.getHost()
     
     
     ## Make the Methodes remote ##

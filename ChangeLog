@@ -1,3 +1,14 @@
+2008-04-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/apiserver.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/mediums/basemedium.py:
+	* flumotion/transcoder/admin/api/mediums/workermedium.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/admin/proxies/workerset.py:
+	Made the first working basic API.
+
 2008-04-01  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:

@@ -137,7 +137,7 @@ class Diagnostician(object):
             report = self.__lookupReport(component)
             workerName = report and report.local.name
         if not worker and workerName:
-            worker = self._workers.getWorker(workerName)
+            worker = self._workers.getWorkerByName(workerName)
         workerHost = worker and worker.getHost()
         return (worker, workerName, workerHost)
     

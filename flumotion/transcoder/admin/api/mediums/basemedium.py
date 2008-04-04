@@ -31,13 +31,13 @@ class BaseMedium(mediums.ServerMedium):
     ## IBaseMedium Methodes ##
     
     def getIdentifier(self):
-        self.ref.getIdentifier()
+        return self.ref.getIdentifier()
     
     def getName(self):
-        self.ref.getName()
+        return self.ref.getName()
 
     def getLabel(self):
-        self.ref.getLabel()
+        return self.ref.getLabel()
     
     
     ## Make the Methodes remote ##
