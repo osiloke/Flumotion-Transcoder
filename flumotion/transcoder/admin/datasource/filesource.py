@@ -274,7 +274,7 @@ EMAIL_NOT_TMPL = {'type': NotificationTypeEnum.email,
                   'recipients': {}}
 
 
-REQ_NOT_TMPL = {'type': NotificationTypeEnum.get_request,
+REQ_NOT_TMPL = {'type': NotificationTypeEnum.http_request,
                 'triggers': set([]),
                 'timeout': None,
                 'retryMax': None,

@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import implements
 
 from flumotion.admin import multi
 #To register Jellyable classes
@@ -108,4 +108,15 @@ class ManagerSet(RootFlumotionProxy):
     def __getManagerUniqueId(self, admin, managerContext, planet):
         if admin == None:
             return None
-        return admin.managerId
+        # We do not use admin.managerId, because it contains private data,
+        # and the identifier can be published by the API.
+        id = _managerIdentifiers.get(admin.managerId, None)
+        if id is None:
+            id = len(_managerIdentifiers) + 1
+            _managerIdentifiers[admin.managerId] = str(id)
+        return id
+
+
+## Private ##
+
+_managerIdentifiers = {}

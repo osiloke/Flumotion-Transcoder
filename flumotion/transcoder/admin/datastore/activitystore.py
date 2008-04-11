@@ -13,8 +13,11 @@
 import datetime
 from cStringIO import StringIO
 
+from zope.interface import implements
+
 from flumotion.inhouse import log, utils
 
+from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import TranscodingTypeEnum
@@ -25,8 +28,32 @@ from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
 from flumotion.transcoder.admin.datastore.notifystore import BaseNotification
 
 
+class IActivityStore(interfaces.IAdminInterface):
+    pass
+
+
+class IBaseActivity(interfaces.IAdminInterface):
+    pass
+
+
+class ITranscodingActivity(interfaces.IAdminInterface):
+    pass
+
+
+class INotificationActivity(interfaces.IAdminInterface):
+    pass
+
+
+class IHTTPRequestActivity(INotificationActivity):
+    pass
+
+
+class IMailActivity(INotificationActivity):
+    pass
+
 
 class ActivityStore(log.LoggerProxy):
+    implements(IActivityStore)
     
     def __init__(self, logger, parent, dataSource):
         log.LoggerProxy.__init__(self, logger)
@@ -111,6 +138,7 @@ def _buildPropertyGetter(propertyName, default):
         
         
 class BaseActivity(log.LoggerProxy):
+    implements(IBaseActivity)
 
     __metaclass__ = MetaStore
     
@@ -204,6 +232,7 @@ class BaseActivity(log.LoggerProxy):
 
 
 class TranscodingActivity(BaseActivity):
+    implements(ITranscodingActivity)
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":
@@ -237,7 +266,8 @@ class TranscodingActivity(BaseActivity):
         self._touche()
 
 
-class BaseNotifyActivity(BaseActivity):
+class NotificationActivity(BaseActivity):
+    implements(INotificationActivity)
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":
@@ -286,7 +316,8 @@ class BaseNotifyActivity(BaseActivity):
         self._touche()
     
     
-class GETRequestNotifyActivity(BaseNotifyActivity):
+class HTTPRequestActivity(NotificationActivity):
+    implements(IHTTPRequestActivity)
 
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"data":
@@ -297,10 +328,11 @@ class GETRequestNotifyActivity(BaseNotifyActivity):
                        {"setRequestURL": ("url",)}}
 
     def __init__(self, logger, parent, data, isNew=True):
-        BaseNotifyActivity.__init__(self, logger, parent, data, isNew)
+        NotificationActivity.__init__(self, logger, parent, data, isNew)
 
 
-class MailNotifyActivity(BaseNotifyActivity):
+class MailActivity(NotificationActivity):
+    implements(IMailActivity)
 
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"data":
@@ -315,7 +347,7 @@ class MailNotifyActivity(BaseNotifyActivity):
                         "setBody":       ("body",)}}
 
     def __init__(self, logger, parent, data, isNew=True):
-        BaseNotifyActivity.__init__(self, logger, parent, data, isNew)
+        NotificationActivity.__init__(self, logger, parent, data, isNew)
 
     def getRecipientsAddr(self):
         """
@@ -335,8 +367,8 @@ class MailNotifyActivity(BaseNotifyActivity):
 _activityLookup = {ActivityTypeEnum.transcoding: 
                    {TranscodingTypeEnum.normal: TranscodingActivity},
                    ActivityTypeEnum.notification: 
-                   {NotificationTypeEnum.get_request: GETRequestNotifyActivity,
-                    NotificationTypeEnum.email: MailNotifyActivity}}
+                   {NotificationTypeEnum.http_request: HTTPRequestActivity,
+                    NotificationTypeEnum.email: MailActivity}}
 
 
 def ActivityFactory(logger, parent, data, isNew=True):

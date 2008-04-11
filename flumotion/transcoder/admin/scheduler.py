@@ -28,7 +28,12 @@ from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 #      higher than other customer priorities.
 
 
+class IScheduler(Interface):
+    pass
+
+
 class Scheduler(log.Loggable, events.EventSourceMixin):
+    implements(IScheduler)
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     

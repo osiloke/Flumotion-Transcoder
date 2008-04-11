@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import implements
 
 from flumotion.inhouse import defer, utils
 from flumotion.inhouse.waiters import AssignWaiters
@@ -28,7 +28,12 @@ def instantiate(logger, parent, identifier, admin,
                         managerContext, state, *args, **kwargs)
 
 
+class IManagerProxy(fluproxy.IFlumotionProxy):
+    pass
+
+
 class ManagerProxy(fluproxy.BaseFlumotionProxy):
+    implements(IManagerProxy)
     
     def __init__(self, logger, parent, identifier, 
                  admin, managerContext, planetState):
@@ -203,20 +208,20 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         return self.__getWorkerUniqueIdByName(workerState.get('name'))
         
     def __getWorkerUniqueIdByName(self, name):
-        return "%s/Wkr:%s" % (self.getIdentifier(), name)
+        return "%s.%s" % (self.getIdentifier(), name)
         
     def __getAtmosphereUniqueId(self, manager, atmosphereContext, 
                                 atmosphereState):
         if atmosphereState == None:
             return None
-        return "%s/Atm:%s" % (self.getIdentifier(),
-                              atmosphereState.get('name'))
+        return "%s.%s" % (self.getIdentifier(),
+                          atmosphereState.get('name'))
 
     def __getFlowUniqueId(self, manager, flowContext, flowState):
         if flowState == None:
             return None
-        return "%s/Flw:%s" % (self.getIdentifier(),
-                              flowState.get('name'))
+        return "%s.%s" % (self.getIdentifier(),
+                          flowState.get('name'))
 
     def __workerStateAdded(self, workerState):
         name = workerState.get('name')

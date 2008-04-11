@@ -10,10 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-import datetime
-
-from zope.interface import Interface, implements
-from twisted.internet import reactor
+from zope.interface import implements
 
 from flumotion.inhouse import log, defer
 
@@ -22,17 +19,22 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.errors import StoreError
-from flumotion.transcoder.admin.datastore.basestore import BaseStore
+from flumotion.transcoder.admin.datastore.basestore import IBaseStore, BaseStore
 from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
 from flumotion.transcoder.admin.datastore.activitystore import ActivityStore
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
+
+class IAdminStore(IBaseStore):
+    pass
+    
 
 class StoreLogger(log.Loggable):
     logCategory = adminconsts.STORES_LOG_CATEGORY
 
 
 class AdminStore(BaseStore):
+    implements(IAdminStore)
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic": 

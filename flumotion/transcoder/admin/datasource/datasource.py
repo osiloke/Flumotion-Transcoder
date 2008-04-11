@@ -299,7 +299,7 @@ class IDataSource(Interface):
                 recipients dict with MailAddressTypeEnum as keys
                     of list of tuple with (name, email)
                     where name can be None
-            For type == NotificationTypeEnum.get_request:
+            For type == NotificationTypeEnum.http_request:
                 requestTemplate (str)
         """
         

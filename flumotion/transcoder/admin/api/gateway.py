@@ -12,10 +12,9 @@
 
 from zope.interface import classProvides, implements
 
-from flumotion.inhouse.spread import avatars, mediums
+from flumotion.inhouse.spread import avatars
 
-from flumotion.transcoder.admin.api import interfaces
-from flumotion.transcoder.admin.api.mediums import *
+from flumotion.transcoder.admin.api import interfaces, api, mediums
 
 
 class Avatar(avatars.Avatar):
@@ -30,19 +29,18 @@ class Avatar(avatars.Avatar):
 
     ## ITranscoderGateway Methodes ##
 
-    def getWorkers(self):
-        workers = self._admin.getWorkers() or []
-        return [mediums.IServerMedium(w) for w in workers]
+    def getWorkerSet(self):
+        return api.adapt(self._admin.getWorkers())
     
-    def getWorker(self, identifier):
-        worker = self._admin.getWorker(identifier)
-        return worker and mediums.IServerMedium(worker)
+    def getStore(self):
+        return api.adapt(self._admin.getStore())
     
+    def getScheduler(self):
+        return api.adapt(self._admin.getScheduler())
+
     
-    ## Make methodes remote ##
+    ## Make the method remote ##
     
-    perspective_getWorkers = getWorkers
-    perspective_getWorker = getWorker
-    
-    def perspective_getTest(self):
-        return 666
+    perspective_getWorkerSet = getWorkerSet
+    perspective_getStore = getStore
+    perspective_getScheduler = getScheduler

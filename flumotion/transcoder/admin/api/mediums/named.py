@@ -14,34 +14,27 @@
 
 from zope.interface import implements
 
-from flumotion.inhouse.spread import mediums 
-
 from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.api import interfaces 
+from flumotion.transcoder.admin.api import interfaces, api
 
 
-class BaseMedium(mediums.ServerMedium):
+class NamedMedium(api.Medium):
+    implements(interfaces.INamedMedium)
     
-    implements(interfaces.IBaseMedium)
-    
-    def __init__(self, ref):
-        self.ref = ref
+    def __init__(self, obj):
+        self.obj = obj
         
     
     ## IBaseMedium Methodes ##
     
+    @api.remote()
     def getIdentifier(self):
-        return self.ref.getIdentifier()
+        return self.obj.getIdentifier()
     
+    @api.remote()
     def getName(self):
-        return self.ref.getName()
+        return self.obj.getName()
 
+    @api.remote()
     def getLabel(self):
-        return self.ref.getLabel()
-    
-    
-    ## Make the Methodes remote ##
-    
-    remote_getIdentifier = getIdentifier
-    remote_getName = getName
-    remote_getLabel = getLabel
+        return self.obj.getLabel()

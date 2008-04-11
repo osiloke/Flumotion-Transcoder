@@ -156,7 +156,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         return self.__getComponentUniqueIdByName(componentState.get('name'))
     
     def __getComponentUniqueIdByName(self, name):
-        return "%s/Cmp:%s" % (self.getIdentifier(), name)
+        return "%s.%s" % (self.getIdentifier(), name)
     
     def __componentStateAdded(self, componentState):
         name = componentState.get('name')

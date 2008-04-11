@@ -10,10 +10,11 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import implements
 
 from flumotion.inhouse import log
 
+from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.proxies import fluproxy
 
 
@@ -23,7 +24,7 @@ def instantiate(logger, parent, identifier, manager,
                        workerContext, state, *args, **kwargs)
     
 
-class IWorkerDefinition(Interface):
+class IWorkerDefinition(interfaces.IAdminInterface):
     
     def getName(self):
         pass
@@ -32,8 +33,10 @@ class IWorkerDefinition(Interface):
         pass
 
 
-class IWorker(IWorkerDefinition, fluproxy.IFlumotionProxy):
-    pass
+class IWorkerProxy(IWorkerDefinition, fluproxy.IFlumotionProxy):
+    
+    def getHost(self):
+        pass
 
 
 class WorkerDefinition(object):
@@ -58,8 +61,7 @@ class WorkerDefinition(object):
  
  
 class WorkerProxy(fluproxy.FlumotionProxy):
-    
-    implements(IWorker)
+    implements(IWorkerProxy)
     
     def __init__(self, logger, parent, identifier, manager, 
                  workerContext, workerState):

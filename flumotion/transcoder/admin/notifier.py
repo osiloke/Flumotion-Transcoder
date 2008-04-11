@@ -30,9 +30,9 @@ from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.enums import MailAddressTypeEnum
-from flumotion.transcoder.admin.datastore.activitystore import BaseNotifyActivity
-from flumotion.transcoder.admin.datastore.activitystore import MailNotifyActivity
-from flumotion.transcoder.admin.datastore.activitystore import GETRequestNotifyActivity
+from flumotion.transcoder.admin.datastore.activitystore import NotificationActivity
+from flumotion.transcoder.admin.datastore.activitystore import MailActivity
+from flumotion.transcoder.admin.datastore.activitystore import HTTPRequestActivity
 
 ## Global info for emergency and debug notification ##
 # Should have working default values in case 
@@ -176,8 +176,8 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self._context = notifierContext
         self._paused = True
         self._awaitingActivities = []
-        self._retries = {} # {BaseNotifyActivity: IDelayedCall}
-        self._results = {} # {BaseNotifyActivity: Deferred}
+        self._retries = {} # {NotificationActivity: IDelayedCall}
+        self._results = {} # {NotificationActivity: Deferred}
         # Setup global notification info
         global _smtpServer, _smtpRequireTLS
         global _emergencySender, _debugSender
@@ -254,7 +254,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     
     def __doPrepareGetRequest(self, label, trigger, notif, vars, docs):
         store = self._activities
-        activity = store.newNotification(NotificationTypeEnum.get_request,
+        activity = store.newNotification(NotificationTypeEnum.http_request,
                                          label, ActivityStateEnum.started,
                                          notif, trigger)
         url = vars.substituteURL(notif.getRequestTemplate())
@@ -328,7 +328,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         return "no retry left"
     
     def __doPerformGetRequest(self, activity):
-        assert isinstance(activity, GETRequestNotifyActivity)
+        assert isinstance(activity, HTTPRequestActivity)
         self.debug("GET request '%s' initiated with URL %s" 
                    % (activity.getLabel(), activity.getRequestURL()))
         d = self._performGetRequest(activity.getRequestURL(), 
@@ -352,7 +352,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self.__retryNotification(activity)
 
     def __doPerformMailPost(self, activity):
-        assert isinstance(activity, MailNotifyActivity)
+        assert isinstance(activity, MailActivity)
         self.debug("Mail posting '%s' initiated for %s" 
                    % (activity.getLabel(), activity.getRecipientsAddr()))
         senderAddr = activity.getSenderAddr()
@@ -423,10 +423,10 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self._retries.pop(activity)
         self._results.pop(activity)
         
-    _prepareLookup = {NotificationTypeEnum.get_request: __doPrepareGetRequest,
+    _prepareLookup = {NotificationTypeEnum.http_request: __doPrepareGetRequest,
                       NotificationTypeEnum.email: __doPrepareMailPost}
     
-    _performLookup = {NotificationTypeEnum.get_request: __doPerformGetRequest,
+    _performLookup = {NotificationTypeEnum.http_request: __doPerformGetRequest,
                       NotificationTypeEnum.email: __doPerformMailPost}
     
     def __cannotPrepare(self, label, trigger, notif, vars, docs):

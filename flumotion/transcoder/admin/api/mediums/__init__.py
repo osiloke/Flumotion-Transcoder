@@ -12,4 +12,15 @@
 
 # Headers in this file shall remain intact.
 
-__all__ = ['basemedium', 'workermedium']
+__all__ = ()
+
+from flumotion.transcoder.admin.api.mediums.named import *
+from flumotion.transcoder.admin.api.mediums.workerset import *
+from flumotion.transcoder.admin.api.mediums.worker import *
+from flumotion.transcoder.admin.api.mediums.store import *
+from flumotion.transcoder.admin.api.mediums.defaults import *
+from flumotion.transcoder.admin.api.mediums.scheduler import *
+from flumotion.transcoder.admin.api.mediums.customer import *
+from flumotion.transcoder.admin.api.mediums.profile import *
+from flumotion.transcoder.admin.api.mediums.target import *
+from flumotion.transcoder.admin.api.mediums.config import *

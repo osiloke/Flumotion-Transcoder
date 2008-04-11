@@ -13,8 +13,24 @@
 from flumotion.inhouse.spread import mediums 
 
 
-class ITranscoderGateway(mediums.IServerMedium):
+class IMedium(mediums.IServerMedium):
+    pass
+
+
+class ITranscoderGateway(IMedium):
     
+    def getWorkerSet(self):
+        pass
+
+    def getStore(self):
+        pass
+    
+    def getScheduler(self):
+        pass
+
+
+class IWorkerSetMedium(IMedium):
+
     def getWorkers(self):
         pass
     
@@ -22,7 +38,23 @@ class ITranscoderGateway(mediums.IServerMedium):
         pass
 
 
-class IBaseMedium(mediums.IServerMedium):
+class IStoreMedium(IMedium):
+    
+    def getDefaults(self):
+        pass
+    
+    def getCustomers(self):
+        pass
+    
+    def getCustomer(self, identifier):
+        pass
+    
+
+class ISchedulerMedium(IMedium):
+    pass
+
+
+class INamedMedium(IMedium):
 
     def getIdentifier(self):
         pass
@@ -34,7 +66,55 @@ class IBaseMedium(mediums.IServerMedium):
         pass
 
 
-class IWorkerMedium(IBaseMedium):
+class IWorkerMedium(INamedMedium):
 
     def getHost(self):
         pass
+
+
+class ICustomerMedium(INamedMedium):
+    
+    def getProfiles(self):
+        pass
+    
+    def getProfile(self, identifier):
+        pass
+
+    
+class IProfileMedium(INamedMedium):
+    
+    def getTargets(self):
+        pass
+    
+    def getTarget(self, identifier):
+        pass
+
+
+class ITargetMedium(INamedMedium):
+    
+    def getConfig(self):
+        pass
+
+
+class IConfigMedium(IMedium):
+    pass
+
+
+class IIdentityConfigMedium(IConfigMedium):
+    pass
+
+
+class IAudioConfigMedium(IConfigMedium):
+    pass
+
+
+class IVideoConfigMedium(IConfigMedium):
+    pass
+
+
+class IAudioVideoConfigMedium(IAudioConfigMedium, IVideoConfigMedium):
+    pass
+
+
+class IThumbnailsConfigMedium(IConfigMedium):
+    pass

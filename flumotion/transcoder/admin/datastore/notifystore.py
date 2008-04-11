@@ -12,12 +12,27 @@
 
 from flumotion.inhouse import log, utils
 
+from zope.interface import implements
+
+from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.datastore.basestore import MetaStore
 
 
-class BaseNotification(object):
+class INotification(interfaces.IAdminInterface):
+    pass
 
+
+class IMailNotification(INotification):
+    pass
+
+
+class IHTTPRequestNotification(INotification):
+    pass
+
+
+class BaseNotification(object):
+    
     __metaclass__ = MetaStore
     
     __getters__ = {"basic":
@@ -51,7 +66,8 @@ class BaseNotification(object):
         return self._target
     
 
-class EMailNotification(BaseNotification):
+class MailNotification(BaseNotification):
+    implements(IMailNotification)
     
     __getters__ = {"basic":
                        {"getAttachments": ("attachments", set([])),
@@ -73,8 +89,9 @@ class EMailNotification(BaseNotification):
         BaseNotification.__init__(self, data, admin, customer, profile, target)
         
         
-class GETRequestNotification(BaseNotification):
-
+class HTTPRequestNotification(BaseNotification):
+    implements(IHTTPRequestNotification)
+    
     __getters__ = {"basic":
                        {"getRequestTemplate": ("requestTemplate", set([]))},
                    "admin_overridable":
@@ -89,8 +106,8 @@ class GETRequestNotification(BaseNotification):
         BaseNotification.__init__(self, data, admin, customer, profile, target)
         
         
-_notifLookup = {NotificationTypeEnum.get_request: GETRequestNotification,
-                NotificationTypeEnum.email: EMailNotification}
+_notifLookup = {NotificationTypeEnum.http_request: HTTPRequestNotification,
+                NotificationTypeEnum.email: MailNotification}
 
 
 def NotificationFactory(data, admin, customer, profile, target):

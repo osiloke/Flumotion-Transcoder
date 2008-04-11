@@ -1,3 +1,57 @@
+2008-04-11  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/Makefile.am:
+	* flumotion/transcoder/admin/api/api.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/api/mediums/Makefile.am:
+	* flumotion/transcoder/admin/api/mediums/__init__.py:
+	* flumotion/transcoder/admin/api/mediums/basemedium.py:
+	* flumotion/transcoder/admin/api/mediums/config.py:
+	* flumotion/transcoder/admin/api/mediums/customer.py:
+	* flumotion/transcoder/admin/api/mediums/defaults.py:
+	* flumotion/transcoder/admin/api/mediums/named.py:
+	* flumotion/transcoder/admin/api/mediums/profile.py:
+	* flumotion/transcoder/admin/api/mediums/scheduler.py:
+	* flumotion/transcoder/admin/api/mediums/store.py:
+	* flumotion/transcoder/admin/api/mediums/target.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/api/mediums/workermedium.py:
+	* flumotion/transcoder/admin/api/mediums/workerset.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/activitystore.py:
+	* flumotion/transcoder/admin/datastore/adminstore.py:
+	* flumotion/transcoder/admin/datastore/basestore.py:
+	* flumotion/transcoder/admin/datastore/configstore.py:
+	* flumotion/transcoder/admin/datastore/customerstore.py:
+	* flumotion/transcoder/admin/datastore/notifystore.py:
+	* flumotion/transcoder/admin/datastore/profilestore.py:
+	* flumotion/transcoder/admin/datastore/targetstore.py:
+	* flumotion/transcoder/admin/enums.py:
+	* flumotion/transcoder/admin/interfaces.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/proxies/groupproxy.py:
+	* flumotion/transcoder/admin/proxies/managerproxy.py:
+	* flumotion/transcoder/admin/proxies/managerset.py:
+	* flumotion/transcoder/admin/proxies/monitorproxy.py:
+	* flumotion/transcoder/admin/proxies/transcoderproxy.py:
+	* flumotion/transcoder/admin/proxies/workerproxy.py:
+	* flumotion/transcoder/admin/proxies/workerset.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	Changed the all the naems with GETRequest to HTTPRequest.
+	Added a base interface IAdminInterface. Every admin interfaces
+	should inherit from it, this the API can recognise admin objects
+	and try to adapt them with a medium object.
+	Added an interface skeleton to every object that could be 
+	published by the API.
+	Added an api module that help adapting admin objects with medium,
+	and support Deferred and list/dict of Deferreds. It also provide
+	a decorator to make a method remote, and a class annotation to
+	register the medium for an admin interface.
+
 2008-04-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:

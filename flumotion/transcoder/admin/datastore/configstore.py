@@ -10,11 +10,39 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.transcoder.enums import TargetTypeEnum
+from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.datastore.basestore import MetaStore
 
 
+class IBaseConfig(interfaces.IAdminInterface):
+    pass
+
+
+class IIdentityConfig(IBaseConfig):
+    pass
+
+
+class IAudioConfig(IBaseConfig):
+    pass
+
+
+class IVideoConfig(IBaseConfig):
+    pass
+
+
+class IAudioVideoConfig(IAudioConfig, IVideoConfig):
+    pass
+
+
+class IThumbnailsConfig(IBaseConfig):
+    pass
+
+
 class BaseConfig(object):
+    implements(IBaseConfig)
     
     __metaclass__ = MetaStore
     
@@ -30,6 +58,7 @@ class BaseConfig(object):
 
 
 class IdentityConfig(BaseConfig):
+    implements(IIdentityConfig)
     
     def __init__(self, data):
         BaseConfig.__init__(self, data)
@@ -42,6 +71,8 @@ class AudioConfig(BaseConfig):
     audioRate (str) 
     audioChannels (str)
     """
+    
+    implements(IAudioConfig)
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic": 
@@ -67,6 +98,8 @@ class VideoConfig(BaseConfig):
     videoPAR (int[2])
     videoFramerate (int[2])
     """
+    
+    implements(IVideoConfig)
 
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":
@@ -87,6 +120,7 @@ class VideoConfig(BaseConfig):
 
 
 class AudioVideoConfig(AudioConfig, VideoConfig):
+    implements(IAudioVideoConfig)
     
     # MetaStore metaclass will create getters for these properties
     __properties__ = {"Tolerance": ("tolerance", None)}
@@ -106,6 +140,8 @@ class ThumbnailsConfig(BaseConfig):
     format (str) in ['png', 'jpg']
     ensureOne (bool)
     """    
+    
+    implements(IThumbnailsConfig)
     
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":

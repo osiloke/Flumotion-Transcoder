@@ -10,17 +10,22 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import implements
 
 from flumotion.inhouse import log, defer
 
-from flumotion.transcoder.admin.datastore.basestore import BaseStore
+from flumotion.transcoder.admin.datastore.basestore import IBaseStore, BaseStore
 from flumotion.transcoder.admin.datastore.configstore import TargetConfigFactory
 from flumotion.transcoder.admin.datastore.configstore import ThumbnailsConfig
 from flumotion.transcoder.admin.datastore.notifystore import NotificationFactory
 
 
+class ITargetStore(IBaseStore):
+    pass
+
+
 class TargetStore(BaseStore):
+    implements(ITargetStore)
 
     # MetaStore metaclass will create getters for these properties
     __getters__ = {"basic":

@@ -116,10 +116,13 @@ class TranscoderAdmin(log.Loggable):
         return d
 
     def getWorkers(self):
-        return self._workers.getWorkers()
-        
-    def getWorker(self, identifier):
-        return self._workers.getWorker(identifier)
+        return self._workers
+
+    def getStore(self):
+        return self._store
+
+    def getScheduler(self):
+        return self._scheduler
 
 
     ## ManagerSet Event Listeners ##

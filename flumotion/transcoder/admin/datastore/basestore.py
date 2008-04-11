@@ -10,13 +10,19 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import log, defer, utils
 from flumotion.inhouse.waiters import CounterWaiters
 
-from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin import adminconsts, interfaces
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 from flumotion.transcoder.admin.adminelement import AdminElement
 from flumotion.transcoder.admin.datasource import datasource
+
+
+class IBaseStore(interfaces.IAdminInterface):
+    pass
 
 
 def _basic_getter_builder(getterName, propertyName, default):
@@ -79,6 +85,7 @@ class MetaStore(type):
 
 
 class BaseStore(AdminElement):
+    implements(IBaseStore)
     
     __metaclass__ = MetaStore
     

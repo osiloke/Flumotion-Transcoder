@@ -10,16 +10,22 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import implements
 
 from flumotion.inhouse import defer
 
+from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 from flumotion.transcoder.admin.proxies.workerproxy import WorkerProxy
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet
 
 
+class IWorkerSet(interfaces.IAdminInterface):
+    pass
+
+
 class WorkerSet(RootFlumotionProxy):
+    implements(IWorkerSet)
     
     def __init__(self, mgrset):
         assert isinstance(mgrset, ManagerSet)

@@ -24,12 +24,18 @@ from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.document import FileDocument
+from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
 from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
 from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
 
 
+class ITranscoderProxy(fluproxy.IFlumotionProxy):
+    pass
+
+
 class TranscoderProxy(ComponentProxy):
+    implements(ITranscoderProxy)
 
     properties_factory = TranscoderProperties
     

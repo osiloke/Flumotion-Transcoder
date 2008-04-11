@@ -14,29 +14,19 @@
 
 from zope.interface import implements
 
-from twisted.python import components
-
 from flumotion.transcoder.admin.proxies import workerproxy
-from flumotion.transcoder.admin.api import interfaces
-from flumotion.transcoder.admin.api.mediums import basemedium 
+from flumotion.transcoder.admin.api import interfaces, api
+from flumotion.transcoder.admin.api.mediums import named 
 
 
-class WorkerMedium(basemedium.BaseMedium):
-    
+class WorkerMedium(named.NamedMedium):
     implements(interfaces.IWorkerMedium)
+    api.registerMedium(interfaces.IWorkerMedium,
+                          workerproxy.IWorkerProxy)
     
     
     ## IWorkerMedium Methodes ##
     
+    @api.remote()
     def getHost(self):
-        return self.ref.getHost()
-    
-    
-    ## Make the Methodes remote ##
-    
-    remote_getHost = getHost
-    
-
-## Registering Adapters ##
-
-components.registerAdapter(WorkerMedium, workerproxy.IWorker, interfaces.IWorkerMedium)
+        return self.obj.getHost()
