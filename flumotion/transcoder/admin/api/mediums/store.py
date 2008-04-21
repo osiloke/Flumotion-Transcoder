@@ -14,29 +14,26 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import adminstore
+from flumotion.transcoder.admin.datastore import store
 from flumotion.transcoder.admin.api import interfaces, api
 
 
 class StoreMedium(api.Medium):
     implements(interfaces.IStoreMedium)
     api.registerMedium(interfaces.IStoreMedium,
-                          adminstore.IAdminStore)
+                       store.IAdminStore)
     
     def __init__(self, store):
-        self._store = store
+        self._reference = store
     
     
     ## IWorkersMedium Methodes ##
 
     @api.remote()
     def getCustomers(self):
-        return self._store.getCustomers()
+        return self._reference.getCustomerStores()
 
     @api.remote()
     def getCustomer(self, identifier):
-        return self._store.getCustomer(identifier)
+        return self._reference.getCustomerStore(identifier)
 
-    @api.remote()
-    def getDefaults(self):
-        return None

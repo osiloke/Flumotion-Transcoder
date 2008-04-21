@@ -29,7 +29,7 @@ class IWorkerDefinition(interfaces.IAdminInterface):
     def getName(self):
         pass
     
-    def getContext(self):
+    def getWorkerContext(self):
         pass
 
 
@@ -46,8 +46,8 @@ class WorkerDefinition(object):
     
     implements(IWorkerDefinition)
     
-    def __init__(self, workerName, workerContext):
-        self._context = workerContext
+    def __init__(self, workerName, workerCtx):
+        self._workerCtx = workerCtx
         self._name = workerName
     
     
@@ -56,20 +56,20 @@ class WorkerDefinition(object):
     def getName(self):
         return self._name
     
-    def getContext(self):
-        return self._context
+    def getWorkerContext(self):
+        return self._workerCtx
  
  
 class WorkerProxy(fluproxy.FlumotionProxy):
     implements(IWorkerProxy)
     
     def __init__(self, logger, parent, identifier, manager, 
-                 workerContext, workerState):
+                 workerCtx, workerState):
         fluproxy.FlumotionProxy.__init__(self, logger, parent, 
                                          identifier, manager)
         
         self._workerState = workerState
-        self._context = workerContext
+        self._workerCtx = workerCtx
         
         
     ## IWorkerDefinition and IFlumotionProxxyRO Methods ##
@@ -82,8 +82,8 @@ class WorkerProxy(fluproxy.FlumotionProxy):
         assert self._workerState, "Worker has been removed"
         return self._workerState.get('host')
 
-    def getContext(self):
-        return self._context
+    def getWorkerContext(self):
+        return self._workerCtx
 
     
     ## Overriden Methods ##

@@ -21,7 +21,18 @@ from flumotion.transcoder.admin.proxies.managerset import ManagerSet
 
 
 class IWorkerSet(interfaces.IAdminInterface):
-    pass
+
+    def getWorkers(self):
+        pass
+
+    def iterWorkers(self):
+        pass
+        
+    def getWorker(self, identifier):
+        pass
+    
+    def getWorkerByName(self, name):
+        pass
 
 
 class WorkerSet(RootFlumotionProxy):
@@ -41,12 +52,12 @@ class WorkerSet(RootFlumotionProxy):
         
     ## Public Methods ##
 
-    def iterWorkers(self):
-        return self._workers.itervalues()
-    
     def getWorkers(self):
         return self._workers.values()
-    
+
+    def iterWorkers(self):
+        return self._workers.itervalues()
+        
     def getWorker(self, identifier):
         return self._workers[identifier]
     
@@ -56,17 +67,17 @@ class WorkerSet(RootFlumotionProxy):
                 return worker
         return None
     
-    def __iter__(self):
-        return self._workers.__iter__()
-    
-    def __getitem__(self, identifier):
-        return self._workers.get(identifier, None)
-    
-    def __contains__(self, value):
-        identifier = value
-        if isinstance(value, WorkerProxy):
-            identifier = value.getIdentifier()
-        return identifier in self._workers
+#    def __iter__(self):
+#        return self._workers.__iter__()
+#    
+#    def __getitem__(self, identifier):
+#        return self._workers.get(identifier, None)
+#    
+#    def __contains__(self, value):
+#        identifier = value
+#        if isinstance(value, WorkerProxy):
+#            identifier = value.getIdentifier()
+#        return identifier in self._workers
     
     
     ## Overriden Methods ##

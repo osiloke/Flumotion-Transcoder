@@ -178,8 +178,8 @@ class MonitorProxy(ComponentProxy):
         worker = self.getWorker()
         assert ui != None
         assert worker != None
-        context = worker.getContext()
-        local = context.getLocal()
+        workerCtx = worker.getWorkerContext()
+        local = workerCtx.getLocal()
         for (p, f), s in ui.get("pending-files", {}).iteritems():
             files.append((VirtualPath.virtualize(p, local), f, s))
         return files

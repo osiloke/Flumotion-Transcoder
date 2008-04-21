@@ -20,10 +20,21 @@ from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 from flumotion.inhouse import log, utils
 from flumotion.inhouse.waiters import AssignWaiters
 
-from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin import adminconsts, interfaces
 from flumotion.transcoder.admin.proxies import managerproxy
 from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
 
+
+class IManagerSet(interfaces.IAdminInterface):
+
+    def getManagers(self):
+        pass
+    
+    def iterManagers(self):
+        pass
+    
+    def waitManagers(self, timeout=None):
+        pass
 
 
 class FlumotionProxiesLogger(log.Loggable):

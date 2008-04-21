@@ -37,15 +37,16 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
     
-    def __init__(self, activityStore, transCtx, notifier, transcoding, diagnostician):
-        self._transCtx = transCtx
-        self._store = activityStore
+    def __init__(self, schedulerContext, storeContext, 
+                 notifier, transcoding, diagnostician):
+        self._schedulerCtx = schedulerContext
+        self._storeCtx = storeContext
         self._notifier = notifier
         self._transcoding = transcoding
         self._diagnostician = diagnostician
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
-        self._activities = {} # {TranscodingTask: Activity}
+        self._activities = {} # {TranscodingTask: ActivityContext}
         self._started = False
         self._paused = False
         self._startDelay = None
@@ -65,7 +66,8 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._transcoding.connectListener("slot-available", self, self.onSlotsAvailable)
         self._transcoding.update(self)
         states = [ActivityStateEnum.started]
-        d = self._store.getTranscodings(states)
+        stateCtx = self._storeCtx.getStateContext()
+        d = stateCtx.retrieveTranscodingContexts(states)
         d.addCallback(self.__cbRestoreTasks)
         d.addErrback(self.__ebInitializationFailed)
         return d
@@ -93,25 +95,25 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.__startup()
         return defer.succeed(self)
         
-    def addProfile(self, profileContext):
-        inputPath = profileContext.getInputPath()
-        identifier = profileContext.getIdentifier()
-        if self.isProfileQueued(profileContext):
+    def addProfile(self, profCtx):
+        inputPath = profCtx.getInputPath()
+        identifier = profCtx.getIdentifier()
+        if self.isProfileQueued(profCtx):
             self.log("Added an already queued profile '%s'", inputPath)
         elif self._transcoding.getTask(identifier):
             self.log("Added an already transcoding profile '%s'", inputPath)
         else:
             self.debug("Queued profile '%s'", inputPath)
-            self.__queueProfile(profileContext)
+            self.__queueProfile(profCtx)
             self.__startupTasks()
-            self.emit("profile-queued", profileContext)
+            self.emit("profile-queued", profCtx)
     
-    def removeProfile(self, profileContext):
-        inputPath = profileContext.getInputPath()
-        identifier = profileContext.getIdentifier()
-        if self.isProfileQueued(profileContext):
+    def removeProfile(self, profCtx):
+        inputPath = profCtx.getInputPath()
+        identifier = profCtx.getIdentifier()
+        if self.isProfileQueued(profCtx):
             self.debug("Unqueue profile '%s'", inputPath)
-            self.__unqueuProfile(profileContext)
+            self.__unqueuProfile(profCtx)
         trantask = self._transcoding.getTask(identifier, None)
         if trantask and not trantask.isAcknowledging():
             self.debug("Cancel transcoding of profile '%s'", inputPath)
@@ -152,12 +154,68 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     ## TranscodingTask Event Listeners ##
     
     def onTranscodingFailed(self, task, transcoder):
-        activity = self._activities[task]
-        activity.setState(ActivityStateEnum.failed)
-        activity.store()
+        activCtx = self._activities[task]
+        activStore = activCtx.getStore()
+        activStore.setState(ActivityStateEnum.failed)
+        activStore.store()
         self.emit("transcoding-failed", task)
+        if transcoder is not None:
+            d = transcoder.retrieveReport()
+            d.addCallback(self.__transcodingFailed, task, transcoder)
+        else:
+            self.__transcodingFailed(None, task, transcoder)
+            
+    def onTranscodingDone(self, task, transcoder):
+        activCtx = self._activities[task]
+        activStore = activCtx.getStore()
+        activStore.setState(ActivityStateEnum.done)
+        activStore.store()
+        self.emit("transcoding-done", task)
+        if transcoder is not None:
+            d = transcoder.retrieveReport()
+            d.addCallback(self.__transcodingDone, task, transcoder)
+        else:
+            self.__transcodingDone(None, task, transcoder)
+
+    def onTranscodingTerminated(self, task, succeed):
+        self.info("Transcoding task '%s' %s", task.getLabel(), 
+                  (succeed and "succeed") or "failed")
+        profCtx = task.getProfileContext()
+        self._transcoding.removeTask(profCtx.getIdentifier())
+        self._activities.pop(task)
+
+        
+    ## EventSource Overriden Methods ##
+    
+    def update(self, listener):
+        for profCtx in self._queue.itervalues():
+            self.emitTo("profile-queued", listener, profCtx)
+        for task in self._transcoding.iterTasks():
+            self.emitTo("transcoding-started", listener, task)
+
+        
+    ## Private Methods ##
+    
+    def __transcodingDone(self, report, task, transcoder):
         label = task.getLabel()
-        report = transcoder and transcoder.getReport()
+        docs = transcoder and transcoder.getDocuments()
+        trigger = NotificationTriggerEnum.done
+        profCtx = task.getProfileContext()
+        self.__notify(label, trigger, profCtx, report, docs)
+    
+    def __transcodingFailed(self, report, task, transcoder):    
+        d = self._diagnostician.diagnoseTranscodingFailure(task, transcoder)
+        args = (report, task, transcoder)
+        d.addCallbacks(self.__notifyTranscodingfailure,
+                       self.__ebFailureDiagnosticFailed,
+                       callbackArgs=args, errbackArgs=args)
+    
+    def __ebFailureDiagnosticFailed(self, failure, report, task, transcoder):
+        log.notifyFailure(self, failure, "Failure during transcoding failure diagnostic")
+        # But we continue like if nothing has append
+        self.__notifyTranscodingfailure(None, report, task, transcoder)
+    
+    def __notifyTranscodingfailure(self, diagnostic, report, task, transcoder):
         docs = transcoder and transcoder.getDocuments()
         # It possible create an alternative error message for
         # when there is no report or no error message in the report
@@ -166,47 +224,16 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         if (sigv > 0):
             altErrorMessage = ("Transcoding Job seems to have segfaulted "
                                "%d time(s)" % sigv)
+        if diagnostic:
+            if docs:
+                docs.extend(diagnostic)
+            else:
+                docs = diagnostic
+        label = task.getLabel()                
         trigger = NotificationTriggerEnum.failed
         profCtx = task.getProfileContext()
-        diagnostics = self._diagnostician.diagnoseTranscodingFailure(task, transcoder)
-        if diagnostics:
-            if docs:
-                docs.extend(diagnostics)
-            else:
-                docs = diagnostics
         self.__notify(label, trigger, profCtx, report,
                       docs, altErrorMessage=altErrorMessage)
-    
-    def onTranscodingDone(self, task, transcoder):
-        activity = self._activities[task]
-        activity.setState(ActivityStateEnum.done)
-        activity.store()
-        self.emit("transcoding-done", task)
-        label = task.getLabel()
-        report = transcoder and transcoder.getReport()
-        docs = transcoder and transcoder.getDocuments()
-        trigger = NotificationTriggerEnum.done
-        profCtx = task.getProfileContext()
-        self.__notify(label, trigger, profCtx, report, docs)
-
-    def onTranscodingTerminated(self, task, succeed):
-        self.info("Transcoding task '%s' %s", task.getLabel(), 
-                  (succeed and "succeed") or "failed")
-        ctx = task.getProfileContext()
-        self._transcoding.removeTask(ctx.getIdentifier())
-        self._activities.pop(task)
-
-        
-    ## EventSource Overriden Methods ##
-    
-    def update(self, listener):
-        for ctx in self._queue.itervalues():
-            self.emitTo("profile-queued", listener, ctx)
-        for task in self._transcoding.iterTasks():
-            self.emitTo("transcoding-started", listener, task)
-
-        
-    ## Private Methods ##
     
     def __notify(self, label, trigger, profCtx, report,
                  docs, altErrorMessage=None):
@@ -214,50 +241,49 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         if altErrorMessage and (not sourceVars["errorMessage"]):
             sourceVars["errorMessage"] = altErrorMessage
         # Global notifications
-        transCtx = profCtx.getTranscodingContext()
-        notifications = transCtx.store.getNotifications(trigger)
-        for n in notifications:
+        storeCtx = profCtx.getStoreContext()
+        contexts = storeCtx.getNotificationContexts(trigger)
+        for n in contexts:
             d = self._notifier.notify(label, trigger, n, sourceVars, docs)
             # Ignore Failures to prevent defer to notify them
             d.addErrback(defer.resolveFailure)
         # Customer notifications
         custCtx = profCtx.getCustomerContext()
-        notifications = custCtx.store.getNotifications(trigger)
-        for n in notifications:
+        notifCtxs = custCtx.getNotificationContexts(trigger)
+        for n in notifCtxs:
             d = self._notifier.notify(label, trigger, n, sourceVars, docs)
             # Ignore Failures to prevent defer to notify them
             d.addErrback(defer.resolveFailure)
         # Profile notifications
-        notifications = profCtx.store.getNotifications(trigger)
-        for n in notifications:
+        notifCtxs = profCtx.getNotificationContexts(trigger)
+        for n in notifCtxs:
             d = self._notifier.notify(label, trigger, n, sourceVars, docs)
             # Ignore Failures to prevent defer to notify them
             d.addErrback(defer.resolveFailure)
         # Targets notifications
         for targCtx in profCtx.iterTargetContexts():
-            notifications = targCtx.store.getNotifications(trigger)
-            if not notifications:
+            notifCtxs = targCtx.getNotificationContexts(trigger)
+            if not notifCtxs:
                 continue
-            for n in notifications:
+            for n in notifCtxs:
                 targVars = sourceVars.getTargetVariables(targCtx)
                 d = self._notifier.notify(label, trigger, n, targVars, docs)
                 # Ignore Failures to prevent defer to notify them
                 d.addErrback(defer.resolveFailure)
     
-    def __cbRestoreTasks(self, activities):
+    def __cbRestoreTasks(self, activCtxs):
         self.debug("Restoring transcoding tasks")
-        for activity in activities:
-            prof = activity.getProfile()
-            relPath = activity.getInputRelPath()
-            if not (prof and relPath):
+        for activCtx in activCtxs:
+            profCtx = activCtx.getProfileContext()
+            if (profCtx is None) or (not profCtx.isBound()):
                 self.warning("Activity without valid profile information (%s)",
-                             activity.getLabel())
-                activity.delete()
+                             activCtx.getLabel())
+                activStore = activCtx.getStore()
+                activStore.delete()
                 continue
-            profCtx = self._transCtx.getProfileContext(prof, relPath)
             if self.isProfileQueued(profCtx):
                 self.__unqueuProfile(profCtx)
-            self.__startTranscodingTask(profCtx, activity)
+            self.__startTranscodingTask(profCtx, activCtx)
     
     def __ebInitializationFailed(self, failure):
         return failure
@@ -288,47 +314,49 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.__startTranscodingTask(profCtx)
         self._startDelay = utils.callNext(self.__asyncStartTask)
         
-    def __startTranscodingTask(self, profCtx, activity=None):
+    def __startTranscodingTask(self, profCtx, activCtx=None):
         identifier = profCtx.getIdentifier()
         task = TranscodingTask(self._transcoding, profCtx)
         self.info("Starting transcoding task '%s'", 
                   task.getLabel())
         self._transcoding.addTask(identifier, task)
         self.emit("transcoding-started", task)
-        if not activity:
-            activity = self._store.newTranscoding(profCtx.getActivityLabel(),
-                                                  ActivityStateEnum.started,
-                                                  profCtx.store,
-                                                  profCtx.getInputRelPath())
-            activity.store()
-        self._activities[task] = activity
+        if not activCtx:
+            stateCtx = self._storeCtx.getStateContext()
+            activCtx = stateCtx.newTranscodingContext(profCtx.getActivityLabel(),
+                                                      ActivityStateEnum.started,
+                                                      profCtx)
+            activStore = activCtx.getStore()
+            activStore.store()
+        self._activities[task] = activCtx
 
     def __getProfilePriority(self, profCtx):
-        custPri = profCtx.customer.store.getCustomerPriority()
-        profPri = profCtx.store.getTranscodingPriority()
+        custCtx = profCtx.getCustomerContext()
+        custPri = custCtx.getCustomerPriority()
+        profPri = profCtx.getTranscodingPriority()
         return custPri * 1000 + profPri
 
     def __getKeyPriority(self, key):
         return self.__getProfilePriority(self._queue[key])
 
     def __queueProfile(self, profCtx):
-        identifier = profCtx.getIdentifier()
-        assert not (identifier in self._queue)
-        self._queue[identifier] =  profCtx
-        self._order.append(identifier)
+        profIdent = profCtx.getIdentifier()
+        assert not (profIdent in self._queue)
+        self._queue[profIdent] =  profCtx
+        self._order.append(profIdent)
         self._order.sort(key=self.__getKeyPriority)
     
     def __unqueuProfile(self, profCtx):
-        identifier = profCtx.getIdentifier()
-        assert identifier in self._queue
-        del self._queue[identifier]
-        self._order.remove(identifier)
+        profIdent = profCtx.getIdentifier()
+        assert profIdent in self._queue
+        del self._queue[profIdent]
+        self._order.remove(profIdent)
 
     def __popNextProfile(self):
         if not self._order:
             return None
-        identifier = self._order.pop()
-        profCtx = self._queue.pop(identifier)
+        profIdent = self._order.pop()
+        profCtx = self._queue.pop(profIdent)
         return profCtx
     
     def __clearQueue(self):

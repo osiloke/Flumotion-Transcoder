@@ -14,7 +14,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import targetstore
+from flumotion.transcoder.admin.datastore import target
 from flumotion.transcoder.admin.api import interfaces, api
 from flumotion.transcoder.admin.api.mediums import named  
 
@@ -22,7 +22,7 @@ from flumotion.transcoder.admin.api.mediums import named
 class TargetMedium(named.NamedMedium):
     implements(interfaces.IConfigMedium)
     api.registerMedium(interfaces.IConfigMedium,
-                          targetstore.ITargetStore)
+                       target.ITargetStore)
     
     
     def __init__(self, target):
@@ -33,4 +33,4 @@ class TargetMedium(named.NamedMedium):
 
     @api.remote()
     def getConfig(self):
-        return self.obj.getConfig()
+        return self._reference.getConfigStore()

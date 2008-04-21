@@ -23,7 +23,7 @@ import common
 
 from twisted.trial import unittest
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.context.transcontext import TranscodingContext
+from flumotion.transcoder.admin.context import store
 
 class Dummy(object):
     def __init__(self, items, values):
@@ -40,7 +40,12 @@ class Dummy(object):
         if attr[:3] == "get":
             return lambda : self._values[name]
         return lambda val: self._values.__setitem__(name, val)
-        
+    def getCustomerStoreByName(self, name):
+        return self._items[name]
+    def getProfileStoreByName(self, name):
+        return self._items[name]
+    def getTargetStoreByName(self, name):
+        return self._items[name]
 
 class TestTranscoderContext(unittest.TestCase):
 
@@ -86,7 +91,7 @@ class TestTranscoderContext(unittest.TestCase):
                           "TempRepDir": None,
                           "FailedRepDir": None,
                           "DoneRepDir": None})
-        return TranscodingContext(None, Dummy({custName: customer}, {}))
+        return store.StoreContext(None, Dummy({custName: customer}, {}))
 
 
     def testCustomerContext(self):
@@ -98,9 +103,9 @@ class TestTranscoderContext(unittest.TestCase):
             self.assertEqual(value, expected)
         
         # Basic Checks
-        transCtx = self.getContext("Fluendo-BCN (1/2)", None, "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo-BCN (1/2)", None, "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo-BCN (1/2)")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo-BCN (1/2)")
         checkVal(custCtx.getSubdir(), "fluendo-bcn_(1_2)/")
         checkCtx(custCtx.getInputBase(), "default:/fluendo-bcn_(1_2)/files/incoming/")
         checkCtx(custCtx.getFailedBase(), "default:/fluendo-bcn_(1_2)/files/failed/")
@@ -114,9 +119,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(custCtx.getDoneRepBase(), "default:/fluendo-bcn_(1_2)/reports/done/")
         
         # Empty but not None subdir checks
-        transCtx = self.getContext("Big Client Corp.", "", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Big Client Corp.", "", "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Big Client Corp.")
+        custCtx = storeCtx.getCustomerContextByName("Big Client Corp.")
         checkVal(custCtx.getSubdir(), "")
         checkCtx(custCtx.getInputBase(), "default:/files/incoming/")
         checkCtx(custCtx.getFailedBase(), "default:/files/failed/")
@@ -130,9 +135,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(custCtx.getDoneRepBase(), "default:/reports/done/")
 
         # Subdir Checks
-        transCtx = self.getContext("Big Client Corp.", "big/client", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Big Client Corp.", "big/client", "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Big Client Corp.")
+        custCtx = storeCtx.getCustomerContextByName("Big Client Corp.")
         checkVal(custCtx.getSubdir(), "big/client/")
         checkCtx(custCtx.getInputBase(), "default:/big/client/files/incoming/")
         checkCtx(custCtx.getFailedBase(), "default:/big/client/files/failed/")
@@ -146,9 +151,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(custCtx.getDoneRepBase(), "default:/big/client/reports/done/")
         
         # More subdir Checks
-        transCtx = self.getContext("Big Client Corp.", "./big/client/.", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Big Client Corp.", "./big/client/.", "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Big Client Corp.")
+        custCtx = storeCtx.getCustomerContextByName("Big Client Corp.")
         checkVal(custCtx.getSubdir(), "big/client/")
         checkCtx(custCtx.getInputBase(), "default:/big/client/files/incoming/")
         checkCtx(custCtx.getFailedBase(), "default:/big/client/files/failed/")
@@ -162,10 +167,10 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(custCtx.getDoneRepBase(), "default:/big/client/reports/done/")
         
         # Directory override checks
-        custCtx.store.setInputDir("/my/input/dir/")
-        custCtx.store.setWorkDir("/my/work/dir/")
-        custCtx.store.setConfigDir("/my/config/dir/")
-        custCtx.store.setDoneRepDir("/my/reports/done/dir/")
+        custCtx._store.setInputDir("/my/input/dir/")
+        custCtx._store.setWorkDir("/my/work/dir/")
+        custCtx._store.setConfigDir("/my/config/dir/")
+        custCtx._store.setDoneRepDir("/my/reports/done/dir/")
         checkVal(custCtx.getSubdir(), "big/client/")
         checkCtx(custCtx.getInputBase(), "default:/my/input/dir/")
         checkCtx(custCtx.getFailedBase(), "default:/big/client/files/failed/")
@@ -188,9 +193,9 @@ class TestTranscoderContext(unittest.TestCase):
             self.assertEqual(value, expected)
         
         # Basic Checks
-        transCtx = self.getContext("Fluendo", None, "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", None, "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
         checkVal(profCtx.getSubdir(), "ogg_theora-vorbis/")
         checkCtx(profCtx.getInputBase(), "default:/fluendo/files/incoming/ogg_theora-vorbis/")
@@ -205,9 +210,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepBase(), "default:/fluendo/reports/done/ogg_theora-vorbis/")
         
         # Subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/ogg/vorb/")
@@ -222,9 +227,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/ogg/vorb/")
 
         # More subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "/ogg//./vorb/", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/ogg/vorb/")
@@ -239,9 +244,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/ogg/vorb/")
 
         # Empty Subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
         checkVal(profCtx.getSubdir(), "")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/")
@@ -256,34 +261,34 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/")
         
         # Template Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
-        profCtx.store.setConfigFileTemplate("%(sourceDir)sfoo/%(sourceBasename)s.conf")
-        profCtx.store.setReportFileTemplate("/%(sourceDir)s/spam/%(sourceFile)s.dat")
+        profCtx._store.setConfigFileTemplate("%(sourceDir)sfoo/%(sourceBasename)s.conf")
+        profCtx._store.setReportFileTemplate("/%(sourceDir)s/spam/%(sourceFile)s.dat")
         checkCtx(profCtx.getConfigBase(), "default:/flu/one/configs/ogg/vorb/")
         checkCtx(profCtx.getTempRepBase(), "default:/flu/one/reports/pending/ogg/vorb/")
         checkCtx(profCtx.getFailedRepBase(), "default:/flu/one/reports/failed/ogg/vorb/")
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/ogg/vorb/")
         
-        profCtx.store.setConfigFileTemplate("%(sourceFile)s.conf")
-        profCtx.store.setReportFileTemplate("%(sourceBasename)s/report.txt")
+        profCtx._store.setConfigFileTemplate("%(sourceFile)s.conf")
+        profCtx._store.setReportFileTemplate("%(sourceBasename)s/report.txt")
         checkCtx(profCtx.getConfigBase(), "default:/flu/one/configs/ogg/vorb/")
         checkCtx(profCtx.getTempRepBase(), "default:/flu/one/reports/pending/ogg/vorb/")
         checkCtx(profCtx.getFailedRepBase(), "default:/flu/one/reports/failed/ogg/vorb/")
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/ogg/vorb/")
         
         # Override Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getUnboundProfileContextByName("OGG/Theora-vorbis")
-        profCtx.store.setInputDir("/override/input/")
-        profCtx.store.setDoneDir("override/done")
-        profCtx.store.setLinkDir("override/links/")
-        profCtx.store.setConfigDir("/override/configs")
-        profCtx.store.setWorkDir("/override/work/")
+        profCtx._store.setInputDir("/override/input/")
+        profCtx._store.setDoneDir("override/done")
+        profCtx._store.setLinkDir("override/links/")
+        profCtx._store.setConfigDir("/override/configs")
+        profCtx._store.setWorkDir("/override/work/")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/override/input/")
         checkCtx(profCtx.getFailedBase(), "default:/flu/one/files/failed/ogg/vorb/")
@@ -306,9 +311,9 @@ class TestTranscoderContext(unittest.TestCase):
             self.assertEqual(value, expected)
         
         # Basic Checks
-        transCtx = self.getContext("Fluendo", None, "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", None, "OGG/Theora-vorbis", 
                                    None, "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "test.file.avi")
         checkVal(profCtx.getSubdir(), "ogg_theora-vorbis/")
         
@@ -356,9 +361,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepPath(), "default:/fluendo/reports/done/ogg_theora-vorbis/test.file.avi.%(id)s.rep")
         
         # Subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "my/sub.dir/test.file.avi")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/ogg/vorb/")
@@ -405,9 +410,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/ogg/vorb/my/sub.dir/test.file.avi.%(id)s.rep")
 
         # More subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "/ogg//./vorb/", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "my/sub.dir/test.file.avi")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/ogg/vorb/")
@@ -422,9 +427,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepBase(), "default:/flu/one/reports/done/ogg/vorb/")
 
         # Empty Subdir Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "my/sub.dir/test.file.avi")
         checkVal(profCtx.getSubdir(), "")
         checkCtx(profCtx.getInputBase(), "default:/flu/one/files/incoming/")
@@ -455,12 +460,12 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/my/sub.dir/test.file.avi.%(id)s.rep")
 
         # Template Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "my/sub.dir/test.file.avi")
-        profCtx.store.setConfigFileTemplate("%(sourceDir)sfoo/%(sourceBasename)s.conf")
-        profCtx.store.setReportFileTemplate("/%(sourceDir)s/spam/%(sourceFile)s.dat")
+        profCtx._store.setConfigFileTemplate("%(sourceDir)sfoo/%(sourceBasename)s.conf")
+        profCtx._store.setReportFileTemplate("/%(sourceDir)s/spam/%(sourceFile)s.dat")
         checkCtx(profCtx.getConfigBase(), "default:/flu/one/configs/ogg/vorb/")
         checkCtx(profCtx.getTempRepBase(), "default:/flu/one/reports/pending/ogg/vorb/")
         checkCtx(profCtx.getFailedRepBase(), "default:/flu/one/reports/failed/ogg/vorb/")
@@ -482,8 +487,8 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(profCtx.getFailedRepPath(), "default:/flu/one/reports/failed/ogg/vorb/my/sub.dir/spam/test.file.avi.dat")
         checkCtx(profCtx.getDoneRepPath(), "default:/flu/one/reports/done/ogg/vorb/my/sub.dir/spam/test.file.avi.dat")
         
-        profCtx.store.setConfigFileTemplate("%(sourceFile)s.conf")
-        profCtx.store.setReportFileTemplate("%(sourceBasename)s/report.txt")
+        profCtx._store.setConfigFileTemplate("%(sourceFile)s.conf")
+        profCtx._store.setReportFileTemplate("%(sourceBasename)s/report.txt")
         checkCtx(profCtx.getConfigBase(), "default:/flu/one/configs/ogg/vorb/")
         checkCtx(profCtx.getTempRepBase(), "default:/flu/one/reports/pending/ogg/vorb/")
         checkCtx(profCtx.getFailedRepBase(), "default:/flu/one/reports/failed/ogg/vorb/")
@@ -507,15 +512,15 @@ class TestTranscoderContext(unittest.TestCase):
         
         
         # Override Checks
-        transCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
+        storeCtx = self.getContext("Fluendo", "flu/one", "OGG/Theora-vorbis", 
                                    "ogg/vorb", "High Quality", "high", ".ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG/Theora-vorbis", "my/sub.dir/test.file.avi")
-        profCtx.store.setInputDir("/override/input/")
-        profCtx.store.setDoneDir("override/done")
-        profCtx.store.setLinkDir("override/links/")
-        profCtx.store.setConfigDir("/override/configs")
-        profCtx.store.setWorkDir("/override/work/")
+        profCtx._store.setInputDir("/override/input/")
+        profCtx._store.setDoneDir("override/done")
+        profCtx._store.setLinkDir("override/links/")
+        profCtx._store.setConfigDir("/override/configs")
+        profCtx._store.setWorkDir("/override/work/")
         checkVal(profCtx.getSubdir(), "ogg/vorb/")
         checkCtx(profCtx.getInputBase(), "default:/override/input/")
         checkCtx(profCtx.getFailedBase(), "default:/flu/one/files/failed/ogg/vorb/")
@@ -570,9 +575,9 @@ class TestTranscoderContext(unittest.TestCase):
         def checkVal(value, expected):
             self.assertEqual(value, expected)
         
-        transCtx = self.getContext("Fluendo", None, "OGG", 
+        storeCtx = self.getContext("Fluendo", None, "OGG", 
                                    None, "High Quality", None, "ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
         checkVal(targCtx.getSubdir(), '')
@@ -586,9 +591,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.ogg.link")
         
         # Subdir checks
-        transCtx = self.getContext("Fluendo", None, "OGG", 
+        storeCtx = self.getContext("Fluendo", None, "OGG", 
                                    None, "High Quality", "very/high", "ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
         checkVal(targCtx.getSubdir(), "very/high/")
@@ -602,9 +607,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.ogg.link")
         
         # More subdir checks
-        transCtx = self.getContext("Fluendo", None, "OGG", 
+        storeCtx = self.getContext("Fluendo", None, "OGG", 
                                    None, "High Quality", "/very/./high", "ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
         checkVal(targCtx.getSubdir(), "very/high/")
@@ -618,9 +623,9 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/very/high/test.file.avi.ogg.link")
         
         # Empty subdir checks
-        transCtx = self.getContext("Fluendo", None, "OGG", 
+        storeCtx = self.getContext("Fluendo", None, "OGG", 
                                    None, "High Quality", "", "ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
         checkVal(targCtx.getSubdir(), '')
@@ -634,13 +639,13 @@ class TestTranscoderContext(unittest.TestCase):
         checkCtx(targCtx.getLinkPath(), "default:/fluendo/files/links/ogg/test.file.avi.ogg.link")
         
         # Templates checks
-        transCtx = self.getContext("Fluendo", None, "OGG", 
+        storeCtx = self.getContext("Fluendo", None, "OGG", 
                                    None, "High Quality", "very/high", "ogg")
-        custCtx = transCtx.getCustomerContextByName("Fluendo")
+        custCtx = storeCtx.getCustomerContextByName("Fluendo")
         profCtx = custCtx.getProfileContextByName("OGG", "test.file.avi")
         targCtx = profCtx.getTargetContextByName("High Quality")
-        targCtx.store.setOutputFileTemplate("/%(targetDir)s/%(sourceFile)s.hq%(targetExtension)s")
-        targCtx.store.setLinkFileTemplate("%(sourceBasename)s///./%(targetSubdir)sthe.link")
+        targCtx._store.setOutputFileTemplate("/%(targetDir)s/%(sourceFile)s.hq%(targetExtension)s")
+        targCtx._store.setLinkFileTemplate("%(sourceBasename)s///./%(targetSubdir)sthe.link")
         checkVal(targCtx.getSubdir(), "very/high/")
         checkCtx(targCtx.getOutputDir(), "default:/fluendo/files/outgoing/ogg/very/high/")
         checkCtx(targCtx.getLinkDir(), "default:/fluendo/files/links/ogg/test.file/very/high/")

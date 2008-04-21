@@ -14,7 +14,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import profilestore
+from flumotion.transcoder.admin.datastore import profile
 from flumotion.transcoder.admin.api import interfaces, api
 from flumotion.transcoder.admin.api.mediums import named  
 
@@ -22,7 +22,7 @@ from flumotion.transcoder.admin.api.mediums import named
 class ProfileMedium(named.NamedMedium):
     implements(interfaces.IProfileMedium)
     api.registerMedium(interfaces.IProfileMedium,
-                          profilestore.IProfileStore)
+                       profile.IProfileStore)
     
     def __init__(self, profile):
         named.NamedMedium.__init__(self, profile)
@@ -32,8 +32,8 @@ class ProfileMedium(named.NamedMedium):
 
     @api.remote()
     def getTargets(self):
-        return self.obj.getTargets()
+        return self._reference.getTargetStores()
 
     @api.remote()
     def getTarget(self, identifier):
-        return self.obj.getTarget(identifier)
+        return self._reference.getTargetStore(identifier)

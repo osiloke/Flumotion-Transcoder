@@ -97,7 +97,9 @@ class ITargetMedium(INamedMedium):
 
 
 class IConfigMedium(IMedium):
-    pass
+    
+    def getType(self):
+        pass
 
 
 class IIdentityConfigMedium(IConfigMedium):

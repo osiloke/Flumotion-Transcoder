@@ -366,10 +366,10 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
         
-    def retrieveCustomerInfo(self, customerData):
+    def retrieveCustomerInfo(self, custData):
         try:
-            assert isinstance(customerData, ImmutableDataWrapper)
-            result = ImmutableWrapper((customerData.identifier, "info"), 
+            assert isinstance(custData, ImmutableDataWrapper)
+            result = ImmutableWrapper((custData.identifier, "info"), 
                                       CUST_INFO_TMPL)
             return defer.succeed(result)
         except Exception, e:
@@ -378,11 +378,11 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
         
-    def retrieveProfiles(self, customerData):
+    def retrieveProfiles(self, custData):
         try:
-            assert isinstance(customerData, ImmutableDataWrapper)
+            assert isinstance(custData, ImmutableDataWrapper)
             result = [ImmutableDataWrapper(p, k, hidden=['targets']) 
-                      for k, p in customerData._getData().profiles.items()
+                      for k, p in custData._getData().profiles.items()
                       if p != None]
             return defer.succeed(result)
         except Exception, e:
@@ -394,25 +394,25 @@ class FileDataSource(log.Loggable):
     def retrieveGlobalNotifications(self):
         return defer.succeed([])
         
-    def retrieveCustomerNotifications(self, customerData):
+    def retrieveCustomerNotifications(self, custData):
         return defer.succeed([])
         
-    def retrieveProfileNotifications(self, profileData):
+    def retrieveProfileNotifications(self, profData):
         try:
-            assert isinstance(profileData, ImmutableDataWrapper)
-            d = profileData._getData()
+            assert isinstance(profData, ImmutableDataWrapper)
+            d = profData._getData()
             assert isinstance(d, dataprops.ProfileData)
             result = []
             for req in d.notifyFailedRequests:
                 if req:
-                    result.append(_createReqNotif(profileData, False, req))
+                    result.append(_createReqNotif(profData, False, req))
             for req in d.notifyDoneRequests:
                 if req:
-                    result.append(_createReqNotif(profileData, True, req))
+                    result.append(_createReqNotif(profData, True, req))
             recipientsLine = d.notifyFailedMailRecipients
             if recipientsLine:
                 recipients = utils.splitMailRecipients(recipientsLine)
-                notification = _createMailNotif(profileData, False, recipients)
+                notification = _createMailNotif(profData, False, recipients)
                 result.append(notification)
             return defer.succeed(result)
         except Exception, e:
@@ -421,15 +421,15 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
         
-    def retrieveTargetNotifications(self, targetData):
+    def retrieveTargetNotifications(self, targData):
         try:
-            assert isinstance(targetData, ImmutableDataWrapper)
-            d = targetData._getData()
+            assert isinstance(targData, ImmutableDataWrapper)
+            d = targData._getData()
             assert isinstance(d, dataprops.TargetData)
             result = []
             for req in d.notifyDoneRequests:
                 if req:
-                    result.append(_createReqNotif(targetData, True, req))
+                    result.append(_createReqNotif(targData, True, req))
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve target notifications data"
@@ -437,11 +437,11 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
 
-    def retrieveTargets(self, profileData):
+    def retrieveTargets(self, profData):
         try:
-            assert isinstance(profileData, ImmutableDataWrapper)
+            assert isinstance(profData, ImmutableDataWrapper)
             result = [ImmutableDataWrapper(t, k, hidden=['config', 'type'])
-                      for k, t in profileData._getData().targets.items()
+                      for k, t in profData._getData().targets.items()
                       if t != None]
             return defer.succeed(result)
         except Exception, e:
@@ -450,10 +450,10 @@ class FileDataSource(log.Loggable):
             f = failure.Failure(ex)
             return defer.fail(f)
        
-    def retrieveTargetConfig(self, targetData):
+    def retrieveTargetConfig(self, targData):
         try:
-            assert isinstance(targetData, ImmutableDataWrapper)
-            data = targetData._getData()
+            assert isinstance(targData, ImmutableDataWrapper)
+            data = targData._getData()
             conf = data.config
             if not conf:
                 # Build a dummy config container. It's only to not have
@@ -489,28 +489,28 @@ class FileDataSource(log.Loggable):
         tmpl = _activityTemplateLookup.get(type)
         return MutableDataWrapper(self, tmpl, subtype=subtype)
 
-    def newCustomer(self, cusomerId):
+    def newCustomer(self, custId):
         raise NotImplementedError()
 
-    def newProfile(self, customerData):
+    def newProfile(self, custData):
         raise NotImplementedError()
     
     def newNotification(self, type, data):
         raise NotImplementedError()
     
-    def newTarget(self, profileData):
+    def newTarget(self, profData):
         raise NotImplementedError()
 
-    def newTargetConfig(self, targetData):
+    def newTargetConfig(self, targData):
         raise NotImplementedError()
         
-    def newReport(self, profileData):
+    def newReport(self, profData):
         raise NotImplementedError()
         
-    def newTargetReport(self, reportData):
+    def newTargetReport(self, repData):
         raise NotImplementedError()
         
-    def newNotificationReport(self, reportData, notificationData):
+    def newNotificationReport(self, repData, notifData):
         raise NotImplementedError()
         
     def store(self, *data):

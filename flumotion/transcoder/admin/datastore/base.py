@@ -12,7 +12,7 @@
 
 from zope.interface import implements
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, annotate
 from flumotion.inhouse.waiters import CounterWaiters
 
 from flumotion.transcoder.admin import adminconsts, interfaces
@@ -22,88 +22,54 @@ from flumotion.transcoder.admin.datasource import datasource
 
 
 class IBaseStore(interfaces.IAdminInterface):
-    pass
+    
+    def getAdminStore(self):
+        pass
+
+    def getIdentifier(self):
+        pass
+    
+    def getLabel(self):
+        pass
 
 
-def _basic_getter_builder(getterName, propertyName, default):
+class IStoreWithNotification(IBaseStore):
+    
+    def getNotificationStores(self, trigger):
+        pass
+    
+    def iterNotificationStores(self, trigger):
+        pass
+
+
+## Method Generators ##
+
+def genGetter(getterName, propertyName, default=None):
     def getter(self):
         value = getattr(self._data, propertyName, None)
         if value == None: value = default
         return utils.deepCopy(value)
-    return getter
-
-def _parent_overridable_getter_builder(getterName, propertyName, funcName=None):
-    def getter(self):
-        value = getattr(self._data, propertyName, None)
-        if value != None: return utils.deepCopy(value)
-        parentGetterName = funcName or getterName
-        if hasattr(self._parent, parentGetterName):
-            return getattr(self._parent, parentGetterName)()
-        return None
-    return getter
-
-_getter_builders = {"basic": _basic_getter_builder,
-                    "parent_overridable": _parent_overridable_getter_builder}
-
-_setter_builders = {}
-
-
-class MetaStore(type):
-
-    def __init__(cls, name, bases, dct):
-
-        def createGetters(tag, props):
-            getterBuilderName = "_%s_getter_builder" % tag
-            defaultGetterBuilder = _getter_builders.get(tag, None)
-            getterBuilder = getattr(cls, getterBuilderName, defaultGetterBuilder)
-            if getterBuilder:
-                for getterName, params in props.items():
-                    if not hasattr(cls, getterName) :
-                        getter = getterBuilder(getterName, *params)
-                        if getter:
-                            setattr(cls, getterName, getter)
-
-        def createSetters(tag, props):
-            setterBuilderName = "_%s_setter_builder" % tag
-            defaultSetterBuilder = _setter_builders.get(tag, None)
-            setterBuilder = getattr(cls, setterBuilderName, defaultSetterBuilder)
-            if setterBuilder:
-                for setterName, params in props.items():
-                    if not hasattr(cls, setterName) :
-                        setter = setterBuilder(setterName, *params)
-                        if setter:
-                            setattr(cls, setterName, setter)
-        
-        super(MetaStore, cls).__init__(name, bases, dct)
-        
-        properties = getattr(cls, "__getters__", {})
-        for tag, definition in properties.items():
-            createGetters(tag, definition)
-        properties = getattr(cls, "__setters__", {})
-        for tag, definition in properties.items():
-            createSetters(tag, definition)
+    annotate.addAnnotationMethod("genGetter", getterName, getter)
 
 
 class BaseStore(AdminElement):
-    implements(IBaseStore)
+    implements(IStoreWithNotification)
     
-    __metaclass__ = MetaStore
-    
-    def __init__(self, logger, parent, dataSource, data):
+    def __init__(self, logger, parentStore, dataSource, data):
         assert datasource.IDataSource.providedBy(dataSource)
-        AdminElement.__init__(self, logger, parent)
+        AdminElement.__init__(self, logger, parentStore)
         self._data = data
         self._dataSource = dataSource
-        self._notifications = {} # {NotificationTriggerEnum: {identifier: BaseNotification}}
+        self._notifications = {} # {NotificationTriggerEnum: {identifier: NotificationStore}}
 
 
     ## Public Methods ##
     
-    def getNotifications(self, trigger):
+    def getNotificationStores(self, trigger):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].values()
     
-    def iterNotifications(self, trigger):
+    def iterNotificationStores(self, trigger):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].itervalues()
 
@@ -113,7 +79,7 @@ class BaseStore(AdminElement):
     def _doRetrieveNotifications(self):
         return defer.succeed([])
     
-    def _doWrapNotification(self, notificationData):
+    def _doWrapNotification(self, notifData):
         raise NotImplementedError()
 
 
@@ -159,16 +125,16 @@ class BaseStore(AdminElement):
                        callbackArgs=(result,))
         return d
         
-    def __cbWrapNotifications(self, notifications):
-        return [self._doWrapNotification(n) for n in notifications]
+    def __cbWrapNotifications(self, notifDataList):
+        return [self._doWrapNotification(n) for n in notifDataList]
         
-    def __cbNotificationsReceived(self, notifications, oldResult):
+    def __cbNotificationsReceived(self, notifStores, oldResult):
         self.log("Store %s '%s' received %d notifications",
-                 self.__class__.__name__, self.getLabel(), len(notifications))
+                 self.__class__.__name__, self.getLabel(), len(notifStores))
         bag = dict([(t, dict()) for t in NotificationTriggerEnum])
-        for n in notifications:
-            for t in n.getTriggers():
-                bag[t][n.getIdentifier()] = n
+        for notifStore in notifStores:
+            for t in notifStore.getTriggers():
+                bag[t][notifStore.getIdentifier()] = notifStore
         self._notifications = bag
         return oldResult
 

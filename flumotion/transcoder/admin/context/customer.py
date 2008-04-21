@@ -10,19 +10,17 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.inhouse import fileutils
-from flumotion.inhouse.utils import LazyEncapsulationIterator
+from flumotion.inhouse import fileutils, annotate
 
 from flumotion.transcoder import constants
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.substitution import Variables
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.context.profilecontext import ProfileContext
-from flumotion.transcoder.admin.context.profilecontext import UnboundProfileContext
+from flumotion.transcoder.admin.context import base, profile, notification
 
 #TODO: Do some value caching
 
-class CustomerContext(object):
+
+class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin):
     """
     The customer context define the default base directories.
     They are directly taken and expanded from the store get...Dir getter,
@@ -61,11 +59,43 @@ class CustomerContext(object):
                 ...
     """
     
-    def __init__(self, customerStore, transcodingContext):
-        self.transcoding = transcodingContext
-        self.store = customerStore
-        self._vars = Variables(transcodingContext._vars)
-        self._vars.addVar("customerName", self.store.getName())
+    base.genStoreProxy("getIdentifier")
+    base.genStoreProxy("getName")
+    base.genStoreProxy("getLabel")
+    base.genStoreProxy("getCustomerPriority",
+                       adminconsts.DEFAULT_CUSTOMER_PRIORITY)
+    base.genStoreProxy("getPreprocessCommand")
+    base.genStoreProxy("getPostprocessCommand")
+    base.genStoreProxy("getEnablePostprocessing")
+    base.genStoreProxy("getEnablePreprocessing")
+    base.genStoreProxy("getEnableLinkFiles")
+    base.genParentOverridingStoreProxy("getOutputMediaTemplate")
+    base.genParentOverridingStoreProxy("getOutputThumbTemplate")
+    base.genParentOverridingStoreProxy("getLinkFileTemplate")
+    base.genParentOverridingStoreProxy("getConfigFileTemplate")
+    base.genParentOverridingStoreProxy("getReportFileTemplate")
+    base.genParentOverridingStoreProxy("getLinkTemplate")
+    base.genParentOverridingStoreProxy("getLinkURLPrefix")
+    base.genParentOverridingStoreProxy("getTranscodingPriority")
+    base.genParentOverridingStoreProxy("getProcessPriority")
+    base.genParentOverridingStoreProxy("getPreprocessTimeout")
+    base.genParentOverridingStoreProxy("getPostprocessTimeout")
+    base.genParentOverridingStoreProxy("getTranscodingTimeout")
+    base.genParentOverridingStoreProxy("getMonitoringPeriod")
+    base.genParentOverridingStoreProxy("getAccessForceUser")
+    base.genParentOverridingStoreProxy("getAccessForceGroup")
+    base.genParentOverridingStoreProxy("getAccessForceDirMode")
+    base.genParentOverridingStoreProxy("getAccessForceFileMode")
+    
+    def __init__(self, storeCtx, custStore):
+        base.BaseStoreContext.__init__(self, storeCtx, custStore)
+        self._variables.addVar("customerName", self.getName())
+
+    def getAdminContext(self):
+        return self._parent.getAdminContext()
+    
+    def getStoreContext(self):
+        return self._parent
 
     def getIdentifier(self):
         """
@@ -73,48 +103,47 @@ class CustomerContext(object):
         It should not change event if customer configuration changed.
         """
         # For now return only the customer name
-        return self.store.getName()
+        return self.getName()
 
-    def getTranscodingContext(self):
-        return self.transcoding
-
-    def getUnboundProfileContextByName(self, profileName):
-        return UnboundProfileContext(self.store[profileName], self)
+    def getUnboundProfileContextByName(self, profName):
+        profStore = self._store.getProfileStoreByName(profName)
+        return profile.UnboundProfileContext(self, profStore)
     
-    def getUnboundProfileContext(self, profile):
-        return UnboundProfileContext(profile, self)
+    def getUnboundProfileContextFor(self, profStore):
+        assert profStore.getParent() == self._store
+        return profile.UnboundProfileContext(self, profStore)
     
     def iterUnboundProfileContexts(self):
-        return LazyEncapsulationIterator(UnboundProfileContext, 
-                                         self.store.iterProfiles(), self)
+        profIter = self._store.iterProfileStores()
+        return base.LazyContextIterator(self, profile.UnboundProfileContext, profIter)
         
-    def getProfileContextByName(self, profileName, input):
-        return ProfileContext(self.store[profileName], self, input)
+    def getProfileContextByName(self, profName, input):
+        profStore = self._store.getProfileStoreByName(profName)
+        return profile.ProfileContext(self, profStore, input)
     
-    def getProfileContext(self, profile, input):
-        assert profile.getParent() == self.store
-        return ProfileContext(profile, self, input)
+    def getProfileContextFor(self, profStore, input):
+        assert profStore.getParent() == self._store
+        return profile.ProfileContext(self, profStore, input)
 
     def iterProfileContexts(self, input):
-        return LazyEncapsulationIterator(ProfileContext,
-                                         self.store.iterProfiles(),
-                                         self, input)
+        profIter = self._store.iterProfileStores()
+        return base.LazyContextIterator(self, profile.ProfileContext, profIter, input)
         
     def getPathAttributes(self):
-        forceUser = self.store.getAccessForceUser()
-        forceGroup = self.store.getAccessForceGroup()
-        forceDirMode = self.store.getAccessForceDirMode()
-        forceFileMode = self.store.getAccessForceFileMode()
+        forceUser = self.getAccessForceUser()
+        forceGroup = self.getAccessForceGroup()
+        forceDirMode = self.getAccessForceDirMode()
+        forceFileMode = self.getAccessForceFileMode()
         return fileutils.PathAttributes(forceUser, forceGroup,
                                         forceDirMode, forceFileMode)
     
     def getSubdir(self):
-        subdir = self.store.getSubdir()
+        subdir = self._store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
             return fileutils.cleanupPath(subdir)
-        subdir = fileutils.str2filename(self.store.getName())
+        subdir = fileutils.str2filename(self._store.getName())
         return fileutils.ensureDirPath(subdir)
         
     def _expandDir(self, folder):
@@ -133,56 +162,56 @@ class CustomerContext(object):
         return VirtualPath(folder, rootName)
         
     def getInputBase(self):
-        folder = self.store.getInputDir()
+        folder = self._store.getInputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_INPUT_DIR)
 
     def getOutputBase(self):
-        folder = self.store.getOutputDir()
+        folder = self._store.getOutputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_OUTPUT_DIR)
     
     def getFailedBase(self):
-        folder = self.store.getFailedDir()
+        folder = self._store.getFailedDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_FAILED_DIR)
     
     def getDoneBase(self):
-        folder = self.store.getDoneDir()
+        folder = self._store.getDoneDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_DONE_DIR)
     
     def getLinkBase(self):
-        folder = self.store.getLinkDir()
+        folder = self._store.getLinkDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_LINK_DIR)
     
     def getWorkBase(self):
-        folder = self.store.getWorkDir()
+        folder = self._store.getWorkDir()
         return self._getDir(constants.TEMP_ROOT, folder, 
                             adminconsts.DEFAULT_WORK_DIR)
     
     def getConfigBase(self):
-        folder = self.store.getConfigDir()
+        folder = self._store.getConfigDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_CONFIG_DIR)
     
     def getTempRepBase(self):
-        folder = self.store.getTempRepDir()
+        folder = self._store.getTempRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_TEMPREP_DIR)
 
     def getFailedRepBase(self):
-        folder = self.store.getFailedRepDir()
+        folder = self._store.getFailedRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_FAILEDREP_DIR)
     
     def getDoneRepBase(self):
-        folder = self.store.getDoneRepDir()
+        folder = self._store.getDoneRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_DONEREP_DIR)
 
     def getMonitorLabel(self):
-        template = self.transcoding.admin.config.monitorLabelTemplate
-        return self._vars.substitute(template)
+        template = self.getAdminContext().config.monitorLabelTemplate
+        return self._variables.substitute(template)
     

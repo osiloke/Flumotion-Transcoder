@@ -29,16 +29,40 @@ def instantiate(logger, parent, identifier, admin,
 
 
 class IManagerProxy(fluproxy.IFlumotionProxy):
-    pass
+
+    def getAtmosphere(self):
+        pass
+    
+    def waitAtmosphere(self, timeout=None):
+        pass
+
+    def getFlows(self):
+        pass
+    
+    def getManagerContext(self):
+        pass
+
+    def getWorkers(self):
+        pass
+
+    def getWorker(self, identifier):
+        pass
+    
+    def getWorkerByName(self, name):
+        pass
+
+    def waitWorkerByName(self, name, timeout=None):
+        pass
+
 
 
 class ManagerProxy(fluproxy.BaseFlumotionProxy):
     implements(IManagerProxy)
     
     def __init__(self, logger, parent, identifier, 
-                 admin, managerContext, planetState):
+                 admin, managerCtx, planetState):
         fluproxy.BaseFlumotionProxy.__init__(self, logger, parent, identifier)
-        self._context = managerContext
+        self._managerCtx = managerCtx
         self._admin = admin
         self._planetState = planetState
         self._workers = ItemWaiters("Manager Workers") # {identifier: Worker}
@@ -60,6 +84,9 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
         assert self._planetState, "Manager has been removed"
         return self._planetState.get('name')
 
+    def getManagerContext(self):
+        return self._managerCtx
+    
     def getAtmosphere(self):
         return self._atmosphere.getValue()
     
@@ -72,9 +99,9 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     def getWorkers(self):
         return self._workers.getItems()
 
-    def getContext(self):
-        return self._context
-    
+    def getWorker(self, identifier):
+        return self._workers.getItem(identifier, None)
+
     def getWorkerByName(self, name):
         workerId = self.__getWorkerUniqueIdByName(name)
         return self._workers.getItem(workerId, None)
@@ -225,24 +252,26 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
 
     def __workerStateAdded(self, workerState):
         name = workerState.get('name')
-        workerContext = self._context.admin.getWorkerContext(name)
+        adminCtx = self._managerCtx.getAdminContext()
+        workerCtx = adminCtx.getWorkerContextByName(name)
         self._addProxyState(workerproxy, "_workers",
                             self.__getWorkerUniqueId,
                             "worker-added", self, 
-                            workerContext, workerState)
+                            workerCtx, workerState)
         self.__updateIdleTarget()
     
     def __workerStateRemoved(self, workerState):
         name = workerState.get('name')
-        workerContext = self._context.admin.getWorkerContext(name)
+        admnCtx = self._managerCtx.getAdminContext()
+        workerCtx = admnCtx.getWorkerContextByName(name)
         self._removeProxyState("_workers", self.__getWorkerUniqueId,
                                "worker-removed", self, 
-                               workerContext, workerState)
+                               workerCtx, workerState)
         self.__updateIdleTarget()
 
     def __atmosphereSetState(self, atmosphereState):
         name = atmosphereState.get('name')
-        atmosphereContext = self._context.getAtmosphereContext(name)
+        atmosphereContext = self._managerCtx.getAtmosphereContextByName(name)
         self._setProxyState(atmosphereproxy, "_atmosphere",
                             self.__getAtmosphereUniqueId,
                             "atmosphere-unset", "atmosphere-set",
@@ -250,7 +279,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     
     def __flowStateAdded(self, flowState):
         name = flowState.get('name')
-        flowContext = self._context.getFlowContext(name)
+        flowContext = self._managerCtx.getFlowContextByName(name)
         self._addProxyState(flowproxy, "_flows",
                             self.__getFlowUniqueId,
                             "flow-added", self, flowContext, flowState)
@@ -258,7 +287,7 @@ class ManagerProxy(fluproxy.BaseFlumotionProxy):
     
     def __flowStateRemoved(self, flowState):
         name = flowState.get('name')
-        flowContext = self._context.getFlowContext(name)
+        flowContext = self._managerCtx.getFlowContextByName(name)
         self._removeProxyState("_flows", self.__getFlowUniqueId,
                                "flow-removed", self, flowContext, flowState)
         self.__updateIdleTarget()

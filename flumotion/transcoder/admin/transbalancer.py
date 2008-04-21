@@ -56,11 +56,11 @@ class TranscoderBalancer(object):
     def addWorker(self, worker):
         assert not (worker in self._workers)
         self._workers[worker] = []
-        self._maximum += worker.getContext().getMaxTask()
+        self._maximum += worker.getWorkerContext().getMaxTask()
         
     def removeWorker(self, worker):
         assert worker in self._workers
-        self._maximum -= worker.getContext().getMaxTask()
+        self._maximum -= worker.getWorkerContext().getMaxTask()
         self._orphanes.extend(self._workers[worker])
         del self._workers[worker]
     
@@ -69,7 +69,7 @@ class TranscoderBalancer(object):
         assert (worker == None) or (worker in self._workers)
         self._current += 1
         if worker:
-            max = worker.getContext().getMaxTask()
+            max = worker.getWorkerContext().getMaxTask()
             curr = len(self._workers[worker])
             if max > curr:
                 self._workers[worker].append(task)
@@ -96,9 +96,9 @@ class TranscoderBalancer(object):
             Return all the workers with at least 1 free slot
             with the ones with the most free slots first.
             """
-            lookup = dict([(w, float(len(t)) / w.getContext().getMaxTask()) 
+            lookup = dict([(w, float(len(t)) / w.getWorkerContext().getMaxTask()) 
                            for w, t in self._workers.items()
-                           if len(t) < w.getContext().getMaxTask()])
+                           if len(t) < w.getWorkerContext().getMaxTask()])
             workers = lookup.keys()
             workers.sort(key=lookup.get)
             return workers
@@ -106,7 +106,7 @@ class TranscoderBalancer(object):
         if self._workers:
             # First remove the exceding tasks
             for worker, tasks in self._workers.iteritems():
-                max = worker.getContext().getMaxTask()
+                max = worker.getWorkerContext().getMaxTask()
                 if len(tasks) > max:
                     diff = len(tasks) - max
                     oldTasks = tasks[diff:]

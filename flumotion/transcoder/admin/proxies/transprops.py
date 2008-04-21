@@ -28,81 +28,81 @@ from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
 from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin
 
 
-def createTranscodingConfigFromContext(profileCtx):
+def createTranscodingConfigFromContext(profCtx):
     # PyChecker doesn't like dynamic attributes
     __pychecker__ = "no-objattrs"
     conf = TranscodingConfig()
     conf.touch()
-    prof = profileCtx
-    conf.customer.name = prof.customer.store.getLabel()
-    conf.transcodingTimeout = prof.store.getTranscodingTimeout()
-    conf.postProcessTimeout = prof.store.getPostprocessTimeout()
-    conf.preProcessTimeout = prof.store.getPreprocessTimeout()
-    conf.profile.label = prof.store.getName()
-    conf.profile.inputDir = prof.getInputBase()
-    conf.profile.outputDir = prof.getOutputBase()
-    conf.profile.linkDir = prof.getLinkBase()
-    conf.profile.workDir = prof.getWorkBase()
-    conf.profile.doneDir = prof.getDoneBase()
-    conf.profile.failedDir = prof.getFailedBase()
-    conf.profile.tempReportsDir = prof.getTempRepBase()
-    conf.profile.failedReportsDir = prof.getFailedRepBase()
-    conf.profile.doneReportsDir = prof.getDoneRepBase()
-    conf.profile.linkTemplate = prof.store.getLinkTemplate()
-    conf.source.inputFile = prof.getInputRelPath()
+    custCtx = profCtx.getCustomerContext()
+    conf.customer.name = custCtx.getLabel()
+    conf.transcodingTimeout = profCtx.getTranscodingTimeout()
+    conf.postProcessTimeout = profCtx.getPostprocessTimeout()
+    conf.preProcessTimeout = profCtx.getPreprocessTimeout()
+    conf.profile.label = profCtx.getName()
+    conf.profile.inputDir = profCtx.getInputBase()
+    conf.profile.outputDir = profCtx.getOutputBase()
+    conf.profile.linkDir = profCtx.getLinkBase()
+    conf.profile.workDir = profCtx.getWorkBase()
+    conf.profile.doneDir = profCtx.getDoneBase()
+    conf.profile.failedDir = profCtx.getFailedBase()
+    conf.profile.tempReportsDir = profCtx.getTempRepBase()
+    conf.profile.failedReportsDir = profCtx.getFailedRepBase()
+    conf.profile.doneReportsDir = profCtx.getDoneRepBase()
+    conf.profile.linkTemplate = profCtx.getLinkTemplate()
+    conf.source.inputFile = profCtx.getInputRelPath()
     #FIXME: getFailedRepRelPath is not used
-    conf.source.reportTemplate = prof.getDoneRepRelPath()
-    conf.source.preProcess = prof.store.getPreprocessCommand()
-    for targ in prof.iterTargetContexts():
+    conf.source.reportTemplate = profCtx.getDoneRepRelPath()
+    conf.source.preProcess = profCtx.getPreprocessCommand()
+    for targCtx in profCtx.iterTargetContexts():
         tc = TargetConfig()
-        label = targ.store.getLabel()
+        label = targCtx.getLabel()
         conf.targets[label] = tc
         tc.label = label
-        tc.outputFile = targ.getOutputRelPath()
-        ob = targ.getOutputBase()
+        tc.outputFile = targCtx.getOutputRelPath()
+        ob = targCtx.getOutputBase()
         if ob != conf.profile.outputDir:
             tc.outputDir = ob
-        lb = targ.getLinkBase()
+        lb = targCtx.getLinkBase()
         if lb != conf.profile.linkDir:
             tc.linkDir = lb
-        wb = targ.getWorkBase()
+        wb = targCtx.getWorkBase()
         if wb != conf.profile.workDir:
             tc.workDir = wb
-        if targ.store.getEnablePostprocessing():
-            tc.postProcess = targ.store.getPostprocessCommand()
-        if targ.store.getEnableLinkFiles():
-            tc.linkFile = targ.getLinkRelPath()
-            tc.linkUrlPrefix = targ.store.getLinkURLPrefix()
-        cs = targ.store.getConfig()
-        tt = cs.getType()
+        if targCtx.getEnablePostprocessing():
+            tc.postProcess = targCtx.getPostprocessCommand()
+        if targCtx.getEnableLinkFiles():
+            targCtx.linkFile = targCtx.getLinkRelPath()
+            tc.linkUrlPrefix = targCtx.getLinkURLPrefix()
+        confCtx = targCtx.getConfigContext()
+        tt = confCtx.getType()
         tc.type = tt
         if tt in [TargetTypeEnum.audio, TargetTypeEnum.audiovideo]:
-            tc.config.audioEncoder = cs.getAudioEncoder()
-            tc.config.audioRate = cs.getAudioRate()
-            tc.config.audioChannels = cs.getAudioChannels()
-            tc.config.muxer = cs.getMuxer()
+            tc.config.audioEncoder = confCtx.getAudioEncoder()
+            tc.config.audioRate = confCtx.getAudioRate()
+            tc.config.audioChannels = confCtx.getAudioChannels()
+            tc.config.muxer = confCtx.getMuxer()
         if tt in [TargetTypeEnum.video, TargetTypeEnum.audiovideo]:
-            tc.config.videoEncoder = cs.getVideoEncoder()
-            tc.config.videoFramerate = cs.getVideoFramerate()
-            tc.config.videoPAR = cs.getVideoPAR()
-            tc.config.videoWidth = cs.getVideoWidth()
-            tc.config.videoHeight = cs.getVideoHeight()
-            tc.config.videoMaxWidth = cs.getVideoMaxWidth()
-            tc.config.videoMaxHeight = cs.getVideoMaxHeight()
-            tc.config.videoWidthMultiple = cs.getVideoWidthMultiple()
-            tc.config.videoHeightMultiple = cs.getVideoHeightMultiple()
-            tc.config.videoScaleMethod = cs.getVideoScaleMethod()
-            tc.config.muxer = cs.getMuxer()            
+            tc.config.videoEncoder = confCtx.getVideoEncoder()
+            tc.config.videoFramerate = confCtx.getVideoFramerate()
+            tc.config.videoPAR = confCtx.getVideoPAR()
+            tc.config.videoWidth = confCtx.getVideoWidth()
+            tc.config.videoHeight = confCtx.getVideoHeight()
+            tc.config.videoMaxWidth = confCtx.getVideoMaxWidth()
+            tc.config.videoMaxHeight = confCtx.getVideoMaxHeight()
+            tc.config.videoWidthMultiple = confCtx.getVideoWidthMultiple()
+            tc.config.videoHeightMultiple = confCtx.getVideoHeightMultiple()
+            tc.config.videoScaleMethod = confCtx.getVideoScaleMethod()
+            tc.config.muxer = confCtx.getMuxer()            
         if tt == TargetTypeEnum.audiovideo:
-            tc.config.tolerance = cs.getTolerance()
+            tc.config.tolerance = confCtx.getTolerance()
         if tt == TargetTypeEnum.thumbnails:
-            tc.config.periodValue = cs.getPeriodValue()
-            tc.config.periodUnit = cs.getPeriodUnit()
-            tc.config.maxCount = cs.getMaxCount()
-            tc.config.thumbsWidth = cs.getThumbsWidth()
-            tc.config.thumbsHeight = cs.getThumbsHeight()
-            tc.config.outputFormat = cs.getFormat()
-            tc.config.ensureOne = cs.getEnsureOne()
+            tc.config.periodValue = confCtx.getPeriodValue()
+            tc.config.periodUnit = confCtx.getPeriodUnit()
+            tc.config.maxCount = confCtx.getMaxCount()
+            tc.config.thumbsWidth = confCtx.getThumbsWidth()
+            tc.config.thumbsHeight = confCtx.getThumbsHeight()
+            tc.config.outputFormat = confCtx.getFormat()
+            tc.config.ensureOne = confCtx.getEnsureOne()
     return conf
 
 
@@ -111,12 +111,13 @@ class TranscoderProperties(ComponentPropertiesMixin):
     implements(IComponentProperties)
     
     @classmethod
-    def createFromComponentDict(cls, workerContext, props):
+    def createFromComponentDict(cls, workerCtx, props):
         niceLevel = props.get("nice-level", None)
         name = props.get("admin-id", "")
         configPath = VirtualPath(props.get("config", None))
         pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
-        adminLocal = workerContext.admin.getLocal()
+        adminCtx = workerCtx.getAdminContext()
+        adminLocal = adminCtx.getLocal()
         localPath = configPath.localize(adminLocal)
         if not os.path.exists(localPath):
             message = ("Transcoder config file not found ('%s')" % localPath)
@@ -134,14 +135,13 @@ class TranscoderProperties(ComponentPropertiesMixin):
         return cls(name, configPath, config, niceLevel, pathAttr)
     
     @classmethod
-    def createFromContext(cls, profileCtx):
-        prof = profileCtx
-        cust = prof.customer
-        name = "%s/%s" % (cust.store.getName(), prof.store.getName())
-        configPath = prof.getConfigPath()
-        pathAttr = cust.getPathAttributes()
-        config = createTranscodingConfigFromContext(prof)
-        priority = prof.store.getProcessPriority()
+    def createFromContext(cls, profCtx):
+        custCtx = profCtx.getCustomerContext()
+        name = "%s/%s" % (custCtx.getName(), profCtx.getName())
+        configPath = profCtx.getConfigPath()
+        pathAttr = custCtx.getPathAttributes()
+        config = createTranscodingConfigFromContext(profCtx)
+        priority = profCtx.getProcessPriority()
         # for priority in [0,100] the nice level will be in  [19,0]
         # and for priority in [100-200] the nice level will be in [0,-15]
         niceLevel = (19 - (19 * min(100, max(0, priority)) / 100) 
@@ -173,8 +173,9 @@ class TranscoderProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
         
-    def prepare(self, workerContext):
-        adminLocal = workerContext.admin.getLocal()
+    def prepare(self, workerCtx):
+        adminCtx = workerCtx.getAdminContext()
+        adminLocal = adminCtx.getLocal()
         localPath = self._configPath.localize(adminLocal)
         saver = inifile.IniFile()
         # Set the datetime of file creation

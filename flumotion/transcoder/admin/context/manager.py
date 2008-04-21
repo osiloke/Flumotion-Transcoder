@@ -12,16 +12,18 @@
 
 from flumotion.twisted import pb
 
+from flumotion.transcoder.admin.context import base
 
-class ManagerContext(object):
+
+class ManagerContext(base.BaseContext):
     
     def __init__(self, adminCtx, managerConfig):
-        self.admin = adminCtx
+        base.BaseContext.__init__(self, adminCtx)
         self.config = managerConfig
-        # Simulate for the FlowContext, AtmosphereContext and ComponentContext
-        self.manager = self
-        self.group = self
 
+    def getAdminContext(self):
+        return self._parent
+    
     def getHost(self):
         return str(self.config.host)
     
@@ -35,15 +37,23 @@ class ManagerContext(object):
         return pb.Authenticator(username=self.config.username,
                                 password=self.config.password)
 
-    #There is no flow context
-    def getFlowContext(self, name):
+    ## Simulate Flow, atmosphere and component contexts ##
+
+    def getManagerContext(self):
+        return self
+
+    def getFlowContext(self):
+        return self._parent
+    
+    def getAtmosphereContext(self):
+        return self._parent
+
+    def getFlowContextByName(self, name):
         return self
     
-    #There is no atmosphere context
-    def getAtmosphereContext(self, name):
+    def getAtmosphereContextByName(self, name):
         return self
     
-    #There is no component context
-    def getComponentContext(self, name):
+    def getComponentContextByName(self, name):
         return self
     

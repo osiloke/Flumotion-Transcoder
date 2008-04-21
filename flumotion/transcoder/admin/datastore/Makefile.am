@@ -2,8 +2,8 @@ include $(top_srcdir)/common/python.mk
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/datastore
 
-python_PYTHON = __init__.py basestore.py adminstore.py customerstore.py \
-                profilestore.py targetstore.py configstore.py activitystore.py \
+python_PYTHON = __init__.py base.py store.py notification.py customer.py \
+                profile.py target.py config.py state.py activity.py \
                 notifystore.py
 python_DATA =
 

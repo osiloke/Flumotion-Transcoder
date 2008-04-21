@@ -14,51 +14,55 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import configstore
+from flumotion.transcoder.admin.datastore import config
 from flumotion.transcoder.admin.api import interfaces, api  
 
 
-class ConfigMedium(api.Medium):
+class BaseConfigMedium(api.Medium):
     implements(interfaces.IConfigMedium)
     
-    def __init__(self, config):
-        self._config = config
+    def __init__(self, configStore):
+        self._reference = configStore
     
     
     ## IConfigMedium Methodes ##
 
+    @api.remote()
+    def getType(self):
+        return self._reference.getType()
 
-class IdentityConfigMedium(ConfigMedium):
+
+class IdentityConfigMedium(BaseConfigMedium):
     implements(interfaces.IIdentityConfigMedium)
     api.registerMedium(interfaces.IIdentityConfigMedium,
-                          configstore.IIdentityConfig)
+                       config.IIdentityConfigStore)
     
     def __init__(self, config):
-        ConfigMedium.__init__(self, config)
+        BaseConfigMedium.__init__(self, config)
     
     
     ## IIdentityConfigMedium Methodes ##
 
 
-class AudioConfigMedium(ConfigMedium):
+class AudioConfigMedium(BaseConfigMedium):
     implements(interfaces.IAudioConfigMedium)
     api.registerMedium(interfaces.IAudioConfigMedium,
-                          configstore.IAudioConfig)
+                       config.IAudioConfigStore)
     
     def __init__(self, config):
-        ConfigMedium.__init__(self, config)
+        BaseConfigMedium.__init__(self, config)
     
     
     ## IAudioConfigMedium Methodes ##
 
 
-class VideoConfigMedium(ConfigMedium):
+class VideoConfigMedium(BaseConfigMedium):
     implements(interfaces.IVideoConfigMedium)
     api.registerMedium(interfaces.IVideoConfigMedium,
-                          configstore.IVideoConfig)
+                       config.IVideoConfigStore)
     
     def __init__(self, config):
-        ConfigMedium.__init__(self, config)
+        BaseConfigMedium.__init__(self, config)
     
     
     ## IVideoConfigMedium Methodes ##
@@ -67,7 +71,7 @@ class VideoConfigMedium(ConfigMedium):
 class AudioVideoConfigMedium(AudioConfigMedium, VideoConfigMedium):
     implements(interfaces.IAudioVideoConfigMedium)
     api.registerMedium(interfaces.IAudioVideoConfigMedium,
-                          configstore.IAudioVideoConfig)
+                       config.IAudioVideoConfigStore)
     
     def __init__(self, config):
         AudioConfigMedium.__init__(self, config)
@@ -77,13 +81,13 @@ class AudioVideoConfigMedium(AudioConfigMedium, VideoConfigMedium):
     ## IAudioVideoConfigMedium Methodes ##
 
 
-class ThumbnailsConfigMedium(ConfigMedium):
+class ThumbnailsConfigMedium(BaseConfigMedium):
     implements(interfaces.IThumbnailsConfigMedium)
     api.registerMedium(interfaces.IThumbnailsConfigMedium,
-                          configstore.IThumbnailsConfig)
+                       config.IThumbnailsConfigStore)
     
     def __init__(self, config):
-        ConfigMedium.__init__(self, config)
+        BaseConfigMedium.__init__(self, config)
     
     
     ## IThumbnailsConfigMedium Methodes ##

@@ -59,9 +59,9 @@ class BaseComponentProxy(FlumotionProxy):
     properties_factory = GenericComponentProperties
 
     def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain):
+                 compCtx, componentState, domain):
         FlumotionProxy.__init__(self, logger, parent, identifier, manager)
-        self._context = componentContext
+        self._compCtx = compCtx
         self._domain = domain
         self._componentState = componentState
         self._retrievingUIState = False
@@ -92,8 +92,8 @@ class BaseComponentProxy(FlumotionProxy):
         conf = self._componentState.get('config', None)
         return (conf and conf.get('label', None)) or self.getName()
     
-    def getContext(self):
-        return self._context
+    def getComponentContext(self):
+        return self._compCtx
     
     def getDomain(self):
         return self._domain
@@ -401,8 +401,10 @@ class BaseComponentProxy(FlumotionProxy):
     
     def __componentRequestedWorkerChanged(self, workerName):
         self._requestedWorkerName = workerName
-        mgrCtx = self.getManager().getContext()
-        workerCtx = mgrCtx.admin.getWorkerContext(workerName)
+        compCtx = self.getComponentContext()
+        mgrCtx = compCtx.getManagerContext()
+        adminCtx = mgrCtx.getAdminContext() 
+        workerCtx = adminCtx.getWorkerContextByName(workerName)
         props = self._doExtractProperties(workerCtx, self._componentState)
         self._properties.setValue(props)
     

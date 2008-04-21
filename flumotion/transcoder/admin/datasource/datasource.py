@@ -101,8 +101,10 @@ class IDataSource(Interface):
             accessForceFileMode (int) can be None
             monitoringPeriod (int) can be None: 
                 Gives the default period used to monitor the filesystem.
+            processPriority (int) can be None:
+                Gives the default process priority for the transcoding job 
             transcodingPriority (int) can be None:
-                Gives the default priority of the transcoding jobs.
+                Gives the default scheduler priority of the transcoding jobs.
             transcodingTimeout (int) can be None:
                 Gives the default timeout of the transcoding jobs.
             postprocessTimeout (int) can be None:
@@ -172,7 +174,7 @@ class IDataSource(Interface):
             accessForceFileMode (int) can be None
         """
         
-    def retrieveCustomerInfo(self, customerData):
+    def retrieveCustomerInfo(self, custData):
         """
         Returns a deferred.
         The result on success is a "container" objects
@@ -184,7 +186,7 @@ class IDataSource(Interface):
             email (str) can be None
         """
         
-    def retrieveProfiles(self, customerData):
+    def retrieveProfiles(self, custData):
         """
         Returns a deferred.
         The result on success is a list of "container" objects
@@ -222,7 +224,7 @@ class IDataSource(Interface):
             monitoringPeriod (int) can be None
         """
         
-    def retrieveTargets(self, profileData):
+    def retrieveTargets(self, profData):
         """
         Returns a deferred.
         The result on success is a list of "container" objects
@@ -244,7 +246,7 @@ class IDataSource(Interface):
             postprocessTimeout (int) can be None
         """
        
-    def retrieveTargetConfig(self, targetData):
+    def retrieveTargetConfig(self, targData):
         """
         Returns a deferred.
         The result on success is a "container" objects
@@ -303,21 +305,21 @@ class IDataSource(Interface):
                 requestTemplate (str)
         """
         
-    def retrieveCustomerNotifications(self, customerData):
+    def retrieveCustomerNotifications(self, custData):
         """
         Returns a deferred.
         The returned list contains all customers' notifications.
         See retrieveGlobalNotifications for result specifications.
         """
 
-    def retrieveProfileNotifications(self, profileData):
+    def retrieveProfileNotifications(self, profData):
         """
         Returns a deferred.
         The returned list contains all profiles' notifications.
         See retrieveGlobalNotifications for result specifications.
         """
 
-    def retrieveTargetNotifications(self, targetData):
+    def retrieveTargetNotifications(self, targData):
         """
         Returns a deferred.
         The returned list contains all targets' notifications.
@@ -355,14 +357,14 @@ class IDataSource(Interface):
         Creates a new activity container of a specified type and subtype.
         """
 
-    def newCustomer(self, cusomerId):
+    def newCustomer(self, custId):
         """
         Creates a new customer container.
         It's not added to the store, it should be
         filled and then the store method should be call.
         """
 
-    def newProfile(self, customerData):
+    def newProfile(self, custData):
         """
         Creates a new profile container for the specified customer.
         It's not added to the store, it should be
@@ -385,27 +387,27 @@ class IDataSource(Interface):
         filled and then the store method should be call.
         """
     
-    def newTarget(self, profileData):
+    def newTarget(self, profData):
         """
         Creates a new target container object.
         """
 
-    def newTargetConfig(self, targetData):
+    def newTargetConfig(self, targData):
         """
         Creates a new target config container object.
         """
         
-    def newReport(self, profileData):
+    def newReport(self, profData):
         """
         Creates a new report container object.
         """
         
-    def newTargetReport(self, reportData):
+    def newTargetReport(self, repData):
         """
         Creates a new target report container object.
         """
         
-    def newNotificationReport(self, reportData, notificationData):
+    def newNotificationReport(self, repData, notifData):
         """
         Creates a new notification report container object.
         """

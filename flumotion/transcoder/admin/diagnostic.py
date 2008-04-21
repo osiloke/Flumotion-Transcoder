@@ -15,7 +15,7 @@ import re
 
 from flumotion.common import messages
 
-from flumotion.inhouse import log, defer, utils
+from flumotion.inhouse import log, defer, utils, decorators
 
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin import diagutils
@@ -64,43 +64,46 @@ class Diagnostician(object):
         return False
 
     _crashMessagePattern = re.compile("The core dump is '([^']*)' on the host running '([^']*)'")
-        
+    
+    @decorators.ensureDeferred
     def diagnoseComponentMessage(self, component, message):
         diagnostic = []
-        diagnostic.extend(self.__componentDiagnostic(component))
+        d = defer.succeed(diagnostic)
+        if isinstance(component, TranscoderProxy):
+            # Ensure we have the last report path
+            d.addCallback(self.__waitReportPath, component)
+        d.addCallback(self.__componentDiagnostic, component)
         text = self._translator.translate(message)
         isCrashMessage = self._crashMessagePattern.search(text)
         workerName = None
         if isCrashMessage:
             corePath, workerName = isCrashMessage.groups()
-            diagnostic.extend(self.__crashDiagnostic(workerName, corePath))
+            d.addCallback(self.__crashDiagnostic, workerName, corePath)
             
         if isinstance(component, MonitorProxy):
-            diagnostic.extend(self.__monitorDiagnostic(component, workerName))
+            d.addCallback(self.__monitorDiagnostic, component, workerName)
                 
         if isinstance(component, TranscoderProxy):
-            diagnostic.extend(self.__sourceFileDiagnostic(component, workerName))
-            diagnostic.extend(self.__transcoderDiagnostic(component, workerName))
-            diagnostic.extend(self.__pipelineDiagnostic(component, workerName))
+            d.addCallback(self.__sourceFileDiagnostic, component, workerName)
+            d.addCallback(self.__transcoderDiagnostic, component, workerName)
+            d.addCallback(self.__pipelineDiagnostic, component, workerName)
             
+        d.addCallback(self.__finishComponentMessageDiagnostic)
+        return d
         
-        if not diagnostic: return []
-        text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
-        label = "Component Message Diagnostic"
-        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]
-        
-
+    @decorators.ensureDeferred
     def diagnoseTranscodingFailure(self, task, transcoder):
         diagnostic = []
-        diagnostic.extend(self.__componentDiagnostic(transcoder))
-        diagnostic.extend(self.__sourceFileDiagnostic(transcoder))
-        diagnostic.extend(self.__transcoderDiagnostic(transcoder))
-        diagnostic.extend(self.__pipelineDiagnostic(transcoder))
+        d = defer.succeed(diagnostic)
+        # Ensure we have the last report path
+        d.addCallback(self.__waitReportPath, transcoder)
+        d.addCallback(self.__componentDiagnostic, transcoder)
+        d.addCallback(self.__sourceFileDiagnostic, transcoder)
+        d.addCallback(self.__transcoderDiagnostic, transcoder)
+        d.addCallback(self.__pipelineDiagnostic, transcoder)
         
-        if not diagnostic: return []
-        text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
-        label = "Transcoding Failure Diagnostic"
-        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]
+        d.addCallback(self.__finishTranscodingFailureDiagnostic)
+        return d
 
 
     ## Private Methods ##
@@ -118,6 +121,12 @@ class Diagnostician(object):
     def __lookupProperties(self, component):
         if not component: return None
         return component.getProperties()
+    
+    def __waitReportPath(self, diagnostic, transcoder):
+        if not transcoder: return None
+        d = transcoder.retrieveReportPath()
+        d.addCallback(defer.overrideResult, diagnostic)
+        return d
     
     def __lookupReport(self, transcoder):
         if not transcoder: return None
@@ -150,7 +159,7 @@ class Diagnostician(object):
         config = self.__lookupConfig(transcoder)
         if not config: return (virtPath, localPath, remotePath)
         worker = self.__lookupWorker(transcoder, workerName)[0]
-        workerLocal = worker and worker.getContext().getLocal()
+        workerLocal = worker and worker.getWorkerContext().getLocal()
         adminLocal = self._adminCtx.getLocal()
         alternatives = [report.source.lastPath,
                         report.source.failedPath,
@@ -166,9 +175,9 @@ class Diagnostician(object):
                 break
         return (virtPath, localPath, remotePath)
     
-    def __componentDiagnostic(self, component, workerName=None):
-        if not component: return []
-        diagnostic = ["COMPONENT INFO\n--------------"]
+    def __componentDiagnostic(self, diagnostic, component, workerName=None):
+        if not component: return diagnostic
+        diagnostic.append("COMPONENT INFO\n--------------")
         workerName, workerHost = self.__lookupWorker(component)[1:3]
         pid = component.getPID()
         diagnostic.append("Component PID:  %s" % (pid or "Unknown"))
@@ -178,14 +187,14 @@ class Diagnostician(object):
             diagnostic.append("Go to Worker:   ssh -At %s" % workerHost)
         return diagnostic
     
-    def __monitorDiagnostic(self, monitor, workerName=None):
-        if not monitor: return []
+    def __monitorDiagnostic(self, diagnostic, monitor, workerName=None):
+        if not monitor: return diagnostic
         worker, workerName = self.__lookupWorker(monitor, workerName)[0:2]
-        if not worker: return []
+        if not worker: return diagnostic
         props = self.__lookupProperties(monitor)
-        if not props: return []
-        diagnostic = ["MANUAL LAUNCH\n-------------"]
-        args = props.asLaunchArguments(worker.getContext())
+        if not props: return diagnostic
+        diagnostic.append("MANUAL LAUNCH\n-------------")
+        args = props.asLaunchArguments(worker.getWorkerContext())
         origCmd = self.__buildSUCommand("flumotion-launch -d 4 "
                                         "file-monitor", args)
         
@@ -193,16 +202,24 @@ class Diagnostician(object):
         diagnostic.append("    " + origCmd)
         return diagnostic
 
-    def __transcoderDiagnostic(self, transcoder, workerName=None):
-        if not transcoder: return []
+    def __transcoderDiagnostic(self, diagnostic, transcoder, workerName=None):
+        if not transcoder: return diagnostic
         worker, workerName = self.__lookupWorker(transcoder, workerName)[0:2]
-        if not worker: return []
-        workerCtx = worker.getContext()
-        workerLocal = workerCtx.getLocal()
+        if not worker: return diagnostic
+        # Use retrieveReportPath because getReportPath sometime fail
+        # because to the report file has been moved 
+        d = transcoder.retrieveReportPath()
+        d.addCallback(self.__cbGotReportForTranscoderDiagnostic, diagnostic,
+                      transcoder, worker, workerName)
+        return d
+    
+    def __cbGotReportForTranscoderDiagnostic(self, reportVirtPath, diagnostic,
+                                             transcoder, worker, workerName):
         props = self.__lookupProperties(transcoder)
-        reportVirtPath = transcoder.getReportPath()
-        if not (props or reportVirtPath): return []
-        diagnostic = ["MANUAL LAUNCH\n-------------"]
+        if not (props or reportVirtPath): return diagnostic 
+        workerCtx = worker.getWorkerContext()
+        workerLocal = workerCtx.getLocal()
+        diagnostic.append("MANUAL LAUNCH\n-------------")
         if props:
             args = props.asLaunchArguments(workerCtx)
             origCmd = self.__buildSUCommand("GST_DEBUG=2 flumotion-launch -d 4 "
@@ -219,9 +236,9 @@ class Diagnostician(object):
             diagnostic.append("    " + diagCmd)
         return diagnostic
     
-    def __crashDiagnostic(self, workerName, corePath):
-        if not workerName: return []
-        diagnostic = ["CRASH DEBUG\n-----------"]
+    def __crashDiagnostic(self, diagnostic, workerName, corePath):
+        if not workerName: return diagnostic
+        diagnostic.append("CRASH DEBUG\n-----------")
         workerInfo = self.__lookupWorker(None, workerName)
         workerName, workerHost = workerInfo[1:3]
         
@@ -240,16 +257,16 @@ class Diagnostician(object):
 
         return diagnostic
 
-    def __sourceFileDiagnostic(self, transcoder, workerName=None):
-        if not transcoder: return []
+    def __sourceFileDiagnostic(self, diagnostic, transcoder, workerName=None):
+        if not transcoder: return diagnostic
         report = self.__lookupReport(transcoder)
-        if not report: return []
+        if not report: return diagnostic
         pathInfo = self.__lookupInputPath(transcoder, workerName)
         inputVirtPath, inputLocalPath, inputRemotePath = pathInfo
         workerInfo = self.__lookupWorker(transcoder, workerName)
         workerName, workerHost = workerInfo[1:3]
         
-        diagnostic = ["SOURCE FILE INFO\n----------------"]
+        diagnostic.append("SOURCE FILE INFO\n----------------")
         
         # File Path
         diagnostic.append("Virtual Path:   %s" % (inputVirtPath or "Unknown"))
@@ -287,18 +304,18 @@ class Diagnostician(object):
         
         return diagnostic
 
-    def __pipelineDiagnostic(self, transcoder, workerName=None):
-        if not transcoder: return []
+    def __pipelineDiagnostic(self, diagnostic, transcoder, workerName=None):
+        if not transcoder: return diagnostic
         report = self.__lookupReport(transcoder)
         config = self.__lookupConfig(transcoder)
-        if not (config and report): return []
+        if not (config and report): return diagnostic
         pathInfo = self.__lookupInputPath(transcoder, workerName)
         virtInputPath = pathInfo[0]
         targetFileTemplate = "diag_%(filename)s"
         gstlaunch = "GST_DEBUG=2 gst-launch -v "
         inputPath = os.path.basename(virtInputPath.getPath())
         
-        diagnostic = []
+        pipeDiag = []
         analysis = report.source.analysis
         # If the discover fail, assume the source has audio and video
         sourceHasAudio = analysis.hasAudio or (not analysis.mimeType)
@@ -312,13 +329,13 @@ class Diagnostician(object):
                                                   playAudio=sourceHasAudio,
                                                   playVideo=sourceHasVideo)
         if pipeInfo or pipeAudit:
-            diagnostic.append("PLAY SOURCE")
+            pipeDiag.append("PLAY SOURCE")
             if pipeInfo:
-                diagnostic.append("  Pipeline Command:")
-                diagnostic.append("    " + gstlaunch + pipeInfo)
+                pipeDiag.append("  Pipeline Command:")
+                pipeDiag.append("    " + gstlaunch + pipeInfo)
             if pipeAudit:
-                diagnostic.append("  Pipeline Audit:")
-                diagnostic.append("    " + gstlaunch + pipeAudit)
+                pipeDiag.append("  Pipeline Audit:")
+                pipeDiag.append("    " + gstlaunch + pipeAudit)
         
         allTargets = []
         for name, targReport in report.targets.iteritems():
@@ -338,13 +355,13 @@ class Diagnostician(object):
                                                            sourcePath=inputPath,
                                                            targetFileTemplate=targetFileTemplate)
                 if pipeInfo or pipeAudit:
-                    diagnostic.append("TRANSCODE TARGET " + name)
+                    pipeDiag.append("TRANSCODE TARGET " + name)
                     if pipeInfo:
-                        diagnostic.append("  Pipeline Command:")
-                        diagnostic.append("    " + gstlaunch + pipeInfo)
+                        pipeDiag.append("  Pipeline Command:")
+                        pipeDiag.append("    " + gstlaunch + pipeInfo)
                     if pipeAudit:
-                        diagnostic.append("  Pipeline Audit:")
-                        diagnostic.append("    " + gstlaunch + pipeAudit)
+                        pipeDiag.append("  Pipeline Audit:")
+                        pipeDiag.append("    " + gstlaunch + pipeAudit)
 
         if allTargets:
             pipeInfo = diagutils.extractTransPipeline(config, report,
@@ -356,14 +373,28 @@ class Diagnostician(object):
                                                        sourcePath=inputPath,
                                                        targetFileTemplate=targetFileTemplate)
             if pipeInfo or pipeAudit:
-                diagnostic.append("TRANSCODE ALL TARGETS")
+                pipeDiag.append("TRANSCODE ALL TARGETS")
                 if pipeInfo:
-                    diagnostic.append("  Pipeline Command:")
-                    diagnostic.append("    " + gstlaunch + pipeInfo)
+                    pipeDiag.append("  Pipeline Command:")
+                    pipeDiag.append("    " + gstlaunch + pipeInfo)
                 if pipeAudit:
-                    diagnostic.append("  Pipeline Audit:")
-                    diagnostic.append("    " + gstlaunch + pipeAudit)
+                    pipeDiag.append("  Pipeline Audit:")
+                    pipeDiag.append("    " + gstlaunch + pipeAudit)
 
-        if diagnostic:
-            return ["PIPELINE INFO\n-------------"] + diagnostic
-        return []
+        if pipeDiag:
+            diagnostic.append("PIPELINE INFO\n-------------")
+            diagnostic.extend(pipeDiag)
+        return diagnostic
+
+
+    def __finishComponentMessageDiagnostic(self, diagnostic):
+        if not diagnostic: return []
+        text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
+        label = "Component Message Diagnostic"
+        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]
+
+    def __finishTranscodingFailureDiagnostic(self, diagnostic):
+        if not diagnostic: return []
+        text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
+        label = "Transcoding Failure Diagnostic"
+        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]

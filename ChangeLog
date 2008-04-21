@@ -1,3 +1,15 @@
+2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	Moved the data "generation" (value inheritence) from the datastore
+	elements to the context elements. Now the store give only the real data.
+	This was needed for the API to have access to the real data.
+	Standardized the store/context pairing.
+	Sanitized the context /store variables naming.
+	Created interfaces for all store elements.
+	Created interfaces for some proxy elements.
+	Renamed modules for correspondency between stores, contextes, and mediums.
+	Extended the API to access the customers, profiles and config information.
+
 2008-04-11  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/Makefile.am:

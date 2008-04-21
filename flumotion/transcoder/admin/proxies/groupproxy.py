@@ -125,8 +125,9 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
                        componentLabel, worker, properties, timeout=None):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
-        properties.prepare(worker.getContext())
-        props = properties.asComponentProperties(worker.getContext())
+        workerCtx = worker.getWorkerContext()
+        properties.prepare(workerCtx)
+        props = properties.asComponentProperties(workerCtx)
         resDef = defer.Deferred()
         initDef = defer.Deferred()
         self._waitCompLoaded[identifier] = initDef
@@ -160,7 +161,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     def __componentStateAdded(self, componentState):
         name = componentState.get('name')
-        componentContext = self._context.getComponentContext(name)
+        componentContext = self._context.getComponentContextByName(name)
         self._addProxyState(componentproxy, "_components", 
                             self.__getComponentUniqueId, 
                             "component-added", self._manager,
@@ -170,7 +171,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     def __componentStateRemoved(self, componentState):
         name = componentState.get('name')
-        componentContext = self._context.getComponentContext(name)
+        componentContext = self._context.getComponentContextByName(name)
         self._removeProxyState("_components", self.__getComponentUniqueId,
                                "component-removed", self._manager,
                                componentContext, componentState, 

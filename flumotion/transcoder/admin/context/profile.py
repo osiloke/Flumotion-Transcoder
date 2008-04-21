@@ -10,50 +10,59 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.inhouse import fileutils
-from flumotion.inhouse.utils import LazyEncapsulationIterator
+from flumotion.inhouse import fileutils, annotate
 
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.substitution import Variables
-from flumotion.transcoder.admin.context.targetcontext import TargetContext
+from flumotion.transcoder.admin.context import base, target, notification
 
 #TODO: Do some value caching
 
-def _buildBaseGetter(baseGetterName, storeGetterName):
+
+def genBaseGetter(name):
+    storeGetterName = "get%sDir" % name
+    baseGetterName = "get%sBase" % name
+    
     def getter(self):
-        folder = getattr(self.store, storeGetterName)()
-        parent = getattr(self.customer, baseGetterName)()
+        folder = getattr(self._store, storeGetterName)()
+        parent = getattr(self._parent, baseGetterName)()
         if folder != None:
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return VirtualPath(value, parent.getRoot())
         return parent.append(self.getSubdir())
-    return getter
+    
+    annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)
 
-def _buildDirGetter(baseGetterName, relGetterName):
-    def getter(self):
+
+def genGetters(name):
+    dirGetterName = "get%sDir" % name
+    relGetterName = "get%sRelPath" % name
+    baseGetterName = "get%sBase" % name
+    pathGetterName = "get%sPath" % name
+    fileGetterName = "get%sFile" % name
+    
+    def dirGetter(self):
         folder = getattr(self, baseGetterName)()
         relPath = getattr(self, relGetterName)()
         path, file, ext = fileutils.splitPath(relPath)
         return folder.append(path)
-    return getter
-
-def _buildFileGetter(relGetterName):
-    def getter(self):
+    
+    def fileGetter(self):
         relPath = getattr(self, relGetterName)()
         path, file, ext = fileutils.splitPath(relPath)
         return file + ext
-    return getter
-
-def _buildPathGetter(dirGetterName, fileGetterName):
-    def getter(self):
+    
+    def pathGetter(self):
         folder = getattr(self, dirGetterName)()
         return folder.append(getattr(self, fileGetterName)())
-    return getter
+    
+    annotate.addAnnotationMethod("genGetteres", fileGetterName, fileGetter)
+    annotate.addAnnotationMethod("genGetteres", pathGetterName, pathGetter)
+    annotate.addAnnotationMethod("genGetteres", dirGetterName, dirGetter)
+    
 
-
-class UnboundProfileContext(object):
+class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStoreMixin):
     """
     A profile context independent of the input file.
     
@@ -79,50 +88,55 @@ class UnboundProfileContext(object):
                 getDoneRepBase: default:/fluendo/reports/done/ogg/
     """
     
-    # Getters get...Base()
-    # will be created by the metaclass
-    __base_getters__ = ["Output", "Link", "Work",
-                        "Input", "Failed", "Done", 
-                        "Config", "TempRep", "FailedRep", "DoneRep"]
+    base.genStoreProxy("getIdentifier")
+    base.genStoreProxy("getName")
+    base.genStoreProxy("getLabel")
+    base.genParentOverridingStoreProxy("getOutputMediaTemplate")
+    base.genParentOverridingStoreProxy("getOutputThumbTemplate")
+    base.genParentOverridingStoreProxy("getLinkFileTemplate")
+    base.genParentOverridingStoreProxy("getConfigFileTemplate")
+    base.genParentOverridingStoreProxy("getReportFileTemplate")
+    base.genParentOverridingStoreProxy("getLinkTemplate")
+    base.genParentOverridingStoreProxy("getLinkURLPrefix")
+    base.genParentOverridingStoreProxy("getEnablePostprocessing")
+    base.genParentOverridingStoreProxy("getEnablePreprocessing")
+    base.genParentOverridingStoreProxy("getEnableLinkFiles")
+    base.genParentOverridingStoreProxy("getTranscodingPriority")
+    base.genParentOverridingStoreProxy("getProcessPriority")
+    base.genParentOverridingStoreProxy("getPreprocessCommand")
+    base.genParentOverridingStoreProxy("getPostprocessCommand")
+    base.genParentOverridingStoreProxy("getPreprocessTimeout")
+    base.genParentOverridingStoreProxy("getPostprocessTimeout")
+    base.genParentOverridingStoreProxy("getTranscodingTimeout")
+    base.genParentOverridingStoreProxy("getMonitoringPeriod")
+
+    genBaseGetter("Output")
+    genBaseGetter("Link")
+    genBaseGetter("Work")
+    genBaseGetter("Input")
+    genBaseGetter("Failed")
+    genBaseGetter("Done")
+    genBaseGetter("Config")
+    genBaseGetter("TempRep")
+    genBaseGetter("FailedRep")
+    genBaseGetter("DoneRep")
+
+    def __init__(self, custCtx, profStore):
+        base.BaseStoreContext.__init__(self, custCtx, profStore)
+        self._variables.addVar("profileSubdir", self.getSubdir())
+        self._variables.addVar("profileName", self.getName())
+
+    def getAdminContext(self):
+        return self._parent.getAdminContext()
     
-    class __metaclass__(type):
-        
-        def __init__(cls, classname, bases, dct):
-            props = getattr(cls, "__base_getters__", [])
-            for name in props:
-                storeGetterName = "get%sDir" % name
-                baseGetterName = "get%sBase" % name
-                baseGetter = _buildBaseGetter(baseGetterName, storeGetterName)
-                setattr(cls, baseGetterName, baseGetter)
-            props = getattr(cls, "__file_getters__", [])
-            for name in props:
-                dirGetterName = "get%sDir" % name
-                relGetterName = "get%sRelPath" % name
-                baseGetterName = "get%sBase" % name
-                pathGetterName = "get%sPath" % name
-                fileGetterName = "get%sFile" % name
-                dirGetter = _buildDirGetter(baseGetterName, relGetterName)
-                fileGetter = _buildFileGetter(relGetterName)
-                pathGetter = _buildPathGetter(dirGetterName, fileGetterName)
-                if not hasattr(cls, fileGetterName):
-                    setattr(cls, fileGetterName, fileGetter)
-                if not hasattr(cls, pathGetterName):
-                    setattr(cls, pathGetterName, pathGetter)
-                if not hasattr(cls, dirGetterName):
-                    setattr(cls, dirGetterName, dirGetter)
-
-    def __init__(self, profileStore, customerContext):
-        self.customer = customerContext
-        self.store = profileStore
-        self._vars = Variables(customerContext._vars)
-        self._vars.addVar("profileSubdir", self.getSubdir())
-        self._vars.addVar("profileName", self.store.getName())
-
-    def getTranscodingContext(self):
-        return self.customer.getTranscodingContext()
+    def getStoreContext(self):
+        return self._parent.getStoreContext()
     
     def getCustomerContext(self):
-        return self.customer
+        return self._parent
+
+    def isBound(self):
+        return False
 
     def getIdentifier(self):
         """
@@ -130,15 +144,15 @@ class UnboundProfileContext(object):
         It should not change event if profile configuration changed.
         """
         # For now return only the customer and profile name
-        return "%s/%s" % (self.customer.getIdentifier(), self.store.getName())
+        return "%s/%s" % (self._parent.getIdentifier(), self.getName())
 
     def getSubdir(self):
-        subdir = self.store.getSubdir()
+        subdir = self._store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
             return fileutils.cleanupPath(subdir)
-        subdir = fileutils.str2filename(self.store.getName())
+        subdir = fileutils.str2filename(self.getName())
         return fileutils.ensureDirPath(subdir)
 
     def _expandDir(self, folder):
@@ -198,15 +212,20 @@ class ProfileContext(UnboundProfileContext):
                 getDoneRepPath: default:/fluendo/reports/done/ogg/subdir/file.avi.rep
     """
     
-    # Getters get...Dir(), get...File(), get...Path()
-    # will be created by the metaclass
-    __file_getters__ = ["Input", "Failed", "Done", 
-                        "Config", "TempRep", "FailedRep", "DoneRep"]
+    genGetters("Input")
+    genGetters("Failed")
+    genGetters("Done")
+    genGetters("Config")
+    genGetters("TempRep")
+    genGetters("FailedRep")
+    genGetters("DoneRep")
+    
+    def __init__(self, custCtx, profStore, inputAbstractPath):
+        UnboundProfileContext.__init__(self, custCtx, profStore)
+        self._variables.addFileVars(inputAbstractPath.strip('/'), "source")
 
-
-    def __init__(self, profileStore, customerContext, inputAbstractPath):
-        UnboundProfileContext.__init__(self, profileStore, customerContext)
-        self._vars.addFileVars(inputAbstractPath.strip('/'), "source")        
+    def isBound(self):
+        return True
 
     def getIdentifier(self):
         """
@@ -215,54 +234,53 @@ class ProfileContext(UnboundProfileContext):
         """
         # For now return only the customer and profile name
         return "%s:%s" % (UnboundProfileContext.getIdentifier(self),
-                          self._vars["sourcePath"])
+                          self._variables["sourcePath"])
 
-    def getTargetContextByName(self, targetName):
-        return TargetContext(self.store[targetName], self)
+    def getTargetContextByName(self, targName):
+        targStore = self._store.getTargetStoreByName(targName)
+        return target.TargetContext(self, targStore)
 
-    def getTargetContext(self, target):
-        assert target.getParent() == self.store
-        return TargetContext(target, self)
+    def getTargetContextFor(self, targStore):
+        assert targStore.getParent() == self._store
+        return target.TargetContext(self, targStore)
 
     def iterTargetContexts(self):
-        return LazyEncapsulationIterator(TargetContext, 
-                                         self.store.iterTargets(), self)
+        targIter = self._store.iterTargetStores()
+        return base.LazyContextIterator(self, target.TargetContext, targIter)
 
     def getInputRelPath(self):
-        return self._vars["sourcePath"]
+        return self._variables["sourcePath"]
     
     def getFailedRelPath(self):
-        return self._vars["sourcePath"]
+        return self._variables["sourcePath"]
     
     def getDoneRelPath(self):
-        return self._vars["sourcePath"]
+        return self._variables["sourcePath"]
     
     def getConfigRelPath(self):
-        path = self._vars.substitute(self.store.getConfigFileTemplate())
+        path = self._variables.substitute(self.getConfigFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
     def getTempRepRelPath(self):
-        path = self._vars.substitute(self.store.getReportFileTemplate())
+        path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
 
     def getFailedRepRelPath(self):
-        path = self._vars.substitute(self.store.getReportFileTemplate())
+        path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
     def getDoneRepRelPath(self):
-        path = self._vars.substitute(self.store.getReportFileTemplate())
+        path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
     def getTranscoderLabel(self):
-        #FIXME: Dependency too deep 
-        tmpl = self.customer.transcoding.admin.config.transcoderLabelTemplate
-        return self._vars.substitute(tmpl)
+        tmpl = self.getAdminContext().config.transcoderLabelTemplate
+        return self._variables.substitute(tmpl)
 
     def getActivityLabel(self):
-        #FIXME: Dependency too deep 
-        tmpl = self.customer.transcoding.admin.config.activityLabelTemplate
-        return self._vars.substitute(tmpl)
+        tmpl = self.getAdminContext().config.activityLabelTemplate
+        return self._variables.substitute(tmpl)

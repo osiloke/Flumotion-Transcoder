@@ -14,7 +14,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import customerstore
+from flumotion.transcoder.admin.datastore import customer
 from flumotion.transcoder.admin.api import interfaces, api
 from flumotion.transcoder.admin.api.mediums import named
 
@@ -22,7 +22,42 @@ from flumotion.transcoder.admin.api.mediums import named
 class CustomerMedium(named.NamedMedium):
     implements(interfaces.ICustomerMedium)
     api.registerMedium(interfaces.ICustomerMedium,
-                          customerstore.ICustomerStore)
+                       customer.ICustomerStore)
+#    api.proxy("getName",
+#              "getSubdir",
+#              "getInputDir",
+#              "getOutputDir",
+#              "getFailedDir",
+#              "getDoneDir",
+#              "getLinkDir",
+#              "getWorkDir",
+#              "getConfigDir",
+#              "getTempRepDir",
+#              "getFailedRepDir",
+#              "getDoneRepDir",
+#              "getCustomerPriority",
+#              "getOutputMediaTemplate",
+#              "getOutputThumbTemplate",
+#              "getLinkFileTemplate",
+#              "getConfigFileTemplate",
+#              "getReportFileTemplate",
+#              "getLinkTemplate",
+#              "getLinkURLPrefix",
+#              "getEnablePostprocessing",
+#              "getEnablePreprocessing",
+#              "getEnableLinkFiles",
+#              "getTranscodingPriority",
+#              "getProcessPriority",
+#              "getPreprocessCommand",
+#              "getPostprocessCommand",
+#              "getPreprocessTimeout",
+#              "getPostprocessTimeout",
+#              "getTranscodingTimeout",
+#              "getMonitoringPeriod",
+#              "getAccessForceUser",
+#              "getAccessForceGroup",
+#              "getAccessForceDirMode",
+#              "getAccessForceFileMode")
     
     def __init__(self, customer):
         named.NamedMedium.__init__(self, customer)
@@ -32,8 +67,8 @@ class CustomerMedium(named.NamedMedium):
 
     @api.remote()
     def getProfiles(self):
-        return self.obj.getProfiles()
+        return self._reference.getProfileStores()
     
     @api.remote()
     def getProfile(self, identifier):
-        return self.obj.getProfile(identifier)
+        return self._reference.getProfileStore(identifier)

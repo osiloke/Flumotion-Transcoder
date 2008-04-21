@@ -21,20 +21,20 @@ from flumotion.transcoder.admin.api import interfaces, api
 class NamedMedium(api.Medium):
     implements(interfaces.INamedMedium)
     
-    def __init__(self, obj):
-        self.obj = obj
+    def __init__(self, reference):
+        self._reference = reference
         
     
     ## IBaseMedium Methodes ##
     
     @api.remote()
     def getIdentifier(self):
-        return self.obj.getIdentifier()
+        return self._reference.getIdentifier()
     
     @api.remote()
     def getName(self):
-        return self.obj.getName()
+        return self._reference.getName()
 
     @api.remote()
     def getLabel(self):
-        return self.obj.getLabel()
+        return self._reference.getLabel()

@@ -33,3 +33,5 @@ class AtmosphereProxy(groupproxy.ComponentGroupProxy):
                                                 atmosphereContext,
                                                 atmosphereState)
 
+    def getAtmosphereContext(self):
+        return self._context

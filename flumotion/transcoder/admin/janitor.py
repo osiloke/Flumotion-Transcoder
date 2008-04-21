@@ -95,7 +95,7 @@ class Janitor(log.Loggable):
         if not workerName: return None
         if workerName in self._bags:
             return self._bags[workerName]
-        workerCtx = self._adminCtx.getWorkerContext(workerName)
+        workerCtx = self._adminCtx.getWorkerContextByName(workerName)
         capacity = workerCtx.getMaxKeepFailed()
         self.debug("Create disposal bag of %d components for worker '%s'",
                    capacity, workerName)

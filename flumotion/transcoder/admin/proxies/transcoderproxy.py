@@ -99,8 +99,24 @@ class TranscoderProxy(ComponentProxy):
     def getReportPath(self):
         return self._reportPath.getValue()
     
+    def retrieveReportPath(self, timeout=None, retry=1):
+        virtPath = self._reportPath.getValue()
+        if self.isRunning():
+            return self.__retrieveReportPath(virtPath, timeout, retry)
+        return defer.succeed(virtPath) 
+    
     def getReport(self):
         return self.__loadReport(self.__getLocalReportPath())
+    
+    def retrieveReport(self, timeout=None, retry=1):
+        virtPath = self._reportPath.getValue()
+        if self.isRunning():
+            d = self.__retrieveReportPath(virtPath, timeout, retry)
+        else:
+            d = defer.succeed(virtPath)
+        d.addCallback(self.__localizeReportPath)
+        d.addCallback(self.__loadReport)
+        return d
     
     def waitReport(self, timeout=None):
         # Prevent blocking if not running and no report path has been received
@@ -195,25 +211,46 @@ class TranscoderProxy(ComponentProxy):
     
     ## Private Methodes ##
     
+    def __updateReportPath(self, virtPath):
+        self._reportPath.setValue(virtPath)
+        return virtPath
+    
     def __getLocalReportPath(self):
         virtPath = self._reportPath.getValue()
-        if not virtPath:
-            return None
-        context = self.getContext()
-        local = context.group.manager.admin.getLocal()
+        return self.__localizeReportPath(virtPath)
+    
+    def __localizeReportPath(self, virtPath):
+        if not virtPath: return None
+        compCtx = self.getComponentContext()
+        adminCtx = compCtx.getAdminContext()
+        local = adminCtx.getLocal()
         return virtPath.localize(local)
     
     def __getConfigPath(self):
         virtPath = self.getProperties().getConfigPath()
         if not virtPath:
             return None
-        context = self.getContext()
-        local = context.group.manager.admin.getLocal()
+        compCtx = self.getComponentContext()
+        adminCtx = compCtx.getAdminContext()
+        local = adminCtx.getLocal()
         return virtPath.localize(local)
         
     def __wrapDocument(self, localPath, type):
         return FileDocument(type, os.path.basename(localPath),
                             localPath, "plain/text")
+    
+    def __retrieveReportPath(self, virtPath, timeout, retry):
+        assert timeout is None, "Timeout not supported yet"
+        localPath = self.__localizeReportPath(virtPath)
+        if not localPath: return defer.succeed(None)
+        if not os.path.exists(localPath):
+            # Maybe the file has been moved, so we retry
+            if retry > 0:
+                d = self._callRemote("getReportPath")
+                d.addCallback(self.__updateReportPath)
+                d.addCallback(self.__retrieveReportPath, timeout, retry - 1)
+                return d
+        return defer.succeed(virtPath)
     
     def __loadReport(self, localPath):
         if not localPath:

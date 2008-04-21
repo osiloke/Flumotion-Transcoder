@@ -30,9 +30,7 @@ from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.enums import MailAddressTypeEnum
-from flumotion.transcoder.admin.datastore.activitystore import NotificationActivity
-from flumotion.transcoder.admin.datastore.activitystore import MailActivity
-from flumotion.transcoder.admin.datastore.activitystore import HTTPRequestActivity
+from flumotion.transcoder.admin.context import activity
 
 ## Global info for emergency and debug notification ##
 # Should have working default values in case 
@@ -171,12 +169,12 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
     
-    def __init__(self, notifierContext, activityStore):
-        self._activities = activityStore
-        self._context = notifierContext
+    def __init__(self, notifierContext, storeContext):
+        self._notifierCtx = notifierContext 
+        self._storeCtx = storeContext
         self._paused = True
-        self._awaitingActivities = []
-        self._retries = {} # {NotificationActivity: IDelayedCall}
+        self._activities = [] # (NotificationActivityContext)
+        self._retries = {} # {NotificationActivityContext: IDelayedCall}
         self._results = {} # {NotificationActivity: Deferred}
         # Setup global notification info
         global _smtpServer, _smtpRequireTLS
@@ -194,26 +192,28 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def initialize(self):
         self.debug("Retrieve notification activities")
         states = [ActivityStateEnum.started]
-        d = self._activities.getNotifications(states)
+        stateCtx = self._storeCtx.getStateContext()
+        d = stateCtx.retrieveNotificationContexts(states)
         d.addCallback(self.__cbRestoreNotifications)
         d.addErrback(self.__ebInitializationFailed)
         return d
     
     def start(self, timeout=None):
-        for activity in self._awaitingActivities:
-            left = activity.getTimeLeftBeforeRetry()
-            d = self.__startupNotification(activity, left)
+        for activCtx in self._activities:
+            left = activCtx.getTimeLeftBeforeRetry()
+            d = self.__startupNotification(activCtx, left)
             d.addErrback(defer.resolveFailure)
-        del self._awaitingActivities[:]
+        del self._activities[:]
         return defer.succeed(self)
         
-    def notify(self, label, trigger, notification, variables, documents):
+    def notify(self, label, trigger, notifCtx, variables, documents):
         self.info("%s notification '%s' for trigger '%s' initiated", 
-                  notification.getType().nick, label, trigger.nick)
-        activity = self.__prepareNotification(label, trigger, notification, 
+                  notifCtx.getType().nick, label, trigger.nick)
+        activCtx = self.__prepareNotification(label, trigger, notifCtx, 
                                               variables, documents)
-        activity.store()
-        return self.__startupNotification(activity)
+        activStore = activCtx.getStore()
+        activStore.store()
+        return self.__startupNotification(activCtx)
     
     
     ## Protected Static Methods ##
@@ -244,43 +244,45 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     
     ## Private Methods ##
     
-    def __cbRestoreNotifications(self, activities):
-        self.debug("Restoring %d notification activities", len(activities))
-        for activity in activities:
-            self._awaitingActivities.append(activity)
+    def __cbRestoreNotifications(self, activCtxs):
+        self.debug("Restoring %d notification activities", len(activCtxs))
+        for activCtx in activCtxs:
+            self._activities.append(activCtx)
     
     def __ebInitializationFailed(self, failure):
         return failure    
     
-    def __doPrepareGetRequest(self, label, trigger, notif, vars, docs):
-        store = self._activities
-        activity = store.newNotification(NotificationTypeEnum.http_request,
-                                         label, ActivityStateEnum.started,
-                                         notif, trigger)
-        url = vars.substituteURL(notif.getRequestTemplate())
-        activity.setRequestURL(url)
-        return activity
+    def __doPrepareGetRequest(self, label, trigger, notifCtx, vars, docs):
+        stateCtx = self._storeCtx.getStateContext()
+        activCtx = stateCtx.newNotificationContext(NotificationTypeEnum.http_request,
+                                                   label, ActivityStateEnum.started,
+                                                   notifCtx, trigger)
+        url = vars.substituteURL(notifCtx.getRequestTemplate())
+        activStore = activCtx.getStore()
+        activStore.setRequestURL(url)
+        return activCtx
 
-    def __doPrepareMailPost(self, label, trigger, notif, vars, docs):
-        store = self._activities
-        activity = store.newNotification(NotificationTypeEnum.email,
-                                         label, ActivityStateEnum.started,
-                                         notif, trigger)
-        sender = self._context.config.mailNotifySender
+    def __doPrepareMailPost(self, label, trigger, notifCtx, vars, docs):
+        stateCtx = self._storeCtx.getStateContext()
+        activCtx = stateCtx.newNotificationContext(NotificationTypeEnum.email,
+                                                   label, ActivityStateEnum.started,
+                                                   notifCtx, trigger)
+        activStore = activCtx.getStore()
+        sender = self._notifierCtx.config.mailNotifySender
         senderAddr = utils.splitMailAddress(sender)[1]
-        activity.setSenderAddr(senderAddr)
-        recipients = notif.getRecipients()
+        activStore.setSenderAddr(senderAddr)
+        recipients = notifCtx.getRecipients()
         allRecipientsAddr = [f[1] for l in recipients.values() for f in l]
-        activity.setRecipientsAddr(allRecipientsAddr)
-        subject = vars.substitute(notif.getSubjectTemplate())
-        activity.setSubject(subject)
+        activStore.setRecipientsAddr(allRecipientsAddr)
+        subject = vars.substitute(notifCtx.getSubjectTemplate())
+        activStore.setSubject(subject)
         
         toRecipientsFields = recipients.get(MailAddressTypeEnum.to, [])
         toRecipients = utils.joinMailRecipients(toRecipientsFields)
         ccRecipientsFields = recipients.get(MailAddressTypeEnum.cc, [])
         ccRecipients = utils.joinMailRecipients(ccRecipientsFields)
         
-        body = vars.substitute(notif.getBodyTemplate())
+        body = vars.substitute(notifCtx.getBodyTemplate())
         
         msg = MIMEMultipart()
         msg['Subject'] = subject
@@ -290,7 +292,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         txt = MIMEText(body)
         msg.attach(txt)
         
-        attachments = notif.getAttachments()
+        attachments = notifCtx.getAttachments()
         if docs:
             for doc in docs:
                 if doc.getType() in attachments:
@@ -302,126 +304,129 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                     data.add_header('Content-Disposition', 'attachment', 
                                     filename=doc.getLabel())
                     msg.attach(data)
-        activity.setBody(str(msg))
+        activStore.setBody(str(msg))
         
-        return activity
+        return activCtx
 
-    def __startupNotification(self, activity, delay=0):
+    def __startupNotification(self, activCtx, delay=0):
         global _shutingDown
         d = defer.Deferred()
-        self._results[activity] = d
-        self._retries[activity] = None
+        self._results[activCtx] = d
+        self._retries[activCtx] = None
         if delay > 0:
             self.debug("Delaying notification '%s' for %d seconds",
-                       activity.getLabel(), delay)
-            reactor.callLater(delay, self.__performNotification, activity)
+                       activCtx.getLabel(), delay)
+            reactor.callLater(delay, self.__performNotification, activCtx)
         else:
-            self.__performNotification(activity)
+            self.__performNotification(activCtx)
         return d
     
     
     
-    def __getRetriesLeftDesc(self, activity):
-        left = activity.getRetryMax() - activity.getRetryCount()
+    def __getRetriesLeftDesc(self, activCtx):
+        left = activCtx.getRetryMax() - activCtx.getRetryCount()
         if left > 1: return "%d retries left" % left
         if left == 1: return "1 retry left"
         return "no retry left"
     
-    def __doPerformGetRequest(self, activity):
-        assert isinstance(activity, HTTPRequestActivity)
+    def __doPerformGetRequest(self, activCtx):
+        assert isinstance(activCtx, activity.HTTPActivityContext)
         self.debug("GET request '%s' initiated with URL %s" 
-                   % (activity.getLabel(), activity.getRequestURL()))
-        d = self._performGetRequest(activity.getRequestURL(), 
-                                    timeout=activity.getTimeout())
-        args = (activity,)
+                   % (activCtx.getLabel(), activCtx.getRequestURL()))
+        d = self._performGetRequest(activCtx.getRequestURL(), 
+                                    timeout=activCtx.getTimeout())
+        args = (activCtx,)
         d.addCallbacks(self.__cbGetPageSucceed, self.__ebGetPageFailed,
                        callbackArgs=args, errbackArgs=args)
         return d
 
-    def __cbGetPageSucceed(self, page, activity):
-        self.debug("GET request '%s' succeed", activity.getLabel())
+    def __cbGetPageSucceed(self, page, activCtx):
+        self.debug("GET request '%s' succeed", activCtx.getLabel())
         self.log("GET request '%s' received page:\n%s",
-                 activity.getLabel(), page)
-        self.__notificationSucceed(activity)
+                 activCtx.getLabel(), page)
+        self.__notificationSucceed(activCtx)
 
-    def __ebGetPageFailed(self, failure, activity):
-        retryLeftDesc = self.__getRetriesLeftDesc(activity)
+    def __ebGetPageFailed(self, failure, activCtx):
+        retryLeftDesc = self.__getRetriesLeftDesc(activCtx)
         self.debug("GET request '%s' failed (%s): %s",
-                   activity.getLabel(), retryLeftDesc,
+                   activCtx.getLabel(), retryLeftDesc,
                    log.getFailureMessage(failure))
-        self.__retryNotification(activity)
+        self.__retryNotification(activCtx)
 
-    def __doPerformMailPost(self, activity):
-        assert isinstance(activity, MailActivity)
+    def __doPerformMailPost(self, activCtx):
+        assert isinstance(activCtx, activity.MailActivityContext)
         self.debug("Mail posting '%s' initiated for %s" 
-                   % (activity.getLabel(), activity.getRecipientsAddr()))
-        senderAddr = activity.getSenderAddr()
-        recipientsAddr = activity.getRecipientsAddr()
+                   % (activCtx.getLabel(), activCtx.getRecipientsAddr()))
+        senderAddr = activCtx.getSenderAddr()
+        recipientsAddr = activCtx.getRecipientsAddr()
         self.log("Posting mail from %s to %s",
                  senderAddr, ", ".join(recipientsAddr))
-        d = self._postMail(self._context.config.smtpServer,
-                           self._context.config.smtpPort,
-                           self._context.config.smtpUsername,
-                           self._context.config.smtpPassword,
+        d = self._postMail(self._notifierCtx.config.smtpServer,
+                           self._notifierCtx.config.smtpPort,
+                           self._notifierCtx.config.smtpUsername,
+                           self._notifierCtx.config.smtpPassword,
                            senderAddr, recipientsAddr,
-                           StringIO(activity.getBody()),
-                           self._context.config.smtpRequireTLS,
-                           activity.getTimeout())
-        args = (activity,)
+                           StringIO(activCtx.getBody()),
+                           self._notifierCtx.config.smtpRequireTLS,
+                           activCtx.getTimeout())
+        args = (activCtx,)
         d.addCallbacks(self.__cbPostMailSucceed, self.__ebPostMailFailed,
                        callbackArgs=args, errbackArgs=args)
         return d
 
-    def __cbPostMailSucceed(self, results, activity):
-        self.debug("Mail post '%s' succeed", activity.getLabel())
+    def __cbPostMailSucceed(self, results, activCtx):
+        self.debug("Mail post '%s' succeed", activCtx.getLabel())
         self.log("Mail post '%s' responses; %s",
-                 activity.getLabel(), ", ".join(["'%s': '%s'" % (m, r) 
-                                                for m, c, r in results[1]]))
-        self.__notificationSucceed(activity)
+                 activCtx.getLabel(), ", ".join(["'%s': '%s'" % (m, r) 
+                                                    for m, c, r in results[1]]))
+        self.__notificationSucceed(activCtx)
     
-    def __ebPostMailFailed(self, failure, activity):
-        retryLeftDesc = self.__getRetriesLeftDesc(activity)
+    def __ebPostMailFailed(self, failure, activCtx):
+        retryLeftDesc = self.__getRetriesLeftDesc(activCtx)
         self.debug("Mail post '%s' failed (%s): %s",
-                   activity.getLabel(), retryLeftDesc,
+                   activCtx.getLabel(), retryLeftDesc,
                    log.getFailureMessage(failure))
-        self.__retryNotification(activity)
+        self.__retryNotification(activCtx)
 
-    def __retryNotification(self, activity):
-        activity.incRetryCount()
-        if activity.getRetryCount() > activity.getRetryMax():
-            desc = "Retry count exceeded %d" % activity.getRetryMax()
-            self.__notificationFailed(activity, desc)
+    def __retryNotification(self, activCtx):
+        activStore = activCtx.getStore()
+        activStore.incRetryCount()
+        if activStore.getRetryCount() > activCtx.getRetryMax():
+            desc = "Retry count exceeded %d" % activCtx.getRetryMax()
+            self.__notificationFailed(activCtx, desc)
             return
-        activity.store()
-        dc = reactor.callLater(activity.getRetrySleep(),
+        activStore.store()
+        dc = reactor.callLater(activCtx.getRetrySleep(),
                                self.__performNotification,
-                               activity)
-        self._retries[activity] = dc
+                               activCtx)
+        self._retries[activCtx] = dc
         
-    def __notificationSucceed(self, activity):
+    def __notificationSucceed(self, activCtx):
         self.info("%s notification '%s' for trigger '%s' succeed", 
-                  activity.getSubType().nick, activity.getLabel(), 
-                  activity.getTrigger().nick)
-        activity.setState(ActivityStateEnum.done)
-        activity.store()
-        self._results[activity].callback(activity)
-        self.__notificationTerminated(activity)
+                  activCtx.getSubType().nick, activCtx.getLabel(), 
+                  activCtx.getTrigger().nick)
+        activStore = activCtx.getStore()
+        activStore.setState(ActivityStateEnum.done)
+        activStore.store()
+        self._results[activCtx].callback(activCtx)
+        self.__notificationTerminated(activCtx)
         
     
-    def __notificationFailed(self, activity, desc=None):
+    def __notificationFailed(self, activCtx, desc=None):
         message = ("%s notification '%s' for trigger '%s' failed: %s"
-                   % (activity.getSubType().nick,
-                      activity.getLabel(), 
-                      activity.getTrigger().nick, desc))
+                   % (activCtx.getSubType().nick,
+                      activCtx.getLabel(), 
+                      activCtx.getTrigger().nick, desc))
         self.info("%s", message)
-        activity.setState(ActivityStateEnum.failed)
-        activity.store()
-        self._results[activity].errback(Failure(NotificationError(message)))
-        self.__notificationTerminated(activity)
+        activStore = activCtx.getStore()
+        activStore.setState(ActivityStateEnum.failed)
+        activStore.store()
+        self._results[activCtx].errback(Failure(NotificationError(message)))
+        self.__notificationTerminated(activCtx)
         
-    def __notificationTerminated(self, activity):
-        self._retries.pop(activity)
-        self._results.pop(activity)
+    def __notificationTerminated(self, activCtx):
+        self._retries.pop(activCtx)
+        self._results.pop(activCtx)
         
     _prepareLookup = {NotificationTypeEnum.http_request: __doPrepareGetRequest,
                       NotificationTypeEnum.email: __doPrepareMailPost}
@@ -436,22 +441,22 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self.warning("%s", message)
         raise NotificationError(message)
     
-    def __cannotPerform(self, activity):
+    def __cannotPerform(self, activCtx):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot perform"
-                   % (activity.getSubType().name, activity.getLabel()))
+                   % (activCtx.getSubType().name, activCtx.getLabel()))
         self.warning("%s", message)
         raise NotificationError(message)
     
-    def __prepareNotification(self, label, trigger, notif, vars, docs):
-        type = notif.getType()
-        prep = self._prepareLookup.get(type, self.__cannotPrepare)
-        return prep(self, label, trigger, notif, vars, docs)
+    def __prepareNotification(self, label, trigger, notifCtx, vars, docs):
+        type = notifCtx.getType()
+        prepare = self._prepareLookup.get(type, self.__cannotPrepare)
+        return prepare(self, label, trigger, notifCtx, vars, docs)
         
-    def __performNotification(self, activity):
+    def __performNotification(self, activCtx):
         if _shutingDown: return
-        self._retries[activity] = None
-        type = activity.getSubType()
-        prep = self._performLookup.get(type, self.__cannotPerform)
-        prep(self, activity)
+        self._retries[activCtx] = None
+        type = activCtx.getSubType()
+        perform = self._performLookup.get(type, self.__cannotPerform)
+        perform(self, activCtx)
         

@@ -10,8 +10,14 @@
 
 # Headers in this file shall remain intact.
 
+from flumotion.transcoder.admin.context import base
 
-class NotifierContext(object):
+
+class APIContext(base.BaseContext):
     
-    def __init__(self, config):
+    def __init__(self, adminContext, config):
+        base.BaseContext.__init__(self, adminContext)
         self.config = config
+
+    def getAdminContext(self):
+        return self._parent

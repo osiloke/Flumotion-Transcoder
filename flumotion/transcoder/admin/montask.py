@@ -33,10 +33,10 @@ class MonitoringTask(AdminTask):
     
     MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
     
-    def __init__(self, logger, customerCtx):
-        AdminTask.__init__(self, logger, customerCtx.getMonitorLabel(),
-                           MonitorProperties.createFromContext(customerCtx))
-        self._customerCtx = customerCtx
+    def __init__(self, logger, custCtx):
+        AdminTask.__init__(self, logger, custCtx.getMonitorLabel(),
+                           MonitorProperties.createFromContext(custCtx))
+        self._custCtx = custCtx
         self._pendingMoves = [] # [VirtualPath, VirutalPath, [str]]
         self._movingFiles = False
         # Registering Events
@@ -107,33 +107,33 @@ class MonitoringTask(AdminTask):
     def onMonitorFileRemoved(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
         if (state == MonitorFileStateEnum.downloading): return
-        profile = self.__file2profile(virtDir, file)
-        if not profile:
+        profCtx = self.__file2profileContext(virtDir, file)
+        if not profCtx:
             self.warning("File '%s' removed but no corresponding profile "
                          "found for customer '%s'", virtDir + file,
-                         self._customerCtx.store.getName())
+                         self._custCtx.getName())
             return
-        self.emit("file-removed", profile, state)
+        self.emit("file-removed", profCtx, state)
     
     def onMonitorFileAdded(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
-        profile = self.__file2profile(virtDir, file)
-        if not profile:
+        profCtx = self.__file2profileContext(virtDir, file)
+        if not profCtx:
             self.warning("File '%s' added but no corresponding profile "
                          "found for customer '%s'", virtDir + file,
-                         self._customerCtx.store.getName())
+                         self._custCtx.getName())
             return
-        self.emit("file-added", profile, state)
+        self.emit("file-added", profCtx, state)
 
     def onMonitorFileChanged(self, monitor, virtDir, file, state):
         if not self._isElectedComponent(monitor): return
-        profile = self.__file2profile(virtDir, file)
-        if not profile:
+        profCtx = self.__file2profileContext(virtDir, file)
+        if not profCtx:
             self.warning("File '%s' state changed but no corresponding "
                          "profile found for customer '%s'", virtDir + file,
-                         self._customerCtx.store.getName())
+                         self._custCtx.getName())
             return
-        self.emit("file-state-changed", profile, state)
+        self.emit("file-state-changed", profCtx, state)
 
 
     ## Virtual Methods Implementation ##
@@ -179,11 +179,11 @@ class MonitoringTask(AdminTask):
         self.emit("fail-to-run", self.getWorker())
     
     def _doSelectPotentialComponent(self, components):
-        targetWorker = self.getWorker()
+        targWorker = self.getWorker()
         for c in components:
             # If it exists an happy monitor on the target worker, 
             # or there not target worker set, just elect it
-            if ((not targetWorker or (c.getWorker() == targetWorker)) 
+            if ((not targWorker or (c.getWorker() == targWorker)) 
                 and (c.getMood() == moods.happy)):
                 return c
         return None
@@ -198,9 +198,9 @@ class MonitoringTask(AdminTask):
 
     ## Private Methods ##
     
-    def __file2profile(self, virtDir, file):
+    def __file2profileContext(self, virtDir, file):
         virtPath = virtDir + file
-        for p in self._customerCtx.iterProfileContexts(file):
+        for p in self._custCtx.iterProfileContexts(file):
             if p.getInputPath() == virtPath:
                 return p
         return None

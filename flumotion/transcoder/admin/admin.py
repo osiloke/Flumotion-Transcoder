@@ -24,17 +24,13 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.diagnostic import Diagnostician
 from flumotion.transcoder.admin.janitor import Janitor
 from flumotion.transcoder.admin.enums import TaskStateEnum
-from flumotion.transcoder.admin.context.admincontext import AdminContext
-from flumotion.transcoder.admin.context.transcontext import TranscodingContext
+from flumotion.transcoder.admin.context.admin import AdminContext
+from flumotion.transcoder.admin.datastore.store import AdminStore
 from flumotion.transcoder.admin.proxies.managerset import ManagerSet
 from flumotion.transcoder.admin.proxies.componentset import ComponentSet
 from flumotion.transcoder.admin.proxies.workerset import WorkerSet
 from flumotion.transcoder.admin.proxies.transcoderset import TranscoderSet
 from flumotion.transcoder.admin.proxies.monitorset import MonitorSet
-from flumotion.transcoder.admin.datastore.adminstore import AdminStore
-from flumotion.transcoder.admin.datastore.customerstore import CustomerStore
-from flumotion.transcoder.admin.datastore.profilestore import ProfileStore
-from flumotion.transcoder.admin.datastore.targetstore import TargetStore
 from flumotion.transcoder.admin.monitoring import Monitoring
 from flumotion.transcoder.admin.montask import MonitoringTask
 from flumotion.transcoder.admin.transcoding import Transcoding
@@ -51,9 +47,9 @@ class TranscoderAdmin(log.Loggable):
         self._adminCtx = AdminContext(config)
         self._datasource = self._adminCtx.getDataSource()
         self._store = AdminStore(self._datasource)
-        self._notifier = Notifier(self._adminCtx.getNotifierContext(),
-                                  self._store.getActivityStore())
-        self._transCtx = TranscodingContext(self._adminCtx, self._store)
+        self._storeCtx = self._adminCtx.getStoreContextFor(self._store)
+        notifierCtx = self._adminCtx.getNotifierContext()
+        self._notifier = Notifier(notifierCtx, self._storeCtx) 
         self._managers = ManagerSet(self._adminCtx)
         self._components = ComponentSet(self._managers)
         self._workers = WorkerSet(self._managers)
@@ -64,8 +60,8 @@ class TranscoderAdmin(log.Loggable):
         self._monitors = MonitorSet(self._managers)
         self._monitoring = Monitoring(self._workers, self._monitors)
         self._transcoding = Transcoding(self._workers, self._transcoders)
-        self._scheduler = Scheduler(self._store.getActivityStore(),
-                                    self._transCtx, self._notifier, 
+        schedulerCtx = self._adminCtx.getSchedulerContext()
+        self._scheduler = Scheduler(schedulerCtx, self._storeCtx, self._notifier, 
                                     self._transcoding, self._diagnostician)
         self._translator = messages.Translator()
         self._api = apiserver.Server(self._adminCtx.getAPIContext(), self)
@@ -95,8 +91,8 @@ class TranscoderAdmin(log.Loggable):
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
-        self._store.connectListener("customer-added", self, self.onCustomerAdded)
-        self._store.connectListener("customer-removed", self, self.onCustomerRemoved)
+        self._store.connectListener("customer-added", self, self.onCustomerStoreAdded)
+        self._store.connectListener("customer-removed", self, self.onCustomerStoreRemoved)
         self._managers.connectListener("attached", self, self.onAttached)
         self._managers.connectListener("detached", self, self.onDetached)
         self._components.connectListener("component-added", self, self.onComponentAddedToSet)
@@ -165,51 +161,54 @@ class TranscoderAdmin(log.Loggable):
         else:
             msg = ("Orphan component '%s' post a %s message" 
                    % (component.getLabel(), level))
-        diagnostics = self._diagnostician.diagnoseComponentMessage(component, message)
-        notifyDebug(msg, info=text, debug=debug, documents=diagnostics)
+        d = self._diagnostician.diagnoseComponentMessage(component, message)
+        args = (msg, text, debug)
+        d.addCallbacks(self.__cbMessageDiagnosticSucceed,
+                       self.__ebMessageDiagnosticFailed,
+                       callbackArgs=args, errbackArgs=args)
 
 
     ## Store Event Listeners ##
     
-    def onCustomerAdded(self, admin, customer):
-        self.debug("Customer '%s' Added", customer.getLabel())
-        customer.connectListener("profile-added", self, self.onProfileAdded)
-        customer.connectListener("profile-removed", self, self.onProfileRemoved)
-        customer.update(self)
-        custCtx = self._transCtx.getCustomerContext(customer)
+    def onCustomerStoreAdded(self, admin, custStore):
+        self.debug("Customer '%s' Added", custStore.getLabel())
+        custStore.connectListener("profile-added", self, self.onProfileStoreAdded)
+        custStore.connectListener("profile-removed", self, self.onProfileStoreRemoved)
+        custStore.update(self)
+        custCtx = self._storeCtx.getCustomerContextFor(custStore)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
         
         
-    def onCustomerRemoved(self, admin, customer):
-        self.debug("Customer '%s' Removed", customer.getLabel())
-        customer.disconnectListener("profile-added", self)
-        customer.disconnectListener("profile-removed", self)
-        custCtx = self._transCtx.getCustomerContext(customer)
+    def onCustomerStoreRemoved(self, admin, custStore):
+        self.debug("Customer '%s' Removed", custStore.getLabel())
+        custStore.disconnectListener("profile-added", self)
+        custStore.disconnectListener("profile-removed", self)
+        custCtx = self._storeCtx.getCustomerContextFor(custStore)
         self._monitoring.removeTask(custCtx.getIdentifier())
         
         
     ## CustomerStore Event Listeners ##
     
-    def onProfileAdded(self, customer, profile):
-        self.debug("Profile '%s' Added", profile.getLabel())
-        profile.connectListener("target-added", self, self.onTargetAdded)
-        profile.connectListener("target-removed", self, self.onTargetRemoved)
-        profile.update(self)
+    def onProfileStoreAdded(self, custStore, profStore):
+        self.debug("Profile '%s' Added", profStore.getLabel())
+        profStore.connectListener("target-added", self, self.onTargetStoreAdded)
+        profStore.connectListener("target-removed", self, self.onTargetStoreRemoved)
+        profStore.update(self)
         
-    def onProfileRemoved(self, customer, profile):
-        self.debug("Profile '%s' Removed", profile.getLabel())
-        profile.disconnectListener("target-added", self)
-        profile.disconnectListener("target-removed", self)
+    def onProfileStoreRemoved(self, custStore, profStore):
+        self.debug("Profile '%s' Removed", profStore.getLabel())
+        profStore.disconnectListener("target-added", self)
+        profStore.disconnectListener("target-removed", self)
         
     
     ## ProfileStore Event Listeners ##
     
-    def onTargetAdded(self, profile, target):
-        self.debug("Target '%s' Added", target.getLabel())
+    def onTargetStoreAdded(self, profStore, targStore):
+        self.debug("Target '%s' Added", targStore.getLabel())
         
-    def onTargetRemoved(self, profile, target):
-        self.debug("Target '%s' Removed", target.getLabel())
+    def onTargetStoreRemoved(self, profStore, targStore):
+        self.debug("Target '%s' Removed", targStore.getLabel())
 
 
     ## Monitoring Event Listeners ##
@@ -232,21 +231,21 @@ class TranscoderAdmin(log.Loggable):
 
     ## MonitoringTask Event Listeners ##
     
-    def onMonitoredFileAdded(self, montask, profileContext, state):
+    def onMonitoredFileAdded(self, montask, profCtx, state):
         self.log("Monitoring task '%s' added profile '%s'",
-                 montask.getLabel(), profileContext.getInputPath())
-        self.__fileStateChanged(montask, profileContext, state)
+                 montask.getLabel(), profCtx.getInputPath())
+        self.__fileStateChanged(montask, profCtx, state)
         
-    def onMonitoredFileStateChanged(self, montask, profileContext, state):
+    def onMonitoredFileStateChanged(self, montask, profCtx, state):
         self.log("Monitoring task '%s' profile '%s' state "
                  "changed to %s", montask.getLabel(), 
-                 profileContext.getInputPath(), state.name)
-        self.__fileStateChanged(montask, profileContext, state)
+                 profCtx.getInputPath(), state.name)
+        self.__fileStateChanged(montask, profCtx, state)
     
-    def onMonitoredFileRemoved(self, montask, profileContext, state):
+    def onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
-                 montask.getLabel(), profileContext.getInputPath())
-        self._scheduler.removeProfile(profileContext)
+                 montask.getLabel(), profCtx.getInputPath())
+        self._scheduler.removeProfile(profCtx)
 
     def onFailToRunOnWorker(self, task, worker):
         msg = ("Monitoring task '%s' could not be started on worker '%s'"
@@ -256,9 +255,8 @@ class TranscoderAdmin(log.Loggable):
     
     ## Scheduler Event Listeners ##
     
-    def onProfileQueued(self, scheduler, profileContext):
-        self.__setInputFileState(profileContext,
-                                 MonitorFileStateEnum.queued)
+    def onProfileQueued(self, scheduler, profCtx):
+        self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
         
     def onTranscodingStarted(self, scheduler, task):
         self.__setInputFileState(task.getProfileContext(),
@@ -283,6 +281,13 @@ class TranscoderAdmin(log.Loggable):
 
     
     ## Private Methods ##
+    
+    def __cbMessageDiagnosticSucceed(self, diagnostic, msg, text, debug):
+        notifyDebug(msg, info=text, debug=debug, documents=diagnostic)
+
+    def __ebMessageDiagnosticFailed(self, failure, msg, text, debug):
+        notifyDebug(msg, info=text, debug=debug)
+        log.notifyFailure(self, failure, "Failure during component message diagnostic")
     
     def __fileStateChanged(self, montask, profCtx, state):
         
@@ -322,7 +327,7 @@ class TranscoderAdmin(log.Loggable):
             return
     
     def __moveFailedInputFiles(self, profCtx):
-        custCtx = profCtx.customer
+        custCtx = profCtx.getCustomerContext()
         inputBase = profCtx.getInputBase()
         failedBase = profCtx.getFailedBase()
         relPath = profCtx.getInputRelPath()
@@ -330,18 +335,18 @@ class TranscoderAdmin(log.Loggable):
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
                          "cannot move files from '%s' to '%s'",
-                         custCtx.store.getLabel(), inputBase, failedBase)
+                         custCtx.getLabel(), inputBase, failedBase)
             return
         task.moveFiles(inputBase, failedBase, [relPath])
     
     def __setInputFileState(self, profCtx, state):
-        custCtx = profCtx.customer
+        custCtx = profCtx.getCustomerContext()
         inputBase = profCtx.getInputBase()
         task = self._monitoring.getTask(custCtx.getIdentifier())
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
                          "cannot set file '%s' state to %s",
-                         custCtx.store.getLabel(), inputBase, state.name)
+                         custCtx.getLabel(), inputBase, state.name)
             return
         relPath = profCtx.getInputRelPath()        
         task.setFileState(inputBase, relPath, state)

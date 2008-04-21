@@ -212,6 +212,7 @@ class CustomerData(properties.RootPropertyBag):
     #report-file-template =
     #link-template =
     #monitoring-period =
+    #process-priority =
     #transcoding-priority =
     #transcoding-timeout =
     #post-process-timeout =
@@ -420,6 +421,7 @@ class AdminData(properties.RootPropertyBag):
     # See section 4 of specification.odt for more information 
     # about the templates variables.notifyFailedRequests = 
     #monitoring-period = 5
+    #process-priority = 100
     #transcoding-priority = 100
     #transcoding-timeout = 60
     #post-process-timeout = 60

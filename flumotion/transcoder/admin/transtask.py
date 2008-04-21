@@ -36,10 +36,10 @@ class TranscodingTask(AdminTask):
     
     MAX_RETRIES = adminconsts.TRANSCODER_MAX_RETRIES
     
-    def __init__(self, logger, profileCtx):
-        AdminTask.__init__(self, logger, profileCtx.getTranscoderLabel(),
-                           TranscoderProperties.createFromContext(profileCtx))
-        self._profileCtx = profileCtx
+    def __init__(self, logger, profCtx):
+        AdminTask.__init__(self, logger, profCtx.getTranscoderLabel(),
+                           TranscoderProperties.createFromContext(profCtx))
+        self._profCtx = profCtx
         self._acknowledging = False
         self._sadTimeout = None
         # Registering events
@@ -52,7 +52,7 @@ class TranscodingTask(AdminTask):
     ## Public Methods ##
     
     def getProfileContext(self):
-        return self._profileCtx
+        return self._profCtx
 
     def isAcknowledging(self):
         return self._acknowledging
@@ -145,7 +145,7 @@ class TranscodingTask(AdminTask):
                  "job state change to %s", self.getLabel(), 
                  transcoder.getName(), jobState.name)
         if jobState == JobStateEnum.waiting_ack:
-            if not transcoder.isAcknowledged():
+            if not (transcoder.isAcknowledged() or self._acknowledging):
                 self._acknowledging = True
                 self.log("Acknowledging transcoding task '%s' transcoder '%s'",
                          self.getLabel(), transcoder.getName())
@@ -184,6 +184,8 @@ class TranscodingTask(AdminTask):
         component.update(self)
 
     def _onComponentRelieved(self, component):
+        # If elected component is relieved we cannot be acknowledging anymore
+        self._acknowledging = False
         utils.cancelTimeout(self._sadTimeout)
         self.emit("component-released", component)
 

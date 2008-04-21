@@ -76,7 +76,7 @@ def remote(prefix=None):
 def _adaptListValue(l, v):
     a = adapt(v)
     if defer.isDeferred(a):
-        return a.addcallback(_appendListValue, l)
+        return a.addCallback(_appendListValue, l)
     l.append(a)
     return l
 
@@ -89,7 +89,7 @@ def _adaptDictValue(d, k, v):
         raise ValueError("IAdminInterface is not supported for dictonary keys")
     a = adapt(v)
     if defer.isDeferred(a):
-        return a.addcallback(_addDictValue, d, k)
+        return a.addCallback(_addDictValue, d, k)
     d[k] = a
     return d
 

@@ -11,15 +11,19 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder.local import Local
+from flumotion.transcoder.admin.context import base
 
 
-class WorkerContext(object):
+class WorkerContext(base.BaseContext):
     
     def __init__(self, adminCtx, label, workerConfig, workerDefault):
-        self.admin = adminCtx
-        self._label = label
+        base.BaseContext.__init__(self, adminCtx)
         self.config = workerConfig
+        self._label = label
         self._default = workerDefault
+    
+    def getAdminContext(self):
+        return self._parent
     
     def getLabel(self):
         return self._label

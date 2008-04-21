@@ -86,16 +86,17 @@ class SourceNotificationVariables(NotificationVariables):
         NotificationVariables.__init__(self, None,
                                        "source", analysisReport)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
+        custCtx = profCtx.getCustomerContext()
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)
         self.addVar("inputFile", profCtx.getInputFile())
         self.addVar("inputRelPath", profCtx.getInputRelPath())
-        self.addVar("customerName", profCtx.customer.store.getName())
-        self.addVar("profileName", profCtx.store.getName())
+        self.addVar("customerName", custCtx.getName())
+        self.addVar("profileName", profCtx.getName())
         self.addVar("errorMessage", (report and report.fatalError) or "")
         self._targets = {}
         for targCtx in profCtx.iterTargetContexts():
-            key = targCtx.store.getName()
+            key = targCtx.getName()
             targReport = report and report.targets[key]
             vars = TargetNotificationVariables(self, targCtx, 
                                                trigger, targReport)
@@ -117,14 +118,14 @@ class SourceNotificationVariables(NotificationVariables):
             self.addVar('mediaSeconds', self["sourceSeconds"])
          
     def getTargetVariables(self, targCtx):
-        key = targCtx.store.getName()
+        key = targCtx.getName()
         return self._targets[key]
 
 
 class TargetNotificationVariables(NotificationVariables):
     
-    def __init__(self, sourceVars, targCtx, trigger, targetReport):
-        analysisReport = targetReport and targetReport.analysis
+    def __init__(self, sourceVars, targCtx, trigger, targReport):
+        analysisReport = targReport and targReport.analysis
         NotificationVariables.__init__(self, sourceVars,
                                        "target", analysisReport)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
@@ -134,7 +135,7 @@ class TargetNotificationVariables(NotificationVariables):
         self.addVar("outputRelPath", targCtx.getOutputRelPath())
         self.addVar("linkFile", targCtx.getLinkFile())
         self.addVar("linkRelPath", targCtx.getLinkRelPath())
-        self.addVar("targetName", targCtx.store.getName())
+        self.addVar("targetName", targCtx.getName())
             
         if self["targetDuration"] > 0:
             self.addVar('mediaDuration', self["targetDuration"])

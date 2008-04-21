@@ -22,11 +22,11 @@ from flumotion.transcoder.admin.api.mediums import named
 class WorkerMedium(named.NamedMedium):
     implements(interfaces.IWorkerMedium)
     api.registerMedium(interfaces.IWorkerMedium,
-                          workerproxy.IWorkerProxy)
+                       workerproxy.IWorkerProxy)
     
     
     ## IWorkerMedium Methodes ##
     
     @api.remote()
     def getHost(self):
-        return self.obj.getHost()
+        return self._reference.getHost()
