@@ -1,5 +1,10 @@
 2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	Ignoring customer configuration file that starts with '.'
+
+2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
+
 	Moved the data "generation" (value inheritence) from the datastore
 	elements to the context elements. Now the store give only the real data.
 	This was needed for the API to have access to the real data.

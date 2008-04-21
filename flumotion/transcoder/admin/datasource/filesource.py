@@ -588,7 +588,7 @@ class FileDataSource(log.Loggable):
         self._customersData.clear()
         files = os.listdir(absDir)
         for f in files:
-            if not f.endswith('.ini'):
+            if f.startswith(".") or not f.endswith('.ini'):
                 self.log("Ignoring customer data file '%s'", f)
                 continue
             self.log("Loading customer data file '%s'", f)
