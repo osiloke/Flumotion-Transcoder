@@ -14,7 +14,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.proxies import workerset
+from flumotion.transcoder.admin.proxy import workerset
 from flumotion.transcoder.admin.api import interfaces, api
 
 

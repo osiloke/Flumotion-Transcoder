@@ -15,20 +15,19 @@ from flumotion.inhouse import defer, utils
 
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.errors import OperationTimedOutError
-from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.proxies import componentproxy
+from flumotion.transcoder.admin.proxy import base
+from flumotion.transcoder.admin.proxy import component
 
 
-class ComponentGroupProxy(fluproxy.FlumotionProxy):
+class ComponentGroupProxy(base.Proxy):
     
     _componentDomain = None
     
-    def __init__(self, logger, parent, identifier, manager, context, state):
-        fluproxy.FlumotionProxy.__init__(self, logger, parent,
-                                         identifier, manager)
+    def __init__(self, logger, parentPxy, identifier, managerPxy, context, state):
+        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._context = context
         self._state = state
-        self._components = {} # {identifier: ComponentProxy}
+        self._compPxys = {} # {identifier: ComponentProxy}
         self._waitCompLoaded = {} # {identifier: Deferred}
         self.__updateIdleTarget()
         # Registering Events
@@ -43,10 +42,10 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         return self._state.get('name')
 
     def getComponents(self):
-        return self._components.values()
+        return self._compPxys.values()
 
     def iterComponents(self):
-        return self._components.itervalues()
+        return self._compPxys.itervalues()
 
     ## Virtual Methods ##
     
@@ -63,7 +62,7 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     def update(self, listener):
         assert self._state, "Element has been removed"
-        self._updateProxies("_components", listener, "component-added")
+        self._updateProxies("_compPxys", listener, "component-added")
 
     def _doGetChildElements(self):
         return self.getComponents()
@@ -81,11 +80,11 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         if self.isActive():
             state = self._state
             state.removeListener(self)
-        self._removeProxies("_components", "component-removed")
+        self._removeProxies("_compPxys", "component-removed")
     
     def _doDiscard(self):
         assert self._state, "Element has already been discarded"
-        self._discardProxies("_components")
+        self._discardProxies("_compPxys")
         self._atmosphereState = None
 
     def _onElementActivated(self, element):
@@ -121,20 +120,20 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
     
     ## Protected/Friend Methods
     
-    def _loadComponent(self, componentType, componentName,
-                       componentLabel, worker, properties, timeout=None):
+    def _loadComponent(self, componentType, componentName, componentLabel,
+                       workerPxy, properties, timeout=None):
         compId = common.componentId(self._state.get('name'), componentName)
         identifier = self.__getComponentUniqueIdByName(componentName)
-        workerCtx = worker.getWorkerContext()
+        workerCtx = workerPxy.getWorkerContext()
         properties.prepare(workerCtx)
         props = properties.asComponentProperties(workerCtx)
         resDef = defer.Deferred()
         initDef = defer.Deferred()
         self._waitCompLoaded[identifier] = initDef
         
-        callDef = self._manager._callRemote('loadComponent', componentType,
+        callDef = self._managerPxy._callRemote('loadComponent', componentType,
                                             compId, componentLabel, 
-                                            props, worker.getName())
+                                            props, workerPxy.getName())
         to = utils.createTimeout(timeout or adminconsts.LOAD_COMPONENT_TIMEOUT,
                                  self.__asyncComponentLoadedTimeout, callDef)
         args = (identifier, initDef, resDef, to)
@@ -150,35 +149,33 @@ class ComponentGroupProxy(fluproxy.FlumotionProxy):
         count = len(self._state.get("components", []))
         self._setIdleTarget(count)
     
-    def __getComponentUniqueId(self, manager, componentContext, 
-                               componentState, domain):
-        if componentState == None:
+    def __getComponentUniqueId(self, managerPxy, compCtx, compState, domain):
+        if compState == None:
             return None
-        return self.__getComponentUniqueIdByName(componentState.get('name'))
+        return self.__getComponentUniqueIdByName(compState.get('name'))
     
     def __getComponentUniqueIdByName(self, name):
         return "%s.%s" % (self.getIdentifier(), name)
     
-    def __componentStateAdded(self, componentState):
-        name = componentState.get('name')
-        componentContext = self._context.getComponentContextByName(name)
-        self._addProxyState(componentproxy, "_components", 
+    def __componentStateAdded(self, compState):
+        name = compState.get('name')
+        compCtx = self._context.getComponentContextByName(name)
+        self._addProxyState(component, "_compPxys",
                             self.__getComponentUniqueId, 
-                            "component-added", self._manager,
-                            componentContext, componentState, 
-                            self._componentDomain)
+                            "component-added", self._managerPxy,
+                            compCtx, compState, self._componentDomain)
         self.__updateIdleTarget()
     
-    def __componentStateRemoved(self, componentState):
-        name = componentState.get('name')
-        componentContext = self._context.getComponentContextByName(name)
-        self._removeProxyState("_components", self.__getComponentUniqueId,
-                               "component-removed", self._manager,
-                               componentContext, componentState, 
+    def __componentStateRemoved(self, compState):
+        name = compState.get('name')
+        compCtx = self._context.getComponentContextByName(name)
+        self._removeProxyState("_compPxys", self.__getComponentUniqueId,
+                               "component-removed", self._managerPxy,
+                               compCtx, compState, 
                                self._componentDomain)
         self.__updateIdleTarget()
 
-    def __cbComponentLoaded(self, componentState, identifier, initDef, resultDef, to):
+    def __cbComponentLoaded(self, compState, identifier, initDef, resultDef, to):
         utils.cancelTimeout(to)
         initDef.chainDeferred(resultDef)
     

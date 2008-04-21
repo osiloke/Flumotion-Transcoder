@@ -19,20 +19,18 @@ from flumotion.common.planet import moods
 from flumotion.inhouse import log, defer, utils
 from flumotion.inhouse.errors import TimeoutError
 
-from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.taskmanager import TaskManager
-from flumotion.transcoder.admin.transbalancer import TranscoderBalancer
+from flumotion.transcoder.admin import adminconsts, taskmanager, transbalancer
 
 
-class Transcoding(TaskManager):
+class Transcoding(taskmanager.TaskManager):
     
     logCategory = adminconsts.TRANSCODING_LOG_CATEGORY
     
-    def __init__(self, workerset, transcoderset):
-        TaskManager.__init__(self)
-        self._workers = workerset
-        self._transcoders = transcoderset
-        self._balancer = TranscoderBalancer(self)
+    def __init__(self, workerPxySet, transPxySet):
+        taskmanager.TaskManager.__init__(self)
+        self._workerPxySet = workerPxySet
+        self._transPxySet = transPxySet
+        self._balancer = transbalancer.TranscoderBalancer(self)
         # Registering Events
         self._register("task-added")
         self._register("task-removed")
@@ -45,26 +43,26 @@ class Transcoding(TaskManager):
 
     def initialize(self):
         self.log("Initializing Transcoding Manager")
-        self._workers.connectListener("worker-added", self, self.onWorkerAddedToSet)
-        self._workers.connectListener("worker-removed", self, self.onWorkerRemovedFromSet)
-        self._transcoders.connectListener("transcoder-added", self, self.onTranscoderAddedToSet)
-        self._transcoders.connectListener("transcoder-removed", self, self.onTranscoderRemovedFromSet)
-        self._workers.update(self)
-        self._transcoders.update(self)
-        return TaskManager.initialize(self)
+        self._workerPxySet.connectListener("worker-added", self, self._onWorkerAddedToSet)
+        self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
+        self._transPxySet.connectListener("transcoder-added", self, self._onTranscoderAddedToSet)
+        self._transPxySet.connectListener("transcoder-removed", self, self._onTranscoderRemovedFromSet)
+        self._workerPxySet.update(self)
+        self._transPxySet.update(self)
+        return taskmanager.TaskManager.initialize(self)
 
 
     ## Overrided Virtual Methods ##
 
     def _doStart(self):
         self.log("Ready to start transcoding, waiting transcoders to become idle")
-        d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d = self._transPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeTranscoding)
         return d
     
     def _doResume(self):
         self.log("Ready to resume transcoding, waiting transcoder to become idle")
-        d = self._transcoders.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d = self._transPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeTranscoding)
         return d
     
@@ -92,28 +90,28 @@ class Transcoding(TaskManager):
             
     ## WorkerSet Event Listeners ##
     
-    def onWorkerAddedToSet(self, workerset, worker):
-        self.log("Worker '%s' added to transcoding", worker.getLabel())
-        self._balancer.addWorker(worker)
+    def _onWorkerAddedToSet(self, workerPxySet, workerPxy):
+        self.log("Worker '%s' added to transcoding", workerPxy.getLabel())
+        self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
-    def onWorkerRemovedFromSet(self, workerset, worker):
-        self.log("Worker '%s' removed from transcoding", worker.getLabel())
-        self._balancer.removeWorker(worker)
+    def _onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
+        self.log("Worker '%s' removed from transcoding", workerPxy.getLabel())
+        self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
 
 
     ## TranscoderSet Event Listeners ##
     
-    def onTranscoderAddedToSet(self, transcoderset, transcoder):
-        self.log("Transcoder '%s' added to transcoding", transcoder.getLabel())
-        d = self.addComponent(transcoder)
-        d.addErrback(self.__ebAddComponentFailed, transcoder.getName())
+    def _onTranscoderAddedToSet(self, transPxySet, transPxy):
+        self.log("Transcoder '%s' added to transcoding", transPxy.getLabel())
+        d = self.addComponent(transPxy)
+        d.addErrback(self.__ebAddComponentFailed, transPxy.getName())
     
-    def onTranscoderRemovedFromSet(self, transcoderset, transcoder):
-        self.log("Transcoder '%s' removed from transcoding", transcoder.getLabel())
-        d = self.removeComponent(transcoder)
-        d.addErrback(self.__ebRemoveComponentFailed, transcoder.getName())
+    def _onTranscoderRemovedFromSet(self, transPxySet, transPxy):
+        self.log("Transcoder '%s' removed from transcoding", transPxy.getLabel())
+        d = self.removeComponent(transPxy)
+        d.addErrback(self.__ebRemoveComponentFailed, transPxy.getName())
 
 
     ## TranscodingBalancer Callback ##
@@ -152,13 +150,13 @@ class Transcoding(TaskManager):
     def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.TRANSCODING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
-        # Call self._balancer.addTask(task, worker)
+        # Call self._balancer.addTask(task, workerPxy)
         d.addCallback(defer.shiftResult, self._balancer.addTask, 1, task)
         return d
 
     def __ebStartupResumingFailure(self, failure):
         log.notifyFailure(self, failure, 
-                          "Failure during transcoding startup/resuming")
+                          "Failure during transcoder startup/resuming")
 
     def __ebAddComponentFailed(self, failure, name):
         log.notifyFailure(self, failure,

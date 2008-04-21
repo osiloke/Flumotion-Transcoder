@@ -14,14 +14,13 @@ from zope.interface import Interface, implements
 
 from flumotion.inhouse import utils
 
-from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
+from flumotion.transcoder.admin.proxy import componentset, monitor
 
 
-class MonitorSet(BaseComponentSet):
+class MonitorSet(componentset.BaseComponentSet):
     
-    def __init__(self, mgrset):
-        BaseComponentSet.__init__(self, mgrset)
+    def __init__(self, managerPxySet):
+        componentset.BaseComponentSet.__init__(self, managerPxySet)
         # Registering Events
         self._register("monitor-added")
         self._register("monitor-removed")
@@ -32,21 +31,21 @@ class MonitorSet(BaseComponentSet):
     ## Overriden Methods ##
     
     def update(self, listener):
-        self._updateProxies("_components", listener, "monitor-added")
+        self._updateProxies("_compPxys", listener, "monitor-added")
 
-    def _doAcceptComponent(self, component):
-        if not isinstance(component, MonitorProxy):
+    def _doAcceptComponent(self, compPxy):
+        if not isinstance(compPxy, monitor.MonitorProxy):
             return False
         return True
 
-    def _doAddComponent(self, component):
-        BaseComponentSet._doAddComponent(self, component)
+    def _doAddComponent(self, compPxy):
+        componentset.BaseComponentSet._doAddComponent(self, compPxy)
         self.debug("Monitor component '%s' added to set",
-                   component.getLabel())
-        self.emit("monitor-added", component)
+                   compPxy.getLabel())
+        self.emit("monitor-added", compPxy)
         
-    def _doRemoveComponent(self, component):
-        BaseComponentSet._doRemoveComponent(self, component)
+    def _doRemoveComponent(self, compPxy):
+        componentset.BaseComponentSet._doRemoveComponent(self, compPxy)
         self.debug("Monitor component '%s' removed from set",
-                   component.getLabel())
-        self.emit("monitor-removed", component)
+                   compPxy.getLabel())
+        self.emit("monitor-removed", compPxy)

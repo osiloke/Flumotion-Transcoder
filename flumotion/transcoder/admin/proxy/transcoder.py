@@ -24,37 +24,34 @@ from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.errors import TranscoderError
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.document import FileDocument
-from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.admin.proxies.transprops import TranscoderProperties
+from flumotion.transcoder.admin.proxy import base, component
+from flumotion.transcoder.admin.property import filetrans
 
 
-class ITranscoderProxy(fluproxy.IFlumotionProxy):
+class ITranscoderProxy(base.IProxy):
     pass
 
 
-class TranscoderProxy(ComponentProxy):
+class TranscoderProxy(component.ComponentProxy):
     implements(ITranscoderProxy)
 
-    properties_factory = TranscoderProperties
+    properties_factory = filetrans.TranscoderProperties
     
     @classmethod
-    def loadTo(cls, worker, name, label, properties, timeout=None):
-        manager = worker.getParent()
-        atmosphere = manager.getAtmosphere()
-        assert atmosphere != None
-        return atmosphere._loadComponent('file-transcoder', 
-                                         name,  label, worker, 
-                                         properties, timeout)
+    def loadTo(cls, workerPxy, name, label, properties, timeout=None):
+        managerPxy = workerPxy.getParent()
+        atmoPxy = managerPxy.getAtmosphere()
+        assert atmoPxy != None
+        return atmoPxy._loadComponent('file-transcoder', 
+                                      name,  label, workerPxy, 
+                                      properties, timeout)
     
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain):
-        ComponentProxy.__init__(self, logger, parent, 
-                                identifier, manager,
-                                componentContext, 
-                                componentState, domain)
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, compCtx, compState, domain):
+        component.ComponentProxy.__init__(self, logger, parentPxy, 
+                                          identifier, managerPxy,
+                                          compCtx, compState, domain)
         self._reportPath = AssignWaiters("Transcoder report")
         # Registering Events
         self._register("progress")
@@ -271,4 +268,4 @@ class TranscoderProxy(ComponentProxy):
         return report
 
 
-registerProxy("file-transcoder", TranscoderProxy)
+component.registerProxy("file-transcoder", TranscoderProxy)

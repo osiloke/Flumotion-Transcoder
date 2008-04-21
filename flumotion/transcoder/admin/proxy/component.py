@@ -17,21 +17,16 @@ from twisted.spread.pb import PBConnectionLost
 
 from flumotion.common import common
 #To register Jellyable classes
-from flumotion.common import componentui
-from flumotion.common.errors import UnknownComponentError
-from flumotion.common.errors import ComponentError, BusyComponentError
+from flumotion.common import componentui, errors as ferrors
 from flumotion.common.planet import moods
 
-from flumotion.inhouse import log, defer, utils
-from flumotion.inhouse.waiters import AssignWaiters, ValueWaiters
+from flumotion.inhouse import log, defer, utils, waiters
 
-from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder import errors
+from flumotion.transcoder.admin import adminconsts, errors
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
-from flumotion.transcoder.admin.errors import OrphanComponentError
-from flumotion.transcoder.admin.errors import OperationAbortedError
-from flumotion.transcoder.admin.proxies.compprops import GenericComponentProperties
-from flumotion.transcoder.admin.proxies.fluproxy import FlumotionProxy
+from flumotion.transcoder.admin.property import base as pbase
+from flumotion.transcoder.admin.proxy import base
 
 
 _componentRegistry = {}
@@ -47,30 +42,30 @@ def getProxyClass(state, domain):
     assert issubclass(cls, BaseComponentProxy)
     return cls
 
-def instantiate(logger, parent, identifier, manager, 
-                componentContext, state, domain, *args, **kwargs):
-    cls = getProxyClass(state, domain)
-    return cls(logger, parent, identifier, manager, 
-               componentContext, state, domain, *args, **kwargs)
+def instantiate(logger, parentPxy, identifier, managerPxy, 
+                compCtx, compState, domain, *args, **kwargs):
+    cls = getProxyClass(compState, domain)
+    return cls(logger, parentPxy, identifier, managerPxy, 
+               compCtx, compState, domain, *args, **kwargs)
 
 
-class BaseComponentProxy(FlumotionProxy):
+class BaseComponentProxy(base.Proxy):
 
-    properties_factory = GenericComponentProperties
+    properties_factory = pbase.GenericComponentProperties
 
-    def __init__(self, logger, parent, identifier, manager, 
-                 compCtx, componentState, domain):
-        FlumotionProxy.__init__(self, logger, parent, identifier, manager)
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, compCtx, comptState, domain):
+        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._compCtx = compCtx
         self._domain = domain
-        self._componentState = componentState
+        self._compState = comptState
         self._retrievingUIState = False
-        self._uiState = AssignWaiters("Component UIState")
-        self._requestedWorkerName = componentState.get('workerRequested')
-        self._worker = None
+        self._uiState = waiters.AssignWaiters("Component UIState")
+        self._requestedWorkerName = comptState.get('workerRequested')
+        self._workerPxy = None
         self._pid = None
-        self._mood = ValueWaiters("Component Mood")
-        self._properties = AssignWaiters("Component Properties")
+        self._mood = waiters.ValueWaiters("Component Mood")
+        self._properties = waiters.AssignWaiters("Component Properties")
         self._messageIds = {} # {identifier: None}
         # Registering Events
         self._register("mood-changed")
@@ -81,15 +76,15 @@ class BaseComponentProxy(FlumotionProxy):
     ## Public Methods ##
     
     def isValid(self):
-        return self._componentState != None
+        return self._compState != None
     
     def getName(self):
-        assert self._componentState, "Component has been removed"
-        return self._componentState.get('name')
+        assert self._compState, "Component has been removed"
+        return self._compState.get('name')
 
     def getLabel(self):
-        assert self._componentState, "Component has been removed"
-        conf = self._componentState.get('config', None)
+        assert self._compState, "Component has been removed"
+        conf = self._compState.get('config', None)
         return (conf and conf.get('label', None)) or self.getName()
     
     def getComponentContext(self):
@@ -100,7 +95,7 @@ class BaseComponentProxy(FlumotionProxy):
     
     def waitUIState(self, timeout=None):
         if not self.isRunning():
-            error = TranscoderError("Cannot retrieve UI state of "
+            error = errors.TranscoderError("Cannot retrieve UI state of "
                                     "a non-running component")
             return defer.fail(error)
         self.__retrieveUIState(timeout)
@@ -109,17 +104,17 @@ class BaseComponentProxy(FlumotionProxy):
         return d
     
     def isRunning(self):
-        return (self._worker != None)
+        return (self._workerPxy != None)
     
     def getWorker(self):
-        return self._worker
+        return self._workerPxy
     
     def getRequestedWorkerName(self):
         return self._requestedWorkerName
     
     def getRequestedWorker(self):
         if self._requestedWorkerName:
-            return self._manager.getWorkerByName(self._requestedWorkerName)
+            return self._managerPxy.getWorkerByName(self._requestedWorkerName)
         return None
     
     def getPID(self):
@@ -146,34 +141,34 @@ class BaseComponentProxy(FlumotionProxy):
         return self._properties.wait(timeout)
 
     def start(self):
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Starting component '%s'", self.getLabel())
-        d = self._manager._callRemote('componentStart', 
-                                      self._componentState)
+        d = self._managerPxy._callRemote('componentStart', 
+                                      self._compState)
         d.addCallback(defer.overrideResult, self)
         return d
     
     def stop(self):
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Stopping component '%s'", self.getLabel())
-        d = self._manager._callRemote('componentStop', 
-                                      self._componentState)
+        d = self._managerPxy._callRemote('componentStop', 
+                                      self._compState)
         d.addCallback(defer.overrideResult, self)
         return d
     
     def restart(self):
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Restarting component '%s'", self.getLabel())
-        d = self._manager._callRemote('componentRestart', 
-                                      self._componentState)
+        d = self._managerPxy._callRemote('componentRestart', 
+                                      self._compState)
         d.addCallback(defer.overrideResult, self)
         return d
     
     def delete(self):
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Deleting component '%s'", self.getLabel())
-        d = self._manager._callRemote('deleteComponent', 
-                                      self._componentState)
+        d = self._managerPxy._callRemote('deleteComponent', 
+                                      self._compState)
         d.addCallback(defer.overrideResult, self)
         return d
 
@@ -183,7 +178,7 @@ class BaseComponentProxy(FlumotionProxy):
         more than one time to stop the component.
         It will stop it, and kill it if neccessary.
         """
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Stopping (Forced) component '%s'", self.getLabel())
         mood = self.getMood()
         if mood == moods.sleeping:
@@ -200,7 +195,7 @@ class BaseComponentProxy(FlumotionProxy):
         more than one time to delete the component.
         It will stop it, delete it and kill it if neccessary.
         """
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         self.log("Deleting (Forced) component '%s'", self.getLabel())
         d = defer.Deferred()
         self.__stopOrDelete(None, {}, self.getLabel(), d)
@@ -216,35 +211,35 @@ class BaseComponentProxy(FlumotionProxy):
         d.addCallback(defer.dropResult, self.signal, signal.SIGKILL)        
         # And wait for a while
         d.addCallback(defer.delayedSuccess, adminconsts.COMPONENT_WAIT_TO_KILL)
-        # If UnknownComponentError has not been raise try a last time
+        # If ferrors.UnknownComponentError has not been raise try a last time
         d.addCallback(defer.dropResult, self.signal, signal.SIGKILL)
         d.addCallbacks(defer.overrideResult, defer.resolveFailure, 
                        callbackArgs=(False,),
-                       errbackArgs=(True, UnknownComponentError))
+                       errbackArgs=(True, ferrors.UnknownComponentError))
         return d
     
     def signal(self, sig):
-        assert self._componentState, "Component has been removed"
-        if not self._worker:
+        assert self._compState, "Component has been removed"
+        if not self._workerPxy:
             msg = "Component '%s' worker is not running" % self.getLabel()
-            err = OrphanComponentError(msg)
+            err = errors.OrphanComponentError(msg)
             return defer.fail(err)
-        return self._worker._callRemote("killJob", self._getAvatarId(), sig)
+        return self._workerPxy._callRemote("killJob", self._getAvatarId(), sig)
 
 
     ## Overriden Methods ##
     
     def update(self, listener):
-        assert self._componentState, "Component has been removed"
+        assert self._compState, "Component has been removed"
         if self.isActive():
             self.emitTo("mood-changed", listener, self._mood.getValue())
-            if self._worker:
-                self.emitTo("running", listener, self._worker)
+            if self._workerPxy:
+                self.emitTo("running", listener, self._workerPxy)
             if self._hasUIState():
                 self._doBroadcastUIState(self._getUIState())
 
     def _onActivated(self):
-        cs = self._componentState
+        cs = self._compState
         cs.addListener(self, self._componentStateSet,
                        self._componentStateAppend)
         self.__componentMoodChanged(cs.get('mood'))
@@ -252,17 +247,17 @@ class BaseComponentProxy(FlumotionProxy):
         self.__componentRequestedWorkerChanged(cs.get('workerRequested'))
 
     def _onRemoved(self):
-        assert self._componentState, "Component has already been removed"
+        assert self._compState, "Component has already been removed"
         if self.isActive():
-            cs = self._componentState
+            cs = self._compState
             cs.removeListener(self)
         if self._hasUIState():
             self._onUnsetUIState(self._getUIState())
     
     def _doDiscard(self):
-        assert self._componentState, "Component has already been discarded"
+        assert self._compState, "Component has already been discarded"
         self._setUIState(None)
-        self._componentState = None
+        self._compState = None
     
 
     ## Component State Listeners ##
@@ -313,23 +308,23 @@ class BaseComponentProxy(FlumotionProxy):
     def _onUnsetUIState(self, uiState):
         pass
 
-    def _doExtractProperties(self, workerContext, state):
+    def _doExtractProperties(self, workerCtx, state):
         conf = state.get("config")
         assert conf != None, "Component state without config dict"
         props = conf.get("properties")
         assert props != None, "Component state without porperty dict"
         try:
-            return self.properties_factory.createFromComponentDict(workerContext, props)
+            return self.properties_factory.createFromComponentDict(workerCtx, props)
         except Exception, e:
             log.notifyException(self, e,
                                 "Exception during component '%s' "
                                 "properties creation", self.getLabel())
             return None
     
-    def _onComponentRunning(self, worker):
+    def _onComponentRunning(self, workerPxy):
         pass
     
-    def _onComponentOrphaned(self, worker):
+    def _onComponentOrphaned(self, workerPxy):
         pass
     
     def _onComponentMessage(self, message):
@@ -364,27 +359,27 @@ class BaseComponentProxy(FlumotionProxy):
         return common.componentId(self.getParent().getName(), self.getName())
         
     def _callRemote(self, methodName, *args, **kwargs):
-        assert self._componentState, "Component has been removed"
-        return self._manager._componentCallRemote(self._componentState,
+        assert self._compState, "Component has been removed"
+        return self._managerPxy._componentCallRemote(self._compState,
                                                   methodName, 
                                                   *args, **kwargs)
 
 
     ## Private Methods ##
     
-    def __cbGotActiveWorker(self, worker, name):
-        currName = self._componentState.get('workerName')
+    def __cbGotActiveWorker(self, workerPxy, name):
+        currName = self._compState.get('workerName')
         if currName != name:
             self.log("Component '%s' active worker changed from '%s' to '%s'",
                      self.getLabel(), name, currName)
             return
-        self._worker = worker
-        self._onComponentRunning(worker)
+        self._workerPxy = workerPxy
+        self._onComponentRunning(workerPxy)
         if self.isActive():
-            self.emit("running", worker)
+            self.emit("running", workerPxy)
         
     def __ebGetActiveWorkerFail(self, failure, name):
-        currName = self._componentState.get('workerName')
+        currName = self._compState.get('workerName')
         if currName != name:
             self.log("Component '%s' active worker changed from '%s' to '%s'",
                      self.getLabel(), name, currName)
@@ -405,23 +400,23 @@ class BaseComponentProxy(FlumotionProxy):
         mgrCtx = compCtx.getManagerContext()
         adminCtx = mgrCtx.getAdminContext() 
         workerCtx = adminCtx.getWorkerContextByName(workerName)
-        props = self._doExtractProperties(workerCtx, self._componentState)
+        props = self._doExtractProperties(workerCtx, self._compState)
         self._properties.setValue(props)
     
     def __componentActiveWorkerChanged(self, workerName):
         # Because the active worker name is set to None 
         # when the worker is removed, we can keep an hard 
         # reference to the object
-        if self._worker:
-            oldWorker = self._worker
-            self._worker = None
+        if self._workerPxy:
+            oldWorker = self._workerPxy
+            self._workerPxy = None
             self.__discardUIState()
             self._onComponentOrphaned(oldWorker)
             if self.isActive():
                 self.emit("orphaned", oldWorker)
         if workerName:
             timeout = adminconsts.WAIT_WORKER_TIMEOUT
-            d = self._manager.waitWorkerByName(workerName, timeout)
+            d = self._managerPxy.waitWorkerByName(workerName, timeout)
             args = (workerName,)
             d.addCallbacks(self.__cbGotActiveWorker,
                            self.__ebGetActiveWorkerFail,
@@ -464,7 +459,7 @@ class BaseComponentProxy(FlumotionProxy):
             resultDef.callback(self)
             return True
         if failure:
-            if failure.check(UnknownComponentError):
+            if failure.check(ferrors.UnknownComponentError):
                 self.debug("Forced Stop/Delete of component '%s' aborted "
                            "because the component is unknown (already deleted ?)",
                            self.getLabel())
@@ -474,7 +469,7 @@ class BaseComponentProxy(FlumotionProxy):
                 msg = ("Forced Stop/Delete of component '%s' aborted "
                        "because the remote connection was lost" % self.getLabel())
                 self.warning("%s", msg)
-                error = OperationAbortedError(msg, cause=failure.value)
+                error = errors.OperationAbortedError(msg, cause=failure.value)
                 resultDef.errback(error)
                 return True
             status['last-message'] = log.getFailureMessage(failure)
@@ -485,7 +480,7 @@ class BaseComponentProxy(FlumotionProxy):
         self.warning("%s", info)
         err = status.get('last-message', None)
         msg = info + ((err and (": " + err)) or "")
-        resultDef.errback(TranscoderError(msg))
+        resultDef.errback(errors.TranscoderError(msg))
     
     def __stopOrDelete(self, _, status, label, resultDef):
         if self.__isOperationTerminated(None, status, resultDef): return
@@ -540,7 +535,7 @@ class BaseComponentProxy(FlumotionProxy):
         
     def __asyncForceKillFailed(self, failure, status, label, resultDef):
         if self.__isOperationTerminated(failure, status, resultDef): return
-        if failure.check(OrphanComponentError):
+        if failure.check(errors.OrphanComponentError):
             # The component don't have worker
             self.__stopOrDelete(None, status, 
                                 label, resultDef)
@@ -566,7 +561,7 @@ class BaseComponentProxy(FlumotionProxy):
                            self.__asyncForceKillFailed,
                            callbackArgs=args, errbackArgs=args)
             return
-        if failure.check(BusyComponentError):
+        if failure.check(ferrors.BusyComponentError):
             # The component is buzy changing mood,
             # so wait mood change (with a larger timeout)    
             d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
@@ -574,7 +569,7 @@ class BaseComponentProxy(FlumotionProxy):
             return
         # FIXME: make flumotion raise a specific exception 
         # when there is mood conflicts
-        if failure.check(ComponentError):
+        if failure.check(ferrors.ComponentError):
             #Maybe the component was already stopped ?
             if self.getMood() == moods.sleeping:
                 self.__asyncForceDelete(None, status, 
@@ -593,7 +588,7 @@ class BaseComponentProxy(FlumotionProxy):
             # if deletion fail, theres nothing we can do, do we ?
             self.__deletionFailed(status, label, resultDef)
             return
-        if failure.check(BusyComponentError):
+        if failure.check(ferrors.BusyComponentError):
             # The component is buzy changing mood,
             # so wait mood change (with a larger timeout)    
             d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
@@ -606,18 +601,18 @@ class BaseComponentProxy(FlumotionProxy):
 
 class DefaultComponentProxy(BaseComponentProxy):
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain):
-        BaseComponentProxy.__init__(self, logger, parent, identifier, manager,
-                                    componentContext, componentState, domain)
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, compCtx, compState, domain):
+        BaseComponentProxy.__init__(self, logger, parentPxy, identifier,
+                                    managerPxy, compCtx, compState, domain)
 
 
 class ComponentProxy(BaseComponentProxy):
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain):
-        BaseComponentProxy.__init__(self, logger, parent, identifier, manager,
-                                    componentContext, componentState, domain)
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, compCtx, compState, domain):
+        BaseComponentProxy.__init__(self, logger, parentPxy, identifier,
+                                    managerPxy, compCtx, compState, domain)
         # Registering Events
         self._register("message")
 

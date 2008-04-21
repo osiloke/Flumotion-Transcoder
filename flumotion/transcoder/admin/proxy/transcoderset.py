@@ -14,14 +14,13 @@ from zope.interface import Interface, implements
 
 from flumotion.inhouse import utils
 
-from flumotion.transcoder.admin.proxies.componentset import BaseComponentSet
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
+from flumotion.transcoder.admin.proxy import componentset, transcoder
 
 
-class TranscoderSet(BaseComponentSet):
+class TranscoderSet(componentset.BaseComponentSet):
     
-    def __init__(self, mgrset):
-        BaseComponentSet.__init__(self, mgrset)
+    def __init__(self, managerPxySet):
+        componentset.BaseComponentSet.__init__(self, managerPxySet)
         # Registering Events
         self._register("transcoder-added")
         self._register("transcoder-removed")
@@ -33,23 +32,23 @@ class TranscoderSet(BaseComponentSet):
     ## Overriden Methods ##
     
     def update(self, listener):
-        self._updateProxies("_components", listener, "transcoder-added")
+        self._updateProxies("_compPxys", listener, "transcoder-added")
 
-    def _doAcceptComponent(self, component):
-        if not isinstance(component, TranscoderProxy):
+    def _doAcceptComponent(self, compPxy):
+        if not isinstance(compPxy, transcoder.TranscoderProxy):
             return False
         return True
 
-    def _doAddComponent(self, component):
-        BaseComponentSet._doAddComponent(self, component)
+    def _doAddComponent(self, compPxy):
+        componentset.BaseComponentSet._doAddComponent(self, compPxy)
         self.debug("Transcoder component '%s' added to set",
-                   component.getLabel())
-        self.emit("transcoder-added", component)
+                   compPxy.getLabel())
+        self.emit("transcoder-added", compPxy)
         
-    def _doRemoveComponent(self, component):
-        BaseComponentSet._doRemoveComponent(self, component)
+    def _doRemoveComponent(self, compPxy):
+        componentset.BaseComponentSet._doRemoveComponent(self, compPxy)
         self.debug("Transcoder component '%s' removed from set",
-                   component.getLabel())
-        self.emit("transcoder-removed", component)
+                   compPxy.getLabel())
+        self.emit("transcoder-removed", compPxy)
 
     

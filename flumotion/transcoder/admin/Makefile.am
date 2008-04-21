@@ -1,6 +1,6 @@
 include $(top_srcdir)/common/python.mk
 
-SUBDIRS = context datasource datastore proxies api
+SUBDIRS = context datasource datastore property proxy api
 
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin
 

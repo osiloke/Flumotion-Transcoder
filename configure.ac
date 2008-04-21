@@ -79,7 +79,8 @@ flumotion/transcoder/tools/Makefile
 flumotion/transcoder/admin/Makefile
 flumotion/transcoder/admin/datasource/Makefile
 flumotion/transcoder/admin/datastore/Makefile
-flumotion/transcoder/admin/proxies/Makefile
+flumotion/transcoder/admin/property/Makefile
+flumotion/transcoder/admin/proxy/Makefile
 flumotion/transcoder/admin/context/Makefile
 flumotion/transcoder/admin/api/Makefile
 flumotion/transcoder/admin/api/mediums/Makefile

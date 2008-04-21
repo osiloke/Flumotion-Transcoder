@@ -16,16 +16,12 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.inhouse import log, defer, utils, events
-from flumotion.inhouse.waiters import AssignWaiters
-from flumotion.inhouse.waiters import PassiveWaiters
+from flumotion.inhouse import log, defer, utils, events, waiters
 
-from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder import errors as terrors
+from flumotion.transcoder.admin import adminconsts, admintask, errors
 from flumotion.transcoder.admin.enums import TaskStateEnum
-from flumotion.transcoder.admin.errors import ComponentRejectedError
-from flumotion.transcoder.admin.admintask import IAdminTask
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
+from flumotion.transcoder.admin.proxy import component
 
 
 class TaskManager(log.Loggable, events.EventSourceMixin):
@@ -34,12 +30,12 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     
     def __init__(self):
         self._identifiers = {} # {identifiers: ComponentProperties}
-        self._tasks = {} # {ComponentProperties: IAdminTask}
-        self._taskless = {} # {ComponentProxy: None}
+        self._tasks = {} # {ComponentProperties: admintask.IAdminTask}
+        self._taskless = {} # {component.ComponentProxy: None}
         self._state = TaskStateEnum.stopped
         self._starting = False
-        self._startWaiters = PassiveWaiters("Task Manager Startup")
-        self._pauseWaiters = PassiveWaiters("Task Manager Paused")
+        self._startWaiters = waiters.PassiveWaiters("Task Manager Startup")
+        self._pauseWaiters = waiters.PassiveWaiters("Task Manager Paused")
         self._pending = 0
         reactor.addSystemEventTrigger("before", "shutdown", self.abort)
 
@@ -53,7 +49,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         return self.__class__.__name__
     
     def addTask(self, identifier, task):
-        assert IAdminTask.providedBy(task)
+        assert admintask.IAdminTask.providedBy(task)
         self.debug("Adding task '%s' to manager '%s'", 
                    task.getLabel(), self.getLabel())
         props = task.getProperties()
@@ -61,11 +57,11 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         assert not (identifier in self._identifiers)
         self._identifiers[identifier] = props
         self._tasks[props] = task
-        for m in self.__getTasklessComponents():
-            if m.getProperties() == props:
+        for compPxy in self.__getTasklessComponents():
+            if compPxy.getProperties() == props:
                 # Not my responsability anymore
-                self.__releaseTasklessComponent(m)
-                task.addComponent(m)
+                self.__releaseTasklessComponent(compPxy)
+                task.addComponent(compPxy)
         self._onTaskAdded(task)
         if self.isStarted():
             task.start(paused=self.isPaused())
@@ -105,7 +101,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def start(self, timeout=None):
         if not (self._state in [TaskStateEnum.stopped, 
                                 TaskStateEnum.starting]):
-            return defer.fail(TranscoderError("Cannot start %s if %s"
+            return defer.fail(terrors.TranscoderError("Cannot start %s if %s"
                                               % (self.getLabel(), 
                                                  self._state.name)))
         if self._state == TaskStateEnum.stopped:
@@ -117,7 +113,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
 
     def pause(self, timeout=None):
         if not (self._state in [TaskStateEnum.started]):
-            return defer.fail(TranscoderError("Cannot pause %s if %s"
+            return defer.fail(terrors.TranscoderError("Cannot pause %s if %s"
                                               % (self.getLabel(), 
                                                  self._state.name)))
         if self._state == TaskStateEnum.started:
@@ -131,7 +127,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def resume(self, timeout=None):
         if not (self._state in [TaskStateEnum.paused, 
                                 TaskStateEnum.resuming]):
-            return defer.fail(TranscoderError("Cannot resume %s if %s"
+            return defer.fail(terrors.TranscoderError("Cannot resume %s if %s"
                                               % (self.getLabel(), 
                                                  self._state.name)))
         if self._state == TaskStateEnum.paused:
@@ -152,24 +148,24 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self._tasks.clear()
         self._doAbort()
 
-    def addComponent(self, component):
-        assert isinstance(component, ComponentProxy)
+    def addComponent(self, compPxy):
+        assert isinstance(compPxy, component.ComponentProxy)
         self.log("Component '%s' added to task manager '%s'", 
-                 component.getName(), self.getLabel())
+                 compPxy.getName(), self.getLabel())
         self._pending += 1
-        d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
-        args = (component,)
+        d = compPxy.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
+        args = (compPxy,)
         d.addCallbacks(self.__cbAddComponent, 
                        self.__ebGetPropertiesFailed,
                        callbackArgs=args, errbackArgs=args)
         return d
     
-    def removeComponent(self, component):
-        assert isinstance(component, ComponentProxy)
+    def removeComponent(self, compPxy):
+        assert isinstance(compPxy, component.ComponentProxy)
         self.log("Component '%s' removed from task manager '%s'", 
-                 component.getName(), self.getLabel())
-        d = component.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
-        d.addCallback(self.__cbRemoveComponent, component)
+                 compPxy.getName(), self.getLabel())
+        d = compPxy.waitProperties(adminconsts.TASKMANAGER_WAITPROPS_TIMEOUT)        
+        d.addCallback(self.__cbRemoveComponent, compPxy)
         return d
 
     def waitIdle(self, timeout=None):
@@ -216,25 +212,25 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def _onTaskRemoved(self, task):
         pass
 
-    def _onTasklessComponentAdded(self, component):
+    def _onTasklessComponentAdded(self, compPxy):
         pass
     
-    def _onTasklessComponentRemoved(self, component):
+    def _onTasklessComponentRemoved(self, compPxy):
         pass
 
 
     ## Component Event Listeners ##
     
-    def onComponentMoodChanged(self, component, mood):
+    def _onComponentMoodChanged(self, compPxy, mood):
         if not self.isStarted(): return
         self.log("Task manager '%s' taskless component '%s' goes %s",
-                 self.getLabel(), component.getName(), mood.name)
+                 self.getLabel(), compPxy.getName(), mood.name)
         if mood == moods.sleeping:
-            d = component.forceDelete()
-            d.addErrback(self.__ebComponentDeleteFailed, component.getName())
+            d = compPxy.forceDelete()
+            d.addErrback(self.__ebComponentDeleteFailed, compPxy.getName())
         elif mood != moods.sad:
-            d = component.forceStop()
-            d.addErrback(self.__ebComponentStopFailed, component.getName())
+            d = compPxy.forceStop()
+            d.addErrback(self.__ebComponentStopFailed, compPxy.getName())
 
     ## Protected Methods ##
     
@@ -289,56 +285,56 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def __getTasklessComponents(self):
         return self._taskless.keys()
     
-    def __apartTasklessComponent(self, component):
+    def __apartTasklessComponent(self, compPxy):
         self.log("Task manager '%s' takes apart taskless component '%s'",
-                 self.getLabel(), component.getName())
-        self._taskless[component] = None
-        component.connectListener("mood-changed", self, self.onComponentMoodChanged)
-        component.update(self)
-        self._onTasklessComponentAdded(component)
+                 self.getLabel(), compPxy.getName())
+        self._taskless[compPxy] = None
+        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
+        compPxy.update(self)
+        self._onTasklessComponentAdded(compPxy)
     
-    def __releaseTasklessComponent(self, component):
+    def __releaseTasklessComponent(self, compPxy):
         self.log("Task manager '%s' release taskless component '%s'",
-                 self.getLabel(), component.getName())
-        assert component in self._taskless
-        del self._taskless[component]
-        component.disconnectListener("mood-changed", self)
-        self._onTasklessComponentRemoved(component)
+                 self.getLabel(), compPxy.getName())
+        assert compPxy in self._taskless
+        del self._taskless[compPxy]
+        compPxy.disconnectListener("mood-changed", self)
+        self._onTasklessComponentRemoved(compPxy)
     
-    def __cbAddComponent(self, props, component):
+    def __cbAddComponent(self, props, compPxy):
         assert props != None
-        assert props == component.getProperties()
+        assert props == compPxy.getProperties()
         if props in self._tasks:
             task = self._tasks[props]
-            task.addComponent(component)
+            task.addComponent(compPxy)
         else:
             msg = ("Task manager '%s' ask to add component '%s' "
                    "without matching task" 
-                   % (self.getLabel(), component.getName()))
+                   % (self.getLabel(), compPxy.getName()))
             self.debug("%s", msg)
-            self.__apartTasklessComponent(component)
+            self.__apartTasklessComponent(compPxy)
         self._pending -= 1
         self._tryStartup()
-        return component
+        return compPxy
     
-    def __ebGetPropertiesFailed(self, failure, component):
+    def __ebGetPropertiesFailed(self, failure, compPxy):
         msg = ("Task manager '%s' fail to retrieve component '%s' properties."
-               % (self.getLabel(), component.getName()))
+               % (self.getLabel(), compPxy.getName()))
         log.notifyFailure(self, failure, "%s", msg)
-        self.__apartTasklessComponent(component)
+        self.__apartTasklessComponent(compPxy)
         self._pending -= 1
         self._tryStartup()
-        raise ComponentRejectedError(msg, cause=failure)
+        raise errors.ComponentRejectedError(msg, cause=failure)
         
-    def __cbRemoveComponent(self, props, component):
+    def __cbRemoveComponent(self, props, compPxy):
         assert props != None
-        assert props == component.getProperties()
+        assert props == compPxy.getProperties()
         if props in self._tasks:
             task = self._tasks[props]
-            task.removeComponent(component)
-        if component in self._taskless:
-            self.__releaseTasklessComponent(component)
-        return component
+            task.removeComponent(compPxy)
+        if compPxy in self._taskless:
+            self.__releaseTasklessComponent(compPxy)
+        return compPxy
 
     def __ebComponentStopFailed(self, failure, name):
         log.notifyFailure(self, failure,
@@ -351,10 +347,10 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
                           "component '%s'", self.getLabel(), name)
 
     def __stateChangedError(self, waiters, actionDesc):
-        error = TranscoderError("State changed to %s during %s of '%s'"
-                                % (self._state.name, 
-                                   actionDesc, 
-                                   self.getLabel()))
+        error = terrors.TranscoderError("State changed to %s during %s of '%s'"
+                                        % (self._state.name, 
+                                           actionDesc, 
+                                           self.getLabel()))
         waiters.fireErrbacks(error)
 
     def __cbStartupSucceed(self, result, actionDesc):
@@ -369,7 +365,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self._startWaiters.fireCallbacks(result)
         # Now we can manage the taskless components
         for c in self._taskless:
-            self.onComponentMoodChanged(c, c.getMood())
+            self._onComponentMoodChanged(c, c.getMood())
 
     def __ebStartupFailed(self, failure, actionDesc):
         log.notifyFailure(self, failure,
@@ -423,9 +419,9 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self._doChainWaitActive(dl)
         return dl
     
-    def __cbAppartStopResults(self, components):
-        for c in components:
-            self.__apartTasklessComponent(c)
+    def __cbAppartStopResults(self, compPxys):
+        for compPxy in compPxys:
+            self.__apartTasklessComponent(compPxy)
     
     def __ebTaskStopFailed(self, failure, task):
         log.notifyFailure(self, failure,

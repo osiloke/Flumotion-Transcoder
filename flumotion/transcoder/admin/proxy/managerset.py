@@ -21,8 +21,7 @@ from flumotion.inhouse import log, utils
 from flumotion.inhouse.waiters import AssignWaiters
 
 from flumotion.transcoder.admin import adminconsts, interfaces
-from flumotion.transcoder.admin.proxies import managerproxy
-from flumotion.transcoder.admin.proxies.fluproxy import RootFlumotionProxy
+from flumotion.transcoder.admin.proxy import base, manager
 
 
 class IManagerSet(interfaces.IAdminInterface):
@@ -41,14 +40,14 @@ class FlumotionProxiesLogger(log.Loggable):
     logCategory = adminconsts.PROXIES_LOG_CATEGORY
 
 
-class ManagerSet(RootFlumotionProxy):
+class ManagerSet(base.RootProxy):
     
     def __init__(self, adminContext):
-        RootFlumotionProxy.__init__(self, FlumotionProxiesLogger())
+        base.RootProxy.__init__(self, FlumotionProxiesLogger())
         self._context = adminContext
         self._multi = multi.MultiAdminModel()
         self._multi.addListener(self)
-        self._managers = AssignWaiters("Manager Set Assignment", {})
+        self._managerPxys = AssignWaiters("Manager Set Assignment", {})
         self._setIdleTarget(1)
         # Registering Events
         self._register("manager-added")
@@ -60,29 +59,29 @@ class ManagerSet(RootFlumotionProxy):
     ## Public Methods ##
     
     def getManagers(self):
-        return self._managers.getValue().values()
+        return self._managerPxys.getValue().values()
     
     def iterManagers(self):
-        return self._managers.getValue().itervalues()
+        return self._managerPxys.getValue().itervalues()
     
     def waitManagers(self, timeout=None):
-        return self._managers.wait(timeout)
+        return self._managerPxys.wait(timeout)
 
     
     ## Overriden Methods ##
     
     def update(self, listener):
-        self._updateProxies("_managers", listener, "manager-added")
+        self._updateProxies("_managerPxys", listener, "manager-added")
 
     def _doGetChildElements(self):
         return self.getManagers()
     
     def _doPrepareInit(self, chain):
-        ctx = self._context.getManagerContext()
-        info = ConnectionInfo(ctx.getHost(),
-                              ctx.getPort(),
-                              ctx.getUseSSL(),
-                              ctx.getAuthenticator())
+        managerCtx = self._context.getManagerContext()
+        info = ConnectionInfo(managerCtx.getHost(),
+                              managerCtx.getPort(),
+                              managerCtx.getUseSSL(),
+                              managerCtx.getAuthenticator())
         self._multi.addManager(info, tenacious=True)
 
 
@@ -91,32 +90,29 @@ class ManagerSet(RootFlumotionProxy):
     def model_addPlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s added", planet.get('name'))
-        managerContext = self._context.getManagerContext()
-        managers = self._managers.getValue()
-        if len(managers) == 0:
+        managerCtx = self._context.getManagerContext()
+        managerPxys = self._managerPxys.getValue()
+        if len(managerPxys) == 0:
             self.emit("attached")
-        self._addProxyState(managerproxy, "_managers", 
-                            self.__getManagerUniqueId,
-                            "manager-added", 
-                            admin, managerContext, planet)
+        self._addProxyState(manager, "_managerPxys",  self.__getManagerUniqueId,
+                            "manager-added", admin, managerCtx, planet)
     
     def model_removePlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s removed", planet.get('name'))
-        managerContext = self._context.getManagerContext()
-        managers = self._managers.getValue()
-        if len(managers) == 1:
-            ident = self.__getManagerUniqueId(admin, managerContext, planet)
-            if ident in managers:
+        managerCtx = self._context.getManagerContext()
+        managerPxys = self._managerPxys.getValue()
+        if len(managerPxys) == 1:
+            ident = self.__getManagerUniqueId(admin, managerCtx, planet)
+            if ident in managerPxys:
                 self.emit("detached")
-        self._removeProxyState("_managers", self.__getManagerUniqueId,
-                               "manager-removed", 
-                               admin, managerContext, planet)
+        self._removeProxyState("_managerPxys", self.__getManagerUniqueId,
+                               "manager-removed",  admin, managerCtx, planet)
     
     
     ## Private Methods ##
     
-    def __getManagerUniqueId(self, admin, managerContext, planet):
+    def __getManagerUniqueId(self, admin, managerCtx, planet):
         if admin == None:
             return None
         # We do not use admin.managerId, because it contains private data,

@@ -14,7 +14,7 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.proxies import workerproxy
+from flumotion.transcoder.admin.proxy import worker
 from flumotion.transcoder.admin.api import interfaces, api
 from flumotion.transcoder.admin.api.mediums import named 
 
@@ -22,7 +22,7 @@ from flumotion.transcoder.admin.api.mediums import named
 class WorkerMedium(named.NamedMedium):
     implements(interfaces.IWorkerMedium)
     api.registerMedium(interfaces.IWorkerMedium,
-                       workerproxy.IWorkerProxy)
+                       worker.IWorkerProxy)
     
     
     ## IWorkerMedium Methodes ##

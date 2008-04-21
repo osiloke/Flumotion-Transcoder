@@ -17,35 +17,32 @@ from flumotion.inhouse import utils, defer, log
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.proxies import fluproxy
-from flumotion.transcoder.admin.proxies.monprops import MonitorProperties
-from flumotion.transcoder.admin.proxies.componentproxy import ComponentProxy
-from flumotion.transcoder.admin.proxies.componentproxy import registerProxy
+from flumotion.transcoder.admin.proxy import base, component
+from flumotion.transcoder.admin.property import filemon
 
 
-class IMonitorProxy(fluproxy.IFlumotionProxy):
+class IMonitorProxy(base.IProxy):
     pass
 
 
-class MonitorProxy(ComponentProxy):
+class MonitorProxy(component.ComponentProxy):
     implements(IMonitorProxy)
     
-    properties_factory = MonitorProperties
+    properties_factory = filemon.MonitorProperties
     
     @classmethod
-    def loadTo(cls, worker, name, label, properties, timeout=None):
-        manager = worker.getParent()
-        atmosphere = manager.getAtmosphere()
-        return atmosphere._loadComponent('file-monitor', 
-                                         name,  label, worker, 
-                                         properties, timeout)
+    def loadTo(cls, workerPxy, name, label, properties, timeout=None):
+        managerPxy = workerPxy.getParent()
+        atmoPxy = managerPxy.getAtmosphere()
+        return atmoPxy._loadComponent('file-monitor', 
+                                      name,  label, workerPxy, 
+                                      properties, timeout)
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 componentContext, componentState, domain):
-        ComponentProxy.__init__(self, logger, parent,  
-                                identifier, manager,
-                                componentContext, 
-                                componentState, domain)
+    def __init__(self, logger, parentPxy, identifier, managerPxy, 
+                 compCtx, compState, domain):
+        component.ComponentProxy.__init__(self, logger, parentPxy,  
+                                          identifier, managerPxy,
+                                          compCtx, compState, domain)
         self._alreadyAdded = {} # {file: None}
         self._stateUpdateDelta = {}
         self._stateUpdateDelay = None
@@ -114,7 +111,7 @@ class MonitorProxy(ComponentProxy):
             self._onMonitorDelFile(virtBase, relFile, value)
 
     def _onUnsetUIState(self, uiState):
-        ComponentProxy._onUnsetUIState(self, uiState)
+        component.ComponentProxy._onUnsetUIState(self, uiState)
         self._alreadyAdded.clear()
 
     
@@ -175,14 +172,14 @@ class MonitorProxy(ComponentProxy):
     
     def __cbRetrieveFiles(self, ui):
         files = []
-        worker = self.getWorker()
+        workerPxy = self.getWorker()
         assert ui != None
-        assert worker != None
-        workerCtx = worker.getWorkerContext()
+        assert workerPxy != None
+        workerCtx = workerPxy.getWorkerContext()
         local = workerCtx.getLocal()
         for (p, f), s in ui.get("pending-files", {}).iteritems():
             files.append((VirtualPath.virtualize(p, local), f, s))
         return files
     
 
-registerProxy("file-monitor", MonitorProxy)
+component.registerProxy("file-monitor", MonitorProxy)

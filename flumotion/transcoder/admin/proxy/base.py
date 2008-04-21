@@ -22,7 +22,7 @@ from flumotion.transcoder.errors import HandledTranscoderError
 from flumotion.transcoder.admin import adminelement
 
 
-class IBaseFlumotionProxy(Interface):
+class IBaseProxy(Interface):
 
     def getIdentifier(self):
         """
@@ -41,7 +41,7 @@ class IBaseFlumotionProxy(Interface):
         """
 
 
-class IFlumotionProxy(IBaseFlumotionProxy):
+class IProxy(IBaseProxy):
     
     def getManager(self):
         pass
@@ -49,17 +49,17 @@ class IFlumotionProxy(IBaseFlumotionProxy):
 
 #TODO: Rewrite this... It's a mess
 
-class BaseFlumotionProxy(adminelement.AdminElement):
+class BaseProxy(adminelement.AdminElement):
     
-    implements(IBaseFlumotionProxy)
+    implements(IBaseProxy)
     
-    def __init__(self, logger, parent, identifier):
-        adminelement.AdminElement.__init__(self, logger, parent)
+    def __init__(self, logger, parentPxy, identifier):
+        adminelement.AdminElement.__init__(self, logger, parentPxy)
         self._identifier = identifier
-        self._pendingElements = {} # {attr: {identifier: BaseFlumotionProxy}}
+        self._pendingElements = {} # {attr: {identifier: BaseProxy}}
 
 
-    ## IFlumotionProxyRO Methods ##
+    ## IProxyRO Methods ##
 
     def getIdentifier(self):
         return self._identifier
@@ -124,11 +124,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
-                assert isinstance(element, BaseFlumotionProxy)
+                assert isinstance(element, BaseProxy)
                 if element.isActive():
                     self.emitTo(addEvent, listener, element)
         else:
-            assert isinstance(value, BaseFlumotionProxy)
+            assert isinstance(value, BaseProxy)
             if value.isActive():
                 self.emitTo(addEvent, listener, value)
     
@@ -144,7 +144,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         assert isinstance(finalDict, dict)
         assert not (identifier in finalDict)
         element = factory.instantiate(self, self, identifier, *args, **kwargs)
-        assert isinstance(element, BaseFlumotionProxy)
+        assert isinstance(element, BaseProxy)
         self.__addPending(attr, identifier, element)
         d = element.initialize()
         d.addCallbacks(self.__cbDictElementInitialized,
@@ -165,7 +165,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         assert (identifier in values)
         pending = self.__getPending(attr, identifier)
         if pending:
-            assert isinstance(pending, BaseFlumotionProxy)
+            assert isinstance(pending, BaseProxy)
             #Element is beeing initialized
             pending.setObsolete()
         else:
@@ -173,7 +173,7 @@ class BaseFlumotionProxy(adminelement.AdminElement):
                 element = values.pop(identifier)
                 # Do not assume the retrieved dict is a reference
                 self.__setAttrValue(attr, values)
-                assert isinstance(element, BaseFlumotionProxy)
+                assert isinstance(element, BaseProxy)
                 element._removed()
                 self.emit(removeEvent, element)
                 self._onElementRemoved(element)
@@ -191,19 +191,19 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         identifier = idfunc(*args, **kwargs)
         current = self.__getAttrValue(attr)
         if current:
-            assert isinstance(current, BaseFlumotionProxy)
+            assert isinstance(current, BaseProxy)
             self.__setAttrValue(attr, None)
             current._removed()
             self.emit(unsetEvent, current)
         pending = self.__getPending(attr, identifier)
         if pending:
-            assert isinstance(pending, BaseFlumotionProxy)
+            assert isinstance(pending, BaseProxy)
             #The element is beeing initialized
             pending.setObsolete()
         if identifier:
             element = factory.instantiate(self, self, identifier, 
                                           *args, **kwargs)
-            assert isinstance(element, BaseFlumotionProxy)
+            assert isinstance(element, BaseProxy)
             self.__addPending(attr, identifier, element)
             d = element.initialize()
             d.addCallbacks(self.__cbElementInitialized,
@@ -221,11 +221,11 @@ class BaseFlumotionProxy(adminelement.AdminElement):
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
-                assert isinstance(element, BaseFlumotionProxy)
+                assert isinstance(element, BaseProxy)
                 element._removed()
                 self.emit(removeEvent, element)
         else:
-            assert isinstance(value, BaseFlumotionProxy)
+            assert isinstance(value, BaseProxy)
             value._removed()
             self.emit(removeEvent, value)
     
@@ -376,23 +376,23 @@ class BaseFlumotionProxy(adminelement.AdminElement):
 
 
 
-class RootFlumotionProxy(BaseFlumotionProxy):
+class RootProxy(BaseProxy):
     
     def __init__(self, logger):
-        BaseFlumotionProxy.__init__(self, logger, None, 
+        BaseProxy.__init__(self, logger, None, 
                                     self.__class__.__name__)
 
 
 
-class FlumotionProxy(BaseFlumotionProxy):
+class Proxy(BaseProxy):
     
-    implements(IFlumotionProxy)
+    implements(IProxy)
     
-    def __init__(self, logger, parent, identifier, manager):
-        BaseFlumotionProxy.__init__(self, logger, parent, identifier)
-        self._manager = manager
+    def __init__(self, logger, parentPxy, identifier, managerPxy):
+        BaseProxy.__init__(self, logger, parentPxy, identifier)
+        self._managerPxy = managerPxy
         
     def getManager(self):
-        return self._manager
+        return self._managerPxy
     
     

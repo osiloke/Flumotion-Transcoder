@@ -19,20 +19,18 @@ from flumotion.common.planet import moods
 from flumotion.inhouse import log, defer, utils
 from flumotion.inhouse.errors import TimeoutError
 
-from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.taskmanager import TaskManager
-from flumotion.transcoder.admin.monbalancer import MonitorBalancer
+from flumotion.transcoder.admin import adminconsts, taskmanager, monbalancer
 
 
-class Monitoring(TaskManager):
+class Monitoring(taskmanager.TaskManager):
     
     logCategory = adminconsts.MONITORING_LOG_CATEGORY
     
-    def __init__(self, workerset, monitorset):
-        TaskManager.__init__(self)
-        self._workers = workerset
-        self._monitors = monitorset
-        self._balancer = MonitorBalancer()
+    def __init__(self, workerPxySet, monitorPxySet):
+        taskmanager.TaskManager.__init__(self)
+        self._workerPxySet = workerPxySet
+        self._monitorPxySet = monitorPxySet
+        self._balancer = monbalancer.MonitorBalancer()
         # Registering Events
         self._register("task-added")
         self._register("task-removed")
@@ -42,28 +40,26 @@ class Monitoring(TaskManager):
     
     def initialize(self):
         self.log("Initializing Monitoring Manager")
-   
-
-        self._workers.connectListener("worker-added", self, self.onWorkerAddedToSet)
-        self._workers.connectListener("worker-removed", self, self.onWorkerRemovedFromSet)
-        self._monitors.connectListener("monitor-added", self, self.onMonitorAddedToSet)
-        self._monitors.connectListener("monitor-removed", self, self.onMonitorRemovedFromSet)
-        self._workers.update(self)
-        self._monitors.update(self)
-        return TaskManager.initialize(self)
+        self._workerPxySet.connectListener("worker-added", self, self._onWorkerAddedToSet)
+        self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
+        self._monitorPxySet.connectListener("monitor-added", self, self._onMonitorAddedToSet)
+        self._monitorPxySet.connectListener("monitor-removed", self, self._onMonitorRemovedFromSet)
+        self._workerPxySet.update(self)
+        self._monitorPxySet.update(self)
+        return taskmanager.TaskManager.initialize(self)
 
     
     ## Overrided Virtual Methods ##
 
     def _doStart(self):
         self.log("Ready to start monitoring, waiting monitors to become idle")
-        d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d = self._monitorPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeMonitoring)
         return d
     
     def _doResume(self):
         self.log("Ready to resume monitoring, waiting monitors to become idle")
-        d = self._monitors.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
+        d = self._monitorPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeMonitoring)
         return d
     
@@ -91,28 +87,28 @@ class Monitoring(TaskManager):
             
     ## WorkerSet Event Listeners ##
     
-    def onWorkerAddedToSet(self, workerset, worker):
-        self.log("Worker '%s' added to monitoring", worker.getLabel())
-        self._balancer.addWorker(worker)
+    def _onWorkerAddedToSet(self, workerPxySet, workerPxy):
+        self.log("Worker '%s' added to monitoring", workerPxy.getLabel())
+        self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
-    def onWorkerRemovedFromSet(self, workerset, worker):
-        self.log("Worker '%s' removed from monitoring", worker.getLabel())
-        self._balancer.removeWorker(worker)
+    def _onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
+        self.log("Worker '%s' removed from monitoring", workerPxy.getLabel())
+        self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
 
 
     ## MonitorSet Event Listeners ##
     
-    def onMonitorAddedToSet(self, monitorset, monitor):
-        self.log("Monitor '%s' added to monitoring", monitor.getLabel())
-        d = self.addComponent(monitor)
-        d.addErrback(self.__ebAddComponentFailed, monitor.getName())
+    def _onMonitorAddedToSet(self, monitorPxySet, monitorPxy):
+        self.log("Monitor '%s' added to monitoring", monitorPxy.getLabel())
+        d = self.addComponent(monitorPxy)
+        d.addErrback(self.__ebAddComponentFailed, monitorPxy.getName())
     
-    def onMonitorRemovedFromSet(self, monitorset, monitor):
-        self.log("Monitor '%s' removed from monitoring", monitor.getLabel())
-        d = self.removeComponent(monitor)
-        d.addErrback(self.__ebRemoveComponentFailed, monitor.getName())
+    def _onMonitorRemovedFromSet(self, monitorPxySet, monitorPxy):
+        self.log("Monitor '%s' removed from monitoring", monitorPxy.getLabel())
+        d = self.removeComponent(monitorPxy)
+        d.addErrback(self.__ebRemoveComponentFailed, monitorPxy.getName())
 
 
     ## Overriden Methods ##
@@ -142,7 +138,7 @@ class Monitoring(TaskManager):
     def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.MONITORING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
-        # Call self._balancer.addTask(task, worker)
+        # Call self._balancer.addTask(task, workerPxy)
         d.addCallback(defer.shiftResult, self._balancer.addTask, 1, task)
         return d
     

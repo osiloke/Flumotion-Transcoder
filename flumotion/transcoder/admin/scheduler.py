@@ -61,9 +61,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     def initialize(self):
         self.debug("Retrieve transcoding activities")
-        self._transcoding.connectListener("task-added", self, self.onTranscodingTaskAdded)
-        self._transcoding.connectListener("task-removed", self, self.onTranscodingTaskRemoved)
-        self._transcoding.connectListener("slot-available", self, self.onSlotsAvailable)
+        self._transcoding.connectListener("task-added", self, self._onTranscodingTaskAdded)
+        self._transcoding.connectListener("task-removed", self, self._onTranscodingTaskRemoved)
+        self._transcoding.connectListener("slot-available", self, self._onSlotsAvailable)
         self._transcoding.update(self)
         states = [ActivityStateEnum.started]
         stateCtx = self._storeCtx.getStateContext()
@@ -133,51 +133,51 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     ## ITranscoding Event Listers ##
     
-    def onTranscodingTaskAdded(self, takset, task):
+    def _onTranscodingTaskAdded(self, takset, task):
         self.debug("Transcoding task '%s' added", task.getLabel())
-        task.connectListener("failed", self, self.onTranscodingFailed)
-        task.connectListener("done", self, self.onTranscodingDone)
-        task.connectListener("terminated", self, self.onTranscodingTerminated)
+        task.connectListener("failed", self, self._onTranscodingFailed)
+        task.connectListener("done", self, self._onTranscodingDone)
+        task.connectListener("terminated", self, self._onTranscodingTerminated)
         task.update(self)
     
-    def onTranscodingTaskRemoved(self, tasker, task):
+    def _onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.getLabel())
         task.disconnectListener("failed", self)
         task.disconnectListener("done", self)
         task.disconnectListener("terminated", self)
 
-    def onSlotsAvailable(self, tasker, count):
+    def _onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)
         self.__startupTasks()
 
 
     ## TranscodingTask Event Listeners ##
     
-    def onTranscodingFailed(self, task, transcoder):
+    def _onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.getStore()
         activStore.setState(ActivityStateEnum.failed)
         activStore.store()
         self.emit("transcoding-failed", task)
-        if transcoder is not None:
-            d = transcoder.retrieveReport()
-            d.addCallback(self.__transcodingFailed, task, transcoder)
+        if transPxy is not None:
+            d = transPxy.retrieveReport()
+            d.addCallback(self.__transcodingFailed, task, transPxy)
         else:
-            self.__transcodingFailed(None, task, transcoder)
+            self.__transcodingFailed(None, task, transPxy)
             
-    def onTranscodingDone(self, task, transcoder):
+    def _onTranscodingDone(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.getStore()
         activStore.setState(ActivityStateEnum.done)
         activStore.store()
         self.emit("transcoding-done", task)
-        if transcoder is not None:
-            d = transcoder.retrieveReport()
-            d.addCallback(self.__transcodingDone, task, transcoder)
+        if transPxy is not None:
+            d = transPxy.retrieveReport()
+            d.addCallback(self.__transcodingDone, task, transPxy)
         else:
-            self.__transcodingDone(None, task, transcoder)
+            self.__transcodingDone(None, task, transPxy)
 
-    def onTranscodingTerminated(self, task, succeed):
+    def _onTranscodingTerminated(self, task, succeed):
         self.info("Transcoding task '%s' %s", task.getLabel(), 
                   (succeed and "succeed") or "failed")
         profCtx = task.getProfileContext()
@@ -196,27 +196,27 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     ## Private Methods ##
     
-    def __transcodingDone(self, report, task, transcoder):
+    def __transcodingDone(self, report, task, transPxy):
         label = task.getLabel()
-        docs = transcoder and transcoder.getDocuments()
+        docs = transPxy and transPxy.getDocuments()
         trigger = NotificationTriggerEnum.done
         profCtx = task.getProfileContext()
         self.__notify(label, trigger, profCtx, report, docs)
     
-    def __transcodingFailed(self, report, task, transcoder):    
-        d = self._diagnostician.diagnoseTranscodingFailure(task, transcoder)
-        args = (report, task, transcoder)
+    def __transcodingFailed(self, report, task, transPxy):    
+        d = self._diagnostician.diagnoseTranscodingFailure(task, transPxy)
+        args = (report, task, transPxy)
         d.addCallbacks(self.__notifyTranscodingfailure,
                        self.__ebFailureDiagnosticFailed,
                        callbackArgs=args, errbackArgs=args)
     
-    def __ebFailureDiagnosticFailed(self, failure, report, task, transcoder):
+    def __ebFailureDiagnosticFailed(self, failure, report, task, transPxy):
         log.notifyFailure(self, failure, "Failure during transcoding failure diagnostic")
         # But we continue like if nothing has append
-        self.__notifyTranscodingfailure(None, report, task, transcoder)
+        self.__notifyTranscodingfailure(None, report, task, transPxy)
     
-    def __notifyTranscodingfailure(self, diagnostic, report, task, transcoder):
-        docs = transcoder and transcoder.getDocuments()
+    def __notifyTranscodingfailure(self, diagnostic, report, task, transPxy):
+        docs = transPxy and transPxy.getDocuments()
         # It possible create an alternative error message for
         # when there is no report or no error message in the report
         altErrorMessage = None

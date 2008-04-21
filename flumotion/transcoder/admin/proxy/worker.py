@@ -15,13 +15,7 @@ from zope.interface import implements
 from flumotion.inhouse import log
 
 from flumotion.transcoder.admin import interfaces
-from flumotion.transcoder.admin.proxies import fluproxy
-
-
-def instantiate(logger, parent, identifier, manager, 
-                workerContext, state, *args, **kwargs):
-    return WorkerProxy(logger, parent, identifier, manager, 
-                       workerContext, state, *args, **kwargs)
+from flumotion.transcoder.admin.proxy import base
     
 
 class IWorkerDefinition(interfaces.IAdminInterface):
@@ -33,7 +27,7 @@ class IWorkerDefinition(interfaces.IAdminInterface):
         pass
 
 
-class IWorkerProxy(IWorkerDefinition, fluproxy.IFlumotionProxy):
+class IWorkerProxy(IWorkerDefinition, base.IProxy):
     
     def getHost(self):
         pass
@@ -60,14 +54,11 @@ class WorkerDefinition(object):
         return self._workerCtx
  
  
-class WorkerProxy(fluproxy.FlumotionProxy):
+class WorkerProxy(base.Proxy):
     implements(IWorkerProxy)
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 workerCtx, workerState):
-        fluproxy.FlumotionProxy.__init__(self, logger, parent, 
-                                         identifier, manager)
-        
+    def __init__(self, logger, parentPxy, identifier, managerPxy, workerCtx, workerState):
+        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._workerState = workerState
         self._workerCtx = workerCtx
         
@@ -101,6 +92,12 @@ class WorkerProxy(fluproxy.FlumotionProxy):
     def _callRemote(self, methodName, *args, **kwargs):
         assert self._workerState, "Worker has been removed"
         workerName = self._workerState.get('name')
-        return self._manager._workerCallRemote(workerName, 
-                                               methodName, 
-                                               *args, **kwargs)
+        return self._managerPxy._workerCallRemote(workerName, 
+                                                  methodName, 
+                                                  *args, **kwargs)
+
+
+def instantiate(logger, parentPxy, identifier, managerPxy, 
+                workerContext, workerState, *args, **kwargs):
+    return WorkerProxy(logger, parentPxy, identifier, managerPxy, 
+                       workerContext, workerState, *args, **kwargs)

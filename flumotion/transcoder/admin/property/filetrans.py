@@ -17,21 +17,17 @@ from zope.interface import implements
 from flumotion.common import common
 
 from flumotion.inhouse import log, inifile, utils, fileutils
-from flumotion.inhouse.utils import digestParameters
 
-from flumotion.transcoder import constants
+from flumotion.transcoder import constants, transconfig, virtualpath
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.transconfig import TranscodingConfig, TargetConfig
-from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.errors import PropertiesError
-from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
-from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin
+from flumotion.transcoder.admin import errors
+from flumotion.transcoder.admin.property import base
 
 
 def createTranscodingConfigFromContext(profCtx):
     # PyChecker doesn't like dynamic attributes
     __pychecker__ = "no-objattrs"
-    conf = TranscodingConfig()
+    conf = transconfig.TranscodingConfig()
     conf.touch()
     custCtx = profCtx.getCustomerContext()
     conf.customer.name = custCtx.getLabel()
@@ -54,7 +50,7 @@ def createTranscodingConfigFromContext(profCtx):
     conf.source.reportTemplate = profCtx.getDoneRepRelPath()
     conf.source.preProcess = profCtx.getPreprocessCommand()
     for targCtx in profCtx.iterTargetContexts():
-        tc = TargetConfig()
+        tc = transconfig.TargetConfig()
         label = targCtx.getLabel()
         conf.targets[label] = tc
         tc.label = label
@@ -106,15 +102,15 @@ def createTranscodingConfigFromContext(profCtx):
     return conf
 
 
-class TranscoderProperties(ComponentPropertiesMixin):
+class TranscoderProperties(base.ComponentPropertiesMixin):
     
-    implements(IComponentProperties)
+    implements(base.IComponentProperties)
     
     @classmethod
     def createFromComponentDict(cls, workerCtx, props):
         niceLevel = props.get("nice-level", None)
         name = props.get("admin-id", "")
-        configPath = VirtualPath(props.get("config", None))
+        configPath = virtualpath.VirtualPath(props.get("config", None))
         pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
         adminCtx = workerCtx.getAdminContext()
         adminLocal = adminCtx.getLocal()
@@ -122,16 +118,16 @@ class TranscoderProperties(ComponentPropertiesMixin):
         if not os.path.exists(localPath):
             message = ("Transcoder config file not found ('%s')" % localPath)
             log.warning("%s", message)
-            raise PropertiesError(message)
+            raise errors.PropertiesError(message)
         loader = inifile.IniFile()
-        config = TranscodingConfig()
+        config = transconfig.TranscodingConfig()
         try:
             loader.loadFromFile(config, localPath)
         except Exception, e:
             message = ("Failed to load transcoder config file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
-            raise PropertiesError(message)
+            raise errors.PropertiesError(message)
         return cls(name, configPath, config, niceLevel, pathAttr)
     
     @classmethod
@@ -156,10 +152,10 @@ class TranscoderProperties(ComponentPropertiesMixin):
         self._niceLevel = niceLevel
         self._pathAttr = pathAttr
         # For now only use the configPath property in the digest
-        self._digest = digestParameters(self._name, 
-                                        self._configPath, 
-                                        self._niceLevel,
-                                        self._pathAttr)
+        self._digest = utils.digestParameters(self._name, 
+                                              self._configPath, 
+                                              self._niceLevel,
+                                              self._pathAttr)
 
     def getConfigPath(self):
         return self._configPath
@@ -168,7 +164,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
         return self._config
 
 
-    ## IComponentProperties Implementation ##
+    ## base.IComponentProperties Implementation ##
         
     def getDigest(self):
         return self._digest
@@ -188,7 +184,7 @@ class TranscoderProperties(ComponentPropertiesMixin):
             message = ("Failed to save transcoder config file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
-            raise PropertiesError(message)
+            raise errors.PropertiesError(message)
         if self._pathAttr:
             self._pathAttr.apply(localPath)
         

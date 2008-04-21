@@ -23,32 +23,32 @@ class MonitorBalancer(object):
     """
     
     def __init__(self):
-        self._workers = {} # {worker: [task]}
+        self._workerTasks = {} # {workerPxy: [task]}
         self._orphanes = []
         self._total = 0
         
     def clearTasks(self):
         self._total = 0
         del self._orphanes[:]
-        for tasks in self._workers.itervalues():
+        for tasks in self._workerTasks.itervalues():
             del tasks[:]
         
-    def addWorker(self, worker):
-        assert not (worker in self._workers)
-        self._workers[worker] = []
+    def addWorker(self, workerPxy):
+        assert not (workerPxy in self._workerTasks)
+        self._workerTasks[workerPxy] = []
         
-    def removeWorker(self, worker):
-        assert worker in self._workers
-        self._orphanes.extend(self._workers[worker])
-        del self._workers[worker]
+    def removeWorker(self, workerPxy):
+        assert workerPxy in self._workerTasks
+        self._orphanes.extend(self._workerTasks[workerPxy])
+        del self._workerTasks[workerPxy]
     
-    def addTask(self, task, worker=None):
+    def addTask(self, task, workerPxy=None):
         assert IAdminTask.providedBy(task)
-        assert (worker == None) or (worker in self._workers)
+        assert (workerPxy == None) or (workerPxy in self._workerTasks)
         self._total += 1
-        if worker:
-            self._workers[worker].append(task)
-            task.suggestWorker(worker)
+        if workerPxy:
+            self._workerTasks[workerPxy].append(task)
+            task.suggestWorker(workerPxy)
         else:
             self._orphanes.append(task)
     
@@ -58,19 +58,19 @@ class MonitorBalancer(object):
             self._orphanes.remove(task)
             self._total -= 1
             return
-        for tasks in self._workers.itervalues():
+        for tasks in self._workerTasks.itervalues():
             if task in tasks:
                 tasks.remove(task)
                 self._total -= 1
                 return
 
     def balance(self):
-        if self._workers:
-            max = int(math.ceil(float(self._total) / len(self._workers)))
-            workers = self._workers.keys()
-            workers.sort(key=lambda w: -len(self._workers[w]))
-            for worker in workers:
-                tasks = self._workers[worker]
+        if self._workerTasks:
+            max = int(math.ceil(float(self._total) / len(self._workerTasks)))
+            workerPxys = self._workerTasks.keys()
+            workerPxys.sort(key=lambda w: -len(self._workerTasks[w]))
+            for workerPxy in workerPxys:
+                tasks = self._workerTasks[workerPxy]
                 l = len(tasks)
                 if l > max:
                     self._orphanes.extend(tasks[max:])
@@ -81,9 +81,9 @@ class MonitorBalancer(object):
                     del self._orphanes[i:]
                     tasks.extend(migrated)
                     for j in migrated:
-                        j.suggestWorker(worker)
+                        j.suggestWorker(workerPxy)
         if len(self._orphanes) > 0:
-            assert len(self._workers) == 0
+            assert len(self._workerTasks) == 0
             for j in self._orphanes:
                 j.suggestWorker(None)
 

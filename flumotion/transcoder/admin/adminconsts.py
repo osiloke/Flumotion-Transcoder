@@ -13,7 +13,7 @@
 # Log categories
 ADMIN_LOG_CATEGORY = "admin"
 STORES_LOG_CATEGORY = "stores"
-PROXIES_LOG_CATEGORY = "proxies"
+PROXIES_LOG_CATEGORY = "proxy"
 DATASOURCE_LOG_CATEGORY = "datasource"
 MONITORING_LOG_CATEGORY = "monitoring"
 TRANSCODING_LOG_CATEGORY = "transcoding"

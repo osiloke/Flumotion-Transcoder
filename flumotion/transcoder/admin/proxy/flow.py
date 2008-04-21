@@ -13,24 +13,24 @@
 from zope.interface import Interface, implements
 
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
-from flumotion.transcoder.admin.proxies import groupproxy
+from flumotion.transcoder.admin.proxy import group
 
 
-def instantiate(logger, parent, identifier, manager, 
-                flowContext, state, *args, **kwargs):
-    return FlowProxy(logger, parent, identifier, manager, 
-                     flowContext, state, *args, **kwargs)
-
-
-class FlowProxy(groupproxy.ComponentGroupProxy):
+class FlowProxy(group.ComponentGroupProxy):
     
     _componentDomain = ComponentDomainEnum.flow
     
-    def __init__(self, logger, parent, identifier, manager, 
-                 flowContext, flowState):
-        groupproxy.ComponentGroupProxy.__init__(self, logger, parent, 
-                                                identifier, manager,
-                                                flowContext, flowState)
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, flowCtx, flowState):
+        group.ComponentGroupProxy.__init__(self, logger, parentPxy, 
+                                           identifier, managerPxy,
+                                           flowCtx, flowState)
 
     def getFlowContext(self):
         return self._context
+
+    
+def instantiate(logger, parentPxy, identifier, managerPxy, 
+                flowCtx, flowState, *args, **kwargs):
+    return FlowProxy(logger, parentPxy, identifier, managerPxy, 
+                     flowCtx, flowState, *args, **kwargs)

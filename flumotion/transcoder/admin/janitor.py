@@ -23,58 +23,58 @@ class Janitor(log.Loggable):
     
     logCategory = adminconsts.JANITOR_LOG_CATEGORY
     
-    def __init__(self, adminCtx, components):
+    def __init__(self, adminCtx, compPxySet):
         self._adminCtx = adminCtx
-        self._components = components
-        # The component with bad moods are keeped but limited
+        self._compPxySet = compPxySet
+        # The compPxy with bad moods are keeped but limited
         self._badMoods = set([moods.sad, moods.lost])
         self._neutralMoods = set([moods.sleeping, moods.waking])
         self._bags = {} # {workername: RingBuffer}
         self._deleted = set()
         
     def initialize(self):
-        self._components.connectListener("component-added", self, self.onComponentAddedToSet)
-        self._components.connectListener("component-removed", self, self.onComponentRemovedFromSet)
-        self._components.update(self)
+        self._compPxySet.connectListener("component-added", self, self._onComponentAddedToSet)
+        self._compPxySet.connectListener("component-removed", self, self._onComponentRemovedFromSet)
+        self._compPxySet.update(self)
         return defer.succeed(self)
 
 
     ## ComponentSet Event Listeners ##
 
-    def onComponentAddedToSet(self, componentset, component):
-        component.connectListener("mood-changed", self, self.onComponentMoodChanged)    
-        component.update(self)
+    def _onComponentAddedToSet(self, compPxySet, compPxy):
+        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)    
+        compPxy.update(self)
     
-    def onComponentRemovedFromSet(self, componentset, component):
-        component.disconnectListener("mood-changed", self)
-        bag = self.__getComponentBag(component)
-        if bag and (component in bag):
-            bag.remove(component)
-        if component in self._deleted:
-            self._deleted.remove(component)
+    def _onComponentRemovedFromSet(self, compPxySet, compPxy):
+        compPxy.disconnectListener("mood-changed", self)
+        bag = self.__getComponentBag(compPxy)
+        if bag and (compPxy in bag):
+            bag.remove(compPxy)
+        if compPxy in self._deleted:
+            self._deleted.remove(compPxy)
 
 
     ## Component Event Listeners ##
 
-    def onComponentMoodChanged(self, component, mood):
+    def _onComponentMoodChanged(self, compPxy, mood):
         if mood == None: return
         if mood in self._neutralMoods: return
-        if component in self._deleted: return
-        bag = self.__getComponentBag(component)
+        if compPxy in self._deleted: return
+        bag = self.__getComponentBag(compPxy)
         if bag == None: return
-        workerName = component.getRequestedWorkerName()
-        if component in bag:
+        workerName = compPxy.getRequestedWorkerName()
+        if compPxy in bag:
             if not (mood in self._badMoods):
-                bag.remove(component)
+                bag.remove(compPxy)
                 self.log("Component '%s' not in a bad mood anymore (%s); "
                          "take out of the bag (worker '%s' bag contains %d components)",
-                         component.getLabel(), mood.name, workerName, len(bag))
+                         compPxy.getLabel(), mood.name, workerName, len(bag))
         else:
             if mood in self._badMoods:
-                old = bag.push(component)
+                old = bag.push(compPxy)
                 self.log("Component '%s' goes in a bad mood (%s); "
                          "keeping it (worker '%s' bag contains %d components)",
-                         component.getLabel(), mood.name, workerName, len(bag))
+                         compPxy.getLabel(), mood.name, workerName, len(bag))
                 if old:
                     self.debug("Worker '%s' disposal bag is full; dumping "
                                "component '%s'", workerName, old.getLabel())
@@ -90,8 +90,8 @@ class Janitor(log.Loggable):
 
     ## Private Methods ##
     
-    def __getComponentBag(self, component):
-        workerName = component.getRequestedWorkerName()
+    def __getComponentBag(self, compPxy):
+        workerName = compPxy.getRequestedWorkerName()
         if not workerName: return None
         if workerName in self._bags:
             return self._bags[workerName]
@@ -103,12 +103,12 @@ class Janitor(log.Loggable):
         self._bags[workerName] = bag
         return bag
     
-    def __forceComponentDeletion(self, component):
-        if component not in self._deleted:
+    def __forceComponentDeletion(self, compPxy):
+        if compPxy not in self._deleted:
             # Already deleted by the components managers.
             return
         self.warning("Component '%s' still not deleted, force deletion",
-                     component.getLabel())
-        d = component.forceDelete()
+                     compPxy.getLabel())
+        d = compPxy.forceDelete()
         # Catch all failures
         d.addErrback(defer.resolveFailure) 

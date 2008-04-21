@@ -21,17 +21,16 @@ from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin import diagutils
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.document import StringDocument
-from flumotion.transcoder.admin.proxies.monitorproxy import MonitorProxy
-from flumotion.transcoder.admin.proxies.transcoderproxy import TranscoderProxy
+from flumotion.transcoder.admin.proxy import monitor, transcoder
 
 
 class Diagnostician(object):
     
-    def __init__(self, adminContext, managers, workers, components):
-        self._adminCtx = adminContext
-        self._managers = managers
-        self._workers = workers
-        self._components = components
+    def __init__(self, adminCtx, managerPxySet, workerPxySet, compPxySet):
+        self._adminCtx = adminCtx
+        self._managerPxySet = managerPxySet
+        self._workerPxySet = workerPxySet
+        self._compPxySet = compPxySet
         self._translator = messages.Translator()
         
     
@@ -66,13 +65,13 @@ class Diagnostician(object):
     _crashMessagePattern = re.compile("The core dump is '([^']*)' on the host running '([^']*)'")
     
     @decorators.ensureDeferred
-    def diagnoseComponentMessage(self, component, message):
+    def diagnoseComponentMessage(self, compPxy, message):
         diagnostic = []
         d = defer.succeed(diagnostic)
-        if isinstance(component, TranscoderProxy):
+        if isinstance(compPxy, transcoder.TranscoderProxy):
             # Ensure we have the last report path
-            d.addCallback(self.__waitReportPath, component)
-        d.addCallback(self.__componentDiagnostic, component)
+            d.addCallback(self.__waitReportPath, compPxy)
+        d.addCallback(self.__componentDiagnostic, compPxy)
         text = self._translator.translate(message)
         isCrashMessage = self._crashMessagePattern.search(text)
         workerName = None
@@ -80,27 +79,27 @@ class Diagnostician(object):
             corePath, workerName = isCrashMessage.groups()
             d.addCallback(self.__crashDiagnostic, workerName, corePath)
             
-        if isinstance(component, MonitorProxy):
-            d.addCallback(self.__monitorDiagnostic, component, workerName)
+        if isinstance(compPxy, monitor.MonitorProxy):
+            d.addCallback(self.__monitorDiagnostic, compPxy, workerName)
                 
-        if isinstance(component, TranscoderProxy):
-            d.addCallback(self.__sourceFileDiagnostic, component, workerName)
-            d.addCallback(self.__transcoderDiagnostic, component, workerName)
-            d.addCallback(self.__pipelineDiagnostic, component, workerName)
+        if isinstance(compPxy, transcoder.TranscoderProxy):
+            d.addCallback(self.__sourceFileDiagnostic, compPxy, workerName)
+            d.addCallback(self.__transcoderDiagnostic, compPxy, workerName)
+            d.addCallback(self.__pipelineDiagnostic, compPxy, workerName)
             
         d.addCallback(self.__finishComponentMessageDiagnostic)
         return d
         
     @decorators.ensureDeferred
-    def diagnoseTranscodingFailure(self, task, transcoder):
+    def diagnoseTranscodingFailure(self, task, transPxy):
         diagnostic = []
         d = defer.succeed(diagnostic)
         # Ensure we have the last report path
-        d.addCallback(self.__waitReportPath, transcoder)
-        d.addCallback(self.__componentDiagnostic, transcoder)
-        d.addCallback(self.__sourceFileDiagnostic, transcoder)
-        d.addCallback(self.__transcoderDiagnostic, transcoder)
-        d.addCallback(self.__pipelineDiagnostic, transcoder)
+        d.addCallback(self.__waitReportPath, transPxy)
+        d.addCallback(self.__componentDiagnostic, transPxy)
+        d.addCallback(self.__sourceFileDiagnostic, transPxy)
+        d.addCallback(self.__transcoderDiagnostic, transPxy)
+        d.addCallback(self.__pipelineDiagnostic, transPxy)
         
         d.addCallback(self.__finishTranscodingFailureDiagnostic)
         return d
@@ -118,48 +117,48 @@ class Diagnostician(object):
         dest = utils.mkCmdArg(dest)
         return "scp " + source + dest
     
-    def __lookupProperties(self, component):
-        if not component: return None
-        return component.getProperties()
+    def __lookupProperties(self, compPxy):
+        if not compPxy: return None
+        return compPxy.getProperties()
     
-    def __waitReportPath(self, diagnostic, transcoder):
-        if not transcoder: return None
-        d = transcoder.retrieveReportPath()
+    def __waitReportPath(self, diagnostic, transPxy):
+        if not transPxy: return None
+        d = transPxy.retrieveReportPath()
         d.addCallback(defer.overrideResult, diagnostic)
         return d
     
-    def __lookupReport(self, transcoder):
-        if not transcoder: return None
-        return transcoder.getReport()
+    def __lookupReport(self, transPxy):
+        if not transPxy: return None
+        return transPxy.getReport()
     
-    def __lookupConfig(self, transcoder):
-        if not transcoder: return None
-        props = self.__lookupProperties(transcoder)
+    def __lookupConfig(self, transPxy):
+        if not transPxy: return None
+        props = self.__lookupProperties(transPxy)
         return props and props.getConfig()
     
-    def __lookupWorker(self, component, workerName=None):
-        worker = None
-        if component:
-            worker = component.getWorker()
-        if (not worker and not workerName
-           and isinstance(component, TranscoderProxy)):
-            report = self.__lookupReport(component)
+    def __lookupWorker(self, compPxy, workerName=None):
+        workerPxy = None
+        if compPxy:
+            workerPxy = compPxy.getWorker()
+        if (not workerPxy and not workerName
+           and isinstance(compPxy, transcoder.TranscoderProxy)):
+            report = self.__lookupReport(compPxy)
             workerName = report and report.local.name
-        if not worker and workerName:
-            worker = self._workers.getWorkerByName(workerName)
-        workerHost = worker and worker.getHost()
-        return (worker, workerName, workerHost)
+        if not workerPxy and workerName:
+            workerPxy = self._workerPxySet.getWorkerByName(workerName)
+        workerHost = workerPxy and workerPxy.getHost()
+        return (workerPxy, workerName, workerHost)
     
-    def __lookupInputPath(self, transcoder, workerName=None):
+    def __lookupInputPath(self, transPxy, workerName=None):
         virtPath, localPath, remotePath = None, None, None
-        if not transcoder: return (virtPath, localPath, remotePath)
-        report = self.__lookupReport(transcoder)
+        if not transPxy: return (virtPath, localPath, remotePath)
+        report = self.__lookupReport(transPxy)
         if not report: return (virtPath, localPath, remotePath)
         virtPath = report.source.lastPath
-        config = self.__lookupConfig(transcoder)
+        config = self.__lookupConfig(transPxy)
         if not config: return (virtPath, localPath, remotePath)
-        worker = self.__lookupWorker(transcoder, workerName)[0]
-        workerLocal = worker and worker.getWorkerContext().getLocal()
+        transPxy = self.__lookupWorker(transPxy, workerName)[0]
+        workerLocal = transPxy and transPxy.getWorkerContext().getLocal()
         adminLocal = self._adminCtx.getLocal()
         alternatives = [report.source.lastPath,
                         report.source.failedPath,
@@ -175,11 +174,11 @@ class Diagnostician(object):
                 break
         return (virtPath, localPath, remotePath)
     
-    def __componentDiagnostic(self, diagnostic, component, workerName=None):
-        if not component: return diagnostic
+    def __componentDiagnostic(self, diagnostic, compPxy, workerName=None):
+        if not compPxy: return diagnostic
         diagnostic.append("COMPONENT INFO\n--------------")
-        workerName, workerHost = self.__lookupWorker(component)[1:3]
-        pid = component.getPID()
+        workerName, workerHost = self.__lookupWorker(compPxy)[1:3]
+        pid = compPxy.getPID()
         diagnostic.append("Component PID:  %s" % (pid or "Unknown"))
         diagnostic.append("Worker Name:    %s" % (workerName or "Unknown"))
         diagnostic.append("Worker Host:    %s" % (workerHost or "Unknown"))
@@ -187,14 +186,14 @@ class Diagnostician(object):
             diagnostic.append("Go to Worker:   ssh -At %s" % workerHost)
         return diagnostic
     
-    def __monitorDiagnostic(self, diagnostic, monitor, workerName=None):
-        if not monitor: return diagnostic
-        worker, workerName = self.__lookupWorker(monitor, workerName)[0:2]
-        if not worker: return diagnostic
-        props = self.__lookupProperties(monitor)
+    def __monitorDiagnostic(self, diagnostic, monPxy, workerName=None):
+        if not monPxy: return diagnostic
+        workerPxy, workerName = self.__lookupWorker(monPxy, workerName)[0:2]
+        if not workerPxy: return diagnostic
+        props = self.__lookupProperties(monPxy)
         if not props: return diagnostic
         diagnostic.append("MANUAL LAUNCH\n-------------")
-        args = props.asLaunchArguments(worker.getWorkerContext())
+        args = props.asLaunchArguments(workerPxy.getWorkerContext())
         origCmd = self.__buildSUCommand("flumotion-launch -d 4 "
                                         "file-monitor", args)
         
@@ -202,22 +201,22 @@ class Diagnostician(object):
         diagnostic.append("    " + origCmd)
         return diagnostic
 
-    def __transcoderDiagnostic(self, diagnostic, transcoder, workerName=None):
+    def __transcoderDiagnostic(self, diagnostic, transPxy, workerName=None):
+        if not transPxy: return diagnostic
+        workerPxy, workerName = self.__lookupWorker(transPxy, workerName)[0:2]
         if not transcoder: return diagnostic
-        worker, workerName = self.__lookupWorker(transcoder, workerName)[0:2]
-        if not worker: return diagnostic
         # Use retrieveReportPath because getReportPath sometime fail
         # because to the report file has been moved 
-        d = transcoder.retrieveReportPath()
+        d = transPxy.retrieveReportPath()
         d.addCallback(self.__cbGotReportForTranscoderDiagnostic, diagnostic,
-                      transcoder, worker, workerName)
+                      transPxy, workerPxy, workerName)
         return d
     
     def __cbGotReportForTranscoderDiagnostic(self, reportVirtPath, diagnostic,
-                                             transcoder, worker, workerName):
-        props = self.__lookupProperties(transcoder)
+                                             transPxy, workerPxy, workerName):
+        props = self.__lookupProperties(transPxy)
         if not (props or reportVirtPath): return diagnostic 
-        workerCtx = worker.getWorkerContext()
+        workerCtx = workerPxy.getWorkerContext()
         workerLocal = workerCtx.getLocal()
         diagnostic.append("MANUAL LAUNCH\n-------------")
         if props:
@@ -257,13 +256,13 @@ class Diagnostician(object):
 
         return diagnostic
 
-    def __sourceFileDiagnostic(self, diagnostic, transcoder, workerName=None):
-        if not transcoder: return diagnostic
-        report = self.__lookupReport(transcoder)
+    def __sourceFileDiagnostic(self, diagnostic, transPxy, workerName=None):
+        if not transPxy: return diagnostic
+        report = self.__lookupReport(transPxy)
         if not report: return diagnostic
-        pathInfo = self.__lookupInputPath(transcoder, workerName)
+        pathInfo = self.__lookupInputPath(transPxy, workerName)
         inputVirtPath, inputLocalPath, inputRemotePath = pathInfo
-        workerInfo = self.__lookupWorker(transcoder, workerName)
+        workerInfo = self.__lookupWorker(transPxy, workerName)
         workerName, workerHost = workerInfo[1:3]
         
         diagnostic.append("SOURCE FILE INFO\n----------------")
@@ -304,12 +303,12 @@ class Diagnostician(object):
         
         return diagnostic
 
-    def __pipelineDiagnostic(self, diagnostic, transcoder, workerName=None):
-        if not transcoder: return diagnostic
-        report = self.__lookupReport(transcoder)
-        config = self.__lookupConfig(transcoder)
+    def __pipelineDiagnostic(self, diagnostic, transPxy, workerName=None):
+        if not transPxy: return diagnostic
+        report = self.__lookupReport(transPxy)
+        config = self.__lookupConfig(transPxy)
         if not (config and report): return diagnostic
-        pathInfo = self.__lookupInputPath(transcoder, workerName)
+        pathInfo = self.__lookupInputPath(transPxy, workerName)
         virtInputPath = pathInfo[0]
         targetFileTemplate = "diag_%(filename)s"
         gstlaunch = "GST_DEBUG=2 gst-launch -v "

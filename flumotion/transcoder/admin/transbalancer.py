@@ -31,12 +31,12 @@ class TranscoderBalancerListener(object):
 
 class TranscoderBalancer(object):
     """
-    Handle the distribution of transcoding tasks to a set of worker.
+    Handle the distribution of transcoding tasks to a set of workerPxy.
     """
     
     def __init__(self, listener=None):
         self._listener = listener
-        self._workers = {} # {worker: [task]}
+        self._workerTasks = {} # {workerPxy: [task]}
         self._orphanes = []
         self._current = 0
         self._maximum = 0
@@ -50,30 +50,30 @@ class TranscoderBalancer(object):
     def clearTasks(self):
         self._current = 0
         del self._orphanes[:]
-        for tasks in self._workers.itervalues():
+        for tasks in self._workerTasks.itervalues():
             del tasks[:]
         
-    def addWorker(self, worker):
-        assert not (worker in self._workers)
-        self._workers[worker] = []
-        self._maximum += worker.getWorkerContext().getMaxTask()
+    def addWorker(self, workerPxy):
+        assert not (workerPxy in self._workerTasks)
+        self._workerTasks[workerPxy] = []
+        self._maximum += workerPxy.getWorkerContext().getMaxTask()
         
-    def removeWorker(self, worker):
-        assert worker in self._workers
-        self._maximum -= worker.getWorkerContext().getMaxTask()
-        self._orphanes.extend(self._workers[worker])
-        del self._workers[worker]
+    def removeWorker(self, workerPxy):
+        assert workerPxy in self._workerTasks
+        self._maximum -= workerPxy.getWorkerContext().getMaxTask()
+        self._orphanes.extend(self._workerTasks[workerPxy])
+        del self._workerTasks[workerPxy]
     
-    def addTask(self, task, worker=None):
+    def addTask(self, task, workerPxy=None):
         assert IAdminTask.providedBy(task)
-        assert (worker == None) or (worker in self._workers)
+        assert (workerPxy == None) or (workerPxy in self._workerTasks)
         self._current += 1
-        if worker:
-            max = worker.getWorkerContext().getMaxTask()
-            curr = len(self._workers[worker])
+        if workerPxy:
+            max = workerPxy.getWorkerContext().getMaxTask()
+            curr = len(self._workerTasks[workerPxy])
             if max > curr:
-                self._workers[worker].append(task)
-                task.suggestWorker(worker)
+                self._workerTasks[workerPxy].append(task)
+                task.suggestWorker(workerPxy)
                 return
         self._orphanes.append(task)
     
@@ -83,7 +83,7 @@ class TranscoderBalancer(object):
             self._orphanes.remove(task)
             self._current -= 1
             return
-        for tasks in self._workers.itervalues():
+        for tasks in self._workerTasks.itervalues():
             if task in tasks:
                 tasks.remove(task)
                 self._current -= 1
@@ -97,16 +97,16 @@ class TranscoderBalancer(object):
             with the ones with the most free slots first.
             """
             lookup = dict([(w, float(len(t)) / w.getWorkerContext().getMaxTask()) 
-                           for w, t in self._workers.items()
+                           for w, t in self._workerTasks.items()
                            if len(t) < w.getWorkerContext().getMaxTask()])
-            workers = lookup.keys()
-            workers.sort(key=lookup.get)
-            return workers
+            workerPxys = lookup.keys()
+            workerPxys.sort(key=lookup.get)
+            return workerPxys
         
-        if self._workers:
+        if self._workerTasks:
             # First remove the exceding tasks
-            for worker, tasks in self._workers.iteritems():
-                max = worker.getWorkerContext().getMaxTask()
+            for workerPxy, tasks in self._workerTasks.iteritems():
+                max = workerPxy.getWorkerContext().getMaxTask()
                 if len(tasks) > max:
                     diff = len(tasks) - max
                     oldTasks = tasks[diff:]
@@ -117,14 +117,14 @@ class TranscoderBalancer(object):
             # Then distribute the orphanes until there is 
             # no more free slots or no more orphane tasks
             while True:
-                workers = getSortedWorkers()
-                if not workers: break
-                for worker in workers:                    
+                workerPxys = getSortedWorkers()
+                if not workerPxys: break
+                for workerPxy in workerPxys:                    
                     if not self._orphanes: break
-                    tasks = self._workers[worker]
+                    tasks = self._workerTasks[workerPxy]
                     task = self._orphanes.pop()
                     tasks.append(task)
-                    task.suggestWorker(worker)
+                    task.suggestWorker(workerPxy)
                 else:
                     continue
                 break

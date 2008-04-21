@@ -1,5 +1,11 @@
 2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
 
+	Standardized the proxies naming to match store/context/medium conventions.
+	Sanitized the proxies variables naming.
+	Renamed proxy modules to match store/context/medium conventions.
+
+2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datasource/filesource.py:
 	Ignoring customer configuration file that starts with '.'
 

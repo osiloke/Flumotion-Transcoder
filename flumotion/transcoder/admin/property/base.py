@@ -25,13 +25,13 @@ class IComponentProperties(Interface):
     def getDigest(self):
         pass
 
-    def prepare(self, workerContext):
+    def prepare(self, workerCtx):
         pass
 
-    def asComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerCtx):
         pass
 
-    def asLaunchArguments(self, workerContext):
+    def asLaunchArguments(self, workerCtx):
         pass
     
 
@@ -56,7 +56,7 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     implements(IComponentProperties)
     
     @classmethod
-    def createFromComponentDict(cls, workerContext, props):
+    def createFromComponentDict(cls, workerCtx, props):
         return GenericComponentProperties(props)
     
     def __init__(self, props):
@@ -69,11 +69,11 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     def getDigest(self):
         return self._digest
     
-    def prepare(self, workerContext):
+    def prepare(self, workerCtx):
         pass
     
-    def asComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerCtx):
         raise NotImplementedError()
     
-    def asLaunchArguments(self, workerContext):
+    def asLaunchArguments(self, workerCtx):
         raise NotImplementedError()

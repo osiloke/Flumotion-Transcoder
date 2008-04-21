@@ -17,20 +17,17 @@ from zope.interface import implements
 from flumotion.common import log
 
 from flumotion.inhouse import utils, fileutils
-from flumotion.inhouse.utils import digestParameters
 
-from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.admin.errors import PropertiesError
-from flumotion.transcoder.admin.proxies.compprops import IComponentProperties
-from flumotion.transcoder.admin.proxies.compprops import ComponentPropertiesMixin
+from flumotion.transcoder.admin import errors
+from flumotion.transcoder.admin.property import base
 
 
-class MonitorProperties(ComponentPropertiesMixin):
+class MonitorProperties(base.ComponentPropertiesMixin):
     
-    implements(IComponentProperties)
+    implements(base.IComponentProperties)
     
     @classmethod
-    def createFromComponentDict(cls, workerContext, props):
+    def createFromComponentDict(cls, workerCtx, props):
         scanPeriod = props.get("scan-period", None)
         directories = props.get("directory", list())
         pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
@@ -40,8 +37,8 @@ class MonitorProperties(ComponentPropertiesMixin):
     @classmethod
     def createFromContext(cls, custCtx):
         folders = []
-        for p in custCtx.iterUnboundProfileContexts():
-            folders.append(p.getInputBase())
+        for profCtx in custCtx.iterUnboundProfileContexts():
+            folders.append(profCtx.getInputBase())
         period = custCtx.getMonitoringPeriod()
         pathAttr = custCtx.getPathAttributes()
         return cls(custCtx.getName(), folders, period, pathAttr)
@@ -52,21 +49,21 @@ class MonitorProperties(ComponentPropertiesMixin):
         self._directories = tuple(virtDirs)
         self._scanPeriod = scanPeriod
         self._pathAttr = pathAttr
-        self._digest = digestParameters(self._name, self._directories, 
-                                        self._scanPeriod, self._pathAttr)
+        self._digest = utils.digestParameters(self._name, self._directories, 
+                                              self._scanPeriod, self._pathAttr)
         
 
-    ## IComponentProperties Implementation ##
+    ## base.IComponentProperties Implementation ##
         
     def getDigest(self):
         return self._digest
         
-    def prepare(self, workerContext):
+    def prepare(self, workerCtx):
         pass
         
-    def asComponentProperties(self, workerContext):
+    def asComponentProperties(self, workerCtx):
         props = []
-        local = workerContext.getLocal()
+        local = workerCtx.getLocal()
         for d in self._directories:
             props.append(("directory", str(d)))
         if self._scanPeriod:
@@ -77,9 +74,9 @@ class MonitorProperties(ComponentPropertiesMixin):
         props.extend(local.asComponentProperties())
         return props
     
-    def asLaunchArguments(self, workerContext):
+    def asLaunchArguments(self, workerCtx):
         args = []
-        local = workerContext.getLocal()
+        local = workerCtx.getLocal()
         for d in self._directories:
             args.append(utils.mkCmdArg(str(d), "directory="))
         if self._scanPeriod:

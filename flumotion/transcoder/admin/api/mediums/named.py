@@ -14,7 +14,6 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.proxies import fluproxy
 from flumotion.transcoder.admin.api import interfaces, api
 
 
