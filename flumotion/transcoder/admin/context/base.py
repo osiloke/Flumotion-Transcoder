@@ -87,9 +87,6 @@ class BaseContext(object):
     def __init__(self, parent):
         self.parent = parent
         self._variables = Variables(getattr(parent, "_variables", None))
-
-    def getParentContext(self):
-        return self.parent
     
 
 class BaseStoreContext(BaseContext):

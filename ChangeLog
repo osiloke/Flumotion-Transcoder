@@ -1,5 +1,10 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/base.py:
+	Removed deprecated getter for contexts' parent.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/test/test_storecontexts.py:
 	* flumotion/transcoder/admin/context/activity.py:
 	* flumotion/transcoder/admin/context/base.py:
