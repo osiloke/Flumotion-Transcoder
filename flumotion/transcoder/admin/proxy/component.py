@@ -49,13 +49,13 @@ def instantiate(logger, parentPxy, identifier, managerPxy,
                compCtx, compState, domain, *args, **kwargs)
 
 
-class BaseComponentProxy(base.Proxy):
+class BaseComponentProxy(base.BaseProxy):
 
     properties_factory = pbase.GenericComponentProperties
 
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, compCtx, comptState, domain):
-        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
+        base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._compCtx = compCtx
         self._domain = domain
         self._compState = comptState

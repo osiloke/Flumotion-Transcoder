@@ -22,7 +22,7 @@ from flumotion.transcoder.errors import HandledTranscoderError
 from flumotion.transcoder.admin import adminelement
 
 
-class IBaseProxy(Interface):
+class IProxyElement(Interface):
 
     def getIdentifier(self):
         """
@@ -41,7 +41,7 @@ class IBaseProxy(Interface):
         """
 
 
-class IProxy(IBaseProxy):
+class IBaseProxy(IProxyElement):
     
     def getManagerProxy(self):
         pass
@@ -49,17 +49,17 @@ class IProxy(IBaseProxy):
 
 #TODO: Rewrite this... It's a mess
 
-class BaseProxy(adminelement.AdminElement):
+class ProxyElement(adminelement.AdminElement):
     
-    implements(IBaseProxy)
+    implements(IProxyElement)
     
     def __init__(self, logger, parentPxy, identifier):
         adminelement.AdminElement.__init__(self, logger, parentPxy)
         self._identifier = identifier
-        self._pendingElements = {} # {attr: {identifier: BaseProxy}}
+        self._pendingElements = {} # {attr: {identifier: ProxyElement}}
 
 
-    ## IProxyRO Methods ##
+    ## IProxyElement Methods ##
 
     def getIdentifier(self):
         return self._identifier
@@ -124,11 +124,11 @@ class BaseProxy(adminelement.AdminElement):
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
-                assert isinstance(element, BaseProxy)
+                assert isinstance(element, ProxyElement)
                 if element.isActive():
                     self.emitTo(addEvent, listener, element)
         else:
-            assert isinstance(value, BaseProxy)
+            assert isinstance(value, ProxyElement)
             if value.isActive():
                 self.emitTo(addEvent, listener, value)
     
@@ -144,7 +144,7 @@ class BaseProxy(adminelement.AdminElement):
         assert isinstance(finalDict, dict)
         assert not (identifier in finalDict)
         element = factory.instantiate(self, self, identifier, *args, **kwargs)
-        assert isinstance(element, BaseProxy)
+        assert isinstance(element, ProxyElement)
         self.__addPending(attr, identifier, element)
         d = element.initialize()
         d.addCallbacks(self.__cbDictElementInitialized,
@@ -165,7 +165,7 @@ class BaseProxy(adminelement.AdminElement):
         assert (identifier in values)
         pending = self.__getPending(attr, identifier)
         if pending:
-            assert isinstance(pending, BaseProxy)
+            assert isinstance(pending, ProxyElement)
             #Element is beeing initialized
             pending.setObsolete()
         else:
@@ -173,7 +173,7 @@ class BaseProxy(adminelement.AdminElement):
                 element = values.pop(identifier)
                 # Do not assume the retrieved dict is a reference
                 self.__setAttrValue(attr, values)
-                assert isinstance(element, BaseProxy)
+                assert isinstance(element, ProxyElement)
                 element._removed()
                 self.emit(removeEvent, element)
                 self._onElementRemoved(element)
@@ -191,19 +191,19 @@ class BaseProxy(adminelement.AdminElement):
         identifier = idfunc(*args, **kwargs)
         current = self.__getAttrValue(attr)
         if current:
-            assert isinstance(current, BaseProxy)
+            assert isinstance(current, ProxyElement)
             self.__setAttrValue(attr, None)
             current._removed()
             self.emit(unsetEvent, current)
         pending = self.__getPending(attr, identifier)
         if pending:
-            assert isinstance(pending, BaseProxy)
+            assert isinstance(pending, ProxyElement)
             #The element is beeing initialized
             pending.setObsolete()
         if identifier:
             element = factory.instantiate(self, self, identifier, 
                                           *args, **kwargs)
-            assert isinstance(element, BaseProxy)
+            assert isinstance(element, ProxyElement)
             self.__addPending(attr, identifier, element)
             d = element.initialize()
             d.addCallbacks(self.__cbElementInitialized,
@@ -221,11 +221,11 @@ class BaseProxy(adminelement.AdminElement):
         if not value: return
         if isinstance(value, dict):
             for element in value.values():
-                assert isinstance(element, BaseProxy)
+                assert isinstance(element, ProxyElement)
                 element._removed()
                 self.emit(removeEvent, element)
         else:
-            assert isinstance(value, BaseProxy)
+            assert isinstance(value, ProxyElement)
             value._removed()
             self.emit(removeEvent, value)
     
@@ -376,20 +376,20 @@ class BaseProxy(adminelement.AdminElement):
 
 
 
-class RootProxy(BaseProxy):
+class RootProxy(ProxyElement):
     
     def __init__(self, logger):
-        BaseProxy.__init__(self, logger, None, 
+        ProxyElement.__init__(self, logger, None, 
                                     self.__class__.__name__)
 
 
 
-class Proxy(BaseProxy):
+class BaseProxy(ProxyElement):
     
-    implements(IProxy)
+    implements(IBaseProxy)
     
     def __init__(self, logger, parentPxy, identifier, managerPxy):
-        BaseProxy.__init__(self, logger, parentPxy, identifier)
+        ProxyElement.__init__(self, logger, parentPxy, identifier)
         self._managerPxy = managerPxy
         
     def getManagerProxy(self):

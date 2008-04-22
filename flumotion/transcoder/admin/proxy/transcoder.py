@@ -28,7 +28,7 @@ from flumotion.transcoder.admin.proxy import base, component
 from flumotion.transcoder.admin.property import filetrans
 
 
-class ITranscoderProxy(base.IProxy):
+class ITranscoderProxy(base.IBaseProxy):
     pass
 
 

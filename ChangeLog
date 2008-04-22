@@ -1,5 +1,17 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/proxy/base.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/manager.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	* flumotion/transcoder/admin/proxy/transcoder.py:
+	* flumotion/transcoder/admin/proxy/worker.py:
+	Changed BaseProxy to ProxyElement and Paroxy to BaseProxy. 
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/base.py:
 	Removed deprecated getter for contexts' parent.
 

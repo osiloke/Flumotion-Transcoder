@@ -19,12 +19,12 @@ from flumotion.transcoder.admin.proxy import base
 from flumotion.transcoder.admin.proxy import component
 
 
-class ComponentGroupProxy(base.Proxy):
+class ComponentGroupProxy(base.BaseProxy):
     
     _componentDomain = None
     
     def __init__(self, logger, parentPxy, identifier, managerPxy, context, state):
-        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
+        base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._context = context
         self._state = state
         self._compPxys = {} # {identifier: ComponentProxy}

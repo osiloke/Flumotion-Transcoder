@@ -19,7 +19,7 @@ from flumotion.inhouse.waiters import ItemWaiters
 from flumotion.transcoder.admin.proxy import base, worker, flow, atmosphere
 
 
-class IManagerProxy(base.IProxy):
+class IManagerProxy(base.IBaseProxy):
 
     def getAtmosphereProxy(self):
         pass
@@ -47,12 +47,12 @@ class IManagerProxy(base.IProxy):
 
 
 
-class ManagerProxy(base.BaseProxy):
+class ManagerProxy(base.ProxyElement):
     implements(IManagerProxy)
     
     def __init__(self, logger, managerPxySet, identifier, 
                  admin, managerCtx, planetState):
-        base.BaseProxy.__init__(self, logger, managerPxySet, identifier)
+        base.ProxyElement.__init__(self, logger, managerPxySet, identifier)
         self._managerCtx = managerCtx
         self._admin = admin
         self._planetState = planetState

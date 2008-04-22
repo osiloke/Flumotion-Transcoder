@@ -21,7 +21,7 @@ from flumotion.transcoder.admin.proxy import base, component
 from flumotion.transcoder.admin.property import filemon
 
 
-class IMonitorProxy(base.IProxy):
+class IMonitorProxy(base.IBaseProxy):
     pass
 
 

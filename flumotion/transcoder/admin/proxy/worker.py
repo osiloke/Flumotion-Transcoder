@@ -27,7 +27,7 @@ class IWorkerDefinition(interfaces.IAdminInterface):
         pass
 
 
-class IWorkerProxy(IWorkerDefinition, base.IProxy):
+class IWorkerProxy(IWorkerDefinition, base.IBaseProxy):
     
     def getHost(self):
         pass
@@ -54,11 +54,11 @@ class WorkerDefinition(object):
         return self._workerCtx
  
  
-class WorkerProxy(base.Proxy):
+class WorkerProxy(base.BaseProxy):
     implements(IWorkerProxy)
     
     def __init__(self, logger, parentPxy, identifier, managerPxy, workerCtx, workerState):
-        base.Proxy.__init__(self, logger, parentPxy, identifier, managerPxy)
+        base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._workerState = workerState
         self._workerCtx = workerCtx
         
