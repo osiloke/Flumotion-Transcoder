@@ -1,5 +1,18 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxy/base.py:
+	* flumotion/transcoder/admin/proxy/componentset.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/manager.py:
+	* flumotion/transcoder/admin/proxy/managerset.py:
+	* flumotion/transcoder/admin/proxy/monitorset.py:
+	* flumotion/transcoder/admin/proxy/transcoderset.py:
+	* flumotion/transcoder/admin/proxy/workerset.py:
+	Changed the protected method _updateProxies to _refreshProxiesListener
+	to be more descriptive and match the event source interface.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/janitor.py:
 	* flumotion/transcoder/admin/monitoring.py:

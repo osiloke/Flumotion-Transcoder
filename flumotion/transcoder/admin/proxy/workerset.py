@@ -71,7 +71,7 @@ class WorkerSet(base.RootProxy):
     ## Overriden Methods ##
     
     def refreshListener(self, listener):
-        self._updateProxies("_workerPxys", listener, "worker-added")
+        self._refreshProxiesListener("_workerPxys", listener, "worker-added")
 
 
     ### managerset.IManagerSetListener Implementation ###

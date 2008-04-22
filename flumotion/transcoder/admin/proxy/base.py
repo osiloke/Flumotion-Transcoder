@@ -116,9 +116,9 @@ class BaseProxy(adminelement.AdminElement):
 
     ## Protected Methods ##
     
-    def _updateProxies(self, attr, listener, addEvent):
+    def _refreshProxiesListener(self, attr, listener, addEvent):
         """
-        Utility method to update a listener. 
+        Utility method to refresh a listener. 
         """
         value = self.__getAttrValue(attr)
         if not value: return

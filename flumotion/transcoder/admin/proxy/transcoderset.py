@@ -32,7 +32,7 @@ class TranscoderSet(componentset.BaseComponentSet):
     ## Overriden Methods ##
     
     def refreshListener(self, listener):
-        self._updateProxies("_compPxys", listener, "transcoder-added")
+        self._refreshProxiesListener("_compPxys", listener, "transcoder-added")
 
     def _doAcceptComponent(self, compPxy):
         if not isinstance(compPxy, transcoder.TranscoderProxy):

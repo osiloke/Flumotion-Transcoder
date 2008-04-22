@@ -71,7 +71,7 @@ class ManagerSet(base.RootProxy):
     ## Overriden Methods ##
     
     def refreshListener(self, listener):
-        self._updateProxies("_managerPxys", listener, "manager-added")
+        self._refreshProxiesListener("_managerPxys", listener, "manager-added")
 
     def _doGetChildElements(self):
         return self.getManagerProxies()

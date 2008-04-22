@@ -295,7 +295,7 @@ class ComponentSet(BaseComponentSet):
     ## Overriden Methods ##
     
     def refreshListener(self, listener):
-        self._updateProxies("_compPxys", listener, "component-added")
+        self._refreshProxiesListener("_compPxys", listener, "component-added")
 
     def _doAddComponent(self, compPxy):
         BaseComponentSet._doAddComponent(self, compPxy)

@@ -109,9 +109,9 @@ class ManagerProxy(base.BaseProxy):
     
     def refreshListener(self, listener):
         assert self._planetState, "Manager has been removed"
-        self._updateProxies("_workerPxys", listener, "worker-added")
-        self._updateProxies("_atmoPxy", listener, "atmosphere-set")
-        self._updateProxies("_flowPxys", listener, "flow-added")
+        self._refreshProxiesListener("_workerPxys", listener, "worker-added")
+        self._refreshProxiesListener("_atmoPxy", listener, "atmosphere-set")
+        self._refreshProxiesListener("_flowPxys", listener, "flow-added")
 
     def _doGetChildElements(self):
         childs = self.getWorkerProxies()
