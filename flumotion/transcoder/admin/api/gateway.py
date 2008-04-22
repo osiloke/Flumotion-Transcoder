@@ -30,7 +30,7 @@ class Avatar(avatars.Avatar):
     ## ITranscoderGateway Methodes ##
 
     def getWorkerSet(self):
-        return api.adapt(self._admin.getWorkerSet())
+        return api.adapt(self._admin.getWorkerProxySet())
     
     def getStore(self):
         return api.adapt(self._admin.getStore())

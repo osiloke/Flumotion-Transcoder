@@ -1,5 +1,11 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	Changed to match "convention".
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	Changed the proxies interfaces to be more
 	consistent with store/context/medium. 
 

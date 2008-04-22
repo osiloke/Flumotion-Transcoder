@@ -111,7 +111,7 @@ class TranscoderAdmin(log.Loggable):
         d.callback(None)
         return d
 
-    def getWorkerSet(self):
+    def getWorkerProxySet(self):
         return self._workerPxySet
 
     def getStore(self):
