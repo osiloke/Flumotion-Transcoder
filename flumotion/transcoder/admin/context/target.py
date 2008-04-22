@@ -28,7 +28,7 @@ def genBaseGetter(name):
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return VirtualPath(value)
-        return getattr(self._parent, baseGetterName)()
+        return getattr(self.parent, baseGetterName)()
     
     annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)
 
@@ -134,16 +134,16 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
                                     "target", extension=self.getExtension())
         
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
 
     def getStoreContext(self):
-        return self._parent.getStoreContext()
+        return self.parent.getStoreContext()
     
     def getCustomerContext(self):
-        return self._parent.getCustomerContext()
+        return self.parent.getCustomerContext()
     
     def getProfileContext(self):
-        return self._parent
+        return self.parent
 
     def getConfigContext(self):
         confStore = self._store.getConfigStore()
@@ -154,9 +154,9 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
         if tmpl: return tmpl
         type = self._store.getConfigStore().getType()
         if type == TargetTypeEnum.thumbnails:
-            return self._parent.getOutputThumbTemplate()
+            return self.parent.getOutputThumbTemplate()
         else:
-            return self._parent.getOutputMediaTemplate()
+            return self.parent.getOutputMediaTemplate()
 
         
     def getSubdir(self):

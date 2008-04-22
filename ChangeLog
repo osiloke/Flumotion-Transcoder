@@ -1,5 +1,33 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/api.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/config.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/manager.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/notifier.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/scheduler.py:
+	* flumotion/transcoder/admin/context/state.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/context/worker.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/state.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	* flumotion/transcoder/admin/proxy/transcoder.py:
+	Uniformized the access to parents as a public attribute.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxy/base.py:
 	* flumotion/transcoder/admin/proxy/componentset.py:
 	* flumotion/transcoder/admin/proxy/group.py:

@@ -23,7 +23,7 @@ class WorkerContext(base.BaseContext):
         self._default = workerDefault
     
     def getAdminContext(self):
-        return self._parent
+        return self.parent
     
     def getLabel(self):
         return self._label

@@ -39,7 +39,7 @@ class TranscoderProxy(component.ComponentProxy):
     
     @classmethod
     def loadTo(cls, workerPxy, name, label, properties, timeout=None):
-        managerPxy = workerPxy.getParent()
+        managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
         assert atmoPxy != None
         return atmoPxy._loadComponent('file-transcoder', 

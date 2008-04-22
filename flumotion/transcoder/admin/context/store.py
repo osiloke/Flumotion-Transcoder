@@ -72,10 +72,10 @@ class StoreContext(base.BaseStoreContext, notification.NotificationStoreMixin):
         base.BaseStoreContext.__init__(self, adminContext, adminStore)
 
     def getAdminContext(self):
-        return self._parent
+        return self.parent
 
     def getCustomerContextFor(self, custStore):
-        assert custStore.getParent() == self._store
+        assert custStore.parent == self._store
         return customer.CustomerContext(self, custStore)
     
     def getCustomerContextByName(self, custName):

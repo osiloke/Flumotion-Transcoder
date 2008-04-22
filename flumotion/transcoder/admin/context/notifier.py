@@ -20,4 +20,4 @@ class NotifierContext(base.BaseContext):
         self.config = config
 
     def getAdminContext(self):
-        return self._parent
+        return self.parent

@@ -32,7 +32,7 @@ class MonitorProxy(component.ComponentProxy):
     
     @classmethod
     def loadTo(cls, workerPxy, name, label, properties, timeout=None):
-        managerPxy = workerPxy.getParent()
+        managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
         return atmoPxy._loadComponent('file-monitor', 
                                       name,  label, workerPxy, 

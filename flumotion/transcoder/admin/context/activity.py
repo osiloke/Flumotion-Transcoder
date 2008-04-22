@@ -33,13 +33,13 @@ class ActivityContext(base.BaseStoreContext):
         pass
 
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent.getStoreContext()
+        return self.parent.getStoreContext()
     
     def getStatecontext(self):
-        return self._parent
+        return self.parent
     
     
 

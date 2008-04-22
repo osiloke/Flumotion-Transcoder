@@ -18,7 +18,7 @@ from flumotion.transcoder.substitution import Variables
 class LazyContextIterator(object):
     
     def __init__(self, parent, cls, iterator, *args, **kwargs):
-        self._parent = parent
+        self.parent = parent
         self._cls = cls
         self._iterator = iterator
         self._args = args
@@ -29,7 +29,7 @@ class LazyContextIterator(object):
         
     def next(self):
         nextValue = self._iterator.next()        
-        return self._cls(self._parent, nextValue, *self._args, **self._kwargs)
+        return self._cls(self.parent, nextValue, *self._args, **self._kwargs)
 
 
 def genStoreProxy(getterName, default=None):
@@ -53,12 +53,12 @@ def genParentOverridingStoreProxy(getterName, parentGetterName=None):
         if value != None:
             return value
         pGetterName = parentGetterName or getterName
-        if self._parent is None:
+        if self.parent is None:
             raise ValueError("Context element %s without parent" % self)
-        parentGetter = getattr(self._parent, pGetterName, None)
+        parentGetter = getattr(self.parent, pGetterName, None)
         if parentGetter is None:
             raise ValueError("Context element %s do not have method %s"
-                             % (self._parent, pGetterName))
+                             % (self.parent, pGetterName))
         return  parentGetter()
     annotate.addAnnotationMethod("genParentOverridingStoreProxy", getterName, getter)
 
@@ -85,11 +85,11 @@ def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
 class BaseContext(object):
     
     def __init__(self, parent):
-        self._parent = parent
+        self.parent = parent
         self._variables = Variables(getattr(parent, "_variables", None))
 
     def getParentContext(self):
-        return self._parent
+        return self.parent
     
 
 class BaseStoreContext(BaseContext):

@@ -19,13 +19,13 @@ class StateContext(base.BaseStoreContext):
         base.BaseStoreContext.__init__(self, storeContext, stateStore)
 
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent
+        return self.parent
 
     def getActivityContextFor(self, activStore):
-        assert activStore.getParent() == self._store
+        assert activStore.parent == self._store
         return activity.ActivityContextFactory(self, activStore)
 
     def retrieveTranscodingContexts(self, states):

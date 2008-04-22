@@ -25,19 +25,19 @@ class ConfigContext(base.BaseStoreContext):
         base.BaseStoreContext.__init__(self, targCtx, confStore)
 
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent.getStoreContext()
+        return self.parent.getStoreContext()
     
     def getCustomerContext(self):
-        return self._parent.getCustomerContext()
+        return self.parent.getCustomerContext()
     
     def getProfileContext(self):
-        return self._parent.getProfileContext()
+        return self.parent.getProfileContext()
     
     def getTargetContext(self):
-        return self._parent
+        return self.parent
        
 
 class IdentityConfigContext(ConfigContext):

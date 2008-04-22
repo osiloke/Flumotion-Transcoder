@@ -171,10 +171,10 @@ class ProfileStore(base.BaseStore):
     ## Public Methods ##
     
     def getAdminStore(self):
-        return self.getParent().getAdminStore()
+        return self.parent.getAdminStore()
 
     def getCustomerStore(self):
-        return self.getParent()
+        return self.parent
         
     def getLabel(self):
         return self.getName()    

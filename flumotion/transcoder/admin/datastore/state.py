@@ -46,11 +46,11 @@ class StateStore(log.LoggerProxy):
     
     def __init__(self, logger, adminStore, dataSource):
         log.LoggerProxy.__init__(self, logger)
-        self._parent = adminStore
+        self.parent = adminStore
         self._dataSource = dataSource
     
     def getAdminStore(self):
-        return self._parent
+        return self.parent
     
     def getLabel(self):
         return "State Store"

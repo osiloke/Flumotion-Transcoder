@@ -175,35 +175,32 @@ class ActivityStore(log.LoggerProxy):
     
     def __init__(self, logger, parent, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
-        self._parent = parent
+        self.parent = parent
         self._data = data
         self._deleted = False
         self._isNew = isNew
 
-    def getParent(self):
-        return self._parent
-
     def getAdminStore(self):
-        return self._parent.getAdminStore()
+        return self.parent.getAdminStore()
     
     def getStateStore(self):
-        return self._parent
+        return self.parent
         
     def store(self):
         assert not self._deleted
-        d = self._parent._storeActivity(self, self._isNew)
+        d = self.parent._storeActivity(self, self._isNew)
         d.addErrback(self.__ebActivityStoreFailed)
         self._new = False
     
     def delete(self):
         assert not self._deleted
         self._deleted = True
-        d = self._parent._deleteActivity(self)
+        d = self.parent._deleteActivity(self)
         d.addErrback(self.__ebActivityDeleteFailed)
 
     def reset(self):
         assert not self._deleted
-        return self._parent._resetActivity(self)
+        return self.parent._resetActivity(self)
     
     
     ## Protected Methods ##

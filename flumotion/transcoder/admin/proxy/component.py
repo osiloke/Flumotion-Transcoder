@@ -356,13 +356,13 @@ class BaseComponentProxy(base.Proxy):
         self._uiState.setValue(uistate)
 
     def _getAvatarId(self):
-        return common.componentId(self.getParent().getName(), self.getName())
+        return common.componentId(self.parent.getName(), self.getName())
         
     def _callRemote(self, methodName, *args, **kwargs):
         assert self._compState, "Component has been removed"
         return self._managerPxy._componentCallRemote(self._compState,
-                                                  methodName, 
-                                                  *args, **kwargs)
+                                                     methodName, 
+                                                     *args, **kwargs)
 
 
     ## Private Methods ##

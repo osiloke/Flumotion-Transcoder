@@ -22,7 +22,7 @@ class ManagerContext(base.BaseContext):
         self.config = managerConfig
 
     def getAdminContext(self):
-        return self._parent
+        return self.parent
     
     def getHost(self):
         return str(self.config.host)
@@ -43,10 +43,10 @@ class ManagerContext(base.BaseContext):
         return self
 
     def getFlowContext(self):
-        return self._parent
+        return self.parent
     
     def getAtmosphereContext(self):
-        return self._parent
+        return self.parent
 
     def getFlowContextByName(self, name):
         return self

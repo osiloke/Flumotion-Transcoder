@@ -24,7 +24,7 @@ def genBaseGetter(name):
     
     def getter(self):
         folder = getattr(self._store, storeGetterName)()
-        parent = getattr(self._parent, baseGetterName)()
+        parent = getattr(self.parent, baseGetterName)()
         if folder != None:
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
@@ -127,13 +127,13 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
         self._variables.addVar("profileName", self.getName())
 
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent.getStoreContext()
+        return self.parent.getStoreContext()
     
     def getCustomerContext(self):
-        return self._parent
+        return self.parent
 
     def isBound(self):
         return False
@@ -144,7 +144,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
         It should not change event if profile configuration changed.
         """
         # For now return only the customer and profile name
-        return "%s/%s" % (self._parent.getIdentifier(), self.getName())
+        return "%s/%s" % (self.parent.getIdentifier(), self.getName())
 
     def getSubdir(self):
         subdir = self._store.getSubdir()
@@ -241,7 +241,7 @@ class ProfileContext(UnboundProfileContext):
         return target.TargetContext(self, targStore)
 
     def getTargetContextFor(self, targStore):
-        assert targStore.getParent() == self._store
+        assert targStore.parent == self._store
         return target.TargetContext(self, targStore)
 
     def iterTargetContexts(self):

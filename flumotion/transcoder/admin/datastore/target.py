@@ -97,13 +97,13 @@ class TargetStore(base.BaseStore):
     ## Public Methods ##
 
     def getAdminStore(self):
-        return self.getParent().getAdminStore()
+        return self.parent.getAdminStore()
 
     def getCustomerStore(self):
-        return self.getParent().getCustomerStore()
+        return self.parent.getCustomerStore()
     
     def getProfileStore(self):
-        return self.getParent()
+        return self.parent
     
     def getLabel(self):
         return self.getName()

@@ -190,7 +190,7 @@ class CustomerStore(base.BaseStore):
     ## Public Methods ##
 
     def getAdminStore(self):
-        return self.getParent()
+        return self.parent
 
     def getLabel(self):
         return self.getName()

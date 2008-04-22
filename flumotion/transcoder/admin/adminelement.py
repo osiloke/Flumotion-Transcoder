@@ -51,7 +51,7 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         self._triggered = False
         self._active = False
         self._failure = None
-        self._parent = parent
+        self.parent = parent
         self._obsolete = False
         self._beingRemoved = False
         self._idleWaiters = CounterWaiters("Element Idle", 0, 0, self)
@@ -64,9 +64,6 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
     
     def getIdentifier(self):
         raise NotImplementedError()
-    
-    def getParent(self):
-        return self._parent
     
     def isIdle(self):
         return not self._idleWaiters.isWaiting()
@@ -89,7 +86,7 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
 
     def initialize(self):
         self.log("Initializing %s", self.__class__.__name__)
-        if self._parent == None:
+        if self.parent == None:
             self._activate()
         chain = defer.Deferred()
         self._doPrepareInit(chain)
@@ -260,8 +257,8 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         """
         Helper method that handle root element without parent.
         """
-        if self._parent:
-            return self._parent._isBeingRemoved()
+        if self.parent:
+            return self.parent._isBeingRemoved()
         return False
     
     def _removed(self):
@@ -270,8 +267,8 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         """
         self._beingRemoved = True
         self._onRemoved()
-        if self._parent:
-            self._parent._childElementRemoved()
+        if self.parent:
+            self.parent._childElementRemoved()
         
         
     def _discard(self):
@@ -290,8 +287,8 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         assert not self._triggered
         self._triggered = True
         self.log("Start %s activation", self.__class__.__name__)
-        if self._parent:
-            chain = self._parent._childWaitActive()
+        if self.parent:
+            chain = self.parent._childWaitActive()
         else:
             chain = defer.succeed(None)
         self._doPrepareActivation(chain)
@@ -380,8 +377,8 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         self._activeWaiters.fireCallbacks(self)
         self._onActivated()
         self._activeChildWaiters.fireCallbacks(self)
-        if self._parent:
-            self._parent._childElementActivated()
+        if self.parent:
+            self.parent._childElementActivated()
                 
     def __ebParentAborted(self, failure):
         self._failure = failure
@@ -392,5 +389,5 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
         self._activeWaiters.fireErrbacks(failure)
         self._onAborted(failure)
         self._activeChildWaiters.fireErrbacks(failure)
-        if self._parent:
-            self._parent._childElementAborted()
+        if self.parent:
+            self.parent._childElementAborted()

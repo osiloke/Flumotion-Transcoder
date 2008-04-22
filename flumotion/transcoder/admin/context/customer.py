@@ -92,10 +92,10 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         self._variables.addVar("customerName", self.getName())
 
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent
+        return self.parent
 
     def getIdentifier(self):
         """
@@ -110,7 +110,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         return profile.UnboundProfileContext(self, profStore)
     
     def getUnboundProfileContextFor(self, profStore):
-        assert profStore.getParent() == self._store
+        assert profStore.parent == self._store
         return profile.UnboundProfileContext(self, profStore)
     
     def iterUnboundProfileContexts(self):
@@ -122,7 +122,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         return profile.ProfileContext(self, profStore, input)
     
     def getProfileContextFor(self, profStore, input):
-        assert profStore.getParent() == self._store
+        assert profStore.parent == self._store
         return profile.ProfileContext(self, profStore, input)
 
     def iterProfileContexts(self, input):

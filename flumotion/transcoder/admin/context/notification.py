@@ -39,10 +39,10 @@ class NotificationContext(base.BaseStoreContext):
         base.BaseStoreContext.__init__(self, parentCtx, notifStore)
     
     def getAdminContext(self):
-        return self._parent.getAdminContext()
+        return self.parent.getAdminContext()
     
     def getStoreContext(self):
-        return self._parent.getStoreContext()
+        return self.parent.getStoreContext()
 
 
 class MailNotificationContext(NotificationContext):
