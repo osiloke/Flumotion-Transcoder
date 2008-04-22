@@ -41,8 +41,10 @@ class WorkerSet(base.RootProxy):
         base.RootProxy.__init__(self, managerPxySet)
         self._managerPxySet = managerPxySet
         self._workerPxys = {} # {identifier: Worker}
-        self._managerPxySet.connectListener("manager-added", self, self._onManagerAddedToSet)
-        self._managerPxySet.connectListener("manager-removed", self, self._onManagerRemovedFromSet)
+        self._managerPxySet.connectListener("manager-added", self,
+                                            self.__onManagerAddedToSet)
+        self._managerPxySet.connectListener("manager-removed", self,
+                                            self.__onManagerRemovedFromSet)
         # Registering Events
         self._register("worker-added")
         self._register("worker-removed")
@@ -74,25 +76,27 @@ class WorkerSet(base.RootProxy):
 
     ### managerset.IManagerSetListener Implementation ###
 
-    def _onManagerAddedToSet(self, mgrPxySet, managerPxy):
-        managerPxy.connectListener("worker-added", self, self._onWorkerAdded)
-        managerPxy.connectListener("worker-removed", self, self._onWorkerRemoved)
+    def __onManagerAddedToSet(self, mgrPxySet, managerPxy):
+        managerPxy.connectListener("worker-added", self,
+                                   self.__onWorkerAdded)
+        managerPxy.connectListener("worker-removed", self,
+                                   self.__onWorkerRemoved)
         managerPxy.refreshListener(self)
         
-    def _onManagerRemovedFromSet(self, mgrPxySet, managerPxy):
+    def __onManagerRemovedFromSet(self, mgrPxySet, managerPxy):
         managerPxy.disconnectListener("worker-added", self)
         managerPxy.disconnectListener("worker-removed", self)
 
 
     ### managerproxy.IManagerListener Implementation ###
     
-    def _onWorkerAdded(self, managerPxy, workerPxy):
+    def __onWorkerAdded(self, managerPxy, workerPxy):
         identifier = workerPxy.getIdentifier()
         assert not (identifier in self._workerPxys)
         self._workerPxys[identifier] = workerPxy
         self.emit("worker-added", workerPxy)
     
-    def _onWorkerRemoved(self, managerPxy, workerPxy):
+    def __onWorkerRemoved(self, managerPxy, workerPxy):
         identifier = workerPxy.getIdentifier()
         assert identifier in self._workerPxys
         assert self._workerPxys[identifier] == workerPxy

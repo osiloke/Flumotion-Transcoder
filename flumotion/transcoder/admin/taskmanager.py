@@ -221,7 +221,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
 
     ## Component Event Listeners ##
     
-    def _onComponentMoodChanged(self, compPxy, mood):
+    def __onComponentMoodChanged(self, compPxy, mood):
         if not self.isStarted(): return
         self.log("Task manager '%s' taskless component '%s' goes %s",
                  self.getLabel(), compPxy.getName(), mood.name)
@@ -289,7 +289,8 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self.log("Task manager '%s' takes apart taskless component '%s'",
                  self.getLabel(), compPxy.getName())
         self._taskless[compPxy] = None
-        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
+        compPxy.connectListener("mood-changed", self,
+                                self.__onComponentMoodChanged)
         compPxy.refreshListener(self)
         self._onTasklessComponentAdded(compPxy)
     
@@ -365,7 +366,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self._startWaiters.fireCallbacks(result)
         # Now we can manage the taskless components
         for c in self._taskless:
-            self._onComponentMoodChanged(c, c.getMood())
+            self.__onComponentMoodChanged(c, c.getMood())
 
     def __ebStartupFailed(self, failure, actionDesc):
         log.notifyFailure(self, failure,

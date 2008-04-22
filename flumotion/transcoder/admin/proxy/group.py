@@ -57,6 +57,7 @@ class ComponentGroupProxy(base.Proxy):
 
     def _onComponentsLoaded(self):
         pass
+
     
     ## Overriden Methods ##
     

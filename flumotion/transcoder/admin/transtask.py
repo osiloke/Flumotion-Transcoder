@@ -63,7 +63,7 @@ class TranscodingTask(admintask.AdminTask):
 
     ## Component Event Listeners ##
     
-    def _onComponentOrphaned(self, transPxy, workerPxy):
+    def __onComponentOrphaned(self, transPxy, workerPxy):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         # The component segfaulted or has been killed
@@ -79,7 +79,7 @@ class TranscodingTask(admintask.AdminTask):
             self._abort()
             return
     
-    def _onComponentMoodChanged(self, transPxy, mood):
+    def __onComponentMoodChanged(self, transPxy, mood):
         if not self.isStarted(): return
         self.log("Transcoding task '%s' transcoder '%s' goes %s", 
                  self.getLabel(), transPxy.getName(), mood.name)
@@ -127,7 +127,7 @@ class TranscodingTask(admintask.AdminTask):
 
     ## Transcoder Event Listeners ##
 
-    def _onTranscoderStatusChanged(self, transPxy, status):
+    def __onTranscoderStatusChanged(self, transPxy, status):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
@@ -137,7 +137,7 @@ class TranscodingTask(admintask.AdminTask):
                       TranscoderStatusEnum.error]:
             self.__cbJobTerminated(status, transPxy)
 
-    def _onTranscoderJobStateChanged(self, transPxy, jobState):
+    def __onTranscoderJobStateChanged(self, transPxy, jobState):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
@@ -166,10 +166,14 @@ class TranscodingTask(admintask.AdminTask):
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, compPxy):
-        compPxy.connectListener("orphaned", self, self._onComponentOrphaned)
-        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
-        compPxy.connectListener("status-changed", self, self._onTranscoderStatusChanged)
-        compPxy.connectListener("job-state-changed", self, self._onTranscoderJobStateChanged)
+        compPxy.connectListener("orphaned", self,
+                                self.__onComponentOrphaned)
+        compPxy.connectListener("mood-changed", self,
+                                self.__onComponentMoodChanged)
+        compPxy.connectListener("status-changed", self,
+                                self.__onTranscoderStatusChanged)
+        compPxy.connectListener("job-state-changed", self,
+                                self.__onTranscoderJobStateChanged)
         compPxy.refreshListener(self)
 
     def _onComponentRemoved(self, compPxy):
@@ -193,11 +197,11 @@ class TranscodingTask(admintask.AdminTask):
         # this event was ignored
         # So resend the mood changing event
         mood = compPxy.getMood()
-        self._onComponentMoodChanged(compPxy, mood)
+        self.__onComponentMoodChanged(compPxy, mood)
 
     def _onStarted(self):
         for compPxy in self.iterComponentProxies():
-            self._onComponentMoodChanged(compPxy, compPxy.getMood())
+            self.__onComponentMoodChanged(compPxy, compPxy.getMood())
     
     def _doAcceptSuggestedWorker(self, workerPxy):
         currWorkerPxy = self.getWorkerProxy()

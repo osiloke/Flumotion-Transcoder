@@ -91,18 +91,30 @@ class TranscoderAdmin(log.Loggable):
         d.addCallbacks(self.__cbAdminInitialized, 
                        self.__ebAdminInitializationFailed)
         # Register listeners
-        self._adminStore.connectListener("customer-added", self, self._onCustomerStoreAdded)
-        self._adminStore.connectListener("customer-removed", self, self._onCustomerStoreRemoved)
-        self._managerPxySet.connectListener("attached", self, self._onAttached)
-        self._managerPxySet.connectListener("detached", self, self._onDetached)
-        self._compPxySet.connectListener("component-added", self, self._onComponentAddedToSet)
-        self._compPxySet.connectListener("component-removed", self, self._onComponentRemovedFromSet)
-        self._scheduler.connectListener("profile-queued", self, self._onProfileQueued)
-        self._scheduler.connectListener("transcoding-started", self, self._onTranscodingStarted)
-        self._scheduler.connectListener("transcoding-failed", self, self._onTranscodingFailed)
-        self._scheduler.connectListener("transcoding-done", self, self._onTranscodingDone)
-        self._monitoring.connectListener("task-added", self, self._onMonitoringTaskAdded)
-        self._monitoring.connectListener("task-removed", self, self._onMonitoringTaskRemoved)
+        self._adminStore.connectListener("customer-added", self,
+                                         self.__onCustomerStoreAdded)
+        self._adminStore.connectListener("customer-removed", self,
+                                         self.__onCustomerStoreRemoved)
+        self._managerPxySet.connectListener("attached", self,
+                                            self.__onAttached)
+        self._managerPxySet.connectListener("detached", self,
+                                            self.__onDetached)
+        self._compPxySet.connectListener("component-added", self,
+                                         self.__onComponentAddedToSet)
+        self._compPxySet.connectListener("component-removed", self,
+                                         self.__onComponentRemovedFromSet)
+        self._scheduler.connectListener("profile-queued", self,
+                                        self.__onProfileQueued)
+        self._scheduler.connectListener("transcoding-started", self,
+                                        self.__onTranscodingStarted)
+        self._scheduler.connectListener("transcoding-failed", self,
+                                        self.__onTranscodingFailed)
+        self._scheduler.connectListener("transcoding-done", self,
+                                        self.__onTranscodingDone)
+        self._monitoring.connectListener("task-added", self,
+                                         self.__onMonitoringTaskAdded)
+        self._monitoring.connectListener("task-removed", self,
+                                         self.__onMonitoringTaskRemoved)
         self._adminStore.refreshListener(self)
         self._managerPxySet.refreshListener(self)
         self._scheduler.refreshListener(self)
@@ -123,14 +135,14 @@ class TranscoderAdmin(log.Loggable):
 
     ## ManagerSet Event Listeners ##
     
-    def _onDetached(self, managerPxySet):
+    def __onDetached(self, managerPxySet):
         if self._state == TaskStateEnum.started:
             self.debug("Transcoder admin has been detached, "
                        "pausing transcoding")
             self.__pause()
         
         
-    def _onAttached(self, managerPxySet):
+    def __onAttached(self, managerPxySet):
         if self._state == TaskStateEnum.paused:
             self.debug("Transcoder admin attached, "
                        "resuming transcoding")
@@ -139,16 +151,17 @@ class TranscoderAdmin(log.Loggable):
 
     ## ComponentSet Event Listners ##
 
-    def _onComponentAddedToSet(self, compPxySet, compPxy):
-        compPxy.connectListener("message", self, self._onComponentMessage)
+    def __onComponentAddedToSet(self, compPxySet, compPxy):
+        compPxy.connectListener("message", self,
+                                self.__onComponentMessage)
     
-    def _onComponentRemovedFromSet(self, compPxySet, compPxy):
+    def __onComponentRemovedFromSet(self, compPxySet, compPxy):
         compPxy.disconnectListener("message", self)
 
 
     ## Component Event Listeners ##
 
-    def _onComponentMessage(self, compPxy, message):
+    def __onComponentMessage(self, compPxy, message):
         if self._diagnostician.filterComponentMessage(message):
             return
         text = self._translator.translate(message)
@@ -170,17 +183,19 @@ class TranscoderAdmin(log.Loggable):
 
     ## Store Event Listeners ##
     
-    def _onCustomerStoreAdded(self, admin, custStore):
+    def __onCustomerStoreAdded(self, admin, custStore):
         self.debug("Customer '%s' Added", custStore.getLabel())
-        custStore.connectListener("profile-added", self, self._onProfileStoreAdded)
-        custStore.connectListener("profile-removed", self, self._onProfileStoreRemoved)
+        custStore.connectListener("profile-added", self,
+                                  self.__onProfileStoreAdded)
+        custStore.connectListener("profile-removed", self,
+                                  self.__onProfileStoreRemoved)
         custStore.refreshListener(self)
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
         
         
-    def _onCustomerStoreRemoved(self, admin, custStore):
+    def __onCustomerStoreRemoved(self, admin, custStore):
         self.debug("Customer '%s' Removed", custStore.getLabel())
         custStore.disconnectListener("profile-added", self)
         custStore.disconnectListener("profile-removed", self)
@@ -190,13 +205,15 @@ class TranscoderAdmin(log.Loggable):
         
     ## CustomerStore Event Listeners ##
     
-    def _onProfileStoreAdded(self, custStore, profStore):
+    def __onProfileStoreAdded(self, custStore, profStore):
         self.debug("Profile '%s' Added", profStore.getLabel())
-        profStore.connectListener("target-added", self, self._onTargetStoreAdded)
-        profStore.connectListener("target-removed", self, self._onTargetStoreRemoved)
+        profStore.connectListener("target-added", self,
+                                  self.__onTargetStoreAdded)
+        profStore.connectListener("target-removed", self,
+                                  self.__onTargetStoreRemoved)
         profStore.refreshListener(self)
         
-    def _onProfileStoreRemoved(self, custStore, profStore):
+    def __onProfileStoreRemoved(self, custStore, profStore):
         self.debug("Profile '%s' Removed", profStore.getLabel())
         profStore.disconnectListener("target-added", self)
         profStore.disconnectListener("target-removed", self)
@@ -204,24 +221,28 @@ class TranscoderAdmin(log.Loggable):
     
     ## ProfileStore Event Listeners ##
     
-    def _onTargetStoreAdded(self, profStore, targStore):
+    def __onTargetStoreAdded(self, profStore, targStore):
         self.debug("Target '%s' Added", targStore.getLabel())
         
-    def _onTargetStoreRemoved(self, profStore, targStore):
+    def __onTargetStoreRemoved(self, profStore, targStore):
         self.debug("Target '%s' Removed", targStore.getLabel())
 
 
     ## Monitoring Event Listeners ##
     
-    def _onMonitoringTaskAdded(self, takser, task):
+    def __onMonitoringTaskAdded(self, takser, task):
         self.debug("Monitoring task '%s' added", task.getLabel())
-        task.connectListener("file-added", self, self._onMonitoredFileAdded)
-        task.connectListener("file-state-changed", self, self._onMonitoredFileStateChanged)
-        task.connectListener("file-removed", self, self._onMonitoredFileRemoved)
-        task.connectListener("fail-to-run", self, self._onFailToRunOnWorker)
+        task.connectListener("file-added", self,
+                             self.__onMonitoredFileAdded)
+        task.connectListener("file-state-changed", self,
+                             self.__onMonitoredFileStateChanged)
+        task.connectListener("file-removed", self,
+                             self.__onMonitoredFileRemoved)
+        task.connectListener("fail-to-run", self,
+                             self.__onFailToRunOnWorker)
         task.refreshListener(self)
     
-    def _onMonitoringTaskRemoved(self, tasker, task):
+    def __onMonitoringTaskRemoved(self, tasker, task):
         self.debug("Monitoring task '%s' removed", task.getLabel())
         task.disconnectListener("file-added", self)
         task.disconnectListener("file-state-changed", self)
@@ -231,23 +252,23 @@ class TranscoderAdmin(log.Loggable):
 
     ## MonitoringTask Event Listeners ##
     
-    def _onMonitoredFileAdded(self, montask, profCtx, state):
+    def __onMonitoredFileAdded(self, montask, profCtx, state):
         self.log("Monitoring task '%s' added profile '%s'",
                  montask.getLabel(), profCtx.getInputPath())
         self.__fileStateChanged(montask, profCtx, state)
         
-    def _onMonitoredFileStateChanged(self, montask, profCtx, state):
+    def __onMonitoredFileStateChanged(self, montask, profCtx, state):
         self.log("Monitoring task '%s' profile '%s' state "
                  "changed to %s", montask.getLabel(), 
                  profCtx.getInputPath(), state.name)
         self.__fileStateChanged(montask, profCtx, state)
     
-    def _onMonitoredFileRemoved(self, montask, profCtx, state):
+    def __onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
                  montask.getLabel(), profCtx.getInputPath())
         self._scheduler.removeProfile(profCtx)
 
-    def _onFailToRunOnWorker(self, task, workerPxy):
+    def __onFailToRunOnWorker(self, task, workerPxy):
         msg = ("Monitoring task '%s' could not be started on worker '%s'"
                % (task.getLabel(), workerPxy.getLabel()))
         notifyEmergency(msg)
@@ -255,14 +276,14 @@ class TranscoderAdmin(log.Loggable):
     
     ## Scheduler Event Listeners ##
     
-    def _onProfileQueued(self, scheduler, profCtx):
+    def __onProfileQueued(self, scheduler, profCtx):
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
         
-    def _onTranscodingStarted(self, scheduler, task):
+    def __onTranscodingStarted(self, scheduler, task):
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.transcoding)
     
-    def _onTranscodingFailed(self, sheduler, task):
+    def __onTranscodingFailed(self, sheduler, task):
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.failed)
         if not task.isAcknowledged():
@@ -275,7 +296,7 @@ class TranscoderAdmin(log.Loggable):
                        "or has been kill", ctx.getInputPath())
             self.__moveFailedInputFiles(ctx)
     
-    def _onTranscodingDone(self, sheduler, task):
+    def __onTranscodingDone(self, sheduler, task):
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.done)
 

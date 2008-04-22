@@ -27,8 +27,10 @@ class ComponentSetSkeleton(base.RootProxy):
         self._managerPxySet = managerPxySet
         self._rejecteds = {} # {Identifier: ComponentProxy}
         self._compWaiters = {} # {Identifier: {Deferred: IDelayedCall}}
-        self._managerPxySet.connectListener("manager-added", self, self._onManagerAddedToSet)
-        self._managerPxySet.connectListener("manager-removed", self, self._onManagerRemovedFromSet)
+        self._managerPxySet.connectListener("manager-added", self,
+                                            self.__onManagerAddedToSet)
+        self._managerPxySet.connectListener("manager-removed", self,
+                                            self.__onManagerRemovedFromSet)
         
         
     ## Public Methods ##
@@ -94,14 +96,18 @@ class ComponentSetSkeleton(base.RootProxy):
 
     ## managerset.ManagerSet Event Listeners ##
 
-    def _onManagerAddedToSet(self, managerPxySet, managerPxy):
-        managerPxy.connectListener("atmosphere-set", self, self._onAtmosphereSet)
-        managerPxy.connectListener("atmosphere-unset", self, self._onAtmosphereUnset)
-        managerPxy.connectListener("flow-added", self, self._onFlowAdded)
-        managerPxy.connectListener("flow-removed", self, self._onFlowRemoved)
+    def __onManagerAddedToSet(self, managerPxySet, managerPxy):
+        managerPxy.connectListener("atmosphere-set", self,
+                                   self.__onAtmosphereSet)
+        managerPxy.connectListener("atmosphere-unset", self,
+                                   self.__onAtmosphereUnset)
+        managerPxy.connectListener("flow-added", self,
+                                   self.__onFlowAdded)
+        managerPxy.connectListener("flow-removed", self,
+                                   self.__onFlowRemoved)
         managerPxy.refreshListener(self)
         
-    def _onManagerRemovedFromSet(self, managerPxySet, managerPxy):
+    def __onManagerRemovedFromSet(self, managerPxySet, managerPxy):
         managerPxy.disconnectListener("atmosphere-set", self)
         managerPxy.disconnectListener("atmosphere-unset", self)
         managerPxy.disconnectListener("flow-added", self)
@@ -110,40 +116,44 @@ class ComponentSetSkeleton(base.RootProxy):
 
     ## Manager Event Listeners ##
     
-    def _onAtmosphereSet(self, managerPxy, atmoPxy):
-        atmoPxy.connectListener("component-added", self, self._onAtmosphereComponentAdded)
-        atmoPxy.connectListener("component-removed", self, self._onAtmosphereComponentRemoved)
+    def __onAtmosphereSet(self, managerPxy, atmoPxy):
+        atmoPxy.connectListener("component-added", self,
+                                self.__onAtmosphereComponentAdded)
+        atmoPxy.connectListener("component-removed", self,
+                                self.__onAtmosphereComponentRemoved)
         atmoPxy.refreshListener(self)
     
-    def _onAtmosphereUnset(self, managerPxy, atmoPxy):
+    def __onAtmosphereUnset(self, managerPxy, atmoPxy):
         atmoPxy.disconnectListener("component-added", self)
         atmoPxy.disconnectListener("component-removed", self)
     
-    def _onFlowAdded(self, managerPxy, flowPxy):
-        flowPxy.connectListener("component-added", self, self._onFlowComponentAdded)
-        flowPxy.connectListener("component-removed", self, self._onFlowComponentRemoved)
+    def __onFlowAdded(self, managerPxy, flowPxy):
+        flowPxy.connectListener("component-added", self,
+                                self.__onFlowComponentAdded)
+        flowPxy.connectListener("component-removed", self,
+                                self.__onFlowComponentRemoved)
         flowPxy.refreshListener(self)
     
-    def _onFlowRemoved(self, managerPxy, flowPxy):
+    def __onFlowRemoved(self, managerPxy, flowPxy):
         flowPxy.disconnectListener("component-added", self)
         flowPxy.disconnectListener("component-removed", self)
 
 
     ### Flow Event Listeners ###
 
-    def _onFlowComponentAdded(self, flowPxy, compPxy):
+    def __onFlowComponentAdded(self, flowPxy, compPxy):
         self.__addComponent(compPxy)
     
-    def _onFlowComponentRemoved(self, flowPxy, compPxy):
+    def __onFlowComponentRemoved(self, flowPxy, compPxy):
         self.__removeComponent(compPxy)
     
     
     ### Atmosphere Event Listeners ###
     
-    def _onAtmosphereComponentAdded(self, atmoPxy, compPxy):
+    def __onAtmosphereComponentAdded(self, atmoPxy, compPxy):
         self.__addComponent(compPxy)
     
-    def _onAtmosphereComponentRemoved(self, atmoPxy, compPxy):
+    def __onAtmosphereComponentRemoved(self, atmoPxy, compPxy):
         self.__removeComponent(compPxy)
 
 

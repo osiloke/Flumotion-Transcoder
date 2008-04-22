@@ -61,9 +61,12 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     def initialize(self):
         self.debug("Retrieve transcoding activities")
-        self._transcoding.connectListener("task-added", self, self._onTranscodingTaskAdded)
-        self._transcoding.connectListener("task-removed", self, self._onTranscodingTaskRemoved)
-        self._transcoding.connectListener("slot-available", self, self._onSlotsAvailable)
+        self._transcoding.connectListener("task-added", self,
+                                          self.__onTranscodingTaskAdded)
+        self._transcoding.connectListener("task-removed", self,
+                                          self.__onTranscodingTaskRemoved)
+        self._transcoding.connectListener("slot-available", self,
+                                          self.__onSlotsAvailable)
         self._transcoding.refreshListener(self)
         states = [ActivityStateEnum.started]
         stateCtx = self._storeCtx.getStateContext()
@@ -133,27 +136,30 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     ## ITranscoding Event Listers ##
     
-    def _onTranscodingTaskAdded(self, takset, task):
+    def __onTranscodingTaskAdded(self, takset, task):
         self.debug("Transcoding task '%s' added", task.getLabel())
-        task.connectListener("failed", self, self._onTranscodingFailed)
-        task.connectListener("done", self, self._onTranscodingDone)
-        task.connectListener("terminated", self, self._onTranscodingTerminated)
+        task.connectListener("failed", self,
+                             self.__onTranscodingFailed)
+        task.connectListener("done", self,
+                             self.__onTranscodingDone)
+        task.connectListener("terminated", self,
+                             self.__onTranscodingTerminated)
         task.refreshListener(self)
     
-    def _onTranscodingTaskRemoved(self, tasker, task):
+    def __onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.getLabel())
         task.disconnectListener("failed", self)
         task.disconnectListener("done", self)
         task.disconnectListener("terminated", self)
 
-    def _onSlotsAvailable(self, tasker, count):
+    def __onSlotsAvailable(self, tasker, count):
         self.log("Transcoding manager have %d slot(s) available", count)
         self.__startupTasks()
 
 
     ## TranscodingTask Event Listeners ##
     
-    def _onTranscodingFailed(self, task, transPxy):
+    def __onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.getStore()
         activStore.setState(ActivityStateEnum.failed)
@@ -165,7 +171,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         else:
             self.__transcodingFailed(None, task, transPxy)
             
-    def _onTranscodingDone(self, task, transPxy):
+    def __onTranscodingDone(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.getStore()
         activStore.setState(ActivityStateEnum.done)
@@ -177,7 +183,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         else:
             self.__transcodingDone(None, task, transPxy)
 
-    def _onTranscodingTerminated(self, task, succeed):
+    def __onTranscodingTerminated(self, task, succeed):
         self.info("Transcoding task '%s' %s", task.getLabel(), 
                   (succeed and "succeed") or "failed")
         profCtx = task.getProfileContext()

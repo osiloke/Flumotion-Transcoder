@@ -70,7 +70,7 @@ class MonitoringTask(admintask.AdminTask):
 
     ## Component Event Listeners ##
     
-    def _onComponentMoodChanged(self, monPxy, mood):
+    def __onComponentMoodChanged(self, monPxy, mood):
         if not self.isStarted(): return
         self.log("Monitoring task '%s' monitor '%s' goes %s", 
                  self.getLabel(), monPxy.getName(), mood.name)
@@ -103,7 +103,7 @@ class MonitoringTask(admintask.AdminTask):
 
     ## Monitor Event Listeners ##
     
-    def _onMonitorFileRemoved(self, monPxy, virtDir, file, state):
+    def __onMonitorFileRemoved(self, monPxy, virtDir, file, state):
         if not self._isElectedComponent(monPxy): return
         if (state == MonitorFileStateEnum.downloading): return
         profCtx = self.__file2profileContext(virtDir, file)
@@ -114,7 +114,7 @@ class MonitoringTask(admintask.AdminTask):
             return
         self.emit("file-removed", profCtx, state)
     
-    def _onMonitorFileAdded(self, monPxy, virtDir, file, state):
+    def __onMonitorFileAdded(self, monPxy, virtDir, file, state):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -124,7 +124,7 @@ class MonitoringTask(admintask.AdminTask):
             return
         self.emit("file-added", profCtx, state)
 
-    def _onMonitorFileChanged(self, monPxy, virtDir, file, state):
+    def __onMonitorFileChanged(self, monPxy, virtDir, file, state):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -138,10 +138,14 @@ class MonitoringTask(admintask.AdminTask):
     ## Virtual Methods Implementation ##
     
     def _onComponentAdded(self, compPxy):
-        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
-        compPxy.connectListener("file-removed", self, self._onMonitorFileRemoved)
-        compPxy.connectListener("file-added", self, self._onMonitorFileAdded)
-        compPxy.connectListener("file-changed", self, self._onMonitorFileChanged)
+        compPxy.connectListener("mood-changed", self,
+                                self.__onComponentMoodChanged)
+        compPxy.connectListener("file-removed", self,
+                                self.__onMonitorFileRemoved)
+        compPxy.connectListener("file-added", self,
+                                self.__onMonitorFileAdded)
+        compPxy.connectListener("file-changed", self,
+                                self.__onMonitorFileChanged)
         compPxy.refreshListener(self)
 
     def _onComponentRemoved(self, compPxy):
@@ -163,11 +167,11 @@ class MonitoringTask(admintask.AdminTask):
         # So resend the mood changing event
         mood = compPxy.getMood()
         if mood:
-            self._onComponentMoodChanged(compPxy, mood)
+            self.__onComponentMoodChanged(compPxy, mood)
 
     def _onStarted(self):
         for compPxy in self.iterComponentProxies():
-            self._onComponentMoodChanged(compPxy, compPxy.getMood())
+            self.__onComponentMoodChanged(compPxy, compPxy.getMood())
     
     def _doAcceptSuggestedWorker(self, workerPxy):
         currWorkerPxy = self.getWorkerProxy()

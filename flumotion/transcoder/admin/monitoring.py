@@ -40,10 +40,14 @@ class Monitoring(taskmanager.TaskManager):
     
     def initialize(self):
         self.log("Initializing Monitoring Manager")
-        self._workerPxySet.connectListener("worker-added", self, self._onWorkerAddedToSet)
-        self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
-        self._monitorPxySet.connectListener("monitor-added", self, self._onMonitorAddedToSet)
-        self._monitorPxySet.connectListener("monitor-removed", self, self._onMonitorRemovedFromSet)
+        self._workerPxySet.connectListener("worker-added", self,
+                                           self.__onWorkerAddedToSet)
+        self._workerPxySet.connectListener("worker-removed", self,
+                                           self.__onWorkerRemovedFromSet)
+        self._monitorPxySet.connectListener("monitor-added", self,
+                                            self.__onMonitorAddedToSet)
+        self._monitorPxySet.connectListener("monitor-removed", self,
+                                            self.__onMonitorRemovedFromSet)
         self._workerPxySet.refreshListener(self)
         self._monitorPxySet.refreshListener(self)
         return taskmanager.TaskManager.initialize(self)
@@ -87,12 +91,12 @@ class Monitoring(taskmanager.TaskManager):
             
     ## WorkerSet Event Listeners ##
     
-    def _onWorkerAddedToSet(self, workerPxySet, workerPxy):
+    def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' added to monitoring", workerPxy.getLabel())
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
-    def _onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
+    def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' removed from monitoring", workerPxy.getLabel())
         self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
@@ -100,12 +104,12 @@ class Monitoring(taskmanager.TaskManager):
 
     ## MonitorSet Event Listeners ##
     
-    def _onMonitorAddedToSet(self, monitorPxySet, monitorPxy):
+    def __onMonitorAddedToSet(self, monitorPxySet, monitorPxy):
         self.log("Monitor '%s' added to monitoring", monitorPxy.getLabel())
         d = self.addComponent(monitorPxy)
         d.addErrback(self.__ebAddComponentFailed, monitorPxy.getName())
     
-    def _onMonitorRemovedFromSet(self, monitorPxySet, monitorPxy):
+    def __onMonitorRemovedFromSet(self, monitorPxySet, monitorPxy):
         self.log("Monitor '%s' removed from monitoring", monitorPxy.getLabel())
         d = self.removeComponent(monitorPxy)
         d.addErrback(self.__ebRemoveComponentFailed, monitorPxy.getName())

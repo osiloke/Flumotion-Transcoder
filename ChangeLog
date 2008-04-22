@@ -1,6 +1,22 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/janitor.py:
+	* flumotion/transcoder/admin/monitoring.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/componentset.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/workerset.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/transcoding.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Made all event handling methods "private" to prevent
+	confusion with overriden "protected" methods.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/datastore/customer.py:
 	* flumotion/transcoder/admin/datastore/profile.py:
 	* flumotion/transcoder/admin/datastore/store.py:

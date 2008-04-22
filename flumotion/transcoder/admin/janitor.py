@@ -33,19 +33,22 @@ class Janitor(log.Loggable):
         self._deleted = set()
         
     def initialize(self):
-        self._compPxySet.connectListener("component-added", self, self._onComponentAddedToSet)
-        self._compPxySet.connectListener("component-removed", self, self._onComponentRemovedFromSet)
+        self._compPxySet.connectListener("component-added", self,
+                                         self.__onComponentAddedToSet)
+        self._compPxySet.connectListener("component-removed", self,
+                                         self.__onComponentRemovedFromSet)
         self._compPxySet.refreshListener(self)
         return defer.succeed(self)
 
 
     ## ComponentSet Event Listeners ##
 
-    def _onComponentAddedToSet(self, compPxySet, compPxy):
-        compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)    
+    def __onComponentAddedToSet(self, compPxySet, compPxy):
+        compPxy.connectListener("mood-changed", self,
+                                self.__onComponentMoodChanged)    
         compPxy.refreshListener(self)
     
-    def _onComponentRemovedFromSet(self, compPxySet, compPxy):
+    def __onComponentRemovedFromSet(self, compPxySet, compPxy):
         compPxy.disconnectListener("mood-changed", self)
         bag = self.__getComponentBag(compPxy)
         if bag and (compPxy in bag):
@@ -56,7 +59,7 @@ class Janitor(log.Loggable):
 
     ## Component Event Listeners ##
 
-    def _onComponentMoodChanged(self, compPxy, mood):
+    def __onComponentMoodChanged(self, compPxy, mood):
         if mood == None: return
         if mood in self._neutralMoods: return
         if compPxy in self._deleted: return

@@ -43,10 +43,14 @@ class Transcoding(taskmanager.TaskManager):
 
     def initialize(self):
         self.log("Initializing Transcoding Manager")
-        self._workerPxySet.connectListener("worker-added", self, self._onWorkerAddedToSet)
-        self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
-        self._transPxySet.connectListener("transcoder-added", self, self._onTranscoderAddedToSet)
-        self._transPxySet.connectListener("transcoder-removed", self, self._onTranscoderRemovedFromSet)
+        self._workerPxySet.connectListener("worker-added", self,
+                                           self.__onWorkerAddedToSet)
+        self._workerPxySet.connectListener("worker-removed", self,
+                                           self.__onWorkerRemovedFromSet)
+        self._transPxySet.connectListener("transcoder-added", self,
+                                          self.__onTranscoderAddedToSet)
+        self._transPxySet.connectListener("transcoder-removed", self,
+                                          self.__onTranscoderRemovedFromSet)
         self._workerPxySet.refreshListener(self)
         self._transPxySet.refreshListener(self)
         return taskmanager.TaskManager.initialize(self)
@@ -90,12 +94,12 @@ class Transcoding(taskmanager.TaskManager):
             
     ## WorkerSet Event Listeners ##
     
-    def _onWorkerAddedToSet(self, workerPxySet, workerPxy):
+    def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' added to transcoding", workerPxy.getLabel())
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
-    def _onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
+    def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' removed from transcoding", workerPxy.getLabel())
         self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
@@ -103,12 +107,12 @@ class Transcoding(taskmanager.TaskManager):
 
     ## TranscoderSet Event Listeners ##
     
-    def _onTranscoderAddedToSet(self, transPxySet, transPxy):
+    def __onTranscoderAddedToSet(self, transPxySet, transPxy):
         self.log("Transcoder '%s' added to transcoding", transPxy.getLabel())
         d = self.addComponent(transPxy)
         d.addErrback(self.__ebAddComponentFailed, transPxy.getName())
     
-    def _onTranscoderRemovedFromSet(self, transPxySet, transPxy):
+    def __onTranscoderRemovedFromSet(self, transPxySet, transPxy):
         self.log("Transcoder '%s' removed from transcoding", transPxy.getLabel())
         d = self.removeComponent(transPxy)
         d.addErrback(self.__ebRemoveComponentFailed, transPxy.getName())
