@@ -64,7 +64,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._transcoding.connectListener("task-added", self, self._onTranscodingTaskAdded)
         self._transcoding.connectListener("task-removed", self, self._onTranscodingTaskRemoved)
         self._transcoding.connectListener("slot-available", self, self._onSlotsAvailable)
-        self._transcoding.update(self)
+        self._transcoding.refreshListener(self)
         states = [ActivityStateEnum.started]
         stateCtx = self._storeCtx.getStateContext()
         d = stateCtx.retrieveTranscodingContexts(states)
@@ -138,7 +138,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         task.connectListener("failed", self, self._onTranscodingFailed)
         task.connectListener("done", self, self._onTranscodingDone)
         task.connectListener("terminated", self, self._onTranscodingTerminated)
-        task.update(self)
+        task.refreshListener(self)
     
     def _onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.getLabel())
@@ -187,7 +187,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     ## EventSource Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         for profCtx in self._queue.itervalues():
             self.emitTo("profile-queued", listener, profCtx)
         for task in self._transcoding.iterTasks():

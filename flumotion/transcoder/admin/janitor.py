@@ -35,7 +35,7 @@ class Janitor(log.Loggable):
     def initialize(self):
         self._compPxySet.connectListener("component-added", self, self._onComponentAddedToSet)
         self._compPxySet.connectListener("component-removed", self, self._onComponentRemovedFromSet)
-        self._compPxySet.update(self)
+        self._compPxySet.refreshListener(self)
         return defer.succeed(self)
 
 
@@ -43,7 +43,7 @@ class Janitor(log.Loggable):
 
     def _onComponentAddedToSet(self, compPxySet, compPxy):
         compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)    
-        compPxy.update(self)
+        compPxy.refreshListener(self)
     
     def _onComponentRemovedFromSet(self, compPxySet, compPxy):
         compPxy.disconnectListener("mood-changed", self)

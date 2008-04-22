@@ -184,8 +184,8 @@ class AdminStore(base.BaseStore):
     
     ## Overridden Methods ##
 
-    def update(self, listener):
-        base.BaseStore.update(self, listener)
+    def refreshListener(self, listener):
+        base.BaseStore.refreshListener(self, listener)
         for custStore in self._customers.itervalues():
             if custStore.isActive():
                 self.emitTo("customer-added", listener, custStore)

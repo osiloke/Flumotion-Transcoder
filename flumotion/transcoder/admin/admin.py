@@ -103,10 +103,10 @@ class TranscoderAdmin(log.Loggable):
         self._scheduler.connectListener("transcoding-done", self, self._onTranscodingDone)
         self._monitoring.connectListener("task-added", self, self._onMonitoringTaskAdded)
         self._monitoring.connectListener("task-removed", self, self._onMonitoringTaskRemoved)
-        self._adminStore.update(self)
-        self._managerPxySet.update(self)
-        self._scheduler.update(self)
-        self._monitoring.update(self)
+        self._adminStore.refreshListener(self)
+        self._managerPxySet.refreshListener(self)
+        self._scheduler.refreshListener(self)
+        self._monitoring.refreshListener(self)
         # fire the initialization
         d.callback(None)
         return d
@@ -174,7 +174,7 @@ class TranscoderAdmin(log.Loggable):
         self.debug("Customer '%s' Added", custStore.getLabel())
         custStore.connectListener("profile-added", self, self._onProfileStoreAdded)
         custStore.connectListener("profile-removed", self, self._onProfileStoreRemoved)
-        custStore.update(self)
+        custStore.refreshListener(self)
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.getIdentifier(), task)
@@ -194,7 +194,7 @@ class TranscoderAdmin(log.Loggable):
         self.debug("Profile '%s' Added", profStore.getLabel())
         profStore.connectListener("target-added", self, self._onTargetStoreAdded)
         profStore.connectListener("target-removed", self, self._onTargetStoreRemoved)
-        profStore.update(self)
+        profStore.refreshListener(self)
         
     def _onProfileStoreRemoved(self, custStore, profStore):
         self.debug("Profile '%s' Removed", profStore.getLabel())
@@ -219,7 +219,7 @@ class TranscoderAdmin(log.Loggable):
         task.connectListener("file-state-changed", self, self._onMonitoredFileStateChanged)
         task.connectListener("file-removed", self, self._onMonitoredFileRemoved)
         task.connectListener("fail-to-run", self, self._onFailToRunOnWorker)
-        task.update(self)
+        task.refreshListener(self)
     
     def _onMonitoringTaskRemoved(self, tasker, task):
         self.debug("Monitoring task '%s' removed", task.getLabel())

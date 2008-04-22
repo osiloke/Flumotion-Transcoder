@@ -47,8 +47,8 @@ class Transcoding(taskmanager.TaskManager):
         self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
         self._transPxySet.connectListener("transcoder-added", self, self._onTranscoderAddedToSet)
         self._transPxySet.connectListener("transcoder-removed", self, self._onTranscoderRemovedFromSet)
-        self._workerPxySet.update(self)
-        self._transPxySet.update(self)
+        self._workerPxySet.refreshListener(self)
+        self._transPxySet.refreshListener(self)
         return taskmanager.TaskManager.initialize(self)
 
 
@@ -122,7 +122,7 @@ class Transcoding(taskmanager.TaskManager):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         for t in self.iterTasks():
             self.emitTo("task-added", listener, t)
         available = self._balancer.getAvailableSlots()

@@ -68,7 +68,7 @@ class WorkerSet(base.RootProxy):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         self._updateProxies("_workerPxys", listener, "worker-added")
 
 
@@ -77,7 +77,7 @@ class WorkerSet(base.RootProxy):
     def _onManagerAddedToSet(self, mgrPxySet, managerPxy):
         managerPxy.connectListener("worker-added", self, self._onWorkerAdded)
         managerPxy.connectListener("worker-removed", self, self._onWorkerRemoved)
-        managerPxy.update(self)
+        managerPxy.refreshListener(self)
         
     def _onManagerRemovedFromSet(self, mgrPxySet, managerPxy):
         managerPxy.disconnectListener("worker-added", self)

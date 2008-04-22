@@ -1,6 +1,30 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/janitor.py:
+	* flumotion/transcoder/admin/monitoring.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/proxy/componentset.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/manager.py:
+	* flumotion/transcoder/admin/proxy/managerset.py:
+	* flumotion/transcoder/admin/proxy/monitorset.py:
+	* flumotion/transcoder/admin/proxy/transcoderset.py:
+	* flumotion/transcoder/admin/proxy/workerset.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/transcoding.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Changed the event handler method update to refreshListener
+	to be more descriptive and prevent confusion.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/api/gateway.py:
 	Changed to match "convention".
 

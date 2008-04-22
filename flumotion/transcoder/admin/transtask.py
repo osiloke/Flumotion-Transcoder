@@ -170,7 +170,7 @@ class TranscodingTask(admintask.AdminTask):
         compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
         compPxy.connectListener("status-changed", self, self._onTranscoderStatusChanged)
         compPxy.connectListener("job-state-changed", self, self._onTranscoderJobStateChanged)
-        compPxy.update(self)
+        compPxy.refreshListener(self)
 
     def _onComponentRemoved(self, compPxy):
         compPxy.disconnectListener("orphaned", self)
@@ -180,7 +180,7 @@ class TranscodingTask(admintask.AdminTask):
 
     def _onComponentElected(self, compPxy):
         self.emit("component-selected", compPxy)
-        compPxy.update(self)
+        compPxy.refreshListener(self)
 
     def _onComponentRelieved(self, compPxy):
         # If elected component is relieved we cannot be acknowledging anymore

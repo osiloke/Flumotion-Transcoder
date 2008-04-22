@@ -107,7 +107,7 @@ class ManagerProxy(base.BaseProxy):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         assert self._planetState, "Manager has been removed"
         self._updateProxies("_workerPxys", listener, "worker-added")
         self._updateProxies("_atmoPxy", listener, "atmosphere-set")

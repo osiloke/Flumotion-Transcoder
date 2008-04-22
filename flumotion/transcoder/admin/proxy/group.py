@@ -60,7 +60,7 @@ class ComponentGroupProxy(base.Proxy):
     
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         assert self._state, "Element has been removed"
         self._updateProxies("_compPxys", listener, "component-added")
 

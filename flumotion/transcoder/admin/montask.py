@@ -142,7 +142,7 @@ class MonitoringTask(admintask.AdminTask):
         compPxy.connectListener("file-removed", self, self._onMonitorFileRemoved)
         compPxy.connectListener("file-added", self, self._onMonitorFileAdded)
         compPxy.connectListener("file-changed", self, self._onMonitorFileChanged)
-        compPxy.update(self)
+        compPxy.refreshListener(self)
 
     def _onComponentRemoved(self, compPxy):
         compPxy.disconnectListener("mood-changed", self)
@@ -152,7 +152,7 @@ class MonitoringTask(admintask.AdminTask):
 
     def _onComponentElected(self, compPxy):
         self.emit("monitoring-activated", compPxy)
-        compPxy.update(self)
+        compPxy.refreshListener(self)
 
     def _onComponentRelieved(self, compPxy):
         self.emit("monitoring-deactivated", compPxy)

@@ -229,7 +229,7 @@ class BaseComponentProxy(base.Proxy):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         assert self._compState, "Component has been removed"
         if self.isActive():
             self.emitTo("mood-changed", listener, self._mood.getValue())

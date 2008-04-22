@@ -44,8 +44,8 @@ class Monitoring(taskmanager.TaskManager):
         self._workerPxySet.connectListener("worker-removed", self, self._onWorkerRemovedFromSet)
         self._monitorPxySet.connectListener("monitor-added", self, self._onMonitorAddedToSet)
         self._monitorPxySet.connectListener("monitor-removed", self, self._onMonitorRemovedFromSet)
-        self._workerPxySet.update(self)
-        self._monitorPxySet.update(self)
+        self._workerPxySet.refreshListener(self)
+        self._monitorPxySet.refreshListener(self)
         return taskmanager.TaskManager.initialize(self)
 
     
@@ -113,7 +113,7 @@ class Monitoring(taskmanager.TaskManager):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         for t in self._tasks.itervalues():
             self.emitTo("task-added", listener, t)
 

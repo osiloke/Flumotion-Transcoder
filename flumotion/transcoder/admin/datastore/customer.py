@@ -215,8 +215,8 @@ class CustomerStore(base.BaseStore):
 
     ## Overridden Methods ##
 
-    def update(self, listener):
-        base.BaseStore.update(self, listener)
+    def refreshListener(self, listener):
+        base.BaseStore.refreshListener(self, listener)
         for profStore in self._profiles.itervalues():
             if profStore.isActive():
                 self.emitTo("profile-added", listener, profStore)

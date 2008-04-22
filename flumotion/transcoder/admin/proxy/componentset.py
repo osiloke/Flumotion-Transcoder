@@ -99,7 +99,7 @@ class ComponentSetSkeleton(base.RootProxy):
         managerPxy.connectListener("atmosphere-unset", self, self._onAtmosphereUnset)
         managerPxy.connectListener("flow-added", self, self._onFlowAdded)
         managerPxy.connectListener("flow-removed", self, self._onFlowRemoved)
-        managerPxy.update(self)
+        managerPxy.refreshListener(self)
         
     def _onManagerRemovedFromSet(self, managerPxySet, managerPxy):
         managerPxy.disconnectListener("atmosphere-set", self)
@@ -113,7 +113,7 @@ class ComponentSetSkeleton(base.RootProxy):
     def _onAtmosphereSet(self, managerPxy, atmoPxy):
         atmoPxy.connectListener("component-added", self, self._onAtmosphereComponentAdded)
         atmoPxy.connectListener("component-removed", self, self._onAtmosphereComponentRemoved)
-        atmoPxy.update(self)
+        atmoPxy.refreshListener(self)
     
     def _onAtmosphereUnset(self, managerPxy, atmoPxy):
         atmoPxy.disconnectListener("component-added", self)
@@ -122,7 +122,7 @@ class ComponentSetSkeleton(base.RootProxy):
     def _onFlowAdded(self, managerPxy, flowPxy):
         flowPxy.connectListener("component-added", self, self._onFlowComponentAdded)
         flowPxy.connectListener("component-removed", self, self._onFlowComponentRemoved)
-        flowPxy.update(self)
+        flowPxy.refreshListener(self)
     
     def _onFlowRemoved(self, managerPxy, flowPxy):
         flowPxy.disconnectListener("component-added", self)
@@ -284,7 +284,7 @@ class ComponentSet(BaseComponentSet):
         
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         self._updateProxies("_compPxys", listener, "component-added")
 
     def _doAddComponent(self, compPxy):

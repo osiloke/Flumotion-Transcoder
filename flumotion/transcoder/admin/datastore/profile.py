@@ -199,8 +199,8 @@ class ProfileStore(base.BaseStore):
 
     ## Overridden Methods ##
     
-    def update(self, listener):
-        base.BaseStore.update(self, listener)
+    def refreshListener(self, listener):
+        base.BaseStore.refreshListener(self, listener)
         for targStore in self._targets.itervalues():
             if targStore.isActive():
                 self.emitTo("target-added", listener, targStore)

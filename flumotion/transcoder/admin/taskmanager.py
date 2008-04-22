@@ -290,7 +290,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
                  self.getLabel(), compPxy.getName())
         self._taskless[compPxy] = None
         compPxy.connectListener("mood-changed", self, self._onComponentMoodChanged)
-        compPxy.update(self)
+        compPxy.refreshListener(self)
         self._onTasklessComponentAdded(compPxy)
     
     def __releaseTasklessComponent(self, compPxy):

@@ -30,7 +30,7 @@ class MonitorSet(componentset.BaseComponentSet):
 
     ## Overriden Methods ##
     
-    def update(self, listener):
+    def refreshListener(self, listener):
         self._updateProxies("_compPxys", listener, "monitor-added")
 
     def _doAcceptComponent(self, compPxy):
