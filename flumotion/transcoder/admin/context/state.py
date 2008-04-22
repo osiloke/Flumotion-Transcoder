@@ -25,33 +25,31 @@ class StateContext(base.BaseStoreContext):
         return self.parent
 
     def getActivityContextFor(self, activStore):
-        assert activStore.parent == self._store
+        assert activStore.parent == self.store
         return activity.ActivityContextFactory(self, activStore)
 
     def retrieveTranscodingContexts(self, states):
-        d = self._store.retrieveTranscodingStores(states)
+        d = self.store.retrieveTranscodingStores(states)
         d.addCallback(self.__wrappActivities)
         return d
     
     def retrieveNotificationContexts(self, states):
-        d = self._store.retrieveNotificationStores(states)
+        d = self.store.retrieveNotificationStores(states)
         d.addCallback(self.__wrappActivities)
         return d
     
     def newTranscodingContext(self, label, state, profCtx, startTime=None):
         assert isinstance(profCtx, profile.ProfileContext)
         inputRelPath = profCtx.getInputRelPath()
-        profStore = profCtx.getStore()
-        activStore = self._store.newTranscodingStore(label, state, profStore,
-                                                     inputRelPath, startTime)
+        activStore = self.store.newTranscodingStore(label, state, profCtx.store,
+                                                    inputRelPath, startTime)
         activCtx = self.getActivityContextFor(activStore)
         activCtx._setup(profCtx)
         return activCtx
      
     def newNotificationContext(self, subtype, label, state, notifCtx, trigger, startTime=None):
-        notifStore = notifCtx.getStore()
-        activStore = self._store.newNotificationStore(subtype, label, state,
-                                                      notifStore, trigger, startTime)
+        activStore = self.store.newNotificationStore(subtype, label, state,
+                                                     notifCtx.store, trigger, startTime)
         activCtx = self.getActivityContextFor(activStore)
         activCtx._setup(notifCtx)
         return activCtx

@@ -54,7 +54,7 @@ class TranscodingActivityContext(ActivityContext):
         ActivityContext._setup(self)
         
     def getCustomerContext(self):
-        custStore = self._store.getCustomerStore()
+        custStore = self.store.getCustomerStore()
         if not custStore: return None
         storeCtx = self.getStoreContext()
         return storeCtx.getCustomerContextFor(custStore)
@@ -62,7 +62,7 @@ class TranscodingActivityContext(ActivityContext):
     def getProfileContext(self):
         custCtx = self.getCustomerContext()
         if not custCtx: return None
-        profStore = self._store.getProfileStore()
+        profStore = self.store.getProfileStore()
         if not profStore: return None
         relPath = self.getInputRelPath()
         if relPath:
@@ -83,9 +83,9 @@ class NotificationActivityContext(ActivityContext):
 
     def _setup(self, notifCtx):
         ActivityContext._setup(self)
-        self._store.setTimeout(notifCtx.getTimeout())
-        self._store.setRetryMax(notifCtx.getRetryMax())
-        self._store.setRetrySleep(notifCtx.getRetrySleep())
+        self.store.setTimeout(notifCtx.getTimeout())
+        self.store.setRetryMax(notifCtx.getRetryMax())
+        self.store.setRetrySleep(notifCtx.getRetrySleep())
 
     def getTimeLeftBeforeRetry(self):
         now = datetime.datetime.now()

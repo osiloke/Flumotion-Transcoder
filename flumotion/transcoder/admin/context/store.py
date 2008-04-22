@@ -75,18 +75,18 @@ class StoreContext(base.BaseStoreContext, notification.NotificationStoreMixin):
         return self.parent
 
     def getCustomerContextFor(self, custStore):
-        assert custStore.parent == self._store
+        assert custStore.parent == self.store
         return customer.CustomerContext(self, custStore)
     
     def getCustomerContextByName(self, custName):
-        custStore = self._store.getCustomerStoreByName(custName)
+        custStore = self.store.getCustomerStoreByName(custName)
         return customer.CustomerContext(self, custStore)
     
     def iterCustomerContexts(self):
-        iter = self._store.iterCustomerStores()
+        iter = self.store.iterCustomerStores()
         return base.LazyContextIterator(self, customer.CustomerContext, iter)
 
     def getStateContext(self):
-        stateStore = self._store.getStateStore()
+        stateStore = self.store.getStateStore()
         return state.StateContext(self, stateStore)
         

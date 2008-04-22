@@ -1,5 +1,20 @@
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/test/test_storecontexts.py:
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/state.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	Made the store a public attribute of the context wrappers.
+
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py:
 	* flumotion/transcoder/admin/context/activity.py:
 	* flumotion/transcoder/admin/context/api.py:

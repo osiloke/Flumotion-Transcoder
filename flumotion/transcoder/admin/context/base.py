@@ -34,10 +34,10 @@ class LazyContextIterator(object):
 
 def genStoreProxy(getterName, default=None):
     def getter(self):
-        method = getattr(self._store, getterName, None)
+        method = getattr(self.store, getterName, None)
         if method is None:
             raise ValueError("Context element %s do not have method %s"
-                             % (self._store, getterName))
+                             % (self.store, getterName))
         value = method()
         if value == None: value = default
         return value
@@ -45,10 +45,10 @@ def genStoreProxy(getterName, default=None):
 
 def genParentOverridingStoreProxy(getterName, parentGetterName=None):
     def getter(self):
-        method = getattr(self._store, getterName, None)
+        method = getattr(self.store, getterName, None)
         if method is None:
             raise ValueError("Context element %s do not have method %s"
-                             % (self._store, getterName))
+                             % (self.store, getterName))
         value = method()
         if value != None:
             return value
@@ -64,10 +64,10 @@ def genParentOverridingStoreProxy(getterName, parentGetterName=None):
 
 def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
     def getter(self):
-        method = getattr(self._store, getterName, None)
+        method = getattr(self.store, getterName, None)
         if method is None:
             raise ValueError("Context element %s do not have method %s"
-                             % (self._store, getterName))
+                             % (self.store, getterName))
         value = method()
         if value != None: return value
         sGetterName = storeGetterName or getterName
@@ -96,8 +96,4 @@ class BaseStoreContext(BaseContext):
     
     def __init__(self, parent, store):
         BaseContext.__init__(self, parent)
-        self._store = store
-
-    def getStore(self):
-        return self._store    
- 
+        self.store = store

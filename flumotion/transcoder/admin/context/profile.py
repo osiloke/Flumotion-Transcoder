@@ -23,7 +23,7 @@ def genBaseGetter(name):
     baseGetterName = "get%sBase" % name
     
     def getter(self):
-        folder = getattr(self._store, storeGetterName)()
+        folder = getattr(self.store, storeGetterName)()
         parent = getattr(self.parent, baseGetterName)()
         if folder != None:
             value = self._expandDir(folder)
@@ -147,7 +147,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
         return "%s/%s" % (self.parent.getIdentifier(), self.getName())
 
     def getSubdir(self):
-        subdir = self._store.getSubdir()
+        subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
@@ -237,15 +237,15 @@ class ProfileContext(UnboundProfileContext):
                           self._variables["sourcePath"])
 
     def getTargetContextByName(self, targName):
-        targStore = self._store.getTargetStoreByName(targName)
+        targStore = self.store.getTargetStoreByName(targName)
         return target.TargetContext(self, targStore)
 
     def getTargetContextFor(self, targStore):
-        assert targStore.parent == self._store
+        assert targStore.parent == self.store
         return target.TargetContext(self, targStore)
 
     def iterTargetContexts(self):
-        targIter = self._store.iterTargetStores()
+        targIter = self.store.iterTargetStores()
         return base.LazyContextIterator(self, target.TargetContext, targIter)
 
     def getInputRelPath(self):

@@ -106,27 +106,27 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         return self.getName()
 
     def getUnboundProfileContextByName(self, profName):
-        profStore = self._store.getProfileStoreByName(profName)
+        profStore = self.store.getProfileStoreByName(profName)
         return profile.UnboundProfileContext(self, profStore)
     
     def getUnboundProfileContextFor(self, profStore):
-        assert profStore.parent == self._store
+        assert profStore.parent == self.store
         return profile.UnboundProfileContext(self, profStore)
     
     def iterUnboundProfileContexts(self):
-        profIter = self._store.iterProfileStores()
+        profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.UnboundProfileContext, profIter)
         
     def getProfileContextByName(self, profName, input):
-        profStore = self._store.getProfileStoreByName(profName)
+        profStore = self.store.getProfileStoreByName(profName)
         return profile.ProfileContext(self, profStore, input)
     
     def getProfileContextFor(self, profStore, input):
-        assert profStore.parent == self._store
+        assert profStore.parent == self.store
         return profile.ProfileContext(self, profStore, input)
 
     def iterProfileContexts(self, input):
-        profIter = self._store.iterProfileStores()
+        profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.ProfileContext, profIter, input)
         
     def getPathAttributes(self):
@@ -138,12 +138,12 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
                                         forceDirMode, forceFileMode)
     
     def getSubdir(self):
-        subdir = self._store.getSubdir()
+        subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
             return fileutils.cleanupPath(subdir)
-        subdir = fileutils.str2filename(self._store.getName())
+        subdir = fileutils.str2filename(self.store.getName())
         return fileutils.ensureDirPath(subdir)
         
     def _expandDir(self, folder):
@@ -162,52 +162,52 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         return VirtualPath(folder, rootName)
         
     def getInputBase(self):
-        folder = self._store.getInputDir()
+        folder = self.store.getInputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_INPUT_DIR)
 
     def getOutputBase(self):
-        folder = self._store.getOutputDir()
+        folder = self.store.getOutputDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_OUTPUT_DIR)
     
     def getFailedBase(self):
-        folder = self._store.getFailedDir()
+        folder = self.store.getFailedDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_FAILED_DIR)
     
     def getDoneBase(self):
-        folder = self._store.getDoneDir()
+        folder = self.store.getDoneDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_DONE_DIR)
     
     def getLinkBase(self):
-        folder = self._store.getLinkDir()
+        folder = self.store.getLinkDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_LINK_DIR)
     
     def getWorkBase(self):
-        folder = self._store.getWorkDir()
+        folder = self.store.getWorkDir()
         return self._getDir(constants.TEMP_ROOT, folder, 
                             adminconsts.DEFAULT_WORK_DIR)
     
     def getConfigBase(self):
-        folder = self._store.getConfigDir()
+        folder = self.store.getConfigDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_CONFIG_DIR)
     
     def getTempRepBase(self):
-        folder = self._store.getTempRepDir()
+        folder = self.store.getTempRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_TEMPREP_DIR)
 
     def getFailedRepBase(self):
-        folder = self._store.getFailedRepDir()
+        folder = self.store.getFailedRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_FAILEDREP_DIR)
     
     def getDoneRepBase(self):
-        folder = self._store.getDoneRepDir()
+        folder = self.store.getDoneRepDir()
         return self._getDir(constants.DEFAULT_ROOT, folder, 
                             adminconsts.DEFAULT_DONEREP_DIR)
 

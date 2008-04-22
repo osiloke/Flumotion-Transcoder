@@ -18,14 +18,14 @@ from flumotion.transcoder.admin.datastore import notification
 
 class NotificationStoreMixin(object):
     
-    _store = None
+    store = None
     
     def getNotificationContexts(self, trigger):
-        notifiactions = self._store.getNotificationStores(trigger)
+        notifiactions = self.store.getNotificationStores(trigger)
         return [NotificationContextFactory(self, n) for n in notifiactions]
     
     def iterNotificationContexts(self, trigger):
-        iter = self._store.iterNotificationStores(trigger)
+        iter = self.store.iterNotificationStores(trigger)
         return base.LazyContextIterator(self, NotificationContextFactory, iter)
 
 

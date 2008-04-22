@@ -22,7 +22,7 @@ def genBaseGetter(name):
     storeBaseGetterName = "get%sDir" % name
     
     def getter(self):
-        folder = getattr(self._store, storeBaseGetterName)()
+        folder = getattr(self.store, storeBaseGetterName)()
         if folder != None:
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
@@ -123,7 +123,7 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
     def __init__(self, profCtx, targStore):
         base.BaseStoreContext.__init__(self, profCtx, targStore)
         self._variables.addVar("targetName", self.getName())
-        subdir = self._store.getSubdir() or ""
+        subdir = self.store.getSubdir() or ""
         subdir = fileutils.str2path(subdir)
         subdir = fileutils.ensureRelDirPath(subdir)
         subdir = fileutils.cleanupPath(subdir)
@@ -146,13 +146,13 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
         return self.parent
 
     def getConfigContext(self):
-        confStore = self._store.getConfigStore()
+        confStore = self.store.getConfigStore()
         return config.ConfigContextFactory(self, confStore)
 
     def getOutputFileTemplate(self):
-        tmpl = self._store.getOutputFileTemplate()
+        tmpl = self.store.getOutputFileTemplate()
         if tmpl: return tmpl
-        type = self._store.getConfigStore().getType()
+        type = self.store.getConfigStore().getType()
         if type == TargetTypeEnum.thumbnails:
             return self.parent.getOutputThumbTemplate()
         else:
@@ -163,7 +163,7 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
         return self._variables["targetSubdir"]
     
     def getExtension(self):
-        ext = self._store.getExtension()
+        ext = self.store.getExtension()
         if ext :
             return '.' + ext.lstrip('.')
         return ""

@@ -161,7 +161,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     def __onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
-        activStore = activCtx.getStore()
+        activStore = activCtx.store
         activStore.setState(ActivityStateEnum.failed)
         activStore.store()
         self.emit("transcoding-failed", task)
@@ -173,7 +173,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             
     def __onTranscodingDone(self, task, transPxy):
         activCtx = self._activities[task]
-        activStore = activCtx.getStore()
+        activStore = activCtx.store
         activStore.setState(ActivityStateEnum.done)
         activStore.store()
         self.emit("transcoding-done", task)
@@ -284,8 +284,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             if (profCtx is None) or (not profCtx.isBound()):
                 self.warning("Activity without valid profile information (%s)",
                              activCtx.getLabel())
-                activStore = activCtx.getStore()
-                activStore.delete()
+                activCtx.store.delete()
                 continue
             if self.isProfileQueued(profCtx):
                 self.__unqueuProfile(profCtx)
@@ -332,8 +331,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             activCtx = stateCtx.newTranscodingContext(profCtx.getActivityLabel(),
                                                       ActivityStateEnum.started,
                                                       profCtx)
-            activStore = activCtx.getStore()
-            activStore.store()
+            activCtx.store.store()
         self._activities[task] = activCtx
 
     def __getProfilePriority(self, profCtx):
