@@ -33,7 +33,7 @@ class MonitorProxy(component.ComponentProxy):
     @classmethod
     def loadTo(cls, workerPxy, name, label, properties, timeout=None):
         managerPxy = workerPxy.getParent()
-        atmoPxy = managerPxy.getAtmosphere()
+        atmoPxy = managerPxy.getAtmosphereProxy()
         return atmoPxy._loadComponent('file-monitor', 
                                       name,  label, workerPxy, 
                                       properties, timeout)
@@ -172,7 +172,7 @@ class MonitorProxy(component.ComponentProxy):
     
     def __cbRetrieveFiles(self, ui):
         files = []
-        workerPxy = self.getWorker()
+        workerPxy = self.getWorkerProxy()
         assert ui != None
         assert workerPxy != None
         workerCtx = workerPxy.getWorkerContext()

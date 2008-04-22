@@ -1,3 +1,8 @@
+2008-04-22  Sebastien Merle  <sebastien@fluendo.com>
+
+	Changed the proxies interfaces to be more
+	consistent with store/context/medium. 
+
 2008-04-21  Sebastien Merle  <sebastien@fluendo.com>
 
 	Standardized the proxies naming to match store/context/medium conventions.

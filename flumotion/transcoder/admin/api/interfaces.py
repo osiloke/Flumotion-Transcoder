@@ -31,10 +31,10 @@ class ITranscoderGateway(IMedium):
 
 class IWorkerSetMedium(IMedium):
 
-    def getWorkers(self):
+    def getWorkerProxies(self):
         pass
     
-    def getWorker(self, identifier):
+    def getWorkerProxy(self, identifier):
         pass
 
 

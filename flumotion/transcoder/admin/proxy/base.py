@@ -43,7 +43,7 @@ class IBaseProxy(Interface):
 
 class IProxy(IBaseProxy):
     
-    def getManager(self):
+    def getManagerProxy(self):
         pass
 
 
@@ -392,7 +392,7 @@ class Proxy(BaseProxy):
         BaseProxy.__init__(self, logger, parentPxy, identifier)
         self._managerPxy = managerPxy
         
-    def getManager(self):
+    def getManagerProxy(self):
         return self._managerPxy
     
     

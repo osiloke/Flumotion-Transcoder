@@ -21,28 +21,28 @@ from flumotion.transcoder.admin.proxy import base, worker, flow, atmosphere
 
 class IManagerProxy(base.IProxy):
 
-    def getAtmosphere(self):
+    def getAtmosphereProxy(self):
         pass
     
-    def waitAtmosphere(self, timeout=None):
+    def waitAtmosphereProxy(self, timeout=None):
         pass
 
-    def getFlows(self):
+    def getFlowProxies(self):
         pass
     
     def getManagerContext(self):
         pass
 
-    def getWorkers(self):
+    def getWorkerProxies(self):
         pass
 
-    def getWorker(self, identifier):
+    def getWorkerProxy(self, identifier):
         pass
     
-    def getWorkerByName(self, name):
+    def getWorkerProxyByName(self, name):
         pass
 
-    def waitWorkerByName(self, name, timeout=None):
+    def waitWorkerProxyByName(self, name, timeout=None):
         pass
 
 
@@ -78,26 +78,26 @@ class ManagerProxy(base.BaseProxy):
     def getManagerContext(self):
         return self._managerCtx
     
-    def getAtmosphere(self):
+    def getAtmosphereProxy(self):
         return self._atmoPxy.getValue()
     
-    def waitAtmosphere(self, timeout=None):
+    def waitAtmosphereProxy(self, timeout=None):
         return self._atmoPxy.wait(timeout)
 
-    def getFlows(self):
+    def getFlowProxies(self):
         return self._flowPxys.values()
     
-    def getWorkers(self):
+    def getWorkerProxies(self):
         return self._workerPxys.getItems()
 
-    def getWorker(self, identifier):
+    def getWorkerProxy(self, identifier):
         return self._workerPxys.getItem(identifier, None)
 
-    def getWorkerByName(self, name):
+    def getWorkerProxyByName(self, name):
         workerId = self.__getWorkerUniqueIdByName(name)
         return self._workerPxys.getItem(workerId, None)
 
-    def waitWorkerByName(self, name, timeout=None):
+    def waitWorkerProxyByName(self, name, timeout=None):
         workerId = self.__getWorkerUniqueIdByName(name)
         return self._workerPxys.wait(workerId, timeout)
 
@@ -114,9 +114,9 @@ class ManagerProxy(base.BaseProxy):
         self._updateProxies("_flowPxys", listener, "flow-added")
 
     def _doGetChildElements(self):
-        childs = self.getWorkers()
-        childs.extend(self.getFlows())
-        atmoPxy = self.getAtmosphere()
+        childs = self.getWorkerProxies()
+        childs.extend(self.getFlowProxies())
+        atmoPxy = self.getAtmosphereProxy()
         if atmoPxy:
             childs.append(atmoPxy)
         return childs

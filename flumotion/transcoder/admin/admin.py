@@ -111,7 +111,7 @@ class TranscoderAdmin(log.Loggable):
         d.callback(None)
         return d
 
-    def getWorkers(self):
+    def getWorkerSet(self):
         return self._workerPxySet
 
     def getStore(self):
@@ -154,7 +154,7 @@ class TranscoderAdmin(log.Loggable):
         text = self._translator.translate(message)
         debug = message.debug
         level = {1: "ERROR", 2: "WARNING", 3: "INFO"}[message.level]
-        workerPxy = compPxy.getWorker()
+        workerPxy = compPxy.getWorkerProxy()
         if workerPxy:
             msg = ("Component '%s' on worker '%s' post a %s message" 
                    % (compPxy.getLabel(), workerPxy.getLabel(), level))

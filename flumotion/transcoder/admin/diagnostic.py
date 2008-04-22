@@ -139,13 +139,13 @@ class Diagnostician(object):
     def __lookupWorker(self, compPxy, workerName=None):
         workerPxy = None
         if compPxy:
-            workerPxy = compPxy.getWorker()
+            workerPxy = compPxy.getWorkerProxy()
         if (not workerPxy and not workerName
            and isinstance(compPxy, transcoder.TranscoderProxy)):
             report = self.__lookupReport(compPxy)
             workerName = report and report.local.name
         if not workerPxy and workerName:
-            workerPxy = self._workerPxySet.getWorkerByName(workerName)
+            workerPxy = self._workerPxySet.getWorkerProxyByName(workerName)
         workerHost = workerPxy and workerPxy.getHost()
         return (workerPxy, workerName, workerHost)
     

@@ -41,10 +41,10 @@ class ComponentGroupProxy(base.Proxy):
         assert self._state, "Element has been removed"
         return self._state.get('name')
 
-    def getComponents(self):
+    def getComponentProxies(self):
         return self._compPxys.values()
 
-    def iterComponents(self):
+    def iterComponentProxies(self):
         return self._compPxys.itervalues()
 
     ## Virtual Methods ##
@@ -65,7 +65,7 @@ class ComponentGroupProxy(base.Proxy):
         self._updateProxies("_compPxys", listener, "component-added")
 
     def _doGetChildElements(self):
-        return self.getComponents()
+        return self.getComponentProxies()
     
     def _onActivated(self):
         state = self._state

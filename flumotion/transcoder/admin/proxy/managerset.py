@@ -26,13 +26,13 @@ from flumotion.transcoder.admin.proxy import base, manager
 
 class IManagerSet(interfaces.IAdminInterface):
 
-    def getManagers(self):
+    def getManagerProxies(self):
         pass
     
-    def iterManagers(self):
+    def iterManagerProxies(self):
         pass
     
-    def waitManagers(self, timeout=None):
+    def waitManagerProxies(self, timeout=None):
         pass
 
 
@@ -58,13 +58,13 @@ class ManagerSet(base.RootProxy):
         
     ## Public Methods ##
     
-    def getManagers(self):
+    def getManagerProxies(self):
         return self._managerPxys.getValue().values()
     
-    def iterManagers(self):
+    def iterManagerProxies(self):
         return self._managerPxys.getValue().itervalues()
     
-    def waitManagers(self, timeout=None):
+    def waitManagerProxies(self, timeout=None):
         return self._managerPxys.wait(timeout)
 
     
@@ -74,7 +74,7 @@ class ManagerSet(base.RootProxy):
         self._updateProxies("_managerPxys", listener, "manager-added")
 
     def _doGetChildElements(self):
-        return self.getManagers()
+        return self.getManagerProxies()
     
     def _doPrepareInit(self, chain):
         managerCtx = self._context.getManagerContext()

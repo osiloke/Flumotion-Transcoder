@@ -48,7 +48,7 @@ class IAdminTask(Interface):
     def getActiveComponent(self):
         pass
     
-    def getWorker(self):
+    def getWorkerProxy(self):
         pass
     
     def start(self, paused=False, timeout=None):
@@ -145,13 +145,13 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def getActiveComponent(self):
         return self._activePxy.getValue()
     
-    def getWorker(self):
+    def getWorkerProxy(self):
         return self._workerPxy
     
-    def getComponents(self):
+    def getComponentProxies(self):
         return self._compPxys.keys()
     
-    def iterComponents(self):
+    def iterComponentProxies(self):
         return self._compPxys.iterkeys()
 
     def addComponent(self, compPxy):
@@ -291,7 +291,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def waitPotentialWorker(self, timeout=None):
         compPxy = self.getActiveComponent()
         if compPxy:
-            return defer.succeed(compPxy.getWorker())
+            return defer.succeed(compPxy.getWorkerProxy())
         d = self.__waitPotentialComponent(timeout)
         d.addCallbacks(self.__cbGetValidWorker,
                        self.__ebNoValidWorker)
@@ -647,7 +647,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             return
         compPxy = self.getActiveComponent()
         if compPxy:
-            workerPxy = compPxy.getWorker()
+            workerPxy = compPxy.getWorkerProxy()
             if workerPxy == self._workerPxy:
                 self.debug("The valid component '%s' is already started",
                            compPxy.getName())
@@ -784,7 +784,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
 
     def __cbGetValidWorker(self, compPxy):
         if compPxy:
-            workerPxy = compPxy.getWorker()
+            workerPxy = compPxy.getWorkerProxy()
             self.log("Admin task '%s' found the valid worker '%s'",
                      self.getLabel(), workerPxy.getName())            
             return workerPxy

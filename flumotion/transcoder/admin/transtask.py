@@ -196,11 +196,11 @@ class TranscodingTask(admintask.AdminTask):
         self._onComponentMoodChanged(compPxy, mood)
 
     def _onStarted(self):
-        for compPxy in self.iterComponents():
+        for compPxy in self.iterComponentProxies():
             self._onComponentMoodChanged(compPxy, compPxy.getMood())
     
     def _doAcceptSuggestedWorker(self, workerPxy):
-        currWorkerPxy = self.getWorker()
+        currWorkerPxy = self.getWorkerProxy()
         transPxy = self.getActiveComponent()
         # Change task's worker for None or if there is no active transcoder
         return (workerPxy != currWorkerPxy) and (not currWorkerPxy or not transPxy)

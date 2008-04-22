@@ -166,23 +166,23 @@ class MonitoringTask(admintask.AdminTask):
             self._onComponentMoodChanged(compPxy, mood)
 
     def _onStarted(self):
-        for compPxy in self.iterComponents():
+        for compPxy in self.iterComponentProxies():
             self._onComponentMoodChanged(compPxy, compPxy.getMood())
     
     def _doAcceptSuggestedWorker(self, workerPxy):
-        currWorkerPxy = self.getWorker()
+        currWorkerPxy = self.getWorkerProxy()
         monPxy = self.getActiveComponent()
         return (workerPxy != currWorkerPxy) or (not monPxy)
 
     def _doAborted(self):
-        self.emit("fail-to-run", self.getWorker())
+        self.emit("fail-to-run", self.getWorkerProxy())
     
     def _doSelectPotentialComponent(self, compPxys):
-        targWorkerPxy = self.getWorker()
+        targWorkerPxy = self.getWorkerProxy()
         for compPxy in compPxys:
             # If it exists an happy monitor on the target worker, 
             # or there not target worker set, just elect it
-            if ((not targWorkerPxy or (compPxy.getWorker() == targWorkerPxy)) 
+            if ((not targWorkerPxy or (compPxy.getWorkerProxy() == targWorkerPxy)) 
                 and (compPxy.getMood() == moods.happy)):
                 return compPxy
         return None

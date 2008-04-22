@@ -31,8 +31,8 @@ class WorkerSetMedium(api.Medium):
 
     @api.remote()
     def getWorkers(self):
-        return self._reference.getWorkers()
+        return self._reference.getWorkerProxies()
 
     @api.remote()
     def getWorker(self, identifier):
-        return self._reference.getWorker(identifier)
+        return self._reference.getWorkerProxy(identifier)

@@ -106,15 +106,15 @@ class BaseComponentProxy(base.Proxy):
     def isRunning(self):
         return (self._workerPxy != None)
     
-    def getWorker(self):
+    def getWorkerProxy(self):
         return self._workerPxy
     
     def getRequestedWorkerName(self):
         return self._requestedWorkerName
     
-    def getRequestedWorker(self):
+    def getRequestedWorkerProxy(self):
         if self._requestedWorkerName:
-            return self._managerPxy.getWorkerByName(self._requestedWorkerName)
+            return self._managerPxy.getWorkerProxyByName(self._requestedWorkerName)
         return None
     
     def getPID(self):
@@ -416,7 +416,7 @@ class BaseComponentProxy(base.Proxy):
                 self.emit("orphaned", oldWorker)
         if workerName:
             timeout = adminconsts.WAIT_WORKER_TIMEOUT
-            d = self._managerPxy.waitWorkerByName(workerName, timeout)
+            d = self._managerPxy.waitWorkerProxyByName(workerName, timeout)
             args = (workerName,)
             d.addCallbacks(self.__cbGotActiveWorker,
                            self.__ebGetActiveWorkerFail,

@@ -20,16 +20,16 @@ from flumotion.transcoder.admin.proxy import base, worker, managerset
 
 class IWorkerSet(interfaces.IAdminInterface):
 
-    def getWorkers(self):
+    def getWorkerProxies(self):
         pass
 
-    def iterWorkers(self):
+    def iterWorkerProxies(self):
         pass
         
-    def getWorker(self, identifier):
+    def getWorkerProxy(self, identifier):
         pass
     
-    def getWorkerByName(self, name):
+    def getWorkerProxyByName(self, name):
         pass
 
 
@@ -50,16 +50,16 @@ class WorkerSet(base.RootProxy):
         
     ## Public Methods ##
 
-    def getWorkers(self):
+    def getWorkerProxies(self):
         return self._workerPxys.values()
 
-    def iterWorkers(self):
+    def iterWorkerProxies(self):
         return self._workerPxys.itervalues()
         
-    def getWorker(self, identifier):
+    def getWorkerProxy(self, identifier):
         return self._workerPxys[identifier]
     
-    def getWorkerByName(self, name):
+    def getWorkerProxyByName(self, name):
         for workerPxy in self._workerPxys.itervalues():
             if workerPxy.getName() == name:
                 return workerPxy

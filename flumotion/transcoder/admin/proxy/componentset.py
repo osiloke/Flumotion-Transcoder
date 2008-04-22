@@ -33,16 +33,16 @@ class ComponentSetSkeleton(base.RootProxy):
         
     ## Public Methods ##
     
-    def getManagerSet(self):
+    def getManagerProxySet(self):
         return self._managerPxySet
     
-    def getComponents(self):
+    def getComponentProxies(self):
         return []
 
     def waitIdle(self, timeout=None):
-        return self.getManagerSet().waitIdle(timeout)
+        return self.getManagerProxySet().waitIdle(timeout)
 
-    def isComponentRejected(self, compPxy):
+    def isComponentProxyRejected(self, compPxy):
         """
         Return True if a component has been rejected,
         and still exists.
@@ -56,7 +56,7 @@ class ComponentSetSkeleton(base.RootProxy):
         """
         return identifier in self._rejecteds
 
-    def waitComponent(self, identifier, timeout=None):
+    def waitComponentProxy(self, identifier, timeout=None):
         """
         Wait to a component with specified identifier.
         If it's already contained by the set, the returned
@@ -77,7 +77,7 @@ class ComponentSetSkeleton(base.RootProxy):
 
     ## Abstract Public Methodes ##
     
-    def hasComponent(self, compPxy):
+    def hasComponentProxy(self, compPxy):
         """
         Return True if the component has been accepted,
         and added to the set.
@@ -182,7 +182,7 @@ class ComponentSetSkeleton(base.RootProxy):
     ## Overriden Protected Methods ##
     
     def _doGetChildElements(self):
-        return self.getComponents()
+        return self.getComponentProxies()
 
     
     ## Private Methods ##
@@ -221,7 +221,7 @@ class ComponentSetSkeleton(base.RootProxy):
         identifier = compPxy.getIdentifier()
         if identifier in self._rejecteds:
             del self._rejecteds[identifier]
-        if self.hasComponent(compPxy):
+        if self.hasComponentProxy(compPxy):
             self._doRemoveComponent(compPxy)
             
     def __waitComponentTimeout(self, identifier, d):
@@ -240,10 +240,10 @@ class BaseComponentSet(ComponentSetSkeleton):
 
     ## Overriden Public Methods ##
 
-    def getComponents(self):
+    def getComponentProxies(self):
         return self._compPxys.values()
     
-    def hasComponent(self, compPxy):
+    def hasComponentProxy(self, compPxy):
         return compPxy.getIdentifier() in self._compPxys
     
     def hasIdentifier(self, identifier):
