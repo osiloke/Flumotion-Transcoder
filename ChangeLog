@@ -1,5 +1,17 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	Made the store elements realy use the underlying
+	unique identifier insteed of the element name.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py:
 	* flumotion/transcoder/admin/adminelement.py:
 	* flumotion/transcoder/admin/admintask.py:

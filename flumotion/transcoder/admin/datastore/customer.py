@@ -183,7 +183,7 @@ class CustomerStore(base.NotifyStore):
         base.NotifyStore.__init__(self, logger, adminStore, dataSource,
                                   custData, identifier=identifier)
         self._customerInfo = None
-        self._profiles = {} # {PROFILE_NAME: ProfileStore} 
+        self._profiles = {} # {PROFILE_IDENTIFIER: ProfileStore} 
         # Registering Events
         self._register("profile-added")
         self._register("profile-removed")
@@ -198,11 +198,13 @@ class CustomerStore(base.NotifyStore):
         return self._profiles.values()
     
     def getProfileStore(self, profIdent, default=None):
-        #FIXME: differentiat name from identifier
         return self._profiles.get(profIdent, default)    
     
     def getProfileStoreByName(self, profName, default=None):
-        return self._profiles.get(profName, default)    
+        for profStore in self._profiles.itervalues():
+            if profName == profStore.getName():
+                return profStore
+        return default    
     
     def iterProfileStores(self):
         return self._profiles.itervalues()
@@ -286,7 +288,7 @@ class CustomerStore(base.NotifyStore):
     def __cbProfileInitialized(self, profStore):
         self.debug("Profile '%s' initialized; adding it to customer '%s' store",
                    profStore.label, self.label)
-        if (profStore.getName() in self._profiles):
+        if (profStore.identifier in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
                    "dropping the new one" 
                    % (self.getName(), profStore.getName()))
@@ -294,7 +296,7 @@ class CustomerStore(base.NotifyStore):
             error = admerrs.StoreError(msg)
             profStore._abort(error)
             return None
-        self._profiles[profStore.getName()] = profStore
+        self._profiles[profStore.identifier] = profStore
         # Send event when the profile has been activated
         self.emitWhenActive("profile-added", profStore)
         # Activate the new profile store

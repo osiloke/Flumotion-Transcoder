@@ -338,9 +338,9 @@ class IDataSource(Interface):
            state (ActivityStateEnum)
            startTime (datetime)
            lastTime (dateTime)
-           customerName (str)
-           profileName (str)
-           targetName (str)
+           customerIdentifier (str)
+           profileIdentifier (str)
+           targetIdentifier (str)
         For type == transcoding, reference is a data container:
            inputRelPath (str)
         For type == notification:

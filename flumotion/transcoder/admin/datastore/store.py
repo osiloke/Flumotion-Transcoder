@@ -147,7 +147,7 @@ class AdminStore(base.NotifyStore):
         ## Root element, no parent
         base.NotifyStore.__init__(self, StoreLogger(), None, dataSource, None,
                                   identifier=identifier, label=label) 
-        self._customers = {} # {CUSTOMER_NAME: CustomerStore}
+        self._customers = {} # {CUSTOMER_IDENTIFIER: CustomerStore}
         self._state = state.StateStore(self, self, dataSource)
         # Registering Events
         self._register("customer-added")
@@ -163,11 +163,13 @@ class AdminStore(base.NotifyStore):
         return self._customers.values()
     
     def getCustomerStore(self, custIdent, default=None):
-        #FIXME: differentiat name from identifier
         return self._customers.get(custIdent, default)
 
     def getCustomerStoreByName(self, custName, default=None):
-        return self._customers.get(custName, default)
+        for custStore in self._customers.itervalues():
+            if custName == custStore.getName():
+                return custStore
+        return default
         
     def iterCustomerStores(self):
         self._customers.itervalues()
@@ -246,14 +248,14 @@ class AdminStore(base.NotifyStore):
     def __cbCustomerInitialized(self, custStore):
         self.debug("Customer '%s' initialized; adding it to the admin store",
                    custStore.label)
-        if (custStore.getName() in self._customers):
+        if (custStore.identifier in self._customers):
             msg = ("Admin store already have a customer '%s', "
                   "dropping the new one" % custStore.getName())
             self.warning("%s", msg)
             error = admerrs.StoreError(msg)
             custStore._abort(error)
             return None
-        self._customers[custStore.getName()] = custStore
+        self._customers[custStore.identifier] = custStore
         # Send event when the customer has been activated
         self.emitWhenActive("customer-added", custStore)
         # Activate the new customer store

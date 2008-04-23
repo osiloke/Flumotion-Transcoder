@@ -165,7 +165,7 @@ class ProfileStore(base.NotifyStore):
         identifier = profData.name
         base.NotifyStore.__init__(self, logger, custStore, dataSource,
                                   profData, identifier=identifier)
-        self._targets = {} # {TARGET_NAME: TagetStore} 
+        self._targets = {} # {TARGET_IDENTIFIER: TagetStore} 
         # Registering Events
         self._register("target-added")
         self._register("target-removed")
@@ -183,11 +183,13 @@ class ProfileStore(base.NotifyStore):
         return self._targets.values()
 
     def getTargetStore(self, targIdent, default=None):
-        #FIXME: differentiat name from identifier
         return self._targets.get(targIdent, default)
 
     def getTargetStoreByName(self, targName, default=None):
-        return self._targets.get(targName, default)
+        for targStore in self._targets.itervalues():
+            if targName == targStore.getName():
+                return targStore
+        return default
     
     def iterTargetStores(self):
         return self._targets.itervalues()
@@ -259,7 +261,7 @@ class ProfileStore(base.NotifyStore):
     def __cbTargetInitialized(self, targStore):
         self.debug("Target '%s' initialized; adding it to profile '%s' store",
                    targStore.label, self.label)
-        if (targStore.getName() in self._targets):
+        if (targStore.identifier in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
                    "dropping the new one" 
                    % (self.getName(), targStore.getName()))
@@ -267,7 +269,7 @@ class ProfileStore(base.NotifyStore):
             error = admerrs.StoreError(msg)
             targStore._abort(error)
             return None
-        self._targets[targStore.getName()] = targStore
+        self._targets[targStore.identifier] = targStore
         # Send event when the target has been activated
         self.emitWhenActive("target-added", targStore)
         # Activate the new target store

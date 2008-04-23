@@ -236,16 +236,16 @@ class TranscodingActivityStore(ActivityStore):
         
     def getCustomerStore(self):
         assert not self._deleted
-        custName = self._data.customerName
+        custIdent = self._data.customerIdentifier
         adminStore = self.getAdminStore()
-        return adminStore.getCustomerStoreByName(custName, None)
+        return adminStore.getCustomerStore(custIdent, None)
     
     def getProfileStore(self):
         custStore = self.getCustomerStore()
         if not custStore:
             return None
-        profName = self._data.profileName
-        profStore = custStore.getProfileStoreByName(profName, None)
+        profIdent = self._data.profileIdentifier
+        profStore = custStore.getProfileStore(profIdent, None)
         return profStore
 
     ## Protected Methods ##
@@ -254,8 +254,8 @@ class TranscodingActivityStore(ActivityStore):
         assert isinstance(profStore, profile.ProfileStore)
         assert (not relPath) or isinstance(relPath, str)
         custStore = profStore.getCustomerStore()
-        self._data.customerName = custStore.getName()
-        self._data.profileName = profStore.getName()
+        self._data.customerIdentifier = custStore.identifier
+        self._data.profileIdentifier = profStore.identifier
         self._data.inputRelPath = relPath       
         self._touche()
 
