@@ -55,7 +55,11 @@ class BaseComponentProxy(base.BaseProxy):
 
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, compCtx, comptState, domain):
-        base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
+        conf = comptState.get('config', None)
+        name = comptState.get('name')
+        label = (conf and conf.get('label', None)) 
+        base.BaseProxy.__init__(self, logger, parentPxy, identifier,
+                                managerPxy, name=name, label=label)
         self._compCtx = compCtx
         self._domain = domain
         self._compState = comptState
@@ -77,15 +81,6 @@ class BaseComponentProxy(base.BaseProxy):
     
     def isValid(self):
         return self._compState != None
-    
-    def getName(self):
-        assert self._compState, "Component has been removed"
-        return self._compState.get('name')
-
-    def getLabel(self):
-        assert self._compState, "Component has been removed"
-        conf = self._compState.get('config', None)
-        return (conf and conf.get('label', None)) or self.getName()
     
     def getComponentContext(self):
         return self._compCtx

@@ -18,8 +18,6 @@ from flumotion.transcoder.admin.datastore import activity
 
 class ActivityContext(base.BaseStoreContext):
 
-    base.genStoreProxy("getLabel")
-    base.genStoreProxy("getIdentifier")
     base.genStoreProxy("getType")
     base.genStoreProxy("getSubType")
     base.genStoreProxy("getStartTime")

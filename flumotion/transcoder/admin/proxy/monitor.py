@@ -38,8 +38,8 @@ class MonitorProxy(component.ComponentProxy):
                                       name,  label, workerPxy, 
                                       properties, timeout)
     
-    def __init__(self, logger, parentPxy, identifier, managerPxy, 
-                 compCtx, compState, domain):
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, compCtx, compState, domain):
         component.ComponentProxy.__init__(self, logger, parentPxy,  
                                           identifier, managerPxy,
                                           compCtx, compState, domain)

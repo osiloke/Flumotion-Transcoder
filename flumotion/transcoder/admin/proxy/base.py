@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import Interface, implements, Attribute
 
 from twisted.internet import reactor
 
@@ -22,20 +22,12 @@ from flumotion.transcoder.admin import adminelement
 
 class IProxyElement(Interface):
 
-    def getIdentifier(self):
-        """
-        The identifier is unique in a manager context.
-        """
+    identifier = Attribute("Proxy unique identifier")
+    label = Attribute("Proxy description")
 
     def getName(self):
         """
         The name is unique in a component group context (flow and atmosphere)
-        """
-    
-    def getLabel(self):
-        """
-        The label is a description without uniqueness constraints.
-        By default the label is the name.
         """
 
 
@@ -51,22 +43,19 @@ class ProxyElement(adminelement.AdminElement):
     
     implements(IProxyElement)
     
-    def __init__(self, logger, parentPxy, identifier):
-        adminelement.AdminElement.__init__(self, logger, parentPxy)
-        self._identifier = identifier
-        self._pendingElements = {} # {attr: {identifier: ProxyElement}}
+    def __init__(self, logger, parentPxy, identifier, name=None, label=None):
+        name = name or identifier
+        label = label or name
+        adminelement.AdminElement.__init__(self, logger, parentPxy,
+                                           identifier, label)
+        self.name = name or identifier
+        self._pendingElements = {} # {attr: {identifier: ProxyElement}}        
 
 
     ## IProxyElement Methods ##
 
-    def getIdentifier(self):
-        return self._identifier
-
     def getName(self):
-        return self._identifier
-    
-    def getLabel(self):
-        return self.getName()
+        return self.name
     
 
     ## Virtual Methods ##
@@ -376,18 +365,19 @@ class ProxyElement(adminelement.AdminElement):
 
 class RootProxy(ProxyElement):
     
-    def __init__(self, logger):
-        ProxyElement.__init__(self, logger, None, 
-                                    self.__class__.__name__)
-
+    def __init__(self, logger, identifier=None, name=None, label=None):
+        identifier = identifier or self.__class__.__name__
+        ProxyElement.__init__(self, logger, None,
+                              identifier=identifier, name=name, label=label)
 
 
 class BaseProxy(ProxyElement):
     
     implements(IBaseProxy)
     
-    def __init__(self, logger, parentPxy, identifier, managerPxy):
-        ProxyElement.__init__(self, logger, parentPxy, identifier)
+    def __init__(self, logger, parentPxy, identifier, managerPxy, name=None, label=None):
+        ProxyElement.__init__(self, logger, parentPxy, identifier, name, label)
+        assert IProxyElement.providedBy(managerPxy) 
         self._managerPxy = managerPxy
         
     def getManagerProxy(self):

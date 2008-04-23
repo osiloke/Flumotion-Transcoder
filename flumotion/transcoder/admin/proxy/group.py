@@ -36,15 +36,12 @@ class ComponentGroupProxy(base.BaseProxy):
         
     ## Public Methods ##
     
-    def getName(self):
-        assert self._state, "Element has been removed"
-        return self._state.get('name')
-
     def getComponentProxies(self):
         return self._compPxys.values()
 
     def iterComponentProxies(self):
         return self._compPxys.itervalues()
+
 
     ## Virtual Methods ##
     

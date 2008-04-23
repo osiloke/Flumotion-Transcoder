@@ -33,7 +33,6 @@ class NotificationStoreMixin(object):
 
 class NotificationContext(base.BaseStoreContext):
     
-    base.genStoreProxy("getIdentifier")
     base.genStoreProxy("getType")
     base.genStoreProxy("getTriggers")
     

@@ -1,5 +1,23 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/proxy/base.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/proxy/flow.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/manager.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	* flumotion/transcoder/admin/proxy/worker.py:
+	Second step in changing getLabel and getIdentifier to attributes,
+	updating the proxies setup of identifier/label.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/adminelement.py:
 	* flumotion/transcoder/admin/datasource/datasource.py:
 	* flumotion/transcoder/admin/datastore/base.py:

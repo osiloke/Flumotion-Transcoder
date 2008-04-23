@@ -22,9 +22,8 @@ class FlowProxy(group.ComponentGroupProxy):
     
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, flowCtx, flowState):
-        group.ComponentGroupProxy.__init__(self, logger, parentPxy, 
-                                           identifier, managerPxy,
-                                           flowCtx, flowState)
+        group.ComponentGroupProxy.__init__(self, logger, parentPxy, identifier,
+                                           managerPxy, flowCtx, flowState)
 
     def getFlowContext(self):
         return self._context

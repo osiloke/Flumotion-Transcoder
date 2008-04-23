@@ -102,9 +102,7 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
                 getLinkPath: default:/fluendo/files/link/ogg/subdir/file.avi.link
     """
     
-    base.genStoreProxy("getIdentifier")
     base.genStoreProxy("getName")
-    base.genStoreProxy("getLabel")
     base.genParentOverridingStoreProxy("getLinkFileTemplate")
     base.genParentOverridingStoreProxy("getLinkTemplate")
     base.genParentOverridingStoreProxy("getLinkURLPrefix")

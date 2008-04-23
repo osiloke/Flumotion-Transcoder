@@ -88,9 +88,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
                 getDoneRepBase: default:/fluendo/reports/done/ogg/
     """
     
-    base.genStoreProxy("getIdentifier")
     base.genStoreProxy("getName")
-    base.genStoreProxy("getLabel")
     base.genParentOverridingStoreProxy("getOutputMediaTemplate")
     base.genParentOverridingStoreProxy("getOutputThumbTemplate")
     base.genParentOverridingStoreProxy("getLinkFileTemplate")

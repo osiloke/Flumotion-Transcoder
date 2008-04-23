@@ -58,9 +58,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
                 ...
     """
     
-    base.genStoreProxy("getIdentifier")
     base.genStoreProxy("getName")
-    base.genStoreProxy("getLabel")
     base.genStoreProxy("getCustomerPriority",
                        adminconsts.DEFAULT_CUSTOMER_PRIORITY)
     base.genStoreProxy("getPreprocessCommand")

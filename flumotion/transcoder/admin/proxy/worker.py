@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log
 
@@ -20,8 +20,7 @@ from flumotion.transcoder.admin.proxy import base
 
 class IWorkerDefinition(interfaces.IAdminInterface):
     
-    def getName(self):
-        pass
+    name = Attribute("Name of the worker")
     
     def getWorkerContext(self):
         pass
@@ -41,12 +40,13 @@ class WorkerDefinition(object):
     implements(IWorkerDefinition)
     
     def __init__(self, workerName, workerCtx):
+        self.name = workerName
         self._workerCtx = workerCtx
-        self._name = workerName
     
     
     ## IWorkerDefinition Methodes ##
     
+    #"R"*40 remove this
     def getName(self):
         return self._name
     
@@ -57,7 +57,8 @@ class WorkerDefinition(object):
 class WorkerProxy(base.BaseProxy):
     implements(IWorkerProxy)
     
-    def __init__(self, logger, parentPxy, identifier, managerPxy, workerCtx, workerState):
+    def __init__(self, logger, parentPxy, identifier,
+                 managerPxy, workerCtx, workerState):
         base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._workerState = workerState
         self._workerCtx = workerCtx

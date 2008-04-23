@@ -50,7 +50,9 @@ class ManagerProxy(base.ProxyElement):
     
     def __init__(self, logger, managerPxySet, identifier, 
                  admin, managerCtx, planetState):
-        base.ProxyElement.__init__(self, logger, managerPxySet, identifier)
+        name = planetState.get('name')
+        base.ProxyElement.__init__(self, logger, managerPxySet,
+                                   identifier, name=name)
         self._managerCtx = managerCtx
         self._admin = admin
         self._planetState = planetState
@@ -69,10 +71,6 @@ class ManagerProxy(base.ProxyElement):
     
     ## Public Methods ##
     
-    def getName(self):
-        assert self._planetState, "Manager has been removed"
-        return self._planetState.get('name')
-
     def getManagerContext(self):
         return self._managerCtx
     
