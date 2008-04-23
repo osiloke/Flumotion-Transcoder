@@ -1,5 +1,12 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxy/managerset.py:
+	Generate an identifier for the manager from the flumotion
+	managerid but removing the user name for privacy
+	because the manager identifier will be published by the API.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/activity.py:
 	* flumotion/transcoder/admin/datastore/base.py:	
 	* flumotion/transcoder/admin/proxy/worker.py:

@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+import re
+
 from zope.interface import implements
 
 from flumotion.admin import multi
@@ -19,6 +21,7 @@ from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
 from flumotion.inhouse import log, utils, waiters
 
+from flumotion.transcoder import errors
 from flumotion.transcoder.admin import adminconsts, interfaces
 from flumotion.transcoder.admin.proxy import base, manager
 
@@ -93,9 +96,11 @@ class ManagerSet(base.RootProxy):
         managerPxys = self._managerPxys.getValue()
         if len(managerPxys) == 0:
             self.emit("attached")
+        else:
+            raise NotImplementedError("More than one Manager is not yet supported")
         self._addProxyState(manager, "_managerPxys",  self.__getManagerUniqueId,
                             "manager-added", admin, managerCtx, planet)
-    
+        
     def model_removePlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s removed", planet.get('name'))
@@ -111,18 +116,17 @@ class ManagerSet(base.RootProxy):
     
     ## Private Methods ##
     
+    _identPtrn = re.compile("([^@]*)@([^:]*):(.*)")
+    
     def __getManagerUniqueId(self, admin, managerCtx, planet):
         if admin == None:
             return None
-        # We do not use admin.managerId, because it contains private data,
-        # and the identifier can be published by the API.
-        id = _managerIdentifiers.get(admin.managerId, None)
-        if id is None:
-            id = len(_managerIdentifiers) + 1
-            _managerIdentifiers[admin.managerId] = str(id)
-        return id
-
-
-## Private ##
-
-_managerIdentifiers = {}
+        # We want to remove the username from the managerId for privacy
+        # because the identifier is published by the API
+        #FIXME: Should we hide the host and port too ?
+        match = self._identPtrn.match(admin.managerId)
+        if not match:
+            raise errors.TranscoderError("Unknown manager identifier format '%s', "
+                                         "maybe it changed ?" % admin.managerId)
+        identifier = "%s.%s" % (match.group(2), match.group(3)) 
+        return identifier
