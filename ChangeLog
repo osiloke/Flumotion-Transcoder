@@ -1,5 +1,12 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	Forgoten to remove the hacks to use the names as identifiers.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datasource/dataprops.py:
 	* flumotion/transcoder/admin/datasource/datasource.py:
 	* flumotion/transcoder/admin/datasource/filesource.py:

@@ -90,10 +90,7 @@ class TargetStore(base.NotifyStore):
     base.genGetter("getPostprocessTimeout",   "postprocessTimeout")
 
     def __init__(self, logger, profStore, dataSource, targData):
-        #FIXME: use the real data identifier insteed of the name
-        identifier = targData.name
-        base.NotifyStore.__init__(self, logger, profStore, dataSource,
-                                  targData, identifier=identifier)
+        base.NotifyStore.__init__(self, logger, profStore, dataSource, targData)
         self._config = None
         
 

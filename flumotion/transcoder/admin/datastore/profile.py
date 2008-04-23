@@ -161,10 +161,7 @@ class ProfileStore(base.NotifyStore):
     base.genGetter("getMonitoringPeriod",     "monitoringPeriod")
     
     def __init__(self, logger, custStore, dataSource, profData):
-        #FIXME: use the real data identifier insteed of the name
-        identifier = profData.name
-        base.NotifyStore.__init__(self, logger, custStore, dataSource,
-                                  profData, identifier=identifier)
+        base.NotifyStore.__init__(self, logger, custStore, dataSource, profData)
         self._targets = {} # {TARGET_IDENTIFIER: TagetStore} 
         # Registering Events
         self._register("target-added")
