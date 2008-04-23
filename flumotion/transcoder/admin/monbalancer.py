@@ -14,7 +14,7 @@ import math
 
 from zope.interface import Interface
 
-from flumotion.transcoder.admin.admintask import IAdminTask
+from flumotion.transcoder.admin import admintask
 
 
 class MonitorBalancer(object):
@@ -43,7 +43,7 @@ class MonitorBalancer(object):
         del self._workerTasks[workerPxy]
     
     def addTask(self, task, workerPxy=None):
-        assert IAdminTask.providedBy(task)
+        assert admintask.IAdminTask.providedBy(task)
         assert (workerPxy == None) or (workerPxy in self._workerTasks)
         self._total += 1
         if workerPxy:
@@ -53,7 +53,7 @@ class MonitorBalancer(object):
             self._orphanes.append(task)
     
     def removeTask(self, task):
-        assert IAdminTask.providedBy(task)
+        assert admintask.IAdminTask.providedBy(task)
         if task in self._orphanes:
             self._orphanes.remove(task)
             self._total -= 1

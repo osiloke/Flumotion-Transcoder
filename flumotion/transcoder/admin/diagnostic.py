@@ -18,9 +18,8 @@ from flumotion.common import messages
 from flumotion.inhouse import log, defer, utils, decorators
 
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.admin import diagutils
+from flumotion.transcoder.admin import diagutils, document
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
-from flumotion.transcoder.admin.document import StringDocument
 from flumotion.transcoder.admin.proxy import monitor, transcoder
 
 
@@ -390,10 +389,10 @@ class Diagnostician(object):
         if not diagnostic: return []
         text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
         label = "Component Message Diagnostic"
-        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]
+        return [document.StringDocument(DocumentTypeEnum.diagnostic, label, text)]
 
     def __finishTranscodingFailureDiagnostic(self, diagnostic):
         if not diagnostic: return []
         text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
         label = "Transcoding Failure Diagnostic"
-        return [StringDocument(DocumentTypeEnum.diagnostic, label, text)]
+        return [document.StringDocument(DocumentTypeEnum.diagnostic, label, text)]

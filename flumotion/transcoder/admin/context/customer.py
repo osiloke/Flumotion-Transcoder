@@ -12,8 +12,7 @@
 
 from flumotion.inhouse import fileutils, annotate
 
-from flumotion.transcoder import constants
-from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder import constants, virtualpath
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context import base, profile, notification
 
@@ -25,7 +24,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
     The customer context define the default base directories.
     They are directly taken and expanded from the store get...Dir getter,
     or deduced from constants and customer name/subdir values.
-    The return values are VirtualPath instances that abstract
+    The return values are virtualpath.VirtualPath instances that abstract
     local filesystems root points.
     
         Ex: customer data => store.get...Dir()=None
@@ -155,11 +154,11 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
             folder = self._expandDir(folder)
             folder = fileutils.ensureAbsDirPath(folder)
             folder = fileutils.cleanupPath(folder)
-            return VirtualPath(folder, rootName)
+            return virtualpath.VirtualPath(folder, rootName)
         subdir = self.getSubdir()
         folder = fileutils.ensureAbsDirPath(template % subdir)
         folder = fileutils.cleanupPath(folder)
-        return VirtualPath(folder, rootName)
+        return virtualpath.VirtualPath(folder, rootName)
         
     def getInputBase(self):
         folder = self.store.getInputDir()

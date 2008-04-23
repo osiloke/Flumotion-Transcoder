@@ -13,11 +13,11 @@
 # Headers in this file shall remain intact.
 
 from flumotion.inhouse import properties
+
+from flumotion.transcoder import local, virtualpath
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
 from flumotion.transcoder.enums import TranscoderStatusEnum
-from flumotion.transcoder.local import Local
-from flumotion.transcoder.virtualpath import VirtualPathProperty
 
 
 class UsageProperty(properties.ValueProperty):
@@ -76,10 +76,10 @@ class AnalysisReport(properties.PropertyBag):
 
 class SourceReport(properties.PropertyBag):
 
-    lastPath = VirtualPathProperty('last-path')
-    inputPath = VirtualPathProperty('input-path')
-    donePath = VirtualPathProperty('done-path')
-    failedPath = VirtualPathProperty('failed-path')
+    lastPath = virtualpath.VirtualPathProperty('last-path')
+    inputPath = virtualpath.VirtualPathProperty('input-path')
+    donePath = virtualpath.VirtualPathProperty('done-path')
+    failedPath = virtualpath.VirtualPathProperty('failed-path')
     analysis = properties.Child('analysis', AnalysisReport)
     pipelineAudit = properties.Dict(properties.String("pipeline-audit"))
     fileType = properties.String("file-type")
@@ -90,8 +90,8 @@ class SourceReport(properties.PropertyBag):
 class TargetReport(TaskReport):
 
     state = properties.Enum('state', TargetStateEnum, TargetStateEnum.pending)
-    workFiles = properties.List(VirtualPathProperty('files-work'))
-    outputFiles = properties.List(VirtualPathProperty('files-output'))
+    workFiles = properties.List(virtualpath.VirtualPathProperty('files-work'))
+    outputFiles = properties.List(virtualpath.VirtualPathProperty('files-output'))
     analysis = properties.Child('analysis', AnalysisReport)
     pipelineAudit = properties.Dict(properties.String("pipeline-audit"))
     pipelineInfo = properties.Dict(properties.String("pipeline-info"))
@@ -115,7 +115,7 @@ class LocalReport(properties.PropertyBag):
     def getLocal(self):
         # PyChecker doesn't like dynamic attributes
         __pychecker__ = "no-classattr"
-        return Local(self.name, self.roots)
+        return local.Local(self.name, self.roots)
                             
 
 class TranscodingReport(properties.RootPropertyBag, TaskReport):
@@ -129,7 +129,7 @@ class TranscodingReport(properties.RootPropertyBag, TaskReport):
     doneTime = properties.DateTime('time-done')
     ackTime = properties.DateTime('time-ack')
     terminateTime = properties.DateTime('time-terminate')
-    configPath = VirtualPathProperty('config-path', None, True)
+    configPath = virtualpath.VirtualPathProperty('config-path', None, True)
     niceLevel = properties.Integer('nice-level')
     local = properties.Child('local', LocalReport)
     source = properties.Child('source', SourceReport)

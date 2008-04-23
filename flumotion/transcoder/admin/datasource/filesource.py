@@ -30,10 +30,6 @@ from flumotion.transcoder.admin.enums import MailAddressTypeEnum
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.datasource import dataprops
 from flumotion.transcoder.admin.datasource import datasource
-from flumotion.transcoder.admin.datasource.datasource import InitializationError
-from flumotion.transcoder.admin.datasource.datasource import StoringError
-from flumotion.transcoder.admin.datasource.datasource import ResetError
-from flumotion.transcoder.admin.datasource.datasource import DeletionError
 
 
 class ImmutableWrapper(object):
@@ -521,7 +517,7 @@ class FileDataSource(log.Loggable):
                 mutable._store()
             return defer.succeed(self)
         except Exception, e:
-            error = StoringError(cause=e)
+            error = datasource.StoringError(cause=e)
             return defer.fail(error)
         
     def reset(self, *data):
@@ -532,7 +528,7 @@ class FileDataSource(log.Loggable):
                 mutable._reset()
             return defer.succeed(self)
         except Exception, e:
-            error = ResetError(cause=e)
+            error = datasource.ResetError(cause=e)
             return defer.fail(error)
         
     def delete(self, *data):
@@ -543,7 +539,7 @@ class FileDataSource(log.Loggable):
                 mutable._delete() 
             return defer.succeed(self)
         except Exception, e:
-            error = DeletionError(cause=e)
+            error = datasource.DeletionError(cause=e)
             return defer.fail(error)
 
 
@@ -651,7 +647,7 @@ class FileDataSource(log.Loggable):
                 self._activitiesData[f] = (absDir + f, data)
         
     def __ebInitializationFailed(self, failure):
-        if failure.check(InitializationError):
+        if failure.check(datasource.InitializationError):
             return failure
         msg = "Failed to initialize file data-source"
-        raise InitializationError(msg, cause=failure.value)        
+        raise datasource.InitializationError(msg, cause=failure.value)        

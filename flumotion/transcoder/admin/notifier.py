@@ -24,8 +24,7 @@ from twisted.mail.smtp import ESMTPSenderFactory
 
 from flumotion.inhouse import log, defer, utils, events
 
-from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.errors import NotificationError
+from flumotion.transcoder.admin import adminconsts, errors as admerrs
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
@@ -419,7 +418,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         activStore = activCtx.store
         activStore.setState(ActivityStateEnum.failed)
         activStore.store()
-        self._results[activCtx].errback(Failure(NotificationError(message)))
+        self._results[activCtx].errback(Failure(admerrs.NotificationError(message)))
         self.__notificationTerminated(activCtx)
         
     def __notificationTerminated(self, activCtx):
@@ -437,14 +436,14 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                    "notification '%s'; cannot prepare"
                    % (notif.getType().name, label))
         self.warning("%s", message)
-        raise NotificationError(message)
+        raise admerrs.NotificationError(message)
     
     def __cannotPerform(self, activCtx):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot perform"
                    % (activCtx.getSubType().name, activCtx.getLabel()))
         self.warning("%s", message)
-        raise NotificationError(message)
+        raise admerrs.NotificationError(message)
     
     def __prepareNotification(self, label, trigger, notifCtx, vars, docs):
         type = notifCtx.getType()

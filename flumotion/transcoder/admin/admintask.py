@@ -20,7 +20,7 @@ from flumotion.common.planet import moods
 
 from flumotion.inhouse import log, defer, utils, events, waiters
 
-from flumotion.transcoder.admin import adminconsts, errors
+from flumotion.transcoder.admin import adminconsts, errors as admerrs
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.proxy import component
 
@@ -175,7 +175,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def start(self, paused=False, timeout=None):
         if not (self._state in [TaskStateEnum.stopped, 
                                 TaskStateEnum.starting]):
-            return defer.fail(errors.TranscoderError("Cannot start %s task '%s'"
+            return defer.fail(admerrs.TranscoderError("Cannot start %s task '%s'"
                                               % (self._state.name,
                                                  self.getLabel())))
         if self._state == TaskStateEnum.stopped:
@@ -195,7 +195,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             # If terminated, a task can be paused and resume silently
             return defer.succeed(self)
         if not (self._state in [TaskStateEnum.started]):
-            return defer.fail(errors.TranscoderError("Cannot pause %s task '%s'"
+            return defer.fail(admerrs.TranscoderError("Cannot pause %s task '%s'"
                                               % (self._state.name,
                                                  self.getLabel())))
         self.log("Pausing admin task '%s'", self.getLabel())
@@ -212,7 +212,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             return defer.succeed(self)
         if not (self._state in [TaskStateEnum.paused, 
                                 TaskStateEnum.resuming]):
-            return defer.fail(errors.TranscoderError("Cannot resume %s task '%s'"
+            return defer.fail(admerrs.TranscoderError("Cannot resume %s task '%s'"
                                               % (self._state.name,
                                                  self.getLabel())))
         if self._state == TaskStateEnum.paused:
@@ -230,7 +230,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         After this, no component will/should be added or removed.
         """
         if self._state in [TaskStateEnum.stopped]:
-            return defer.fail(errors.TranscoderError("Cannot stop %s task '%s'"
+            return defer.fail(admerrs.TranscoderError("Cannot stop %s task '%s'"
                                               % (self._state.name,
                                                  self.getLabel())))
         self.log("Stopping admin task '%s'", self.getLabel())
@@ -491,11 +491,11 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         d.callback(None)
         
     def __stateChangedError(self, waiters, actionDesc):
-        error = errors.TranscoderError("State changed to %s during "
-                                       "%s of admin task '%s'"
-                                       % (self._state.name,
-                                          actionDesc, 
-                                          self.getLabel()))
+        error = admerrs.TranscoderError("State changed to %s during "
+                                        "%s of admin task '%s'"
+                                        % (self._state.name,
+                                           actionDesc, 
+                                           self.getLabel()))
         waiters.fireErrbacks(error)
         
     def __cbStartupSucceed(self, result, actionDesc):

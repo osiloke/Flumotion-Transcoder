@@ -20,7 +20,7 @@ from flumotion.inhouse import log, inifile, utils, fileutils
 
 from flumotion.transcoder import constants, transconfig, virtualpath
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.admin import errors
+from flumotion.transcoder.admin import errors as admerrs
 from flumotion.transcoder.admin.property import base
 
 
@@ -118,7 +118,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         if not os.path.exists(localPath):
             message = ("Transcoder config file not found ('%s')" % localPath)
             log.warning("%s", message)
-            raise errors.PropertiesError(message)
+            raise admerrs.PropertiesError(message)
         loader = inifile.IniFile()
         config = transconfig.TranscodingConfig()
         try:
@@ -127,7 +127,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
             message = ("Failed to load transcoder config file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
-            raise errors.PropertiesError(message)
+            raise admerrs.PropertiesError(message)
         return cls(name, configPath, config, niceLevel, pathAttr)
     
     @classmethod
@@ -184,7 +184,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
             message = ("Failed to save transcoder config file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             log.warning("%s", message)
-            raise errors.PropertiesError(message)
+            raise admerrs.PropertiesError(message)
         if self._pathAttr:
             self._pathAttr.apply(localPath)
         

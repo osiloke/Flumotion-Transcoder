@@ -22,7 +22,7 @@ from twisted.internet import reactor
 from flumotion.common import common
 from flumotion.configure import configure
 
-from flumotion.inhouse import errors, inifile, log, defer
+from flumotion.inhouse import inifile, log, defer, errors as iherrors
 from flumotion.inhouse import utils, fileutils
 
 from flumotion.transcoder import constants
@@ -72,7 +72,7 @@ def parse_options(args):
         sys.exit(0)
 
     if options.daemonizeTo and not options.daemonize:
-        raise errors.SystemError(
+        raise iherrors.SystemError(
             '--daemonize-to can only be used with -D/--daemonize.')
 
     if len(args) != 2:
@@ -80,7 +80,7 @@ def parse_options(args):
 
     configPath = args[1]
     if not os.path.exists(configPath):
-        raise errors.SystemError("Configuration file '%s' not found" 
+        raise iherrors.SystemError("Configuration file '%s' not found" 
                                  % configPath)
 
     return options, configPath
@@ -95,7 +95,7 @@ def possess(daemonizeTo=None):
     pid = common.getPid('transcoder-admin')
     if pid:
         if common.checkPidRunning(pid):
-            raise errors.SystemError(
+            raise iherrors.SystemError(
                 'A flumotion-transcoder-admin is already running '
                 + 'as pid %d' % pid)
         else:

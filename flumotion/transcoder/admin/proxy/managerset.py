@@ -17,8 +17,7 @@ from flumotion.admin import multi
 from flumotion.common import planet
 from flumotion.common.connection import PBConnectionInfo as ConnectionInfo
 
-from flumotion.inhouse import log, utils
-from flumotion.inhouse.waiters import AssignWaiters
+from flumotion.inhouse import log, utils, waiters
 
 from flumotion.transcoder.admin import adminconsts, interfaces
 from flumotion.transcoder.admin.proxy import base, manager
@@ -47,7 +46,7 @@ class ManagerSet(base.RootProxy):
         self._context = adminContext
         self._multi = multi.MultiAdminModel()
         self._multi.addListener(self)
-        self._managerPxys = AssignWaiters("Manager Set Assignment", {})
+        self._managerPxys = waiters.AssignWaiters("Manager Set Assignment", {})
         self._setIdleTarget(1)
         # Registering Events
         self._register("manager-added")

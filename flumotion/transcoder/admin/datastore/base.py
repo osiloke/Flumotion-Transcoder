@@ -12,12 +12,10 @@
 
 from zope.interface import implements
 
-from flumotion.inhouse import log, defer, utils, annotate
-from flumotion.inhouse.waiters import CounterWaiters
+from flumotion.inhouse import log, defer, utils, annotate, waiters
 
-from flumotion.transcoder.admin import adminconsts, interfaces
+from flumotion.transcoder.admin import adminconsts, interfaces, adminelement
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
-from flumotion.transcoder.admin.adminelement import AdminElement
 from flumotion.transcoder.admin.datasource import datasource
 
 
@@ -52,12 +50,12 @@ def genGetter(getterName, propertyName, default=None):
     annotate.addAnnotationMethod("genGetter", getterName, getter)
 
 
-class BaseStore(AdminElement):
+class BaseStore(adminelement.AdminElement):
     implements(IStoreWithNotification)
     
     def __init__(self, logger, parentStore, dataSource, data):
         assert datasource.IDataSource.providedBy(dataSource)
-        AdminElement.__init__(self, logger, parentStore)
+        adminelement.AdminElement.__init__(self, logger, parentStore)
         self._data = data
         self._dataSource = dataSource
         self._notifications = {} # {NotificationTriggerEnum: {identifier: NotificationStore}}

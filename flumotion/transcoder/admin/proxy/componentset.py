@@ -15,7 +15,7 @@ from twisted.internet import reactor
 
 from flumotion.inhouse import log, defer, utils
 
-from flumotion.transcoder.admin import errors
+from flumotion.transcoder.admin import errors as admerrs
 from flumotion.transcoder.admin.proxy import base, managerset
 
 
@@ -68,7 +68,7 @@ class ComponentSetSkeleton(base.RootProxy):
         if self.hasIdentifier(identifier):
             result.callback(self[identifier])
         elif self.isIdentifierRejected(identifier):
-            result.errback(errors.ComponentRejectedError("Component rejected"))
+            result.errback(admerrs.ComponentRejectedError("Component rejected"))
         else:
             to = utils.createTimeout(timeout, 
                                      self.__waitComponentTimeout, 
@@ -221,7 +221,7 @@ class ComponentSetSkeleton(base.RootProxy):
             if identifier in self._compWaiters:
                 for d, to in self._compWaiters[identifier].items():
                     utils.cancelTimeout(to)
-                    d.errback(errors.ComponentRejectedError("Component rejected"))
+                    d.errback(admerrs.ComponentRejectedError("Component rejected"))
                 del self._compWaiters[identifier]
 
     def __ebAcceptFailure(self, failure, compPxy, message):
@@ -236,8 +236,8 @@ class ComponentSetSkeleton(base.RootProxy):
             
     def __waitComponentTimeout(self, identifier, d):
         self._compWaiters[identifier].pop(d)
-        err = errors.OperationTimedOutError("Timeout waiting for component '%s'" 
-                                            % identifier)
+        err = admerrs.OperationTimedOutError("Timeout waiting for component '%s'" 
+                                             % identifier)
         d.errback(err)
             
     

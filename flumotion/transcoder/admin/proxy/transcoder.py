@@ -14,16 +14,13 @@ import os
 
 from zope.interface import implements
 
-from flumotion.inhouse import utils, inifile, log, defer
-from flumotion.inhouse.waiters import AssignWaiters
+from flumotion.inhouse import utils, inifile, log, defer, waiters
 
-from flumotion.transcoder.transreport import TranscodingReport
+from flumotion.transcoder import errors, transreport
 from flumotion.transcoder.enums import TranscoderStatusEnum
 from flumotion.transcoder.enums import JobStateEnum
-from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder.admin import document
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
-from flumotion.transcoder.admin.document import FileDocument
 from flumotion.transcoder.admin.proxy import base, component
 from flumotion.transcoder.admin.property import filetrans
 
@@ -52,7 +49,7 @@ class TranscoderProxy(component.ComponentProxy):
         component.ComponentProxy.__init__(self, logger, parentPxy, 
                                           identifier, managerPxy,
                                           compCtx, compState, domain)
-        self._reportPath = AssignWaiters("Transcoder report")
+        self._reportPath = waiters.AssignWaiters("Transcoder report")
         # Registering Events
         self._register("progress")
         self._register("status-changed")
@@ -233,8 +230,8 @@ class TranscoderProxy(component.ComponentProxy):
         return virtPath.localize(local)
         
     def __wrapDocument(self, localPath, type):
-        return FileDocument(type, os.path.basename(localPath),
-                            localPath, "plain/text")
+        return document.FileDocument(type, os.path.basename(localPath),
+                                     localPath, "plain/text")
     
     def __retrieveReportPath(self, virtPath, timeout, retry):
         assert timeout is None, "Timeout not supported yet"
@@ -255,16 +252,16 @@ class TranscoderProxy(component.ComponentProxy):
         if not os.path.exists(localPath):
             message = ("Transcoder report file not found ('%s')" % localPath)
             self.warning("%s", message)
-            raise TranscoderError(message)
+            raise errors.TranscoderError(message)
         loader = inifile.IniFile()
-        report = TranscodingReport()
+        report = transreport.TranscodingReport()
         try:
             loader.loadFromFile(report, localPath)
         except Exception, e:
             message = ("Failed to load transcoder report file '%s': %s"
                        % (localPath, log.getExceptionMessage(e)))
             self.warning("%s", message)
-            raise TranscoderError(message)
+            raise errors.TranscoderError(message)
         return report
 
 

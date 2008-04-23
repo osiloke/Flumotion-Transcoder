@@ -14,11 +14,9 @@ from zope.interface import Interface, implements
 
 from twisted.internet import reactor
 
-from flumotion.inhouse import log, defer, utils
-from flumotion.inhouse.waiters import IWaiters
+from flumotion.inhouse import log, defer, utils, waiters
 
-from flumotion.transcoder.errors import HandledTranscoderFailure
-from flumotion.transcoder.errors import HandledTranscoderError
+from flumotion.transcoder import errors
 from flumotion.transcoder.admin import adminelement
 
 
@@ -250,19 +248,19 @@ class ProxyElement(adminelement.AdminElement):
     
     def __getAttrValue(self, attr, default=None):
         """
-        Handle IWaiters instances.
+        Handle waiters.IWaiters instances.
         """
         value = getattr(self, attr, default)
-        if IWaiters.providedBy(value):
+        if waiters.IWaiters.providedBy(value):
             return value.getValue()
         return value
     
     def __setAttrValue(self, attr, value):
         """
-        Handle IWaiters instances.
+        Handle waiters.IWaiters instances.
         """
         current = getattr(self, attr, None)
-        if IWaiters.providedBy(current):
+        if waiters.IWaiters.providedBy(current):
             current.setValue(value)
         else:
             setattr(self, attr, value)
@@ -295,8 +293,8 @@ class ProxyElement(adminelement.AdminElement):
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
-            error = HandledTranscoderError(msg)
-            element._abort(HandledTranscoderFailure(error))
+            error = errors.HandledTranscoderError(msg)
+            element._abort(errors.HandledTranscoderFailure(error))
             element._discard()
         else:
             values[identifier] = element
@@ -336,8 +334,8 @@ class ProxyElement(adminelement.AdminElement):
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
-            error = HandledTranscoderError(msg)
-            element._abort(HandledTranscoderFailure(error))
+            error = errors.HandledTranscoderError(msg)
+            element._abort(errors.HandledTranscoderFailure(error))
             element._discard()
         else:
             self.__setAttrValue(attr, element)

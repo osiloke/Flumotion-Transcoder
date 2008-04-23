@@ -10,13 +10,13 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.substitution import Variables
+from flumotion.transcoder import substitution
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 
-class NotificationVariables(Variables):
+class NotificationVariables(substitution.Variables):
     
     def __init__(self, parent, prefix, analysisReport):
-        Variables.__init__(self, parent)
+        substitution.Variables.__init__(self, parent)
         self._addAnalysisResult(prefix, analysisReport)
 
     ## Protected Methods ##

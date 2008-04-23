@@ -15,7 +15,7 @@ from twisted.python import components
 from flumotion.inhouse import defer, annotate
 from flumotion.inhouse.spread import mediums
 
-from flumotion.transcoder.admin.interfaces import IAdminInterface
+from flumotion.transcoder.admin import interfaces as admifaces
 from flumotion.transcoder.admin.api import interfaces
 
 _DEFAULT_PREFIX = "remote_"
@@ -36,7 +36,7 @@ def adapt(value):
         return d
     if defer.isDeferred(value):
         return value.addCallback(adapt)
-    if IAdminInterface.providedBy(value):
+    if admifaces.IAdminInterface.providedBy(value):
         return mediums.IServerMedium(value)
     return value
 
@@ -85,7 +85,7 @@ def _appendListValue(v, l):
     return l
 
 def _adaptDictValue(d, k, v):
-    if IAdminInterface.providedBy(k):
+    if admifaces.IAdminInterface.providedBy(k):
         raise ValueError("IAdminInterface is not supported for dictonary keys")
     a = adapt(v)
     if defer.isDeferred(a):

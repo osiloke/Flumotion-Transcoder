@@ -146,7 +146,7 @@ from flumotion.inhouse import properties
 
 from flumotion.transcoder.admin import adminconsts
 
-from flumotion.transcoder.admin.api.config import APIConfig
+from flumotion.transcoder.admin.api import config
 
 
 class ManagerConfig(properties.PropertyBag):
@@ -188,7 +188,7 @@ class AdminConfig(properties.PropertyBag):
     """
     datasource = properties.Child("data-source", DataSourceConfig)
     notifier = properties.Child("notifier", NotifierConfig)
-    api = properties.Child("api", APIConfig)
+    api = properties.Child("api", config.APIConfig)
     roots = properties.Dict(properties.String('roots'))
 
 

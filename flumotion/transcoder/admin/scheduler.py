@@ -15,13 +15,10 @@ from twisted.internet import reactor
 
 from flumotion.inhouse import log, defer, utils, events
 
-from flumotion.transcoder.admin import adminconsts
+from flumotion.transcoder.admin import adminconsts, transtask, notifysubs
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
-from flumotion.transcoder.admin.transtask import TranscodingTask
-from flumotion.transcoder.admin.notifysubs import SourceNotificationVariables
-from flumotion.transcoder.admin.notifysubs import TargetNotificationVariables
 
 #TODO: Implement a faire scheduler and prevent the possibility
 #      of the profile priority making the overhaul customer priority
@@ -46,7 +43,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._diagnostician = diagnostician
         self._order = [] # [identifier]
         self._queue = {} # {identifier: ProfileContext}
-        self._activities = {} # {TranscodingTask: ActivityContext}
+        self._activities = {} # {transtask.TranscodingTask: ActivityContext}
         self._started = False
         self._paused = False
         self._startDelay = None
@@ -157,7 +154,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.__startupTasks()
 
 
-    ## TranscodingTask Event Listeners ##
+    ## transtask.TranscodingTask Event Listeners ##
     
     def __onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
@@ -243,7 +240,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     def __notify(self, label, trigger, profCtx, report,
                  docs, altErrorMessage=None):
-        sourceVars = SourceNotificationVariables(profCtx, trigger, report)
+        sourceVars = notifysubs.SourceNotificationVariables(profCtx, trigger, report)
         if altErrorMessage and (not sourceVars["errorMessage"]):
             sourceVars["errorMessage"] = altErrorMessage
         # Global notifications
@@ -321,7 +318,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     def __startTranscodingTask(self, profCtx, activCtx=None):
         identifier = profCtx.getIdentifier()
-        task = TranscodingTask(self._transcoding, profCtx)
+        task = transtask.TranscodingTask(self._transcoding, profCtx)
         self.info("Starting transcoding task '%s'", 
                   task.getLabel())
         self._transcoding.addTask(identifier, task)

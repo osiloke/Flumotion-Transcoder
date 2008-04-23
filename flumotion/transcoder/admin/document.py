@@ -19,7 +19,7 @@ from cStringIO import StringIO
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder.admin.errors import DocumentError
+from flumotion.transcoder.admin import errors as admerrs
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 
 
@@ -81,7 +81,7 @@ class FileDocument(object):
     def __init__(self, type, label, path, mimeType=None):
         assert isinstance(type, DocumentTypeEnum)
         if not os.path.exists(path):
-            raise DocumentError("File document '%s' not found", path)
+            raise admerrs.DocumentError("File document '%s' not found", path)
         self._label = label or os.path.basename(self._path)
         self._type = type
         self._path = path

@@ -13,12 +13,12 @@
 
 from zope.interface import Interface
 
-from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder import errors
 
 
-class DataSourceError(TranscoderError):
+class DataSourceError(errors.TranscoderError):
     def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
+        errors.TranscoderError.__init__(self, *args, **kwargs)
 
 class InitializationError(DataSourceError):
     def __init__(self, *args, **kwargs):

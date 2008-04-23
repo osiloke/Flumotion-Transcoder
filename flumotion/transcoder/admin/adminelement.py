@@ -13,10 +13,7 @@
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
-from flumotion.inhouse import log, defer, utils, events
-from flumotion.inhouse.log import LoggerProxy
-from flumotion.inhouse.waiters import PassiveWaiters
-from flumotion.inhouse.waiters import CounterWaiters
+from flumotion.inhouse import log, defer, utils, events, waiters
 
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin import datasource
@@ -25,7 +22,7 @@ from flumotion.transcoder.admin import datasource
 _idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)    
 
 
-class AdminElement(events.EventSourceMixin, LoggerProxy):
+class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     """
     Manage element activation and initialization.
     Ensure that the activation deferreds are called 
@@ -45,16 +42,16 @@ class AdminElement(events.EventSourceMixin, LoggerProxy):
     
     def __init__(self, logger, parent):
         assert (parent == None) or isinstance(parent, AdminElement)
-        LoggerProxy.__init__(self, logger)
+        log.LoggerProxy.__init__(self, logger)
         self.parent = parent
         self._triggered = False
         self._active = False
         self._failure = None
         self._obsolete = False
         self._beingRemoved = False
-        self._idleWaiters = CounterWaiters("Element Idle", 0, 0, self)
-        self._activeWaiters = PassiveWaiters("Element Activation")
-        self._activeChildWaiters = PassiveWaiters("Element Child Activation")
+        self._idleWaiters = waiters.CounterWaiters("Element Idle", 0, 0, self)
+        self._activeWaiters = waiters.PassiveWaiters("Element Activation")
+        self._activeChildWaiters = waiters.PassiveWaiters("Element Child Activation")
 
 
     ## Public Methods ##

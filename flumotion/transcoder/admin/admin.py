@@ -16,9 +16,9 @@ from twisted.internet import reactor
 from flumotion.common import messages
 from flumotion.common.enum import EnumClass
 
-from flumotion.inhouse import log, defer, utils, errors
+from flumotion.inhouse import log, defer, utils, errors as iherrors
 
-from flumotion.transcoder.errors import TranscoderError
+from flumotion.transcoder import errors
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.diagnostic import Diagnostician
@@ -374,8 +374,8 @@ class TranscoderAdmin(log.Loggable):
     
     def __startup(self):
         if not (self._state == TaskStateEnum.stopped):
-            raise TranscoderError("Cannot start transcoder admin when %s"
-                                   % self._state.name)
+            raise errors.TranscoderError("Cannot start transcoder admin when %s"
+                                         % self._state.name)
         self.info("Starting Transcoder Administration")
         self._state = TaskStateEnum.starting
         d = defer.Deferred()
@@ -406,8 +406,8 @@ class TranscoderAdmin(log.Loggable):
         
     def __resume(self):
         if not (self._state == TaskStateEnum.paused):
-            raise TranscoderError("Cannot resume transcoder admin when %s"
-                                  % self._state.name)
+            raise errors.TranscoderError("Cannot resume transcoder admin when %s"
+                                         % self._state.name)
         self.info("Resuming Transcoder Administration")
         self._state = TaskStateEnum.resuming
         d = defer.Deferred()
@@ -439,8 +439,8 @@ class TranscoderAdmin(log.Loggable):
         
     def __pause(self):
         if not (self._state == TaskStateEnum.started):
-            raise TranscoderError("Cannot pause transcoder admin when %s"
-                                   % self._state.name)
+            raise errors.TranscoderError("Cannot pause transcoder admin when %s"
+                                         % self._state.name)
         self.info("Pausing Transcoder Administration")
         d = defer.Deferred()
         d.addCallback(defer.bridgeResult, self.debug,
@@ -508,7 +508,7 @@ class TranscoderAdmin(log.Loggable):
         reactor.stop()
 
     def __ebMonitoringNotReady(self, failure):
-        if failure.check(errors.TimeoutError):
+        if failure.check(iherrors.TimeoutError):
             log.notifyFailure(self, failure, "Monitoring fail to activate, no worker ?")
             return None
         return failure

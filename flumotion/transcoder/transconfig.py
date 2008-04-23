@@ -16,13 +16,12 @@ import datetime
 
 from flumotion.inhouse import properties
 
-from flumotion.transcoder import constants
+from flumotion.transcoder import constants, virtualpath
 from flumotion.transcoder.enums import VideoScaleMethodEnum
 from flumotion.transcoder.enums import PeriodUnitEnum
 from flumotion.transcoder.enums import ThumbOutputTypeEnum
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import AudioVideoToleranceEnum
-from flumotion.transcoder.virtualpath import VirtualPathProperty
 
 
 class CustomerConfig(properties.PropertyBag):
@@ -35,15 +34,15 @@ class ProfileConfig(properties.PropertyBag):
             Added temp-reports-dir
     """
     label = properties.String('label', None, True)
-    inputDir = VirtualPathProperty('input-dir', None, True)
-    outputDir = VirtualPathProperty('output-dir', None, True)
-    linkDir = VirtualPathProperty('link-dir', None)
-    workDir = VirtualPathProperty('work-dir', None, True)
-    tempReportsDir = VirtualPathProperty('temp-reports-dir', None, True)
-    failedDir = VirtualPathProperty('failed-dir', None, True)
-    failedReportsDir = VirtualPathProperty('failed-reports-dir', None, True)
-    doneDir = VirtualPathProperty('done-dir', None, True)
-    doneReportsDir = VirtualPathProperty('done-reports-dir', None, True)
+    inputDir = virtualpath.VirtualPathProperty('input-dir', None, True)
+    outputDir = virtualpath.VirtualPathProperty('output-dir', None, True)
+    linkDir = virtualpath.VirtualPathProperty('link-dir', None)
+    workDir = virtualpath.VirtualPathProperty('work-dir', None, True)
+    tempReportsDir = virtualpath.VirtualPathProperty('temp-reports-dir', None, True)
+    failedDir = virtualpath.VirtualPathProperty('failed-dir', None, True)
+    failedReportsDir = virtualpath.VirtualPathProperty('failed-reports-dir', None, True)
+    doneDir = virtualpath.VirtualPathProperty('done-dir', None, True)
+    doneReportsDir = virtualpath.VirtualPathProperty('done-reports-dir', None, True)
     linkTemplate = properties.String('link-template', constants.LINK_TEMPLATE)
 
 
@@ -99,9 +98,9 @@ class TargetConfig(properties.PropertyBag):
     label = properties.String('label', None, True)
     type = properties.Enum('type', TargetTypeEnum, None, True)
     outputFile = properties.String('output-file', None, True)
-    outputDir = VirtualPathProperty('output-dir', None)
-    linkDir = VirtualPathProperty('link-dir', None)
-    workDir = VirtualPathProperty('work-dir', None)
+    outputDir = virtualpath.VirtualPathProperty('output-dir', None)
+    linkDir = virtualpath.VirtualPathProperty('link-dir', None)
+    workDir = virtualpath.VirtualPathProperty('work-dir', None)
     linkFile = properties.String('link-file', None, False)
     postProcess = properties.String('post-process', None)
     linkUrlPrefix = properties.String('link-url-prefix', None)

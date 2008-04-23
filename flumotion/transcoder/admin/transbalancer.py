@@ -12,7 +12,7 @@
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder.admin.admintask import IAdminTask
+from flumotion.transcoder.admin import admintask
 
 
 class ITranscoderBalancerListener(Interface):
@@ -65,7 +65,7 @@ class TranscoderBalancer(object):
         del self._workerTasks[workerPxy]
     
     def addTask(self, task, workerPxy=None):
-        assert IAdminTask.providedBy(task)
+        assert admintask.IAdminTask.providedBy(task)
         assert (workerPxy == None) or (workerPxy in self._workerTasks)
         self._current += 1
         if workerPxy:
@@ -78,7 +78,7 @@ class TranscoderBalancer(object):
         self._orphanes.append(task)
     
     def removeTask(self, task):
-        assert IAdminTask.providedBy(task)
+        assert admintask.IAdminTask.providedBy(task)
         if task in self._orphanes:
             self._orphanes.remove(task)
             self._current -= 1

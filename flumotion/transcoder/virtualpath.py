@@ -15,12 +15,9 @@ import re
 from twisted.python.reflect import qual
 from twisted.spread import jelly
 
-from flumotion.inhouse import fileutils
-from flumotion.inhouse.properties import ValueProperty
+from flumotion.inhouse import fileutils, properties
 
-from flumotion.transcoder import constants
-from flumotion.transcoder.errors import VirtualPathError
-
+from flumotion.transcoder import constants, errors
 
 
 _rootPattern = re.compile("(\w*):(.*)")
@@ -43,8 +40,8 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
             if path.startswith(value):
                 path = fileutils.ensureAbsPath(path[len(value):])
                 return VirtualPath(path, name)
-        raise VirtualPathError("Cannot virtualize local path '%s', "
-                               "no compatible virtual root found" % path)
+        raise errors.VirtualPathError("Cannot virtualize local path '%s', "
+                                      "no compatible virtual root found" % path)
     
     def __init__(self, path, defaultRoot=None):
         if isinstance(path, str):
@@ -75,8 +72,8 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
         roots = local.getVirtualRoots()
         if self._root in roots:
             return fileutils.joinPath(roots[self._root], self._path)
-        raise VirtualPathError("Cannot localize virtual path '%s', "
-                               " virtual root not found for this local" % self)
+        raise errors.VirtualPathError("Cannot localize virtual path '%s', "
+                                      " virtual root not found for this local" % self)
     
     def __str__(self):
         return "%s:%s" % (self._root, self._path)
@@ -131,10 +128,10 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
 jelly.setUnjellyableForClass(qual(VirtualPath), VirtualPath)
 
 
-class VirtualPathProperty(ValueProperty):
+class VirtualPathProperty(properties.ValueProperty):
     
     def __init__(self, descriptor, default=None, required=False):
-        ValueProperty.__init__(self, descriptor, default, required)
+        properties.ValueProperty.__init__(self, descriptor, default, required)
     
     def checkValue(self, value):
         return isinstance(value, VirtualPath)

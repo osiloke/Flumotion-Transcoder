@@ -16,7 +16,7 @@ import copy
 
 from zope.interface import Interface, implements
 
-from flumotion.inhouse.utils import digestParameters
+from flumotion.inhouse import utils
 
     
     
@@ -61,7 +61,7 @@ class GenericComponentProperties(ComponentPropertiesMixin):
     
     def __init__(self, props):
         self._properties = copy.deepcopy(props)
-        self._digest = digestParameters(self._properties)
+        self._digest = utils.digestParameters(self._properties)
         
     
     ## IComponentProperties Implemenetation ##

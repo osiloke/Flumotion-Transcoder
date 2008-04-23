@@ -13,8 +13,7 @@
 
 from flumotion.component.component import moods
 
-from flumotion.inhouse import log, defer, utils
-from flumotion.inhouse.ringbuffer import RingBuffer
+from flumotion.inhouse import log, defer, utils, ringbuffer
 
 from flumotion.transcoder.admin import adminconsts
 
@@ -29,7 +28,7 @@ class Janitor(log.Loggable):
         # The compPxy with bad moods are keeped but limited
         self._badMoods = set([moods.sad, moods.lost])
         self._neutralMoods = set([moods.sleeping, moods.waking])
-        self._bags = {} # {workername: RingBuffer}
+        self._bags = {} # {workername: ringbuffer.RingBuffer}
         self._deleted = set()
         
     def initialize(self):
@@ -102,7 +101,7 @@ class Janitor(log.Loggable):
         capacity = workerCtx.getMaxKeepFailed()
         self.debug("Create disposal bag of %d components for worker '%s'",
                    capacity, workerName)
-        bag = RingBuffer(capacity)
+        bag = ringbuffer.RingBuffer(capacity)
         self._bags[workerName] = bag
         return bag
     

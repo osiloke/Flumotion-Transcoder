@@ -23,7 +23,7 @@ from flumotion.common.planet import moods
 from flumotion.inhouse import log, defer, utils, waiters
 
 from flumotion.transcoder import errors
-from flumotion.transcoder.admin import adminconsts, errors
+from flumotion.transcoder.admin import adminconsts, errors as admerrs
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.property import base as pbase
 from flumotion.transcoder.admin.proxy import base
@@ -96,7 +96,7 @@ class BaseComponentProxy(base.BaseProxy):
     def waitUIState(self, timeout=None):
         if not self.isRunning():
             error = errors.TranscoderError("Cannot retrieve UI state of "
-                                    "a non-running component")
+                                           "a non-running component")
             return defer.fail(error)
         self.__retrieveUIState(timeout)
         d = self._waitUIState(timeout)
@@ -222,7 +222,7 @@ class BaseComponentProxy(base.BaseProxy):
         assert self._compState, "Component has been removed"
         if not self._workerPxy:
             msg = "Component '%s' worker is not running" % self.getLabel()
-            err = errors.OrphanComponentError(msg)
+            err = admerrs.OrphanComponentError(msg)
             return defer.fail(err)
         return self._workerPxy._callRemote("killJob", self._getAvatarId(), sig)
 
@@ -469,7 +469,7 @@ class BaseComponentProxy(base.BaseProxy):
                 msg = ("Forced Stop/Delete of component '%s' aborted "
                        "because the remote connection was lost" % self.getLabel())
                 self.warning("%s", msg)
-                error = errors.OperationAbortedError(msg, cause=failure.value)
+                error = admerrs.OperationAbortedError(msg, cause=failure.value)
                 resultDef.errback(error)
                 return True
             status['last-message'] = log.getFailureMessage(failure)
@@ -535,7 +535,7 @@ class BaseComponentProxy(base.BaseProxy):
         
     def __asyncForceKillFailed(self, failure, status, label, resultDef):
         if self.__isOperationTerminated(failure, status, resultDef): return
-        if failure.check(errors.OrphanComponentError):
+        if failure.check(admerrs.OrphanComponentError):
             # The component don't have worker
             self.__stopOrDelete(None, status, 
                                 label, resultDef)

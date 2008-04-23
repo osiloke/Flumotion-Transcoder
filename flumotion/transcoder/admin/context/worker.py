@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.local import Local
+from flumotion.transcoder import local
 from flumotion.transcoder.admin.context import base
 
 
@@ -32,7 +32,7 @@ class WorkerContext(base.BaseContext):
         roots = dict(self._default.roots)
         if self.config:
             roots.update(self.config.roots)
-        return Local(self._label, roots)
+        return local.Local(self._label, roots)
 
     def getMaxTask(self):
         if self.config and (self.config.maxTask != None):

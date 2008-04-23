@@ -12,7 +12,7 @@
 
 from flumotion.inhouse import fileutils, annotate
 
-from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder import virtualpath
 from flumotion.transcoder.admin.context import base, target, notification
 
 #TODO: Do some value caching
@@ -29,7 +29,7 @@ def genBaseGetter(name):
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
-            return VirtualPath(value, parent.getRoot())
+            return virtualpath.VirtualPath(value, parent.getRoot())
         return parent.append(self.getSubdir())
     
     annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)

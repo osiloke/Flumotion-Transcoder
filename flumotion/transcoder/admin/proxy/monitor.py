@@ -14,7 +14,7 @@ from zope.interface import implements
 
 from flumotion.inhouse import utils, defer, log
 
-from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder import virtualpath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.proxy import base, component
@@ -178,7 +178,7 @@ class MonitorProxy(component.ComponentProxy):
         workerCtx = workerPxy.getWorkerContext()
         local = workerCtx.getLocal()
         for (p, f), s in ui.get("pending-files", {}).iteritems():
-            files.append((VirtualPath.virtualize(p, local), f, s))
+            files.append((virtualpath.VirtualPath.virtualize(p, local), f, s))
         return files
     
 

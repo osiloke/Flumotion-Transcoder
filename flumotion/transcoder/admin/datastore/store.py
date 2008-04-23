@@ -15,7 +15,7 @@ from zope.interface import implements
 from flumotion.inhouse import log, defer
 
 from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.errors import StoreError
+from flumotion.transcoder.admin import errors as admerrs
 from flumotion.transcoder.admin.datastore import base, customer, state, activity, notification
 
 
@@ -256,7 +256,7 @@ class AdminStore(base.BaseStore):
             msg = ("Admin store already have a customer '%s', "
                   "dropping the new one" % custStore.getName())
             self.warning("%s", msg)
-            error = StoreError(msg)
+            error = admerrs.StoreError(msg)
             custStore._abort(error)
             return None
         self._customers[custStore.getName()] = custStore

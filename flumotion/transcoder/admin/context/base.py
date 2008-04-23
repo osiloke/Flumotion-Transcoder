@@ -12,7 +12,7 @@
 
 from flumotion.inhouse import annotate
 
-from flumotion.transcoder.substitution import Variables
+from flumotion.transcoder import substitution
 
 
 class LazyContextIterator(object):
@@ -86,7 +86,7 @@ class BaseContext(object):
     
     def __init__(self, parent):
         self.parent = parent
-        self._variables = Variables(getattr(parent, "_variables", None))
+        self._variables = substitution.Variables(getattr(parent, "_variables", None))
     
 
 class BaseStoreContext(BaseContext):

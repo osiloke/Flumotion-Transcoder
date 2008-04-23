@@ -12,7 +12,7 @@
 
 from flumotion.inhouse import fileutils, annotate
 
-from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.transcoder import virtualpath
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.context import base, notification, config
 
@@ -27,7 +27,7 @@ def genBaseGetter(name):
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
-            return VirtualPath(value)
+            return virtualpath.VirtualPath(value)
         return getattr(self.parent, baseGetterName)()
     
     annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)

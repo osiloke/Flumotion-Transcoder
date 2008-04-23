@@ -18,8 +18,8 @@ from flumotion.common.planet import moods
 
 from flumotion.inhouse import log, defer, utils, events, waiters
 
-from flumotion.transcoder import errors as terrors
-from flumotion.transcoder.admin import adminconsts, admintask, errors
+from flumotion.transcoder import errors
+from flumotion.transcoder.admin import adminconsts, admintask, errors as admerrs
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.proxy import component
 
@@ -101,9 +101,9 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def start(self, timeout=None):
         if not (self._state in [TaskStateEnum.stopped, 
                                 TaskStateEnum.starting]):
-            return defer.fail(terrors.TranscoderError("Cannot start %s if %s"
-                                              % (self.getLabel(), 
-                                                 self._state.name)))
+            return defer.fail(errors.TranscoderError("Cannot start %s if %s"
+                                                     % (self.getLabel(), 
+                                                        self._state.name)))
         if self._state == TaskStateEnum.stopped:
             self.log("Ready to start task manager '%s'", self.getLabel())
             self._state = TaskStateEnum.starting
@@ -113,9 +113,9 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
 
     def pause(self, timeout=None):
         if not (self._state in [TaskStateEnum.started]):
-            return defer.fail(terrors.TranscoderError("Cannot pause %s if %s"
-                                              % (self.getLabel(), 
-                                                 self._state.name)))
+            return defer.fail(errors.TranscoderError("Cannot pause %s if %s"
+                                                     % (self.getLabel(), 
+                                                        self._state.name)))
         if self._state == TaskStateEnum.started:
             self.log("Pausing task manager '%s'", self.getLabel())
             self._state = TaskStateEnum.pausing
@@ -127,9 +127,9 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
     def resume(self, timeout=None):
         if not (self._state in [TaskStateEnum.paused, 
                                 TaskStateEnum.resuming]):
-            return defer.fail(terrors.TranscoderError("Cannot resume %s if %s"
-                                              % (self.getLabel(), 
-                                                 self._state.name)))
+            return defer.fail(errors.TranscoderError("Cannot resume %s if %s"
+                                                     % (self.getLabel(), 
+                                                        self._state.name)))
         if self._state == TaskStateEnum.paused:
             self.log("Ready to resume task manager '%s'", self.getLabel())
             self._state = TaskStateEnum.resuming
@@ -325,7 +325,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         self.__apartTasklessComponent(compPxy)
         self._pending -= 1
         self._tryStartup()
-        raise errors.ComponentRejectedError(msg, cause=failure)
+        raise admerrs.ComponentRejectedError(msg, cause=failure)
         
     def __cbRemoveComponent(self, props, compPxy):
         assert props != None
@@ -348,10 +348,10 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
                           "component '%s'", self.getLabel(), name)
 
     def __stateChangedError(self, waiters, actionDesc):
-        error = terrors.TranscoderError("State changed to %s during %s of '%s'"
-                                        % (self._state.name, 
-                                           actionDesc, 
-                                           self.getLabel()))
+        error = errors.TranscoderError("State changed to %s during %s of '%s'"
+                                       % (self._state.name, 
+                                          actionDesc, 
+                                          self.getLabel()))
         waiters.fireErrbacks(error)
 
     def __cbStartupSucceed(self, result, actionDesc):

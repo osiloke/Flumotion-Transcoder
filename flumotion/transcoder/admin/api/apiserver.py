@@ -17,7 +17,7 @@ from flumotion.component.bouncers import saltsha256
 from flumotion.inhouse import defer, log
 from flumotion.inhouse.spread import bouncers, pbserver
 
-from flumotion.transcoder.admin import errors
+from flumotion.transcoder.admin import errors as admerrs
 from flumotion.transcoder.admin.api import gateway
 from flumotion.transcoder.admin.enums import APIBouncerEnum
 
@@ -62,7 +62,7 @@ class Server(log.Loggable):
     def _createBouncer(self, config):
         factory = _bouncerFactories.get(config.type, None)
         if factory is None:
-            raise errors.APIError("Unknown bouncer type '%s'" % config.type)
+            raise admerrs.APIError("Unknown bouncer type '%s'" % config.type)
         return factory(config) 
 
 

@@ -12,12 +12,12 @@
 
 from twisted.python import failure
 
-from flumotion.inhouse import errors
+from flumotion.inhouse import errors as iherrors
 
 
-class TranscoderError(errors.FlumotionError):
+class TranscoderError(iherrors.FlumotionError):
     def __init__(self, *args, **kwargs):
-        errors.FlumotionError.__init__(self, *args, **kwargs)
+        iherrors.FlumotionError.__init__(self, *args, **kwargs)
 
 
 class TranscoderConfigError(TranscoderError):

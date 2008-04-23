@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.transcoder.local import Local
+from flumotion.transcoder import local
 from flumotion.transcoder.admin.datasource import filesource
 from flumotion.transcoder.admin.context import base, worker, notifier, store, api, manager
 
@@ -33,7 +33,7 @@ class AdminContext(base.BaseContext):
         return None
         
     def getLocal(self):
-        return Local("admin", self.config.admin.roots)
+        return local.Local("admin", self.config.admin.roots)
         
     def getManagerContext(self):
         managerConfig = self.config.manager

@@ -12,9 +12,7 @@
 
 from zope.interface import implements
 
-from flumotion.inhouse import defer, utils
-from flumotion.inhouse.waiters import AssignWaiters
-from flumotion.inhouse.waiters import ItemWaiters
+from flumotion.inhouse import defer, utils, waiters
 
 from flumotion.transcoder.admin.proxy import base, worker, flow, atmosphere
 
@@ -56,8 +54,8 @@ class ManagerProxy(base.ProxyElement):
         self._managerCtx = managerCtx
         self._admin = admin
         self._planetState = planetState
-        self._workerPxys = ItemWaiters("Manager Workers") # {identifier: Worker}
-        self._atmoPxy = AssignWaiters("Manager Atmosphere")
+        self._workerPxys = waiters.ItemWaiters("Manager Workers") # {identifier: Worker}
+        self._atmoPxy = waiters.AssignWaiters("Manager Atmosphere")
         self._flowPxys = {} # {identifier: Flow}
         self.__updateIdleTarget()
         # Registering Events

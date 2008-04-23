@@ -14,8 +14,7 @@ from zope.interface import implements
 
 from flumotion.inhouse import log, defer, utils
  
-from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.errors import StoreError
+from flumotion.transcoder.admin import adminconsts, errors as admerrs
 from flumotion.transcoder.admin.datastore import base, profile, notification
 
 
@@ -296,7 +295,7 @@ class CustomerStore(base.BaseStore):
                    "dropping the new one" 
                    % (self.getName(), profStore.getName()))
             self.warning(msg)
-            error = StoreError(msg)
+            error = admerrs.StoreError(msg)
             profStore._abort(error)
             return None
         self._profiles[profStore.getName()] = profStore

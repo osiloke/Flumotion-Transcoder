@@ -13,8 +13,7 @@ from flumotion.common import common
 
 from flumotion.inhouse import defer, utils
 
-from flumotion.transcoder.admin import adminconsts
-from flumotion.transcoder.admin.errors import OperationTimedOutError
+from flumotion.transcoder.admin import adminconsts, errors as admerrs
 from flumotion.transcoder.admin.proxy import base
 from flumotion.transcoder.admin.proxy import component
 
@@ -183,7 +182,7 @@ class ComponentGroupProxy(base.BaseProxy):
     def __asyncComponentLoadedTimeout(self, d, label):
         msg = "Timeout loading component '%s'" % label
         self.warning("%s", msg)
-        err = OperationTimedOutError(msg)
+        err = admerrs.OperationTimedOutError(msg)
         d.errback(err)
     
     def __ebComponentLoadingFailed(self, failure, identifier, initDef, resultDef, to):

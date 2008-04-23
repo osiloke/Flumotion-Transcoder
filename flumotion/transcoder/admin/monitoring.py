@@ -16,8 +16,7 @@ from twisted.python.failure import Failure
 
 from flumotion.common.planet import moods
 
-from flumotion.inhouse import log, defer, utils
-from flumotion.inhouse.errors import TimeoutError
+from flumotion.inhouse import log, defer, utils, errors as iherrors
 
 from flumotion.transcoder.admin import adminconsts, taskmanager, monbalancer
 
@@ -126,7 +125,7 @@ class Monitoring(taskmanager.TaskManager):
     
     def __cbStartResumeMonitoring(self, result):
         if (isinstance(result, Failure) 
-            and not result.check(TimeoutError)):
+            and not result.check(iherrors.TimeoutError)):
             log.notifyFailure(self, result,
                               "Failure waiting monitor set "
                               "to become idle")

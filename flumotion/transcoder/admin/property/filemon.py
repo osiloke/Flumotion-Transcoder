@@ -18,7 +18,6 @@ from flumotion.common import log
 
 from flumotion.inhouse import utils, fileutils
 
-from flumotion.transcoder.admin import errors
 from flumotion.transcoder.admin.property import base
 
 
