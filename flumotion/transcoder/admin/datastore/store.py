@@ -245,7 +245,7 @@ class AdminStore(base.NotifyStore):
     
     def __cbCustomerInitialized(self, custStore):
         self.debug("Customer '%s' initialized; adding it to the admin store",
-                   custStore.getLabel())
+                   custStore.label)
         if (custStore.getName() in self._customers):
             msg = ("Admin store already have a customer '%s', "
                   "dropping the new one" % custStore.getName())
@@ -265,7 +265,7 @@ class AdminStore(base.NotifyStore):
         #FIXME: Better Error Handling ?
         log.notifyFailure(self, failure, 
                           "Customer '%s' failed to initialize; dropping it",
-                          custStore.getLabel())
+                          custStore.label)
         custStore._abort(failure)
         # Don't propagate failures, will be dropped anyway
         return

@@ -19,20 +19,17 @@ class WorkerContext(base.BaseContext):
     def __init__(self, adminCtx, label, workerConfig, workerDefault):
         base.BaseContext.__init__(self, adminCtx)
         self.config = workerConfig
-        self._label = label
+        self.label = label
         self._default = workerDefault
     
     def getAdminContext(self):
         return self.parent
     
-    def getLabel(self):
-        return self._label
-    
     def getLocal(self):
         roots = dict(self._default.roots)
         if self.config:
             roots.update(self.config.roots)
-        return local.Local(self._label, roots)
+        return local.Local(self.label, roots)
 
     def getMaxTask(self):
         if self.config and (self.config.maxTask != None):

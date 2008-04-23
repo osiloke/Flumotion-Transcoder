@@ -94,14 +94,6 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
     def getStoreContext(self):
         return self.parent
 
-    def getIdentifier(self):
-        """
-        Gives an identifier that should uniquely identify a customer.
-        It should not change event if customer configuration changed.
-        """
-        # For now return only the customer name
-        return self.getName()
-
     def getUnboundProfileContextByName(self, profName):
         profStore = self.store.getProfileStoreByName(profName)
         return profile.UnboundProfileContext(self, profStore)

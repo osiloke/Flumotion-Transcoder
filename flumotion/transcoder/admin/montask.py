@@ -54,11 +54,11 @@ class MonitoringTask(admintask.AdminTask):
         monPxy = self.getActiveComponent()
         if not monPxy:
             self.warning("Monitoring task '%s' file '%s' state changed to %s "
-                         "without active monitor", self.getLabel(),
+                         "without active monitor", self.label,
                          virtBase.append(relPath), state.name)
             return
         self.log("Monitoring task '%s' file '%s' state changed to %s",
-                 self.getLabel(), virtBase.append(relPath), state.name)
+                 self.label, virtBase.append(relPath), state.name)
         monPxy.setFileStateBuffered(virtBase, relPath, state)
         
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
@@ -73,7 +73,7 @@ class MonitoringTask(admintask.AdminTask):
     def __onComponentMoodChanged(self, monPxy, mood):
         if not self.isStarted(): return
         self.log("Monitoring task '%s' monitor '%s' goes %s", 
-                 self.getLabel(), monPxy.getName(), mood.name)
+                 self.label, monPxy.getName(), mood.name)
         if self._isPendingComponent(monPxy):
             # Currently beeing started up
             return
@@ -83,7 +83,7 @@ class MonitoringTask(admintask.AdminTask):
             if mood == moods.happy:
                 return
             self.warning("Monitoring task '%s' selected monitor '%s' "
-                         "gone %s", self.getLabel(), 
+                         "gone %s", self.label, 
                          monPxy.getName(), mood.name)
             if mood == moods.lost:
                 # If the monitor goes lost, wait a fixed amount of time
@@ -239,7 +239,7 @@ class MonitoringTask(admintask.AdminTask):
         log.notifyFailure(self, failure,
                           "Monitoring task '%s' monitor "
                           "'%s' fail to move files from '%s' to '%s'",
-                          self.getLabel(), monPxy.getName(), virtSrcBase, 
+                          self.label, monPxy.getName(), virtSrcBase, 
                           virtDestBase)
         # Continue moving files anyway
         self.__asyncMovePendingFiles()

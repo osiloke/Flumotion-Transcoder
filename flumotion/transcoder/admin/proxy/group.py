@@ -85,13 +85,13 @@ class ComponentGroupProxy(base.BaseProxy):
         self._atmosphereState = None
 
     def _onElementActivated(self, element):
-        identifier = element.getIdentifier()
+        identifier = element.identifier
         d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.callback(element)
         
     def _onElementAborted(self, element, failure):
-        identifier = element.getIdentifier()
+        identifier = element.identifier
         d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.errback(failure)
@@ -152,7 +152,7 @@ class ComponentGroupProxy(base.BaseProxy):
         return self.__getComponentUniqueIdByName(compState.get('name'))
     
     def __getComponentUniqueIdByName(self, name):
-        return "%s.%s" % (self.getIdentifier(), name)
+        return "%s.%s" % (self.identifier, name)
     
     def __componentStateAdded(self, compState):
         name = compState.get('name')

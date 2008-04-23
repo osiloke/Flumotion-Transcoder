@@ -68,7 +68,7 @@ class TranscodingTask(admintask.AdminTask):
         if not self._isElectedComponent(transPxy): return
         # The component segfaulted or has been killed
         self.log("Transcoding task '%s' selected transcoder '%s' "
-                 "goes orphaned of worker '%s'", self.getLabel(),
+                 "goes orphaned of worker '%s'", self.label,
                  transPxy.getName(), workerPxy.getName())
         # The transcoder has been killed or has segfaulted.
         # We abort only if the transcoder is already sad,
@@ -82,7 +82,7 @@ class TranscodingTask(admintask.AdminTask):
     def __onComponentMoodChanged(self, transPxy, mood):
         if not self.isStarted(): return
         self.log("Transcoding task '%s' transcoder '%s' goes %s", 
-                 self.getLabel(), transPxy.getName(), mood.name)
+                 self.label, transPxy.getName(), mood.name)
         if self._isPendingComponent(transPxy):
             # Currently beeing started up
             return
@@ -107,8 +107,7 @@ class TranscodingTask(admintask.AdminTask):
                 self._sadTimeout = to
                 return
             self.warning("Transcoding task '%s' selected transcoder '%s' "
-                         "gone %s", self.getLabel(), 
-                         transPxy.getName(), mood.name)
+                         "gone %s", self.label, transPxy.getName(), mood.name)
             if mood == moods.lost:
                 # If the transcoder goes lost, wait a fixed amount of time
                 # to cope with small transient failures.
@@ -131,7 +130,7 @@ class TranscodingTask(admintask.AdminTask):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
-                 "status change to %s", self.getLabel(), 
+                 "status change to %s", self.label, 
                  transPxy.getName(), status.name)
         if status in [TranscoderStatusEnum.unexpected_error,
                       TranscoderStatusEnum.error]:
@@ -141,17 +140,17 @@ class TranscodingTask(admintask.AdminTask):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
-                 "job state change to %s", self.getLabel(), 
+                 "job state change to %s", self.label, 
                  transPxy.getName(), jobState.name)
         if jobState == JobStateEnum.waiting_ack:
             if not (transPxy.isAcknowledged() or self._acknowledging):
                 self._acknowledging = True
                 self.log("Acknowledging transcoding task '%s' transcoder '%s'",
-                         self.getLabel(), transPxy.getName())
+                         self.label, transPxy.getName())
                 d = transPxy.acknowledge(adminconsts.TRANSCODER_ACK_TIMEOUT)
                 d.addCallback(defer.bridgeResult, self.log,
                               "Transcoding task '%s' transcoder '%s' Acknowledged",
-                              self.getLabel(), transPxy.getName())
+                              self.label, transPxy.getName())
                 args = (transPxy,)
                 d.addCallbacks(self.__cbJobTerminated,
                                self.__ebAcknowledgeFailed,
@@ -248,13 +247,13 @@ class TranscodingTask(admintask.AdminTask):
     
     def __transcodingFailed(self, transPxy=None):
         transPxy = transPxy or self.getActiveComponent()
-        self.info("Transcoding task '%s' failed", self.getLabel())
+        self.info("Transcoding task '%s' failed", self.label)
         self.emit("failed", transPxy)
         self._terminate(False)
     
     def __transcodingSucceed(self, transPxy=None):
         transPxy = transPxy or self.getActiveComponent()
-        self.info("Transcoding task '%s' done", self.getLabel())
+        self.info("Transcoding task '%s' done", self.label)
         self.emit("done", transPxy)
         self._terminate(True)
     
@@ -267,16 +266,15 @@ class TranscodingTask(admintask.AdminTask):
             # If the transcoder component got an unexpected error
             # abort and eventualy retry
             self.warning("Transcoding task '%s' transcoder '%s' "
-                         "got an unexpected error", 
-                         self.getLabel(), transPxy.getName())
+                         "got an unexpected error",
+                         self.label, transPxy.getName())
             self._abort()
         elif status == TranscoderStatusEnum.error:
             # If the transcoder component got a known error (transcoder related)
             # it's assumed the error will raise again if we retry.
             # So we do not retry and treat as a failed transcoding.
             self.warning("Transcoding task '%s' transcoder '%s' "
-                         "goes to error status", self.getLabel(), 
-                         transPxy.getName())
+                         "goes to error status", self.label, transPxy.getName())
             self.__transcodingFailed(transPxy)
         else:
             self.warning("Unexpected transcoder status/state combination.")
@@ -286,7 +284,7 @@ class TranscodingTask(admintask.AdminTask):
         if not self._isElectedComponent(transPxy): return
         log.notifyFailure(self, failure, 
                           "Failed to acknowledge task '%s' transcoder '%s'",
-                          self.getLabel(), transPxy.getName())
+                          self.label, transPxy.getName())
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transPxy)
@@ -296,5 +294,5 @@ class TranscodingTask(admintask.AdminTask):
         if self._acknowledging: return
         if transPxy.getMood() == moods.sad:
             self.warning("Transcoding task '%s' transcoder '%s' stall in sad mood", 
-                         self.getLabel(), transPxy.getName())
+                         self.label, transPxy.getName())
             self._abort()

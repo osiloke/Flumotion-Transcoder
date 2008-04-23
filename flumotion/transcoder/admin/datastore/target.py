@@ -121,11 +121,11 @@ class TargetStore(base.NotifyStore):
 
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
-        self.debug("Target '%s' activated", self.getLabel())
+        self.debug("Target '%s' activated", self.label)
     
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
-        self.debug("Target '%s' aborted", self.getLabel())
+        self.debug("Target '%s' aborted", self.label)
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveTargetNotifications(self._data)

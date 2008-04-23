@@ -65,12 +65,6 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
 
     ## Public Methods ##
     
-    def getIdentifier(self):
-        return self.identifier
-    
-    def getLabel(self):
-        return self.label
-    
     def isIdle(self):
         return not self._idleWaiters.isWaiting()
     

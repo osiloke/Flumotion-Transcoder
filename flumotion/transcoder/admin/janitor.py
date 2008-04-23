@@ -70,16 +70,16 @@ class Janitor(log.Loggable):
                 bag.remove(compPxy)
                 self.log("Component '%s' not in a bad mood anymore (%s); "
                          "take out of the bag (worker '%s' bag contains %d components)",
-                         compPxy.getLabel(), mood.name, workerName, len(bag))
+                         compPxy.label, mood.name, workerName, len(bag))
         else:
             if mood in self._badMoods:
                 old = bag.push(compPxy)
                 self.log("Component '%s' goes in a bad mood (%s); "
                          "keeping it (worker '%s' bag contains %d components)",
-                         compPxy.getLabel(), mood.name, workerName, len(bag))
+                         compPxy.label, mood.name, workerName, len(bag))
                 if old:
                     self.debug("Worker '%s' disposal bag is full; dumping "
-                               "component '%s'", workerName, old.getLabel())
+                               "component '%s'", workerName, old.label)
                     self._deleted.add(old)
                     # Let the opportunity to components managers to cleanup,
                     # but fix a maximum time after which the deletion will be forced
@@ -110,7 +110,7 @@ class Janitor(log.Loggable):
             # Already deleted by the components managers.
             return
         self.warning("Component '%s' still not deleted, force deletion",
-                     compPxy.getLabel())
+                     compPxy.label)
         d = compPxy.forceDelete()
         # Catch all failures
         d.addErrback(defer.resolveFailure) 

@@ -86,7 +86,7 @@ def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
             data.set_payload(doc.asString())
             email.Encoders.encode_base64(data)
             data.add_header('Content-Disposition', 'attachment', 
-                            filename=doc.getLabel())
+                            filename=doc.label)
             msg.attach(data)
     return str(msg)
 
@@ -299,7 +299,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                     data.set_payload(doc.asString())
                     email.Encoders.encode_base64(data)
                     data.add_header('Content-Disposition', 'attachment', 
-                                    filename=doc.getLabel())
+                                    filename=doc.label)
                     msg.attach(data)
         activStore.setBody(str(msg))
         
@@ -312,7 +312,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self._retries[activCtx] = None
         if delay > 0:
             self.debug("Delaying notification '%s' for %d seconds",
-                       activCtx.getLabel(), delay)
+                       activCtx.label, delay)
             reactor.callLater(delay, self.__performNotification, activCtx)
         else:
             self.__performNotification(activCtx)
@@ -329,7 +329,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __doPerformGetRequest(self, activCtx):
         assert isinstance(activCtx, activity.HTTPActivityContext)
         self.debug("GET request '%s' initiated with URL %s" 
-                   % (activCtx.getLabel(), activCtx.getRequestURL()))
+                   % (activCtx.label, activCtx.getRequestURL()))
         d = self._performGetRequest(activCtx.getRequestURL(), 
                                     timeout=activCtx.getTimeout())
         args = (activCtx,)
@@ -338,22 +338,22 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         return d
 
     def __cbGetPageSucceed(self, page, activCtx):
-        self.debug("GET request '%s' succeed", activCtx.getLabel())
+        self.debug("GET request '%s' succeed", activCtx.label)
         self.log("GET request '%s' received page:\n%s",
-                 activCtx.getLabel(), page)
+                 activCtx.label, page)
         self.__notificationSucceed(activCtx)
 
     def __ebGetPageFailed(self, failure, activCtx):
         retryLeftDesc = self.__getRetriesLeftDesc(activCtx)
         self.debug("GET request '%s' failed (%s): %s",
-                   activCtx.getLabel(), retryLeftDesc,
+                   activCtx.label, retryLeftDesc,
                    log.getFailureMessage(failure))
         self.__retryNotification(activCtx)
 
     def __doPerformMailPost(self, activCtx):
         assert isinstance(activCtx, activity.MailActivityContext)
         self.debug("Mail posting '%s' initiated for %s" 
-                   % (activCtx.getLabel(), activCtx.getRecipientsAddr()))
+                   % (activCtx.label, activCtx.getRecipientsAddr()))
         senderAddr = activCtx.getSenderAddr()
         recipientsAddr = activCtx.getRecipientsAddr()
         self.log("Posting mail from %s to %s",
@@ -372,16 +372,16 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         return d
 
     def __cbPostMailSucceed(self, results, activCtx):
-        self.debug("Mail post '%s' succeed", activCtx.getLabel())
+        self.debug("Mail post '%s' succeed", activCtx.label)
         self.log("Mail post '%s' responses; %s",
-                 activCtx.getLabel(), ", ".join(["'%s': '%s'" % (m, r) 
+                 activCtx.label, ", ".join(["'%s': '%s'" % (m, r) 
                                                     for m, c, r in results[1]]))
         self.__notificationSucceed(activCtx)
     
     def __ebPostMailFailed(self, failure, activCtx):
         retryLeftDesc = self.__getRetriesLeftDesc(activCtx)
         self.debug("Mail post '%s' failed (%s): %s",
-                   activCtx.getLabel(), retryLeftDesc,
+                   activCtx.label, retryLeftDesc,
                    log.getFailureMessage(failure))
         self.__retryNotification(activCtx)
 
@@ -400,7 +400,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         
     def __notificationSucceed(self, activCtx):
         self.info("%s notification '%s' for trigger '%s' succeed", 
-                  activCtx.getSubType().nick, activCtx.getLabel(), 
+                  activCtx.getSubType().nick, activCtx.label, 
                   activCtx.getTrigger().nick)
         activStore = activCtx.store
         activStore.setState(ActivityStateEnum.done)
@@ -412,7 +412,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __notificationFailed(self, activCtx, desc=None):
         message = ("%s notification '%s' for trigger '%s' failed: %s"
                    % (activCtx.getSubType().nick,
-                      activCtx.getLabel(), 
+                      activCtx.label, 
                       activCtx.getTrigger().nick, desc))
         self.info("%s", message)
         activStore = activCtx.store
@@ -441,7 +441,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __cannotPerform(self, activCtx):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot perform"
-                   % (activCtx.getSubType().name, activCtx.getLabel()))
+                   % (activCtx.getSubType().name, activCtx.label))
         self.warning("%s", message)
         raise admerrs.NotificationError(message)
     

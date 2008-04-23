@@ -49,7 +49,7 @@ class ComponentSetSkeleton(base.RootProxy):
         Return True if a component has been rejected,
         and still exists.
         """
-        return compPxy.getIdentifier() in self._rejecteds
+        return compPxy.identifier in self._rejecteds
     
     def isIdentifierRejected(self, identifier):
         """
@@ -206,7 +206,7 @@ class ComponentSetSkeleton(base.RootProxy):
         d.callback(compPxy)
         
     def __cbPostAcceptAddition(self, accepted, compPxy):
-        identifier = compPxy.getIdentifier()
+        identifier = compPxy.identifier
         assert not (identifier in self._rejecteds)
         if accepted:
             self._doAddComponent(compPxy)
@@ -228,7 +228,7 @@ class ComponentSetSkeleton(base.RootProxy):
         log.notifyFailure(self, failure, "%s", message)
         
     def __removeComponent(self, compPxy):
-        identifier = compPxy.getIdentifier()
+        identifier = compPxy.identifier
         if identifier in self._rejecteds:
             del self._rejecteds[identifier]
         if self.hasComponentProxy(compPxy):
@@ -254,7 +254,7 @@ class BaseComponentSet(ComponentSetSkeleton):
         return self._compPxys.values()
     
     def hasComponentProxy(self, compPxy):
-        return compPxy.getIdentifier() in self._compPxys
+        return compPxy.identifier in self._compPxys
     
     def hasIdentifier(self, identifier):
         return identifier in self._compPxys
@@ -269,16 +269,16 @@ class BaseComponentSet(ComponentSetSkeleton):
     ## Overriden Protected Methods ##
     
     def _doAddComponent(self, compPxy):
-        identifier = compPxy.getIdentifier()
+        identifier = compPxy.identifier
         assert not (identifier in self._compPxys)
         self._compPxys[identifier] = compPxy        
 
     def _doRejectComponent(self, compPxy):
-        identifier = compPxy.getIdentifier()
+        identifier = compPxy.identifier
         assert not (identifier in self._compPxys)
 
     def _doRemoveComponent(self, compPxy):
-        identifier = compPxy.getIdentifier()
+        identifier = compPxy.identifier
         assert identifier in self._compPxys
         assert self._compPxys[identifier] == compPxy
         del self._compPxys[identifier]

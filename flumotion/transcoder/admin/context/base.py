@@ -91,14 +91,8 @@ class BaseContext(object):
 
 class BaseStoreContext(BaseContext):
     
-    def __init__(self, parent, store):
+    def __init__(self, parent, store, identifier=None, label=None):
         BaseContext.__init__(self, parent)
         self.store = store
-        self.identifier = store.identifier
-        self.label = store.label
-
-    def getIdentifier(self):
-        return self.identifier
-
-    def getLabel(self):
-        return self.label
+        self.identifier = identifier or store.identifier
+        self.label = label or store.label

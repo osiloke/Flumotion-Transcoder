@@ -222,17 +222,17 @@ class ManagerProxy(base.ProxyElement):
         return self.__getWorkerUniqueIdByName(workerState.get('name'))
         
     def __getWorkerUniqueIdByName(self, name):
-        return "%s.%s" % (self.getIdentifier(), name)
+        return "%s.%s" % (self.identifier, name)
         
     def __getAtmosphereUniqueId(self, managerPxy, atmoCtx, atmoState):
         if atmoState == None:
             return None
-        return "%s.%s" % (self.getIdentifier(), atmoState.get('name'))
+        return "%s.%s" % (self.identifier, atmoState.get('name'))
 
     def __getFlowUniqueId(self, managerPxy, flowCtx, flowState):
         if flowState == None:
             return None
-        return "%s.%s" % (self.getIdentifier(), flowState.get('name'))
+        return "%s.%s" % (self.identifier, flowState.get('name'))
 
     def __workerStateAdded(self, workerState):
         name = workerState.get('name')

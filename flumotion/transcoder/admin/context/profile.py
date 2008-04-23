@@ -119,8 +119,10 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
     genBaseGetter("FailedRep")
     genBaseGetter("DoneRep")
 
-    def __init__(self, custCtx, profStore):
-        base.BaseStoreContext.__init__(self, custCtx, profStore)
+    def __init__(self, custCtx, profStore, identifier=None):
+        if identifier is None:
+            identifier = "%s.%s" % (custCtx.identifier, profStore.identifier)
+        base.BaseStoreContext.__init__(self, custCtx, profStore, identifier=identifier)
         self._variables.addVar("profileSubdir", self.getSubdir())
         self._variables.addVar("profileName", self.getName())
 
@@ -135,14 +137,6 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
 
     def isBound(self):
         return False
-
-    def getIdentifier(self):
-        """
-        Gives an identifier that should uniquely identify a profile.
-        It should not change event if profile configuration changed.
-        """
-        # For now return only the customer and profile name
-        return "%s/%s" % (self.parent.getIdentifier(), self.getName())
 
     def getSubdir(self):
         subdir = self.store.getSubdir()
@@ -219,20 +213,14 @@ class ProfileContext(UnboundProfileContext):
     genGetters("DoneRep")
     
     def __init__(self, custCtx, profStore, inputAbstractPath):
-        UnboundProfileContext.__init__(self, custCtx, profStore)
+        postfix = inputAbstractPath.strip('/')
+        identifier = "%s.%s.%s" % (custCtx.identifier,
+                                   profStore.identifier, postfix)
+        UnboundProfileContext.__init__(self, custCtx, profStore, identifier=identifier)
         self._variables.addFileVars(inputAbstractPath.strip('/'), "source")
 
     def isBound(self):
         return True
-
-    def getIdentifier(self):
-        """
-        Gives an identifier that should uniquely identify a profile.
-        It should not change event if profile configuration changed.
-        """
-        # For now return only the customer and profile name
-        return "%s:%s" % (UnboundProfileContext.getIdentifier(self),
-                          self._variables["sourcePath"])
 
     def getTargetContextByName(self, targName):
         targStore = self.store.getTargetStoreByName(targName)

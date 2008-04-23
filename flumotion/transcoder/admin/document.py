@@ -17,7 +17,7 @@ import mimetypes
 from cStringIO import StringIO
 
 
-from zope.interface import Interface, implements
+from zope.interface import Interface, implements, Attribute
 
 from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
@@ -25,8 +25,7 @@ from flumotion.transcoder.admin.enums import DocumentTypeEnum
 
 class IDocument(Interface):
     
-    def getLabel(self):
-        pass
+    label = Attribute("Document label")
     
     def getType(self):
         pass
@@ -51,12 +50,9 @@ class StringDocument(object):
     def __init__(self, type, label, data, mimeType='text/plain'):
         assert isinstance(type, DocumentTypeEnum)
         self._type = type
-        self._label = label
+        self.label = label
         self._data = data
         self._mime = mimeType
-    
-    def getLabel(self):
-        return self._label
     
     def getType(self):
         return self._type
@@ -82,15 +78,12 @@ class FileDocument(object):
         assert isinstance(type, DocumentTypeEnum)
         if not os.path.exists(path):
             raise admerrs.DocumentError("File document '%s' not found", path)
-        self._label = label or os.path.basename(self._path)
+        self.label = label or os.path.basename(self._path)
         self._type = type
         self._path = path
         self._mime = mimeType or  mimetypes.guess_type(path)[0]
         if not self._mime:
             self._mime = 'application/octet-stream'
-    
-    def getLabel(self):
-        return self._label
     
     def getType(self):
         return self._type

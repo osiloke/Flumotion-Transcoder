@@ -1,5 +1,42 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/api/mediums/named.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/worker.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	* flumotion/transcoder/admin/document.py:
+	* flumotion/transcoder/admin/janitor.py:
+	* flumotion/transcoder/admin/monitoring.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/property/filetrans.py:
+	* flumotion/transcoder/admin/proxy/base.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/proxy/componentset.py:
+	* flumotion/transcoder/admin/proxy/group.py:
+	* flumotion/transcoder/admin/proxy/manager.py:
+	* flumotion/transcoder/admin/proxy/monitorset.py:
+	* flumotion/transcoder/admin/proxy/transcoderset.py:
+	* flumotion/transcoder/admin/proxy/workerset.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/transcoding.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Last step in making identifier and label attributes
+	insteed of having to use getIdentifier() and getLabel().
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/activity.py:
 	* flumotion/transcoder/admin/context/base.py:
 	* flumotion/transcoder/admin/context/customer.py:

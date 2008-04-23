@@ -97,7 +97,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         
     def addProfile(self, profCtx):
         inputPath = profCtx.getInputPath()
-        identifier = profCtx.getIdentifier()
+        identifier = profCtx.identifier
         if self.isProfileQueued(profCtx):
             self.log("Added an already queued profile '%s'", inputPath)
         elif self._transcoding.getTask(identifier):
@@ -110,7 +110,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     
     def removeProfile(self, profCtx):
         inputPath = profCtx.getInputPath()
-        identifier = profCtx.getIdentifier()
+        identifier = profCtx.identifier
         if self.isProfileQueued(profCtx):
             self.debug("Unqueue profile '%s'", inputPath)
             self.__unqueuProfile(profCtx)
@@ -120,10 +120,10 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self._transcoding.removeTask(identifier)
     
     def isProfileQueued(self, profCtx):
-        return profCtx.getIdentifier() in self._queue
+        return profCtx.identifier in self._queue
     
     def isProfileActive(self, profCtx):
-        identifier = profCtx.getIdentifier()
+        identifier = profCtx.identifier
         trantask = self._transcoding.getTask(identifier, None)
         return trantask != None
     
@@ -134,7 +134,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     ## ITranscoding Event Listers ##
     
     def __onTranscodingTaskAdded(self, takset, task):
-        self.debug("Transcoding task '%s' added", task.getLabel())
+        self.debug("Transcoding task '%s' added", task.label)
         task.connectListener("failed", self,
                              self.__onTranscodingFailed)
         task.connectListener("done", self,
@@ -144,7 +144,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         task.refreshListener(self)
     
     def __onTranscodingTaskRemoved(self, tasker, task):
-        self.debug("Transcoding task '%s' removed", task.getLabel())
+        self.debug("Transcoding task '%s' removed", task.label)
         task.disconnectListener("failed", self)
         task.disconnectListener("done", self)
         task.disconnectListener("terminated", self)
@@ -181,10 +181,10 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.__transcodingDone(None, task, transPxy)
 
     def __onTranscodingTerminated(self, task, succeed):
-        self.info("Transcoding task '%s' %s", task.getLabel(), 
+        self.info("Transcoding task '%s' %s", task.label, 
                   (succeed and "succeed") or "failed")
         profCtx = task.getProfileContext()
-        self._transcoding.removeTask(profCtx.getIdentifier())
+        self._transcoding.removeTask(profCtx.identifier)
         self._activities.pop(task)
 
         
@@ -200,11 +200,10 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     ## Private Methods ##
     
     def __transcodingDone(self, report, task, transPxy):
-        label = task.getLabel()
         docs = transPxy and transPxy.getDocuments()
         trigger = NotificationTriggerEnum.done
         profCtx = task.getProfileContext()
-        self.__notify(label, trigger, profCtx, report, docs)
+        self.__notify(task.label, trigger, profCtx, report, docs)
     
     def __transcodingFailed(self, report, task, transPxy):    
         d = self._diagnostician.diagnoseTranscodingFailure(task, transPxy)
@@ -232,10 +231,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
                 docs.extend(diagnostic)
             else:
                 docs = diagnostic
-        label = task.getLabel()                
         trigger = NotificationTriggerEnum.failed
         profCtx = task.getProfileContext()
-        self.__notify(label, trigger, profCtx, report,
+        self.__notify(task.label, trigger, profCtx, report,
                       docs, altErrorMessage=altErrorMessage)
     
     def __notify(self, label, trigger, profCtx, report,
@@ -280,7 +278,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             profCtx = activCtx.getProfileContext()
             if (profCtx is None) or (not profCtx.isBound()):
                 self.warning("Activity without valid profile information (%s)",
-                             activCtx.getLabel())
+                             activCtx.label)
                 activCtx.store.delete()
                 continue
             if self.isProfileQueued(profCtx):
@@ -317,10 +315,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._startDelay = utils.callNext(self.__asyncStartTask)
         
     def __startTranscodingTask(self, profCtx, activCtx=None):
-        identifier = profCtx.getIdentifier()
+        identifier = profCtx.identifier
         task = transtask.TranscodingTask(self._transcoding, profCtx)
-        self.info("Starting transcoding task '%s'", 
-                  task.getLabel())
+        self.info("Starting transcoding task '%s'",  task.label)
         self._transcoding.addTask(identifier, task)
         self.emit("transcoding-started", task)
         if not activCtx:
@@ -341,14 +338,14 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         return self.__getProfilePriority(self._queue[key])
 
     def __queueProfile(self, profCtx):
-        profIdent = profCtx.getIdentifier()
+        profIdent = profCtx.identifier
         assert not (profIdent in self._queue)
         self._queue[profIdent] =  profCtx
         self._order.append(profIdent)
         self._order.sort(key=self.__getKeyPriority)
     
     def __unqueuProfile(self, profCtx):
-        profIdent = profCtx.getIdentifier()
+        profIdent = profCtx.identifier
         assert profIdent in self._queue
         del self._queue[profIdent]
         self._order.remove(profIdent)

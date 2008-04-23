@@ -27,12 +27,6 @@ class IBaseStore(interfaces.IAdminInterface):
     def getAdminStore(self):
         pass
 
-    def getIdentifier(self):
-        pass
-    
-    def getLabel(self):
-        pass
-
 
 class IStoreElement(interfaces.IAdminInterface):
     pass
@@ -126,7 +120,7 @@ class NotifyStore(StoreElement):
         #FIXME: Better Error Handling ?
         log.notifyFailure(self, failure,
                           "Data retrieval failed for %s '%s'",
-                          self.__class__.__name__, self.getLabel())
+                          self.__class__.__name__, self.label)
         #Propagate failures
         return failure
 
@@ -164,11 +158,11 @@ class NotifyStore(StoreElement):
         
     def __cbNotificationsReceived(self, notifStores, oldResult):
         self.log("Store %s '%s' received %d notifications",
-                 self.__class__.__name__, self.getLabel(), len(notifStores))
+                 self.__class__.__name__, self.label, len(notifStores))
         bag = dict([(t, dict()) for t in NotificationTriggerEnum])
         for notifStore in notifStores:
             for t in notifStore.getTriggers():
-                bag[t][notifStore.getIdentifier()] = notifStore
+                bag[t][notifStore.identifier] = notifStore
         self._notifications = bag
         return oldResult
 
@@ -176,6 +170,6 @@ class NotifyStore(StoreElement):
         #FIXME: Error Handling
         log.notifyFailure(self, failure,
                           "Store %s '%s' data source error",
-                          self.__class__.__name__, self.getLabel())
+                          self.__class__.__name__, self.label)
         return failure
         

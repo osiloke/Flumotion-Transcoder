@@ -30,7 +30,7 @@ def createTranscodingConfigFromContext(profCtx):
     conf = transconfig.TranscodingConfig()
     conf.touch()
     custCtx = profCtx.getCustomerContext()
-    conf.customer.name = custCtx.getLabel()
+    conf.customer.name = custCtx.label
     conf.transcodingTimeout = profCtx.getTranscodingTimeout()
     conf.postProcessTimeout = profCtx.getPostprocessTimeout()
     conf.preProcessTimeout = profCtx.getPreprocessTimeout()
@@ -51,7 +51,7 @@ def createTranscodingConfigFromContext(profCtx):
     conf.source.preProcess = profCtx.getPreprocessCommand()
     for targCtx in profCtx.iterTargetContexts():
         tc = transconfig.TargetConfig()
-        label = targCtx.getLabel()
+        label = targCtx.label
         conf.targets[label] = tc
         tc.label = label
         tc.outputFile = targCtx.getOutputRelPath()

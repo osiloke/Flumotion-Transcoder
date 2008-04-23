@@ -42,13 +42,13 @@ class TranscoderSet(componentset.BaseComponentSet):
     def _doAddComponent(self, compPxy):
         componentset.BaseComponentSet._doAddComponent(self, compPxy)
         self.debug("Transcoder component '%s' added to set",
-                   compPxy.getLabel())
+                   compPxy.label)
         self.emit("transcoder-added", compPxy)
         
     def _doRemoveComponent(self, compPxy):
         componentset.BaseComponentSet._doRemoveComponent(self, compPxy)
         self.debug("Transcoder component '%s' removed from set",
-                   compPxy.getLabel())
+                   compPxy.label)
         self.emit("transcoder-removed", compPxy)
 
     

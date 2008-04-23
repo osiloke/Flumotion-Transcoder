@@ -229,11 +229,11 @@ class CustomerStore(base.NotifyStore):
         
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
-        self.debug("Customer '%s' activated", self.getLabel())
+        self.debug("Customer '%s' activated", self.label)
     
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
-        self.debug("Customer '%s' aborted", self.getLabel())
+        self.debug("Customer '%s' aborted", self.label)
         
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveCustomerNotifications(self._data)
@@ -285,7 +285,7 @@ class CustomerStore(base.NotifyStore):
     
     def __cbProfileInitialized(self, profStore):
         self.debug("Profile '%s' initialized; adding it to customer '%s' store",
-                   profStore.getLabel(), self.getLabel())
+                   profStore.label, self.label)
         if (profStore.getName() in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
                    "dropping the new one" 
@@ -307,7 +307,7 @@ class CustomerStore(base.NotifyStore):
         log.notifyFailure(self, failure, 
                           "Profile '%s' of customer '%s' failed "
                           "to initialize; dropping it",
-                          profStore.getLabel(), self.getLabel())
+                          profStore.label, self.label)
         profStore._abort(failure)
         # Don't propagate failures, will be dropped anyway
         return

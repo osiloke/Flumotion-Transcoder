@@ -94,12 +94,12 @@ class Transcoding(taskmanager.TaskManager):
     ## WorkerSet Event Listeners ##
     
     def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
-        self.log("Worker '%s' added to transcoding", workerPxy.getLabel())
+        self.log("Worker '%s' added to transcoding", workerPxy.label)
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
     def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
-        self.log("Worker '%s' removed from transcoding", workerPxy.getLabel())
+        self.log("Worker '%s' removed from transcoding", workerPxy.label)
         self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
 
@@ -107,12 +107,12 @@ class Transcoding(taskmanager.TaskManager):
     ## TranscoderSet Event Listeners ##
     
     def __onTranscoderAddedToSet(self, transPxySet, transPxy):
-        self.log("Transcoder '%s' added to transcoding", transPxy.getLabel())
+        self.log("Transcoder '%s' added to transcoding", transPxy.label)
         d = self.addComponent(transPxy)
         d.addErrback(self.__ebAddComponentFailed, transPxy.getName())
     
     def __onTranscoderRemovedFromSet(self, transPxySet, transPxy):
-        self.log("Transcoder '%s' removed from transcoding", transPxy.getLabel())
+        self.log("Transcoder '%s' removed from transcoding", transPxy.label)
         d = self.removeComponent(transPxy)
         d.addErrback(self.__ebRemoveComponentFailed, transPxy.getName())
 

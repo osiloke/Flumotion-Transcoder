@@ -91,13 +91,13 @@ class WorkerSet(base.RootProxy):
     ### managerproxy.IManagerListener Implementation ###
     
     def __onWorkerAdded(self, managerPxy, workerPxy):
-        identifier = workerPxy.getIdentifier()
+        identifier = workerPxy.identifier
         assert not (identifier in self._workerPxys)
         self._workerPxys[identifier] = workerPxy
         self.emit("worker-added", workerPxy)
     
     def __onWorkerRemoved(self, managerPxy, workerPxy):
-        identifier = workerPxy.getIdentifier()
+        identifier = workerPxy.identifier
         assert identifier in self._workerPxys
         assert self._workerPxys[identifier] == workerPxy
         del self._workerPxys[identifier]

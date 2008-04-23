@@ -170,10 +170,10 @@ class TranscoderAdmin(log.Loggable):
         workerPxy = compPxy.getWorkerProxy()
         if workerPxy:
             msg = ("Component '%s' on worker '%s' post a %s message" 
-                   % (compPxy.getLabel(), workerPxy.getLabel(), level))
+                   % (compPxy.label, workerPxy.label, level))
         else:
             msg = ("Orphan component '%s' post a %s message" 
-                   % (compPxy.getLabel(), level))
+                   % (compPxy.label, level))
         d = self._diagnostician.diagnoseComponentMessage(compPxy, message)
         args = (msg, text, debug)
         d.addCallbacks(self.__cbMessageDiagnosticSucceed,
@@ -184,7 +184,7 @@ class TranscoderAdmin(log.Loggable):
     ## Store Event Listeners ##
     
     def __onCustomerStoreAdded(self, admin, custStore):
-        self.debug("Customer '%s' Added", custStore.getLabel())
+        self.debug("Customer '%s' Added", custStore.label)
         custStore.connectListener("profile-added", self,
                                   self.__onProfileStoreAdded)
         custStore.connectListener("profile-removed", self,
@@ -192,21 +192,21 @@ class TranscoderAdmin(log.Loggable):
         custStore.refreshListener(self)
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
         task = MonitoringTask(self._monitoring, custCtx)
-        self._monitoring.addTask(custCtx.getIdentifier(), task)
+        self._monitoring.addTask(custCtx.identifier, task)
         
         
     def __onCustomerStoreRemoved(self, admin, custStore):
-        self.debug("Customer '%s' Removed", custStore.getLabel())
+        self.debug("Customer '%s' Removed", custStore.label)
         custStore.disconnectListener("profile-added", self)
         custStore.disconnectListener("profile-removed", self)
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
-        self._monitoring.removeTask(custCtx.getIdentifier())
+        self._monitoring.removeTask(custCtx.identifier)
         
         
     ## CustomerStore Event Listeners ##
     
     def __onProfileStoreAdded(self, custStore, profStore):
-        self.debug("Profile '%s' Added", profStore.getLabel())
+        self.debug("Profile '%s' Added", profStore.label)
         profStore.connectListener("target-added", self,
                                   self.__onTargetStoreAdded)
         profStore.connectListener("target-removed", self,
@@ -214,7 +214,7 @@ class TranscoderAdmin(log.Loggable):
         profStore.refreshListener(self)
         
     def __onProfileStoreRemoved(self, custStore, profStore):
-        self.debug("Profile '%s' Removed", profStore.getLabel())
+        self.debug("Profile '%s' Removed", profStore.label)
         profStore.disconnectListener("target-added", self)
         profStore.disconnectListener("target-removed", self)
         
@@ -222,16 +222,16 @@ class TranscoderAdmin(log.Loggable):
     ## ProfileStore Event Listeners ##
     
     def __onTargetStoreAdded(self, profStore, targStore):
-        self.debug("Target '%s' Added", targStore.getLabel())
+        self.debug("Target '%s' Added", targStore.label)
         
     def __onTargetStoreRemoved(self, profStore, targStore):
-        self.debug("Target '%s' Removed", targStore.getLabel())
+        self.debug("Target '%s' Removed", targStore.label)
 
 
     ## Monitoring Event Listeners ##
     
     def __onMonitoringTaskAdded(self, takser, task):
-        self.debug("Monitoring task '%s' added", task.getLabel())
+        self.debug("Monitoring task '%s' added", task.label)
         task.connectListener("file-added", self,
                              self.__onMonitoredFileAdded)
         task.connectListener("file-state-changed", self,
@@ -243,7 +243,7 @@ class TranscoderAdmin(log.Loggable):
         task.refreshListener(self)
     
     def __onMonitoringTaskRemoved(self, tasker, task):
-        self.debug("Monitoring task '%s' removed", task.getLabel())
+        self.debug("Monitoring task '%s' removed", task.label)
         task.disconnectListener("file-added", self)
         task.disconnectListener("file-state-changed", self)
         task.disconnectListener("file-removed", self)
@@ -254,23 +254,23 @@ class TranscoderAdmin(log.Loggable):
     
     def __onMonitoredFileAdded(self, montask, profCtx, state):
         self.log("Monitoring task '%s' added profile '%s'",
-                 montask.getLabel(), profCtx.getInputPath())
+                 montask.label, profCtx.getInputPath())
         self.__fileStateChanged(montask, profCtx, state)
         
     def __onMonitoredFileStateChanged(self, montask, profCtx, state):
         self.log("Monitoring task '%s' profile '%s' state "
-                 "changed to %s", montask.getLabel(), 
+                 "changed to %s", montask.label, 
                  profCtx.getInputPath(), state.name)
         self.__fileStateChanged(montask, profCtx, state)
     
     def __onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
-                 montask.getLabel(), profCtx.getInputPath())
+                 montask.label, profCtx.getInputPath())
         self._scheduler.removeProfile(profCtx)
 
     def __onFailToRunOnWorker(self, task, workerPxy):
         msg = ("Monitoring task '%s' could not be started on worker '%s'"
-               % (task.getLabel(), workerPxy.getLabel()))
+               % (task.label, workerPxy.label))
         notifyEmergency(msg)
         
     
@@ -352,22 +352,22 @@ class TranscoderAdmin(log.Loggable):
         inputBase = profCtx.getInputBase()
         failedBase = profCtx.getFailedBase()
         relPath = profCtx.getInputRelPath()
-        task = self._monitoring.getTask(custCtx.getIdentifier())
+        task = self._monitoring.getTask(custCtx.identifier)
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
                          "cannot move files from '%s' to '%s'",
-                         custCtx.getLabel(), inputBase, failedBase)
+                         custCtx.label, inputBase, failedBase)
             return
         task.moveFiles(inputBase, failedBase, [relPath])
     
     def __setInputFileState(self, profCtx, state):
         custCtx = profCtx.getCustomerContext()
         inputBase = profCtx.getInputBase()
-        task = self._monitoring.getTask(custCtx.getIdentifier())
+        task = self._monitoring.getTask(custCtx.identifier)
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
                          "cannot set file '%s' state to %s",
-                         custCtx.getLabel(), inputBase, state.name)
+                         custCtx.label, inputBase, state.name)
             return
         relPath = profCtx.getInputRelPath()        
         task.setFileState(inputBase, relPath, state)

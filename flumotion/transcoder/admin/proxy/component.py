@@ -137,7 +137,7 @@ class BaseComponentProxy(base.BaseProxy):
 
     def start(self):
         assert self._compState, "Component has been removed"
-        self.log("Starting component '%s'", self.getLabel())
+        self.log("Starting component '%s'", self.label)
         d = self._managerPxy._callRemote('componentStart', 
                                       self._compState)
         d.addCallback(defer.overrideResult, self)
@@ -145,7 +145,7 @@ class BaseComponentProxy(base.BaseProxy):
     
     def stop(self):
         assert self._compState, "Component has been removed"
-        self.log("Stopping component '%s'", self.getLabel())
+        self.log("Stopping component '%s'", self.label)
         d = self._managerPxy._callRemote('componentStop', 
                                       self._compState)
         d.addCallback(defer.overrideResult, self)
@@ -153,7 +153,7 @@ class BaseComponentProxy(base.BaseProxy):
     
     def restart(self):
         assert self._compState, "Component has been removed"
-        self.log("Restarting component '%s'", self.getLabel())
+        self.log("Restarting component '%s'", self.label)
         d = self._managerPxy._callRemote('componentRestart', 
                                       self._compState)
         d.addCallback(defer.overrideResult, self)
@@ -161,7 +161,7 @@ class BaseComponentProxy(base.BaseProxy):
     
     def delete(self):
         assert self._compState, "Component has been removed"
-        self.log("Deleting component '%s'", self.getLabel())
+        self.log("Deleting component '%s'", self.label)
         d = self._managerPxy._callRemote('deleteComponent', 
                                       self._compState)
         d.addCallback(defer.overrideResult, self)
@@ -174,14 +174,14 @@ class BaseComponentProxy(base.BaseProxy):
         It will stop it, and kill it if neccessary.
         """
         assert self._compState, "Component has been removed"
-        self.log("Stopping (Forced) component '%s'", self.getLabel())
+        self.log("Stopping (Forced) component '%s'", self.label)
         mood = self.getMood()
         if mood == moods.sleeping:
             return defer.succeed(self)
         else:
             d = defer.Deferred()
             status = {"can_delete": False}
-            self.__asyncForceStop(None, status, self.getLabel(), d)
+            self.__asyncForceStop(None, status, self.label, d)
             return d
         
     def forceDelete(self):
@@ -191,13 +191,13 @@ class BaseComponentProxy(base.BaseProxy):
         It will stop it, delete it and kill it if neccessary.
         """
         assert self._compState, "Component has been removed"
-        self.log("Deleting (Forced) component '%s'", self.getLabel())
+        self.log("Deleting (Forced) component '%s'", self.label)
         d = defer.Deferred()
-        self.__stopOrDelete(None, {}, self.getLabel(), d)
+        self.__stopOrDelete(None, {}, self.label, d)
         return d
 
     def kill(self):
-        self.log("Killing component '%s'", self.getLabel())
+        self.log("Killing component '%s'", self.label)
         # First try SIGTERM
         d = self.signal(signal.SIGTERM)
         # And wait for a while
@@ -216,7 +216,7 @@ class BaseComponentProxy(base.BaseProxy):
     def signal(self, sig):
         assert self._compState, "Component has been removed"
         if not self._workerPxy:
-            msg = "Component '%s' worker is not running" % self.getLabel()
+            msg = "Component '%s' worker is not running" % self.label
             err = admerrs.OrphanComponentError(msg)
             return defer.fail(err)
         return self._workerPxy._callRemote("killJob", self._getAvatarId(), sig)
@@ -259,7 +259,7 @@ class BaseComponentProxy(base.BaseProxy):
     
     def _componentStateSet(self, state, key, value):
         self.log("Component '%s' state '%s' set to '%s'",
-                 self.getLabel(), key, value)
+                 self.label, key, value)
         try:
             if key == 'mood':
                 if self.isActive():
@@ -274,7 +274,7 @@ class BaseComponentProxy(base.BaseProxy):
             log.notifyException(self, e,
                                 "Exception when setting component '%s' "
                                 "state key '%s' to '%s'",
-                                self.getLabel(), key, value)
+                                self.label, key, value)
             #FIXME: Do some error handling ?
 
     def _componentStateAppend(self, state, key, value):
@@ -288,7 +288,7 @@ class BaseComponentProxy(base.BaseProxy):
             log.notifyException(self, e,
                                 "Exception when appening value '%s' "
                                 "to component '%s' state list '%s'",
-                                value, self.getLabel(), key)
+                                value, self.label, key)
             #FIXME: Do some error handling ?
 
 
@@ -313,7 +313,7 @@ class BaseComponentProxy(base.BaseProxy):
         except Exception, e:
             log.notifyException(self, e,
                                 "Exception during component '%s' "
-                                "properties creation", self.getLabel())
+                                "properties creation", self.label)
             return None
     
     def _onComponentRunning(self, workerPxy):
@@ -366,7 +366,7 @@ class BaseComponentProxy(base.BaseProxy):
         currName = self._compState.get('workerName')
         if currName != name:
             self.log("Component '%s' active worker changed from '%s' to '%s'",
-                     self.getLabel(), name, currName)
+                     self.label, name, currName)
             return
         self._workerPxy = workerPxy
         self._onComponentRunning(workerPxy)
@@ -377,11 +377,11 @@ class BaseComponentProxy(base.BaseProxy):
         currName = self._compState.get('workerName')
         if currName != name:
             self.log("Component '%s' active worker changed from '%s' to '%s'",
-                     self.getLabel(), name, currName)
+                     self.label, name, currName)
             return
         self.warning("Component '%s' said to be running "
                      + "on an unknown worker '%s'",
-                     self.getLabel(), name)
+                     self.label, name)
     
     def __getUIDictValue(self, state, key, name, default):
         values = state.get(key, None)
@@ -437,7 +437,7 @@ class BaseComponentProxy(base.BaseProxy):
                        self.__ebUIStateRetrievalFailed)
     
     def __cbUIStateRetrievalDone(self, uiState):
-        self.log("Component '%s' received UI State", self.getLabel())
+        self.log("Component '%s' received UI State", self.label)
         if self._retrievingUIState:
             self._setUIState(uiState)
             self._onSetUIState(uiState)
@@ -445,7 +445,7 @@ class BaseComponentProxy(base.BaseProxy):
     def __ebUIStateRetrievalFailed(self, failure):
         self._retrievingUIState = False
         self.warning("Component '%s' fail to retrieve its UI state: %s",
-                     self.getLabel(), log.getFailureMessage(failure))
+                     self.label, log.getFailureMessage(failure))
         self._uiState.fail(failure)
 
     def __isOperationTerminated(self, failure, status, resultDef):
@@ -457,12 +457,12 @@ class BaseComponentProxy(base.BaseProxy):
             if failure.check(ferrors.UnknownComponentError):
                 self.debug("Forced Stop/Delete of component '%s' aborted "
                            "because the component is unknown (already deleted ?)",
-                           self.getLabel())
+                           self.label)
                 resultDef.callback(self)
                 return True
             if failure.check(PBConnectionLost):
                 msg = ("Forced Stop/Delete of component '%s' aborted "
-                       "because the remote connection was lost" % self.getLabel())
+                       "because the remote connection was lost" % self.label)
                 self.warning("%s", msg)
                 error = admerrs.OperationAbortedError(msg, cause=failure.value)
                 resultDef.errback(error)

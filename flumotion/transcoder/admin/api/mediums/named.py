@@ -28,7 +28,7 @@ class NamedMedium(api.Medium):
     
     @api.remote()
     def getIdentifier(self):
-        return self._reference.getIdentifier()
+        return self._reference.identifier
     
     @api.remote()
     def getName(self):
@@ -36,4 +36,4 @@ class NamedMedium(api.Medium):
 
     @api.remote()
     def getLabel(self):
-        return self._reference.getLabel()
+        return self._reference.label

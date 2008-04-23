@@ -91,12 +91,12 @@ class Monitoring(taskmanager.TaskManager):
     ## WorkerSet Event Listeners ##
     
     def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
-        self.log("Worker '%s' added to monitoring", workerPxy.getLabel())
+        self.log("Worker '%s' added to monitoring", workerPxy.label)
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
     
     def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
-        self.log("Worker '%s' removed from monitoring", workerPxy.getLabel())
+        self.log("Worker '%s' removed from monitoring", workerPxy.label)
         self._balancer.removeWorker(workerPxy)
         self._balancer.balance()
 
@@ -104,12 +104,12 @@ class Monitoring(taskmanager.TaskManager):
     ## MonitorSet Event Listeners ##
     
     def __onMonitorAddedToSet(self, monitorPxySet, monitorPxy):
-        self.log("Monitor '%s' added to monitoring", monitorPxy.getLabel())
+        self.log("Monitor '%s' added to monitoring", monitorPxy.label)
         d = self.addComponent(monitorPxy)
         d.addErrback(self.__ebAddComponentFailed, monitorPxy.getName())
     
     def __onMonitorRemovedFromSet(self, monitorPxySet, monitorPxy):
-        self.log("Monitor '%s' removed from monitoring", monitorPxy.getLabel())
+        self.log("Monitor '%s' removed from monitoring", monitorPxy.label)
         d = self.removeComponent(monitorPxy)
         d.addErrback(self.__ebRemoveComponentFailed, monitorPxy.getName())
 

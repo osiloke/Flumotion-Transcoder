@@ -273,12 +273,11 @@ class ProxyElement(adminelement.AdminElement):
             del self._pendingElements[attr]
 
     def __cbDictElementInitialized(self, element, addEvent, attr):
-        identifier = element.getIdentifier()
-        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
+        name = "%s '%s'" % (element.__class__.__name__, element.label)
         self.debug("%s initialized", name)
         values = self.__getAttrValue(attr)
         # Remove the pending reference if it's for the same element
-        self.__removePending(attr, identifier, element)
+        self.__removePending(attr, element.identifier, element)
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
@@ -286,7 +285,7 @@ class ProxyElement(adminelement.AdminElement):
             element._abort(errors.HandledTranscoderFailure(error))
             element._discard()
         else:
-            values[identifier] = element
+            values[element.identifier] = element
             # Do not assume the retrieved dict is a reference
             self.__setAttrValue(attr, values)
             self._onElementInitialized(element)
@@ -302,12 +301,11 @@ class ProxyElement(adminelement.AdminElement):
             return element
     
     def __ebDictElementInitFailed(self, failure, element, attr):
-        identifier = element.getIdentifier()
         log.notifyFailure(self, failure, 
                           "%s '%s' failed to initialize; dropping it",
-                          element.__class__.__name__, element.getLabel())
+                          element.__class__.__name__, element.label)
         # Remove the pending reference if it's for the same element
-        self.__removePending(attr, identifier, element)
+        self.__removePending(attr, element.identifier, element)
         self._onElementInitFailed(element, failure)
         element._abort(failure)
         element._discard()
@@ -315,11 +313,10 @@ class ProxyElement(adminelement.AdminElement):
         return
     
     def __cbElementInitialized(self, element, setEvent, attr):
-        identifier = element.getIdentifier()
-        name = "%s '%s'" % (element.__class__.__name__, element.getLabel())
+        name = "%s '%s'" % (element.__class__.__name__, element.label)
         self.debug("%s initialized", name)
         # Remove the pending reference if it's for the same element
-        self.__removePending(attr, identifier, element)
+        self.__removePending(attr, element.identifier, element)
         if element.isObsolete():
             msg = "%s obsolete before initialization over" % name
             self.debug("%s", msg)
@@ -341,12 +338,11 @@ class ProxyElement(adminelement.AdminElement):
             return element
     
     def __ebElementInitFailed(self, failure, element, attr):
-        identifier = element.getIdentifier()
         log.notifyFailure(self, failure, 
                           "%s '%s' failed to initialize; dropping it",
-                          element.__class__.__name__, element.getLabel())
+                          element.__class__.__name__, element.label)
         # Remove the pending reference if it's for the same element
-        self.__removePending(attr, identifier, element)
+        self.__removePending(attr, element.identifier, element)
         self._onElementInitFailed(element, failure)
         element._abort(failure)
         element._discard()

@@ -126,7 +126,7 @@ class ConfigStore(base.DataStore):
     base.genGetter("getIdentifier", "identifier")
 
     def __init__(self, targStore, data):
-        label = "%s config" % targStore.getLabel()
+        label = "%s config" % targStore.label
         base.DataStore.__init__(self, targStore, data, label=label)
     
     def getAdminStore(self):

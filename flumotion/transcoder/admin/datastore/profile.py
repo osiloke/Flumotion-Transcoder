@@ -211,11 +211,11 @@ class ProfileStore(base.NotifyStore):
 
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
-        self.debug("Profile '%s' activated", self.getLabel())
+        self.debug("Profile '%s' activated", self.label)
     
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
-        self.debug("Profile '%s' aborted", self.getLabel())
+        self.debug("Profile '%s' aborted", self.label)
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveProfileNotifications(self._data)
@@ -258,7 +258,7 @@ class ProfileStore(base.NotifyStore):
     
     def __cbTargetInitialized(self, targStore):
         self.debug("Target '%s' initialized; adding it to profile '%s' store",
-                   targStore.getLabel(), self.getLabel())
+                   targStore.label, self.label)
         if (targStore.getName() in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
                    "dropping the new one" 
@@ -280,7 +280,7 @@ class ProfileStore(base.NotifyStore):
         log.notifyFailure(self, failure, 
                           "Target '%s' of profile '%s' failed "
                           "to initialize; dropping it", 
-                          targStore.getLabel(), self.getLabel())
+                          targStore.label, self.label)
         targStore._abort(failure)
         # Don't propagate failures, will be dropped anyway
         return

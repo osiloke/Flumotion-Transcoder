@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import Interface, implements
+from zope.interface import Interface, implements, Attribute
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionLost
 from twisted.spread.pb import PBConnectionLost
@@ -20,15 +20,14 @@ from flumotion.common.planet import moods
 
 from flumotion.inhouse import log, defer, utils, events, waiters
 
-from flumotion.transcoder.admin import adminconsts, admerrs
+from flumotion.transcoder.admin import adminconsts, admerrs, interfaces
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.proxy import component
 
 
-class IAdminTask(Interface):
+class IAdminTask(interfaces.IAdminInterface):
 
-    def getLabel(self):
-        pass
+    label = Attribute("Task label")
     
     def isStarted(self):
         pass
@@ -111,6 +110,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     
     def __init__(self, logger, label, properties):
         log.LoggerProxy.__init__(self, logger)
+        self.label = label
         self._workerPxy = None # WorkerProxy
         self._state = TaskStateEnum.stopped
         self._startWaiters = waiters.PassiveWaiters("Admin Task Startup/Resuming")
@@ -118,7 +118,6 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self._delayed = None # IDelayedCall
         self._activePxy = waiters.AssignWaiters("Admin Task Active Component")
         self._compPxys = {} # {component.ComponentProxy: None}
-        self._label = label
         self._properties = properties
         self._retry = 0
         self._holdTimeout = None
@@ -127,9 +126,6 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
 
     ## IAdminTask Implementation ##
         
-    def getLabel(self):
-        return self._label
-    
     def getProperties(self):
         return self._properties
 
@@ -158,7 +154,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         assert isinstance(compPxy, component.ComponentProxy)
         assert not (compPxy in self._compPxys)
         self.log("Component '%s' added to task '%s'", 
-                 compPxy.getName(), self.getLabel())
+                 compPxy.getName(), self.label)
         self._compPxys[compPxy] = None
         self._onComponentAdded(compPxy)
         
@@ -166,7 +162,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         assert isinstance(compPxy, component.ComponentProxy)
         assert compPxy in self._compPxys
         self.log("Component '%s' removed from task '%s'", 
-                 compPxy.getName(), self.getLabel())
+                 compPxy.getName(), self.label)
         del self._compPxys[compPxy]
         self._onComponentRemoved(compPxy)
         if compPxy == self.getActiveComponent():
@@ -177,15 +173,15 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
                                 TaskStateEnum.starting]):
             return defer.fail(admerrs.TranscoderError("Cannot start %s task '%s'"
                                               % (self._state.name,
-                                                 self.getLabel())))
+                                                 self.label)))
         if self._state == TaskStateEnum.stopped:
             if paused:
                 self.log("Starting already paused admin task '%s'",
-                         self.getLabel())
+                         self.label)
                 self._state = TaskStateEnum.paused
                 return defer.succeed(self)
             else:
-                self.log("Ready to start admin task '%s'", self.getLabel())
+                self.log("Ready to start admin task '%s'", self.label)
                 self._state = TaskStateEnum.starting
                 self.__startup()
         return self._startWaiters.wait(timeout)
@@ -197,8 +193,8 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         if not (self._state in [TaskStateEnum.started]):
             return defer.fail(admerrs.TranscoderError("Cannot pause %s task '%s'"
                                               % (self._state.name,
-                                                 self.getLabel())))
-        self.log("Pausing admin task '%s'", self.getLabel())
+                                                 self.label)))
+        self.log("Pausing admin task '%s'", self.label)
         self._state = TaskStateEnum.paused
         # No longer have associated worker
         self._workerPxy = None
@@ -214,9 +210,9 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
                                 TaskStateEnum.resuming]):
             return defer.fail(admerrs.TranscoderError("Cannot resume %s task '%s'"
                                               % (self._state.name,
-                                                 self.getLabel())))
+                                                 self.label)))
         if self._state == TaskStateEnum.paused:
-            self.log("Ready to resume admin task '%s'", self.getLabel())
+            self.log("Ready to resume admin task '%s'", self.label)
             self._state = TaskStateEnum.resuming
             self.__startup()
         # Resuming and starting is the same for now
@@ -232,8 +228,8 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         if self._state in [TaskStateEnum.stopped]:
             return defer.fail(admerrs.TranscoderError("Cannot stop %s task '%s'"
                                               % (self._state.name,
-                                                 self.getLabel())))
-        self.log("Stopping admin task '%s'", self.getLabel())
+                                                 self.label)))
+        self.log("Stopping admin task '%s'", self.label)
         self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         for compPxy in self._compPxys:
@@ -249,7 +245,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         if self._state in [TaskStateEnum.terminated]:
             # Silently return because abort should always succeed
             return
-        self.log("Aborting admin task '%s'", self.getLabel())
+        self.log("Aborting admin task '%s'", self.label)
         self._state = TaskStateEnum.terminated
         self.__relieveComponent()
         for compPxy in self._compPxys:
@@ -259,7 +255,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
 
     def suggestWorker(self, workerPxy):
         self.log("Worker '%s' suggested to admin task '%s'", 
-                 workerPxy and workerPxy.getLabel(), self.getLabel())
+                 workerPxy and workerPxy.label, self.label)
         if self._doAcceptSuggestedWorker(workerPxy):
             # Cancel pending components if any
             self._pendingName = None
@@ -270,8 +266,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             # do not start a new one right now.
             if self._isHoldingLostComponent():
                 self.log("Admin task '%s' avoid starting a new component "
-                         "because it's holding a lost component",
-                         self.getLabel())
+                         "because it's holding a lost component", self.label)
             else:
                 self.__startComponent()
             return self._workerPxy
@@ -400,7 +395,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         else:
             self.warning("Admin task '%s' reach the maximum attempts (%s) "
                          "of starting a component on worker '%s'", 
-                         self.getLabel(), str(self.__getRetryCount() + 1),
+                         self.label, str(self.__getRetryCount() + 1),
                          self._workerPxy and self._workerPxy.getName())
             self._doAborted()
             self.__relieveComponent()
@@ -416,14 +411,14 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         return self.getActiveComponent() != None
         
     def _resetRetryCounter(self):
-        self.log("Reset task '%s' retry counter", self.getLabel())
+        self.log("Reset task '%s' retry counter", self.label)
         self._retry = 0
 
     def _holdLostComponent(self, compPxy):
         if self._holdTimeout != None:
             return
         self.log("Admin task '%s' is holding component '%s'",
-                 self.getLabel(), compPxy.getName())
+                 self.label, compPxy.getName())
         self._onComponentHold(compPxy)
         timeout = self.HOLD_TIMEOUT
         to = utils.createTimeout(timeout, self.__asyncHoldTimeout, 
@@ -435,7 +430,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             return
         compPxy = self.getActiveComponent()
         self.log("Admin task '%s' cancel the lost component '%s' hold",
-                 self.getLabel(), compPxy.getName())
+                 self.label, compPxy.getName())
         utils.cancelTimeout(self._holdTimeout)
         self._holdTimeout = None
         self._onComponentHoldCanceled(compPxy)
@@ -445,7 +440,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     
     def _waitStopComponent(self, compPxy):
         self.debug("Admin task '%s' is stopping component '%s'", 
-                   self.getLabel(), compPxy.getName())
+                   self.label, compPxy.getName())
         # Don't stop sad component
         if compPxy.getMood() != moods.sad:
             d = compPxy.forceStop()
@@ -460,7 +455,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
 
     def _waitDeleteComponent(self, compPxy):
         self.debug("Admin task '%s' is deleting component '%s'", 
-                   self.getLabel(), compPxy.getName())
+                   self.label, compPxy.getName())
         # Don't delete sad component
         if compPxy.getMood() != moods.sad:
             d = compPxy.forceDelete()
@@ -480,7 +475,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self._activePxy.setValue(compPxy)
     
     def __startup(self):
-        self.log("Starting/Resuming admin task '%s'", self.getLabel())
+        self.log("Starting/Resuming admin task '%s'", self.label)
         assert self._state in [TaskStateEnum.starting,
                                TaskStateEnum.resuming]
         d = defer.Deferred()
@@ -495,12 +490,12 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
                                         "%s of admin task '%s'"
                                         % (self._state.name,
                                            actionDesc, 
-                                           self.getLabel()))
+                                           self.label))
         waiters.fireErrbacks(error)
         
     def __cbStartupSucceed(self, result, actionDesc):
         self.debug("Admin task '%s' started/resumed successfully",
-                   self.getLabel())
+                   self.label)
         if not (self._state in [TaskStateEnum.starting,
                                 TaskStateEnum.resuming]):
             self.__stateChangedError(self._startWaiters, actionDesc)
@@ -513,8 +508,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         
     def __ebStartupFailed(self, failure, actionDesc):
         log.notifyFailure(self, failure,
-                          "Admin task '%s' failed to startup/resume",
-                          self.getLabel())
+                          "Admin task '%s' failed to startup/resume", self.label)
         if self._state == TaskStateEnum.starting:
             self._state = TaskStateEnum.stopped
             self._startWaiters.fireErrbacks(failure)
@@ -529,15 +523,13 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             if not succeed:
                 log.notifyFailure(self, result,
                                   "Failure waiting admin task '%s' "
-                                  "components beeing deleted",
-                                  self.getLabel())
+                                  "components beeing deleted", self.label)
         return newResult        
         
     def __bbTaskTerminated(self, resultOrFailure, result):
         if isinstance(resultOrFailure, Failure):
             log.notifyFailure(self, resultOrFailure,
-                              "Failure terminating admin task '%s'",
-                              self.getLabel())
+                              "Failure terminating admin task '%s'", self.label)
             self._doTerminated(result)
         else:
             self._doTerminated(resultOrFailure)
@@ -546,7 +538,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         active = self.getActiveComponent()
         if active:
             self.log("Component '%s' relieved by admin task '%s'",
-                     active.getName(), self.getLabel())
+                     active.getName(), self.label)
             self._cancelComponentHold()
             self._onComponentRelieved(active)
             self.__setActiveComponent(None)
@@ -557,7 +549,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             self.__relieveComponent()
         self.__setActiveComponent(compPxy)
         self.log("Component '%s' elected by admin task '%s'",
-                 compPxy.getName(), self.getLabel())
+                 compPxy.getName(), self.label)
         self._onComponentElected(compPxy)
         # Stop all component other than the selected one
         for m in self._compPxys:
@@ -584,16 +576,14 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             else:
                 log.notifyFailure(self, result,
                                   "Failure waiting admin task '%s' "
-                                  "components UI State",
-                                  self.getLabel())
+                                  "components UI State", self.label)
         return newResult        
         
     def __bbSelectPotentialComponent(self, resultOrFailure):
         if isinstance(resultOrFailure, Failure):
             log.notifyFailure(self, resultOrFailure,
-                              "Failure in admin task '%s' "
-                              "during potential component selection",
-                              self.getLabel())
+                              "Failure in admin task '%s' during potential "
+                              "component selection", self.label)
             compPxys = []
         else:
             compPxys = resultOrFailure
@@ -625,10 +615,9 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __delayedStartComponent(self):
         if self._delayed:
             self.log("Component startup already scheduled for task '%s'",
-                     self.getLabel())
+                     self.label)
             return
-        self.log("Scheduling component startup for task '%s'",
-                 self.getLabel())
+        self.log("Scheduling component startup for task '%s'", self.label)
         timeout = self.__getRetryDelay()
         self._delayed = utils.createTimeout(timeout, self.__startComponent)
 
@@ -638,12 +627,11 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self._delayed = None
         if self._pendingName:
             self.log("Canceling component startup for task '%s', "
-                     "component '%s' is pending", self.getLabel(),
-                     self._pendingName)
+                     "component '%s' is pending", self.label, self._pendingName)
             return
         if not self._workerPxy:
             self.warning("Couldn't start component for task '%s', "
-                         "no worker found", self.getLabel())
+                         "no worker found", self.label)
             return
         compPxy = self.getActiveComponent()
         if compPxy:
@@ -656,7 +644,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         # transoder to be started
         self._pendingName = utils.genUniqueIdentifier()
         self.log("Admin task '%s' is looking for a potential component",
-                 self.getLabel())
+                 self.label)
         # Check there is a valid transcoder already running
         d = self.__waitPotentialComponent(self.POTENTIAL_TIMEOUT)
         d.addCallbacks(self.__cbGotPotentialComponent,
@@ -665,28 +653,28 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __ebPotentialComponentFailure(self, failure):
         log.notifyFailure(self, failure,
                           "Failure looking for a potential component "
-                          "for admin task '%s'", self.getLabel())
+                          "for admin task '%s'", self.label)
         self.__loadNewComponent()
         
     def __cbGotPotentialComponent(self, compPxy):
         if compPxy:
             self.log("Admin task '%s' found the potential component '%s'",
-                     self.getLabel(), compPxy.getName())            
+                     self.label, compPxy.getName())            
             self._pendingName = None
             self.__electComponent(compPxy)
         else:
             self.log("Admin task '%s' doesn't found potential component",
-                     self.getLabel())
+                     self.label)
             self.__loadNewComponent()
 
     def __loadNewComponent(self):
         componentName = self._pendingName
         workerName = self._workerPxy.getName()
         self.debug("Admin task '%s' loading component '%s' on  worker '%s'",
-                   self.getLabel(), componentName, workerName)
+                   self.label, componentName, workerName)
         try:
             d = self._doLoadComponent(self._workerPxy, componentName,
-                                      self._label, self._properties,
+                                      self.label, self._properties,
                                       self.LOAD_TIMEOUT)
             args = (componentName, workerName)
             d.addCallbacks(self.__cbComponentLoadSucceed,
@@ -700,21 +688,20 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         if compPxy.getName() != self._pendingName:
             self.log("Admin task '%s' pending component changed while "
                      "starting component '%s'", 
-                     self.getLabel(), compPxy.getName())
+                     self.label, compPxy.getName())
             return False
         # If the target worker changed, cancel 
         if ((not self._workerPxy) 
             or (self._workerPxy and (workerName != self._workerPxy.getName()))):
             self.log("Admin task '%s' suggested worker changed while "
                      "starting component '%s'", 
-                     self.getLabel(), compPxy.getName())
+                     self.label, compPxy.getName())
             return False
         return True
 
     def __cbComponentLoadSucceed(self, result, componentName, workerName):
         self.debug("Admin task '%s' succeed to load component '%s' "
-                   "on worker '%s'", self.getLabel(), 
-                   componentName, workerName)
+                   "on worker '%s'", self.label, componentName, workerName)
         assert componentName == result.getName()
         if self.__shouldContinueComponentStartup(result, workerName):
             self.__componentLoaded(result)
@@ -730,12 +717,12 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         log.notifyFailure(self, failure,
                           "Admin task '%s' fail to load "
                           "component '%s' on worker '%s'",
-                          self.getLabel(), componentName, workerName)
+                          self.label, componentName, workerName)
         self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, compPxy, workerName):
         self.debug("Admin task '%s' component '%s' goes happy on worker '%s'", 
-                   self.getLabel(), compPxy.getName(), workerName)
+                   self.label, compPxy.getName(), workerName)
         if self.__shouldContinueComponentStartup(compPxy, workerName):
             d = compPxy.waitUIState(self.UISTATE_TIMEOUT)
             args = (compPxy, workerName)
@@ -748,13 +735,13 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __ebComponentNotHappy(self, failure, compPxy, workerName):
         self.warning("Admin task '%s' component '%s' "
                      "fail to become happy on worker '%s': %s", 
-                     self.getLabel(), compPxy.getName(), workerName,
+                     self.label, compPxy.getName(), workerName,
                      log.getFailureMessage(failure))
         self.__abortComponentStartup(compPxy)
 
     def  __cbGotUIState(self, _, compPxy, workerName):
         self.debug("Admin task '%s' retrieved component '%s' UI State", 
-                   self.getLabel(), compPxy.getName())
+                   self.label, compPxy.getName())
         if self.__shouldContinueComponentStartup(compPxy, workerName):
             self.__componentStarted(compPxy)
             self.__electComponent(compPxy)
@@ -767,33 +754,33 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             log.notifyFailure(self, failure,
                               "Admin task '%s' failed to retrieve "
                               "component '%s' UI state",
-                              self.getLabel(), compPxy.getName())
+                              self.label, compPxy.getName())
         self.__abortComponentStartup(compPxy)
         
     def __ebComponentStopFailed(self, failure, name):
         log.notifyFailure(self, failure,
                           "Admin task '%s' failed to stop "
-                          "component '%s'", self.getLabel(), name)
+                          "component '%s'", self.label, name)
         return failure
         
     def __ebComponentDeleteFailed(self, failure, name):
         log.notifyFailure(self, failure,
                           "Admin task '%s' failed to delete "
-                          "component '%s'", self.getLabel(), name)
+                          "component '%s'", self.label, name)
         return failure
 
     def __cbGetValidWorker(self, compPxy):
         if compPxy:
             workerPxy = compPxy.getWorkerProxy()
             self.log("Admin task '%s' found the valid worker '%s'",
-                     self.getLabel(), workerPxy.getName())            
+                     self.label, workerPxy.getName())            
             return workerPxy
         return None
     
     def __ebNoValidWorker(self, failure):
         log.notifyFailure(self, failure,
                           "Failure looking for a valid worker "
-                          "for admin task '%s'", self.getLabel())
+                          "for admin task '%s'", self.label)
         return None
         
 
@@ -801,21 +788,18 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self._holdTimeout = None
         if compPxy != self.getActiveComponent():
             self.log("Admin task '%s' hold component '%s' is not "
-                     "currently elected", self.getLabel(), 
-                     compPxy.getName())
+                     "currently elected", self.label, compPxy.getName())
             return
         if not compPxy.isValid():
             self.warning("Admin task '%s' hold component '%s' is not "
-                         "valid anymore", self.getLabel(),
-                         compPxy.getName())
+                         "valid anymore", self.label, compPxy.getName())
             return
         if compPxy.getMood() != moods.lost:
             self.log("Admin task '%s' component '%s' not lost anymore, "
-                     "releasing the hold", self.getLabel(), 
-                     compPxy.getName())
+                     "releasing the hold", self.label, compPxy.getName())
             return
         self.log("Admin task '%s' component '%s' still lost",
-                 self.getLabel(), compPxy.getName())
+                 self.label, compPxy.getName())
         self._abort()
     
     def __getRetryCount(self):
@@ -824,7 +808,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __incRetryCounter(self):
         self._retry += 1
         self.log("Admin task '%s' retry counter set to %s out of %s",
-                 self.getLabel(), self._retry, self.MAX_RETRIES)
+                 self.label, self._retry, self.MAX_RETRIES)
         
     def __canRetry(self):
         return self._retry < self.MAX_RETRIES
