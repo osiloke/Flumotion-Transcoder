@@ -20,7 +20,8 @@ from flumotion.transcoder.admin.proxy import base
 
 class IWorkerDefinition(interfaces.IAdminInterface):
     
-    name = Attribute("Name of the worker")
+    def getName(self):
+        pass
     
     def getWorkerContext(self):
         pass
@@ -46,7 +47,6 @@ class WorkerDefinition(object):
     
     ## IWorkerDefinition Methodes ##
     
-    #"R"*40 remove this
     def getName(self):
         return self._name
     

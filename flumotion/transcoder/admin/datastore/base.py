@@ -60,9 +60,9 @@ class SimpleStore(object):
     def __init__(self, parentStore, identifier=None, label=None):
         self.parent = parentStore
         if identifier is not None:
-            identifier = identifier
+            self.identifier = identifier
         if label is not None:
-            label = label
+            self.label = label
 
 
 class DataStore(SimpleStore):

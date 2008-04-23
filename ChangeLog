@@ -1,5 +1,13 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:	
+	* flumotion/transcoder/admin/proxy/worker.py:
+	Fixed a bug where the identifier and label was not set in contexts.
+	Put back the getName() getter for workers interface. 
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/customer.py:
 	* flumotion/transcoder/admin/datastore/profile.py:
 	* flumotion/transcoder/admin/datastore/target.py:

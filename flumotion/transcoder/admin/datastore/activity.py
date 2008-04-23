@@ -163,8 +163,6 @@ def genDataSetter(setterName, dataKey):
 class ActivityStore(base.DataStore, log.LoggerProxy):
     implements(IActivityStore)
 
-    base.genGetter("getLabel",      "label")
-    base.genGetter("getIdentifier", "identifier")
     base.genGetter("getType",       "type")
     base.genGetter("getSubType",    "subtype")
     base.genGetter("getStartTime",  "startTime")
@@ -175,7 +173,7 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
     
     def __init__(self, logger, stateStore, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
-        base.DataStore.__init__(self, stateStore, data)
+        base.DataStore.__init__(self, stateStore, data, label=data.label)
         self._deleted = False
         self._isNew = isNew
 
