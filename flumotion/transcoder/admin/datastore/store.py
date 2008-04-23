@@ -142,8 +142,11 @@ class AdminStore(base.NotifyStore):
     base.genGetter("getHTTPRequestRetrySleep", "HTTPRequestRetrySleep")
 
     def __init__(self, dataSource):
+        identifier = "store.admin"
+        label = "Admin Store"
         ## Root element, no parent
-        base.NotifyStore.__init__(self, StoreLogger(), None, dataSource, None) 
+        base.NotifyStore.__init__(self, StoreLogger(), None, dataSource, None,
+                                  identifier=identifier, label=label) 
         self._customers = {} # {CUSTOMER_NAME: CustomerStore}
         self._state = state.StateStore(self, self, dataSource)
         # Registering Events
@@ -156,12 +159,6 @@ class AdminStore(base.NotifyStore):
     def getAdminStore(self):
         return self
     
-    def getIdentifier(self):
-        return self.getLabel()
-
-    def getLabel(self):
-        return "Admin Store"
-        
     def getCustomerStores(self):
         return self._customers.values()
     

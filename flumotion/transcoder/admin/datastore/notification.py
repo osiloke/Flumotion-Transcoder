@@ -75,8 +75,8 @@ class NotificationStore(base.DataStore):
     base.genGetter("getTriggers",   "triggers")
     
     def __init__(self, parentStore, data, adminStore,
-                 custStore, profStore, targStore):
-        base.DataStore.__init__(self, parentStore, data)
+                 custStore, profStore, targStore, label=None):
+        base.DataStore.__init__(self, parentStore, data, label)
         self._adminStore = adminStore
         self._custStore = custStore
         self._profStore = profStore
@@ -94,12 +94,6 @@ class NotificationStore(base.DataStore):
     def getTargetStore(self):
         return self._targStore
     
-    def getIdentifier(self):
-        self.getLabel()
-    
-    def getLabel(self):
-        raise NotImplementedError()
-    
 
 class MailNotificationStore(NotificationStore):
     implements(IMailNotificationStore)
@@ -114,12 +108,10 @@ class MailNotificationStore(NotificationStore):
     
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore):
+        emails = [e[1] for v in data.recipients.values() for e in v]
+        label = "Mail Notification to %s" % ", ".join(emails)
         NotificationStore.__init__(self, parentStore, data, adminStore,
-                                   custStore, profStore, targStore)
-    
-    def getLabel(self):
-        emails = [e[1] for v in self.getRecipients().values() for e in v]
-        return "Mail Notification to %s" % ", ".join(emails)
+                                   custStore, profStore, targStore, label=label)
         
         
 class HTTPNotificationStore(NotificationStore):
@@ -131,12 +123,10 @@ class HTTPNotificationStore(NotificationStore):
     base.genGetter("getRetrySleep", "retrySleep")
     
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
+        label = "HTTP Notification to %s" % data.requestTemplate
         NotificationStore.__init__(self, parentStore, data, adminStore,
-                                   custStore, profStore, targStore)
+                                   custStore, profStore, targStore, label=label)
     
-    def getLabel(self):
-        return "HTTP Notification to %s" % self.getRequestTemplate()
-
 
 _notifLookup = {NotificationTypeEnum.http_request: HTTPNotificationStore,
                 NotificationTypeEnum.email:        MailNotificationStore}

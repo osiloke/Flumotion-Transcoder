@@ -178,7 +178,10 @@ class CustomerStore(base.NotifyStore):
     base.genGetter("getAccessForceFileMode",  "accessForceFileMode")
 
     def __init__(self, logger, adminStore, dataSource, custData):
-        base.NotifyStore.__init__(self, logger, adminStore, dataSource, custData)
+        #FIXME: use the real data identifier insteed of the name
+        identifier = custData.name
+        base.NotifyStore.__init__(self, logger, adminStore, dataSource,
+                                  custData, identifier=identifier)
         self._customerInfo = None
         self._profiles = {} # {PROFILE_NAME: ProfileStore} 
         # Registering Events
@@ -191,13 +194,6 @@ class CustomerStore(base.NotifyStore):
     def getAdminStore(self):
         return self.parent
 
-    def getLabel(self):
-        return self.getName()
-    
-    def getIdentifier(self):
-        # For now the used identifier is the name, not the datasource one
-        return self.getName()
-    
     def getProfileStores(self):
         return self._profiles.values()
     

@@ -45,19 +45,16 @@ class StateStore(base.SimpleStore, log.LoggerProxy):
     implements(IStateStore)
     
     def __init__(self, logger, adminStore, dataSource):
+        identifier = "store.state"
+        label = "State Store"
         log.LoggerProxy.__init__(self, logger)
-        base.SimpleStore.__init__(self, adminStore)
+        base.SimpleStore.__init__(self, adminStore,
+                                  identifier=identifier, label=label)
         self._dataSource = dataSource
     
     def getAdminStore(self):
         return self.parent
     
-    def getLabel(self):
-        return "State Store"
-    
-    def getIdentifier(self):
-        return self.getLabel()
-        
     def retrieveTranscodingStores(self, states):
         t = ActivityTypeEnum.transcoding
         return self.__getActivities(t, states)

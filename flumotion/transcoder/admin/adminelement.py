@@ -40,10 +40,19 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     or abort all elements.
     """
     
-    def __init__(self, logger, parent):
+    identifier = None
+    label = None
+    
+    def __init__(self, logger, parent, identifier=None, label=None):
         assert (parent == None) or isinstance(parent, AdminElement)
         log.LoggerProxy.__init__(self, logger)
         self.parent = parent
+        if identifier is not None:
+            self.identifier = identifier
+        if label is not None:
+            self.label = label
+        elif identifier is not None:
+            self.label = identifier
         self._triggered = False
         self._active = False
         self._failure = None
@@ -56,11 +65,11 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
 
     ## Public Methods ##
     
-    def getLabel(self):
-        raise NotImplementedError()
-    
     def getIdentifier(self):
-        raise NotImplementedError()
+        return self.identifier
+    
+    def getLabel(self):
+        return self.label
     
     def isIdle(self):
         return not self._idleWaiters.isWaiting()

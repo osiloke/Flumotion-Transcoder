@@ -1,5 +1,19 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/state.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	First step in changing getLabel and getIdentifier to attributes.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/notification.py:
 	* flumotion/transcoder/admin/datastore/base.py:
 	Changed INotifyStore to INotificationProvider,

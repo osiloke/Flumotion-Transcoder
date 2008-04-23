@@ -62,7 +62,7 @@ class IDataSource(Interface):
     The data source allow the retrieval, creation, insertion and deletion
     of "container" objects in an abstract source.
     The given container are unspecified, apart for there fields,
-    the equality operator, and an identifier fields that uniquely
+    the equality operator, and an identifier field that uniquely
     and persistently identify a "record" and that is None when not stored.
     The equality operator compare if the objects represent the same
     element in the source, not that they have the same field values.

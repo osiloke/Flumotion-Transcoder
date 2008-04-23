@@ -161,7 +161,10 @@ class ProfileStore(base.NotifyStore):
     base.genGetter("getMonitoringPeriod",     "monitoringPeriod")
     
     def __init__(self, logger, custStore, dataSource, profData):
-        base.NotifyStore.__init__(self, logger, custStore, dataSource, profData)
+        #FIXME: use the real data identifier insteed of the name
+        identifier = profData.name
+        base.NotifyStore.__init__(self, logger, custStore, dataSource,
+                                  profData, identifier=identifier)
         self._targets = {} # {TARGET_NAME: TagetStore} 
         # Registering Events
         self._register("target-added")
@@ -176,13 +179,6 @@ class ProfileStore(base.NotifyStore):
     def getCustomerStore(self):
         return self.parent
         
-    def getLabel(self):
-        return self.getName()    
-    
-    def getIdentifier(self):
-        # For now the used identifier is the name, not the datasource one
-        return self.getName()
-    
     def getTargetStores(self):
         return self._targets.values()
 

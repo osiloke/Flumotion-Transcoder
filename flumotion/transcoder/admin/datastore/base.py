@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import Attribute, implements
 
 from flumotion.inhouse import log, defer, utils, annotate, waiters
 
@@ -20,6 +20,9 @@ from flumotion.transcoder.admin.datasource import datasource
 
 
 class IBaseStore(interfaces.IAdminInterface):
+    
+    identifier = Attribute("Unique identifier of the store element")
+    label = Attribute("Label of the store element")
     
     def getAdminStore(self):
         pass
@@ -57,31 +60,39 @@ def genGetter(getterName, propertyName, default=None):
 class SimpleStore(object):
     implements(IBaseStore)
     
-    def __init__(self, parentStore):
+    identifier = None
+    label = None
+    
+    def __init__(self, parentStore, identifier=None, label=None):
         self.parent = parentStore
+        if identifier is not None:
+            identifier = identifier
+        if label is not None:
+            label = label
 
 
 class DataStore(SimpleStore):
     
-    def __init__(self, parentStore, data):
-        SimpleStore.__init__(self, parentStore)
+    def __init__(self, parentStore, data, identifier=None, label=None):
+        SimpleStore.__init__(self, parentStore, identifier or data.identifier, label)
         self._data = data
 
 
 class StoreElement(adminelement.AdminElement):
     implements(IBaseStore, IStoreElement)
     
-    def __init__(self, logger, parentStore, data):
-        adminelement.AdminElement.__init__(self, logger, parentStore)
+    def __init__(self, logger, parentStore, data, identifier=None, label=None):
+        adminelement.AdminElement.__init__(self, logger, parentStore,
+                                           identifier or data.identifier, label)
         self._data = data
 
 
 class NotifyStore(StoreElement):
     implements(INotificationProvider)
     
-    def __init__(self, logger, parentStore, dataSource, data):
+    def __init__(self, logger, parentStore, dataSource, data, identifier=None, label=None):
         assert datasource.IDataSource.providedBy(dataSource)
-        StoreElement.__init__(self, logger, parentStore, data)
+        StoreElement.__init__(self, logger, parentStore, data, identifier, label)
         self._dataSource = dataSource
         self._notifications = {} # {NotificationTriggerEnum: {identifier: NotificationStore}}
 

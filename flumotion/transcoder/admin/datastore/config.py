@@ -126,7 +126,8 @@ class ConfigStore(base.DataStore):
     base.genGetter("getIdentifier", "identifier")
 
     def __init__(self, targStore, data):
-        base.DataStore.__init__(self, targStore, data)
+        label = "%s config" % targStore.getLabel()
+        base.DataStore.__init__(self, targStore, data, label=label)
     
     def getAdminStore(self):
         return self.parent.getAdminStore()
@@ -139,9 +140,6 @@ class ConfigStore(base.DataStore):
     
     def getTargetStore(self):
         return self.parent
-    
-    def getLabel(self):
-        return "%s config" % self.parent.getLabel()
 
 
 class IdentityConfigStore(ConfigStore):
