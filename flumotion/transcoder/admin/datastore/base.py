@@ -35,7 +35,7 @@ class IStoreElement(interfaces.IAdminInterface):
     pass
 
 
-class INotifyStore(interfaces.IAdminInterface):
+class INotificationProvider(interfaces.IAdminInterface):
     
     def getNotificationStores(self, trigger):
         pass
@@ -77,7 +77,7 @@ class StoreElement(adminelement.AdminElement):
 
 
 class NotifyStore(StoreElement):
-    implements(INotifyStore)
+    implements(INotificationProvider)
     
     def __init__(self, logger, parentStore, dataSource, data):
         assert datasource.IDataSource.providedBy(dataSource)

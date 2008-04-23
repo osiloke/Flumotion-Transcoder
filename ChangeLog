@@ -1,6 +1,13 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	Changed INotifyStore to INotificationProvider,
+	because it doesn't realy represent a store by itself.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/context/notification.py:
 	* flumotion/transcoder/admin/datastore/activity.py:
 	* flumotion/transcoder/admin/datastore/base.py:
 	* flumotion/transcoder/admin/datastore/config.py:

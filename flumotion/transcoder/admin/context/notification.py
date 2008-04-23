@@ -21,12 +21,12 @@ class NotificationStoreMixin(object):
     store = None
     
     def getNotificationContexts(self, trigger):
-        notifyStore = storebase.INotifyStore(self.store)
+        notifyStore = storebase.INotificationProvider(self.store)
         notifiactions = notifyStore.getNotificationStores(trigger)
         return [NotificationContextFactory(self, n) for n in notifiactions]
     
     def iterNotificationContexts(self, trigger):
-        notifyStore = storebase.INotifyStore(self.store)
+        notifyStore = storebase.INotificationProvider(self.store)
         iter = notifyStore.iterNotificationStores(trigger)
         return base.LazyContextIterator(self, NotificationContextFactory, iter)
 
