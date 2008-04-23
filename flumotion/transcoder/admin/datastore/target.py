@@ -71,7 +71,7 @@ class ITargetStore(base.IBaseStore):
         pass
 
 
-class TargetStore(base.BaseStore):
+class TargetStore(base.NotifyStore):
     implements(ITargetStore)
 
     base.genGetter("getName",      "name")
@@ -90,7 +90,7 @@ class TargetStore(base.BaseStore):
     base.genGetter("getPostprocessTimeout",   "postprocessTimeout")
 
     def __init__(self, logger, profStore, dataSource, targData):
-        base.BaseStore.__init__(self, logger, profStore, dataSource, targData)
+        base.NotifyStore.__init__(self, logger, profStore, dataSource, targData)
         self._config = None
         
 
@@ -119,23 +119,23 @@ class TargetStore(base.BaseStore):
     ## Overridden Methods ##
     
     def _doPrepareInit(self, chain):
-        base.BaseStore._doPrepareInit(self, chain)
+        base.NotifyStore._doPrepareInit(self, chain)
         # Retrieve target configuration
         chain.addCallback(self.__cbRetrieveConfig)
 
     def _onActivated(self):
-        base.BaseStore._onActivated(self)
+        base.NotifyStore._onActivated(self)
         self.debug("Target '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
-        base.BaseStore._onAborted(self, failure)
+        base.NotifyStore._onAborted(self, failure)
         self.debug("Target '%s' aborted", self.getLabel())
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveTargetNotifications(self._data)
 
     def _doWrapNotification(self, notifData):
-        return notification.NotificationFactory(notifData, 
+        return notification.NotificationFactory(self, notifData, 
                                                 self.getAdminStore(),
                                                 self.getCustomerStore(), 
                                                 self.getProfileStore(), self)

@@ -31,7 +31,11 @@ class IBaseStore(interfaces.IAdminInterface):
         pass
 
 
-class IStoreWithNotification(IBaseStore):
+class IStoreElement(interfaces.IAdminInterface):
+    pass
+
+
+class INotifyStore(interfaces.IAdminInterface):
     
     def getNotificationStores(self, trigger):
         pass
@@ -50,13 +54,34 @@ def genGetter(getterName, propertyName, default=None):
     annotate.addAnnotationMethod("genGetter", getterName, getter)
 
 
-class BaseStore(adminelement.AdminElement):
-    implements(IStoreWithNotification)
+class SimpleStore(object):
+    implements(IBaseStore)
+    
+    def __init__(self, parentStore):
+        self.parent = parentStore
+
+
+class DataStore(SimpleStore):
+    
+    def __init__(self, parentStore, data):
+        SimpleStore.__init__(self, parentStore)
+        self._data = data
+
+
+class StoreElement(adminelement.AdminElement):
+    implements(IBaseStore, IStoreElement)
+    
+    def __init__(self, logger, parentStore, data):
+        adminelement.AdminElement.__init__(self, logger, parentStore)
+        self._data = data
+
+
+class NotifyStore(StoreElement):
+    implements(INotifyStore)
     
     def __init__(self, logger, parentStore, dataSource, data):
         assert datasource.IDataSource.providedBy(dataSource)
-        adminelement.AdminElement.__init__(self, logger, parentStore)
-        self._data = data
+        StoreElement.__init__(self, logger, parentStore, data)
         self._dataSource = dataSource
         self._notifications = {} # {NotificationTriggerEnum: {identifier: NotificationStore}}
 

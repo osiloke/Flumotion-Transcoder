@@ -119,15 +119,14 @@ class IThumbnailsConfigStore(IConfigStore):
 
 
 
-class ConfigStore(object):
+class ConfigStore(base.DataStore):
     implements(IConfigStore)
     
     base.genGetter("getType",       "type")
     base.genGetter("getIdentifier", "identifier")
 
     def __init__(self, targStore, data):
-        self.parent = targStore
-        self._data = data
+        base.DataStore.__init__(self, targStore, data)
     
     def getAdminStore(self):
         return self.parent.getAdminStore()
@@ -148,8 +147,8 @@ class ConfigStore(object):
 class IdentityConfigStore(ConfigStore):
     implements(IIdentityConfigStore)
     
-    def __init__(self, data):
-        ConfigStore.__init__(self, data)
+    def __init__(self, targStore, data):
+        super(ConfigStore, self).__init__(targStore, data)
         
 
 class AudioConfigStore(ConfigStore):

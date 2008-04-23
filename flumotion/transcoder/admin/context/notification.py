@@ -13,7 +13,7 @@
 from flumotion.inhouse import annotate
 
 from flumotion.transcoder.admin.context import base
-from flumotion.transcoder.admin.datastore import notification
+from flumotion.transcoder.admin.datastore import notification, base as storebase
 
 
 class NotificationStoreMixin(object):
@@ -21,11 +21,13 @@ class NotificationStoreMixin(object):
     store = None
     
     def getNotificationContexts(self, trigger):
-        notifiactions = self.store.getNotificationStores(trigger)
+        notifyStore = storebase.INotifyStore(self.store)
+        notifiactions = notifyStore.getNotificationStores(trigger)
         return [NotificationContextFactory(self, n) for n in notifiactions]
     
     def iterNotificationContexts(self, trigger):
-        iter = self.store.iterNotificationStores(trigger)
+        notifyStore = storebase.INotifyStore(self.store)
+        iter = notifyStore.iterNotificationStores(trigger)
         return base.LazyContextIterator(self, NotificationContextFactory, iter)
 
 

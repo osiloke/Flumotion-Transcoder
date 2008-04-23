@@ -67,15 +67,16 @@ class IHTTPNotificationStore(INotificationStore):
         pass
 
 
-class NotificationStore(object):
+class NotificationStore(base.DataStore):
     implements(INotificationStore)
     
     base.genGetter("getIdentifier", "identifier")
     base.genGetter("getType",       "type")
     base.genGetter("getTriggers",   "triggers")
     
-    def __init__(self, data, adminStore, custStore, profStore, targStore):
-        self._data = data
+    def __init__(self, parentStore, data, adminStore,
+                 custStore, profStore, targStore):
+        base.DataStore.__init__(self, parentStore, data)
         self._adminStore = adminStore
         self._custStore = custStore
         self._profStore = profStore
@@ -111,8 +112,10 @@ class MailNotificationStore(NotificationStore):
     base.genGetter("getRetryMax", "retryMax")
     base.genGetter("getRetrySleep", "retrySleep")
     
-    def __init__(self, data, adminStore, custStore, profStore, targStore):
-        NotificationStore.__init__(self, data, adminStore, custStore, profStore, targStore)
+    def __init__(self, parentStore, data, adminStore,
+                 custStore, profStore, targStore):
+        NotificationStore.__init__(self, parentStore, data, adminStore,
+                                   custStore, profStore, targStore)
     
     def getLabel(self):
         emails = [e[1] for v in self.getRecipients().values() for e in v]
@@ -127,8 +130,9 @@ class HTTPNotificationStore(NotificationStore):
     base.genGetter("getRetryMax", "retryMax")
     base.genGetter("getRetrySleep", "retrySleep")
     
-    def __init__(self, data, adminStore, custStore, profStore, targStore):
-        NotificationStore.__init__(self, data, adminStore, custStore, profStore, targStore)
+    def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
+        NotificationStore.__init__(self, parentStore, data, adminStore,
+                                   custStore, profStore, targStore)
     
     def getLabel(self):
         return "HTTP Notification to %s" % self.getRequestTemplate()
@@ -138,6 +142,8 @@ _notifLookup = {NotificationTypeEnum.http_request: HTTPNotificationStore,
                 NotificationTypeEnum.email:        MailNotificationStore}
 
 
-def NotificationFactory(data, adminStore, custStore, profStore, targStore):
+def NotificationFactory(parentStore, data, adminStore,
+                        custStore, profStore, targStore):
     assert data.type in _notifLookup
-    return _notifLookup[data.type](data, adminStore, custStore, profStore, targStore)
+    return _notifLookup[data.type](parentStore, data, adminStore,
+                                   custStore, profStore, targStore)

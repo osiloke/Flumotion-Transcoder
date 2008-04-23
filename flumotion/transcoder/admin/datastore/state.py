@@ -21,10 +21,10 @@ from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
 from flumotion.transcoder.admin.enums import TranscodingTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
-from flumotion.transcoder.admin.datastore import activity
+from flumotion.transcoder.admin.datastore import base, activity
 
 
-class IStateStore(interfaces.IAdminInterface):
+class IStateStore(base.IBaseStore):
     
     def retrieveTranscodingStores(self, states):
         pass
@@ -41,12 +41,12 @@ class IStateStore(interfaces.IAdminInterface):
         pass
 
 
-class StateStore(log.LoggerProxy):
+class StateStore(base.SimpleStore, log.LoggerProxy):
     implements(IStateStore)
     
     def __init__(self, logger, adminStore, dataSource):
         log.LoggerProxy.__init__(self, logger)
-        self.parent = adminStore
+        base.SimpleStore.__init__(self, adminStore)
         self._dataSource = dataSource
     
     def getAdminStore(self):

@@ -126,7 +126,7 @@ class IProfileStore(base.IBaseStore):
         pass
 
 
-class ProfileStore(base.BaseStore):
+class ProfileStore(base.NotifyStore):
     implements(IProfileStore)
     
     base.genGetter("getName",         "name")
@@ -161,7 +161,7 @@ class ProfileStore(base.BaseStore):
     base.genGetter("getMonitoringPeriod",     "monitoringPeriod")
     
     def __init__(self, logger, custStore, dataSource, profData):
-        base.BaseStore.__init__(self, logger, custStore, dataSource, profData)
+        base.NotifyStore.__init__(self, logger, custStore, dataSource, profData)
         self._targets = {} # {TARGET_NAME: TagetStore} 
         # Registering Events
         self._register("target-added")
@@ -200,7 +200,7 @@ class ProfileStore(base.BaseStore):
     ## Overridden Methods ##
     
     def refreshListener(self, listener):
-        base.BaseStore.refreshListener(self, listener)
+        base.NotifyStore.refreshListener(self, listener)
         for targStore in self._targets.itervalues():
             if targStore.isActive():
                 self.emitTo("target-added", listener, targStore)
@@ -209,23 +209,23 @@ class ProfileStore(base.BaseStore):
         return self.getTargetStores()    
     
     def _doPrepareInit(self, chain):
-        base.BaseStore._doPrepareInit(self, chain)
+        base.NotifyStore._doPrepareInit(self, chain)
         # Retrieve and initialize the targets
         chain.addCallback(self.__cbRetrieveTargets)
 
     def _onActivated(self):
-        base.BaseStore._onActivated(self)
+        base.NotifyStore._onActivated(self)
         self.debug("Profile '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
-        base.BaseStore._onAborted(self, failure)
+        base.NotifyStore._onAborted(self, failure)
         self.debug("Profile '%s' aborted", self.getLabel())
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveProfileNotifications(self._data)
         
     def _doWrapNotification(self, notifData):
-        return notification.NotificationFactory(notifData,
+        return notification.NotificationFactory(self, notifData,
                                                 self.getAdminStore(),
                                                 self.getCustomerStore(),
                                                 self, None)

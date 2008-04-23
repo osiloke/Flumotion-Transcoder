@@ -113,7 +113,7 @@ class StoreLogger(log.Loggable):
     logCategory = adminconsts.STORES_LOG_CATEGORY
 
 
-class AdminStore(base.BaseStore):
+class AdminStore(base.NotifyStore):
     implements(IAdminStore)
     
     base.genGetter("getOutputMediaTemplate", "outputMediaTemplate")
@@ -143,7 +143,7 @@ class AdminStore(base.BaseStore):
 
     def __init__(self, dataSource):
         ## Root element, no parent
-        base.BaseStore.__init__(self, StoreLogger(), None, dataSource, None) 
+        base.NotifyStore.__init__(self, StoreLogger(), None, dataSource, None) 
         self._customers = {} # {CUSTOMER_NAME: CustomerStore}
         self._state = state.StateStore(self, self, dataSource)
         # Registering Events
@@ -172,9 +172,6 @@ class AdminStore(base.BaseStore):
     def getCustomerStoreByName(self, custName, default=None):
         return self._customers.get(custName, default)
         
-#    def __iter__(self):
-#        return iter(self._customers)
-    
     def iterCustomerStores(self):
         self._customers.itervalues()
     
@@ -185,7 +182,7 @@ class AdminStore(base.BaseStore):
     ## Overridden Methods ##
 
     def refreshListener(self, listener):
-        base.BaseStore.refreshListener(self, listener)
+        base.NotifyStore.refreshListener(self, listener)
         for custStore in self._customers.itervalues():
             if custStore.isActive():
                 self.emitTo("customer-added", listener, custStore)
@@ -194,7 +191,7 @@ class AdminStore(base.BaseStore):
         return self.getCustomerStores()
         
     def _doPrepareInit(self, chain):
-        base.BaseStore._doPrepareInit(self, chain)
+        base.NotifyStore._doPrepareInit(self, chain)
         # Ensure that the defaults are received
         # before customers initialization
         chain.addCallback(self.__cbRetrieveDefaults)

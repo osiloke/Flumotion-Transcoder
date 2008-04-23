@@ -18,7 +18,7 @@ from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.datastore import base, profile, notification
 
 
-class ICustomerStore(base.IStoreWithNotification):
+class ICustomerStore(base.IBaseStore):
 
     def getProfileStores(self):
         pass
@@ -138,7 +138,7 @@ class ICustomerStore(base.IStoreWithNotification):
         pass
 
 
-class CustomerStore(base.BaseStore):
+class CustomerStore(base.NotifyStore):
     implements(ICustomerStore)
 
     base.genGetter("getName",         "name")
@@ -178,7 +178,7 @@ class CustomerStore(base.BaseStore):
     base.genGetter("getAccessForceFileMode",  "accessForceFileMode")
 
     def __init__(self, logger, adminStore, dataSource, custData):
-        base.BaseStore.__init__(self, logger, adminStore,  dataSource, custData)
+        base.NotifyStore.__init__(self, logger, adminStore, dataSource, custData)
         self._customerInfo = None
         self._profiles = {} # {PROFILE_NAME: ProfileStore} 
         # Registering Events
@@ -215,7 +215,7 @@ class CustomerStore(base.BaseStore):
     ## Overridden Methods ##
 
     def refreshListener(self, listener):
-        base.BaseStore.refreshListener(self, listener)
+        base.NotifyStore.refreshListener(self, listener)
         for profStore in self._profiles.itervalues():
             if profStore.isActive():
                 self.emitTo("profile-added", listener, profStore)
@@ -224,7 +224,7 @@ class CustomerStore(base.BaseStore):
         return self.getProfileStores()
     
     def _doPrepareInit(self, chain):
-        base.BaseStore._doPrepareInit(self, chain)
+        base.NotifyStore._doPrepareInit(self, chain)
         # Ensure that the customer info are received
         # before profiles initialization
         chain.addCallback(self.__cbRetrieveInfo)
@@ -232,18 +232,18 @@ class CustomerStore(base.BaseStore):
         chain.addCallback(self.__cbRetrieveProfiles)        
         
     def _onActivated(self):
-        base.BaseStore._onActivated(self)
+        base.NotifyStore._onActivated(self)
         self.debug("Customer '%s' activated", self.getLabel())
     
     def _onAborted(self, failure):
-        base.BaseStore._onAborted(self, failure)
+        base.NotifyStore._onAborted(self, failure)
         self.debug("Customer '%s' aborted", self.getLabel())
         
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveCustomerNotifications(self._data)
 
     def _doWrapNotification(self, notifData):
-        return notification.NotificationFactory(notifData,
+        return notification.NotificationFactory(self, notifData,
                                                 self.getAdminStore(),
                                                 self, None, None)
 

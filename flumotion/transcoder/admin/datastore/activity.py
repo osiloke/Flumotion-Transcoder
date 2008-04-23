@@ -160,7 +160,7 @@ def genDataSetter(setterName, dataKey):
     annotate.addAnnotationMethod("genDataSetter", setterName, setter)    
 
 
-class ActivityStore(log.LoggerProxy):
+class ActivityStore(base.DataStore, log.LoggerProxy):
     implements(IActivityStore)
 
     base.genGetter("getLabel",      "label")
@@ -173,10 +173,9 @@ class ActivityStore(log.LoggerProxy):
     
     genSetter("setState", "state")    
     
-    def __init__(self, logger, parent, data, isNew=True):
+    def __init__(self, logger, stateStore, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
-        self.parent = parent
-        self._data = data
+        base.DataStore.__init__(self, stateStore, data)
         self._deleted = False
         self._isNew = isNew
 
@@ -232,8 +231,8 @@ class TranscodingActivityStore(ActivityStore):
     
     base.genGetter("getInputRelPath", "inputRelPath")
     
-    def __init__(self, logger, parent, data, isNew=True):
-        ActivityStore.__init__(self, logger, parent, data, isNew)
+    def __init__(self, logger, stateStore, data, isNew=True):
+        ActivityStore.__init__(self, logger, stateStore, data, isNew)
         
     def getCustomerStore(self):
         assert not self._deleted
@@ -275,8 +274,8 @@ class NotificationActivityStore(ActivityStore):
     genSetter("setRetryMax",   "retryMax")
     genSetter("setRetrySleep", "retrySleep")
     
-    def __init__(self, logger, parent, data, isNew=True):
-        ActivityStore.__init__(self, logger, parent, data, isNew)
+    def __init__(self, logger, stateStore, data, isNew=True):
+        ActivityStore.__init__(self, logger, stateStore, data, isNew)
 
     def incRetryCount(self):
         assert not self._deleted
@@ -306,8 +305,8 @@ class HTTPRequestActivityStore(NotificationActivityStore):
     
     genDataSetter("setRequestURL", "url")
 
-    def __init__(self, logger, parent, data, isNew=True):
-        NotificationActivityStore.__init__(self, logger, parent, data, isNew)
+    def __init__(self, logger, stateStore, data, isNew=True):
+        NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
 
 
 class MailActivityStore(NotificationActivityStore):
@@ -321,8 +320,8 @@ class MailActivityStore(NotificationActivityStore):
     genDataSetter("setSubject",    "subject")
     genDataSetter("setBody",       "body")
 
-    def __init__(self, logger, parent, data, isNew=True):
-        NotificationActivityStore.__init__(self, logger, parent, data, isNew)
+    def __init__(self, logger, stateStore, data, isNew=True):
+        NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
 
     def getRecipientsAddr(self):
         """

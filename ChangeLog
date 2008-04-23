@@ -1,5 +1,20 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/state.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	Cleaned up the class and interface hierarchy.
+	Fixed the admin/customer/profile/target use of the wrong base class.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	Renamed f.t.admin.errors to admerrs to not use 'import as'.
 
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
