@@ -19,7 +19,7 @@ from cStringIO import StringIO
 
 from zope.interface import Interface, implements
 
-from flumotion.transcoder.admin import errors as admerrs
+from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 
 

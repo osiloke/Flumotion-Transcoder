@@ -23,7 +23,7 @@ from flumotion.common.planet import moods
 from flumotion.inhouse import log, defer, utils, waiters
 
 from flumotion.transcoder import errors
-from flumotion.transcoder.admin import adminconsts, errors as admerrs
+from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.enums import ComponentDomainEnum
 from flumotion.transcoder.admin.property import base as pbase
 from flumotion.transcoder.admin.proxy import base

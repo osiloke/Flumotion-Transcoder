@@ -20,7 +20,7 @@ from flumotion.inhouse import log, inifile, utils, fileutils
 
 from flumotion.transcoder import constants, transconfig, virtualpath
 from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.admin import errors as admerrs
+from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.property import base
 
 

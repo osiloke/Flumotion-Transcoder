@@ -15,7 +15,7 @@ from twisted.internet import reactor
 
 from flumotion.inhouse import log, defer, utils
 
-from flumotion.transcoder.admin import errors as admerrs
+from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.proxy import base, managerset
 
 

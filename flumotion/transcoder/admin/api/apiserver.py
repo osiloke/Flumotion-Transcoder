@@ -17,7 +17,7 @@ from flumotion.component.bouncers import saltsha256
 from flumotion.inhouse import defer, log
 from flumotion.inhouse.spread import bouncers, pbserver
 
-from flumotion.transcoder.admin import errors as admerrs
+from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.api import gateway
 from flumotion.transcoder.admin.enums import APIBouncerEnum
 

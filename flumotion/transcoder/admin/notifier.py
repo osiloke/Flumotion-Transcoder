@@ -24,7 +24,7 @@ from twisted.mail.smtp import ESMTPSenderFactory
 
 from flumotion.inhouse import log, defer, utils, events
 
-from flumotion.transcoder.admin import adminconsts, errors as admerrs
+from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTypeEnum

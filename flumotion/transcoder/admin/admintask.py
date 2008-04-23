@@ -20,7 +20,7 @@ from flumotion.common.planet import moods
 
 from flumotion.inhouse import log, defer, utils, events, waiters
 
-from flumotion.transcoder.admin import adminconsts, errors as admerrs
+from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.proxy import component
 

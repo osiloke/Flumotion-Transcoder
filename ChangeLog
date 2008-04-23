@@ -1,5 +1,9 @@
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
+	Renamed f.t.admin.errors to admerrs to not use 'import as'.
+
+2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
+
 	Import cleanup. Try to not import names from a module.
 
 2008-04-22  Sebastien Merle  <sebastien@fluendo.com>

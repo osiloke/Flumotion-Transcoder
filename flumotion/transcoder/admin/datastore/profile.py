@@ -14,7 +14,7 @@ from zope.interface import implements
 
 from flumotion.inhouse import log, defer
 
-from flumotion.transcoder.admin import errors as admerrs
+from flumotion.transcoder.admin import admerrs
 from flumotion.transcoder.admin.datastore import base, target, notification
 
 

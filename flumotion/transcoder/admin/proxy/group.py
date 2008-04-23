@@ -13,7 +13,7 @@ from flumotion.common import common
 
 from flumotion.inhouse import defer, utils
 
-from flumotion.transcoder.admin import adminconsts, errors as admerrs
+from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.proxy import base
 from flumotion.transcoder.admin.proxy import component
 
