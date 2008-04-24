@@ -184,7 +184,7 @@ class ProfileStore(base.NotifyStore):
 
     def getTargetStoreByName(self, targName, default=None):
         for targStore in self._targets.itervalues():
-            if targName == targStore.getName():
+            if targName == targStore.name:
                 return targStore
         return default
     
@@ -261,7 +261,7 @@ class ProfileStore(base.NotifyStore):
         if (targStore.identifier in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
                    "dropping the new one" 
-                   % (self.getName(), targStore.getName()))
+                   % (self.name, targStore.name))
             self.warning(msg)
             error = admerrs.StoreError(msg)
             targStore._abort(error)

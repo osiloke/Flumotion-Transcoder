@@ -29,7 +29,7 @@ class BaseConfigMedium(api.Medium):
 
     @api.remote()
     def getType(self):
-        return self._reference.getType()
+        return self._reference.type
 
 
 class IdentityConfigMedium(BaseConfigMedium):

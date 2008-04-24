@@ -29,4 +29,4 @@ class WorkerMedium(named.NamedMedium):
     
     @api.remote()
     def getHost(self):
-        return self._reference.getHost()
+        return self._reference.host

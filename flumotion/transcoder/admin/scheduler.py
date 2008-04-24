@@ -96,7 +96,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         return defer.succeed(self)
         
     def addProfile(self, profCtx):
-        inputPath = profCtx.getInputPath()
+        inputPath = profCtx.inputPath
         identifier = profCtx.identifier
         if self.isProfileQueued(profCtx):
             self.log("Added an already queued profile '%s'", inputPath)
@@ -109,7 +109,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.emit("profile-queued", profCtx)
     
     def removeProfile(self, profCtx):
-        inputPath = profCtx.getInputPath()
+        inputPath = profCtx.inputPath
         identifier = profCtx.identifier
         if self.isProfileQueued(profCtx):
             self.debug("Unqueue profile '%s'", inputPath)
@@ -322,7 +322,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.emit("transcoding-started", task)
         if not activCtx:
             stateCtx = self._storeCtx.getStateContext()
-            activCtx = stateCtx.newTranscodingContext(profCtx.getActivityLabel(),
+            activCtx = stateCtx.newTranscodingContext(profCtx.activityLabel,
                                                       ActivityStateEnum.started,
                                                       profCtx)
             activCtx.store.store()
@@ -330,8 +330,8 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
 
     def __getProfilePriority(self, profCtx):
         custCtx = profCtx.getCustomerContext()
-        custPri = custCtx.getCustomerPriority()
-        profPri = profCtx.getTranscodingPriority()
+        custPri = custCtx.customerPriority
+        profPri = profCtx.transcodingPriority
         return custPri * 1000 + profPri
 
     def __getKeyPriority(self, key):

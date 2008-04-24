@@ -109,9 +109,6 @@ class ActivityContext(base.BaseStoreContext):
     def __init__(self, stateCtx, activStore):
         base.BaseStoreContext.__init__(self, stateCtx, activStore)
 
-    def _setup(self):
-        pass
-
     def getAdminContext(self):
         return self.parent.getAdminContext()
     
@@ -120,7 +117,12 @@ class ActivityContext(base.BaseStoreContext):
     
     def getStatecontext(self):
         return self.parent
-    
+
+
+    ## Protected Methodes ##
+
+    def _setup(self):
+        pass
     
 
 class TranscodingActivityContext(ActivityContext):
@@ -132,9 +134,6 @@ class TranscodingActivityContext(ActivityContext):
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
     
-    def _setup(self, profCtx):
-        ActivityContext._setup(self)
-        
     def getCustomerContext(self):
         custStore = self.store.getCustomerStore()
         if not custStore: return None
@@ -146,11 +145,17 @@ class TranscodingActivityContext(ActivityContext):
         if not custCtx: return None
         profStore = self.store.getProfileStore()
         if not profStore: return None
-        relPath = self.getInputRelPath()
+        relPath = self.inputRelPath
         if relPath:
             return custCtx.getProfileContextFor(profStore, relPath)
         return custCtx.getUnboundProfileContextFor(profStore)
-        
+
+
+    ## Protected Methodes ##
+
+    def _setup(self, profCtx):
+        ActivityContext._setup(self)
+                
 
 class NotificationActivityContext(ActivityContext):
     
@@ -165,22 +170,23 @@ class NotificationActivityContext(ActivityContext):
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
 
-    def _setup(self, notifCtx):
-        ActivityContext._setup(self)
-        self.store.setTimeout(notifCtx.getTimeout())
-        self.store.setRetryMax(notifCtx.getRetryMax())
-        self.store.setRetrySleep(notifCtx.getRetrySleep())
-
     def getTimeLeftBeforeRetry(self):
         now = datetime.datetime.now()
-        last = self.getLastTime()
-        sleep = self.getRetrySleep()
-        expected = last + datetime.timedelta(0, sleep)
+        expected = self.lastTime + datetime.timedelta(0, self.retrySleep)
         if expected < now:
             return 0
         delta = expected - now
         # We ignore the days
         return delta.seconds
+
+
+    ## Protected Methodes ##
+    
+    def _setup(self, notifCtx):
+        ActivityContext._setup(self)
+        self.store.timeout = notifCtx.timeout
+        self.store.retryMax = notifCtx.retryMax
+        self.store.retrySleep = notifCtx.retrySleep
 
 
 class MailActivityContext(NotificationActivityContext):

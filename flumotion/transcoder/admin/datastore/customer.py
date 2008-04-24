@@ -196,7 +196,7 @@ class CustomerStore(base.NotifyStore):
     
     def getProfileStoreByName(self, profName, default=None):
         for profStore in self._profiles.itervalues():
-            if profName == profStore.getName():
+            if profName == profStore.name:
                 return profStore
         return default    
     
@@ -288,7 +288,7 @@ class CustomerStore(base.NotifyStore):
         if (profStore.identifier in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
                    "dropping the new one" 
-                   % (self.getName(), profStore.getName()))
+                   % (self.name, profStore.name))
             self.warning(msg)
             error = admerrs.StoreError(msg)
             profStore._abort(error)

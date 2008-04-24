@@ -221,7 +221,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     def __init__(self, storeCtx, custStore):
         base.BaseStoreContext.__init__(self, storeCtx, custStore)
-        self._variables.addVar("customerName", self.getName())
+        self._variables.addVar("customerName", self.name)
 
     def getAdminContext(self):
         return self.parent.getAdminContext()
@@ -255,12 +255,10 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     @base.property_getter("pathAttributes")
     def getPathAttributes(self):
-        forceUser = self.getAccessForceUser()
-        forceGroup = self.getAccessForceGroup()
-        forceDirMode = self.getAccessForceDirMode()
-        forceFileMode = self.getAccessForceFileMode()
-        return fileutils.PathAttributes(forceUser, forceGroup,
-                                        forceDirMode, forceFileMode)
+        return fileutils.PathAttributes(self.accessForceUser,
+                                        self.accessForceGroup,
+                                        self.accessForceDirMode,
+                                        self.accessForceFileMode)
 
     @base.property_getter("monitorLabel")
     def getMonitorLabel(self):
@@ -269,73 +267,73 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     @base.property_getter("subdir")
     def getSubdir(self):
-        subdir = self.store.getSubdir()
+        subdir = self.store.subdir
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
             return fileutils.cleanupPath(subdir)
-        subdir = fileutils.str2filename(self.store.getName())
+        subdir = fileutils.str2filename(self.store.name)
         return fileutils.ensureDirPath(subdir)
             
     @base.property_getter("inputBase")
     def getInputBase(self):
-        folder = self.store.getInputDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_INPUT_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.inputDir, 
+                            adminconsts.DEFAULT_INPUT_DIR)
 
     @base.property_getter("outputBase")
     def getOutputBase(self):
-        folder = self.store.getOutputDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_OUTPUT_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.outputDir, 
+                            adminconsts.DEFAULT_OUTPUT_DIR)
     
     @base.property_getter("failedBase")
     def getFailedBase(self):
-        folder = self.store.getFailedDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_FAILED_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.failedDir, 
+                            adminconsts.DEFAULT_FAILED_DIR)
     
     @base.property_getter("doneBase")
     def getDoneBase(self):
-        folder = self.store.getDoneDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_DONE_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.doneDir, 
+                            adminconsts.DEFAULT_DONE_DIR)
     
     @base.property_getter("linkBase")
     def getLinkBase(self):
-        folder = self.store.getLinkDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_LINK_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.linkDir,
+                            adminconsts.DEFAULT_LINK_DIR)
     
     @base.property_getter("workBase")
     def getWorkBase(self):
-        folder = self.store.getWorkDir()
-        return self._getDir(constants.TEMP_ROOT, folder, 
-                             adminconsts.DEFAULT_WORK_DIR)
+        return self._getDir(constants.TEMP_ROOT,
+                            self.store.workDir, 
+                            adminconsts.DEFAULT_WORK_DIR)
     
     @base.property_getter("configBase")
     def getConfigBase(self):
-        folder = self.store.getConfigDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_CONFIG_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.configDir, 
+                            adminconsts.DEFAULT_CONFIG_DIR)
     
     @base.property_getter("tempRepBase")
     def getTempRepBase(self):
-        folder = self.store.getTempRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_TEMPREP_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.tempRepDir, 
+                            adminconsts.DEFAULT_TEMPREP_DIR)
 
     @base.property_getter("failedRepBase")
     def getFailedRepBase(self):
-        folder = self.store.getFailedRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.failedRepDir, 
                             adminconsts.DEFAULT_FAILEDREP_DIR)
     
     @base.property_getter("doneRepBase")
     def getDoneRepBase(self):
-        folder = self.store.getDoneRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                             adminconsts.DEFAULT_DONEREP_DIR)
+        return self._getDir(constants.DEFAULT_ROOT,
+                            self.store.doneRepDir, 
+                            adminconsts.DEFAULT_DONEREP_DIR)
     
 
     ## Private Methodes ##
@@ -350,7 +348,6 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
             folder = fileutils.ensureAbsDirPath(folder)
             folder = fileutils.cleanupPath(folder)
             return virtualpath.VirtualPath(folder, rootName)
-        subdir = self.getSubdir()
-        folder = fileutils.ensureAbsDirPath(template % subdir)
+        folder = fileutils.ensureAbsDirPath(template % self.subdir)
         folder = fileutils.cleanupPath(folder)
         return virtualpath.VirtualPath(folder, rootName)

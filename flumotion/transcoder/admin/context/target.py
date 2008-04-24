@@ -244,8 +244,8 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     def __init__(self, profCtx, targStore):
         base.BaseStoreContext.__init__(self, profCtx, targStore)
-        self._variables.addVar("targetName", self.getName())
-        subdir = self.store.getSubdir() or ""
+        self._variables.addVar("targetName", self.name)
+        subdir = self.store.subdir or ""
         subdir = fileutils.str2path(subdir)
         subdir = fileutils.ensureRelDirPath(subdir)
         subdir = fileutils.cleanupPath(subdir)
@@ -253,7 +253,7 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         targPath = (fileutils.joinPath(self._variables["sourceDir"], subdir)
                     + self._variables["sourceFile"])
         self._variables.addFileVars(fileutils.ensureRelPath(targPath),
-                                    "target", extension=self.getExtension())
+                                    "target", extension=self.extension)
         
     def getAdminContext(self):
         return self.parent.getAdminContext()
@@ -273,13 +273,13 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
 
     @base.property_getter("outputFileTemplate")
     def getOutputFileTemplate(self):
-        tmpl = self.store.getOutputFileTemplate()
+        tmpl = self.store.outputFileTemplate
         if tmpl: return tmpl
-        type = self.store.getConfigStore().getType()
+        type = self.store.getConfigStore().type
         if type == TargetTypeEnum.thumbnails:
-            return self.parent.getOutputThumbTemplate()
+            return self.parent.outputThumbTemplate
         else:
-            return self.parent.getOutputMediaTemplate()
+            return self.parent.outputMediaTemplate
 
     @base.property_getter("subdir")
     def getSubdir(self):
@@ -287,7 +287,7 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     @base.property_getter("extension")
     def getExtension(self):
-        ext = self.store.getExtension()
+        ext = self.store.extension
         if ext :
             return '.' + ext.lstrip('.')
         return ""

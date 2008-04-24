@@ -31,74 +31,74 @@ def createTranscodingConfigFromContext(profCtx):
     conf.touch()
     custCtx = profCtx.getCustomerContext()
     conf.customer.name = custCtx.label
-    conf.transcodingTimeout = profCtx.getTranscodingTimeout()
-    conf.postProcessTimeout = profCtx.getPostprocessTimeout()
-    conf.preProcessTimeout = profCtx.getPreprocessTimeout()
-    conf.profile.label = profCtx.getName()
-    conf.profile.inputDir = profCtx.getInputBase()
-    conf.profile.outputDir = profCtx.getOutputBase()
-    conf.profile.linkDir = profCtx.getLinkBase()
-    conf.profile.workDir = profCtx.getWorkBase()
-    conf.profile.doneDir = profCtx.getDoneBase()
-    conf.profile.failedDir = profCtx.getFailedBase()
-    conf.profile.tempReportsDir = profCtx.getTempRepBase()
-    conf.profile.failedReportsDir = profCtx.getFailedRepBase()
-    conf.profile.doneReportsDir = profCtx.getDoneRepBase()
-    conf.profile.linkTemplate = profCtx.getLinkTemplate()
-    conf.source.inputFile = profCtx.getInputRelPath()
+    conf.transcodingTimeout = profCtx.transcodingTimeout
+    conf.postProcessTimeout = profCtx.postprocessTimeout
+    conf.preProcessTimeout = profCtx.preprocessTimeout
+    conf.profile.label = profCtx.name
+    conf.profile.inputDir = profCtx.inputBase
+    conf.profile.outputDir = profCtx.outputBase
+    conf.profile.linkDir = profCtx.linkBase
+    conf.profile.workDir = profCtx.workBase
+    conf.profile.doneDir = profCtx.doneBase
+    conf.profile.failedDir = profCtx.failedBase
+    conf.profile.tempReportsDir = profCtx.tempRepBase
+    conf.profile.failedReportsDir = profCtx.failedRepBase
+    conf.profile.doneReportsDir = profCtx.doneRepBase
+    conf.profile.linkTemplate = profCtx.linkTemplate
+    conf.source.inputFile = profCtx.inputRelPath
     #FIXME: getFailedRepRelPath is not used
-    conf.source.reportTemplate = profCtx.getDoneRepRelPath()
-    conf.source.preProcess = profCtx.getPreprocessCommand()
+    conf.source.reportTemplate = profCtx.doneRepRelPath
+    conf.source.preProcess = profCtx.preprocessCommand
     for targCtx in profCtx.iterTargetContexts():
         tc = transconfig.TargetConfig()
         label = targCtx.label
         conf.targets[label] = tc
         tc.label = label
-        tc.outputFile = targCtx.getOutputRelPath()
-        ob = targCtx.getOutputBase()
+        tc.outputFile = targCtx.outputRelPath
+        ob = targCtx.outputBase
         if ob != conf.profile.outputDir:
             tc.outputDir = ob
-        lb = targCtx.getLinkBase()
+        lb = targCtx.linkBase
         if lb != conf.profile.linkDir:
             tc.linkDir = lb
-        wb = targCtx.getWorkBase()
+        wb = targCtx.workBase
         if wb != conf.profile.workDir:
             tc.workDir = wb
-        if targCtx.getEnablePostprocessing():
-            tc.postProcess = targCtx.getPostprocessCommand()
-        if targCtx.getEnableLinkFiles():
-            targCtx.linkFile = targCtx.getLinkRelPath()
-            tc.linkUrlPrefix = targCtx.getLinkURLPrefix()
+        if targCtx.enablePostprocessing:
+            tc.postProcess = targCtx.postprocessCommand
+        if targCtx.enableLinkFiles:
+            targCtx.linkFile = targCtx.linkRelPath
+            tc.linkUrlPrefix = targCtx.linkURLPrefix
         confCtx = targCtx.getConfigContext()
-        tt = confCtx.getType()
+        tt = confCtx.type
         tc.type = tt
         if tt in [TargetTypeEnum.audio, TargetTypeEnum.audiovideo]:
-            tc.config.audioEncoder = confCtx.getAudioEncoder()
-            tc.config.audioRate = confCtx.getAudioRate()
-            tc.config.audioChannels = confCtx.getAudioChannels()
-            tc.config.muxer = confCtx.getMuxer()
+            tc.config.audioEncoder = confCtx.audioEncoder
+            tc.config.audioRate = confCtx.audioRate
+            tc.config.audioChannels = confCtx.audioChannels
+            tc.config.muxer = confCtx.muxer
         if tt in [TargetTypeEnum.video, TargetTypeEnum.audiovideo]:
-            tc.config.videoEncoder = confCtx.getVideoEncoder()
-            tc.config.videoFramerate = confCtx.getVideoFramerate()
-            tc.config.videoPAR = confCtx.getVideoPAR()
-            tc.config.videoWidth = confCtx.getVideoWidth()
-            tc.config.videoHeight = confCtx.getVideoHeight()
-            tc.config.videoMaxWidth = confCtx.getVideoMaxWidth()
-            tc.config.videoMaxHeight = confCtx.getVideoMaxHeight()
-            tc.config.videoWidthMultiple = confCtx.getVideoWidthMultiple()
-            tc.config.videoHeightMultiple = confCtx.getVideoHeightMultiple()
-            tc.config.videoScaleMethod = confCtx.getVideoScaleMethod()
-            tc.config.muxer = confCtx.getMuxer()            
+            tc.config.videoEncoder = confCtx.videoEncoder
+            tc.config.videoFramerate = confCtx.videoFramerate
+            tc.config.videoPAR = confCtx.videoPAR
+            tc.config.videoWidth = confCtx.videoWidth
+            tc.config.videoHeight = confCtx.videoHeight
+            tc.config.videoMaxWidth = confCtx.videoMaxWidth
+            tc.config.videoMaxHeight = confCtx.videoMaxHeight
+            tc.config.videoWidthMultiple = confCtx.videoWidthMultiple
+            tc.config.videoHeightMultiple = confCtx.videoHeightMultiple
+            tc.config.videoScaleMethod = confCtx.videoScaleMethod
+            tc.config.muxer = confCtx.muxer
         if tt == TargetTypeEnum.audiovideo:
-            tc.config.tolerance = confCtx.getTolerance()
+            tc.config.tolerance = confCtx.tolerance
         if tt == TargetTypeEnum.thumbnails:
-            tc.config.periodValue = confCtx.getPeriodValue()
-            tc.config.periodUnit = confCtx.getPeriodUnit()
-            tc.config.maxCount = confCtx.getMaxCount()
-            tc.config.thumbsWidth = confCtx.getThumbsWidth()
-            tc.config.thumbsHeight = confCtx.getThumbsHeight()
-            tc.config.outputFormat = confCtx.getFormat()
-            tc.config.ensureOne = confCtx.getEnsureOne()
+            tc.config.periodValue = confCtx.periodValue
+            tc.config.periodUnit = confCtx.periodUnit
+            tc.config.maxCount = confCtx.maxCount
+            tc.config.thumbsWidth = confCtx.thumbsWidth
+            tc.config.thumbsHeight = confCtx.thumbsHeight
+            tc.config.outputFormat = confCtx.format
+            tc.config.ensureOne = confCtx.ensureOne
     return conf
 
 
@@ -133,11 +133,11 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
     @classmethod
     def createFromContext(cls, profCtx):
         custCtx = profCtx.getCustomerContext()
-        name = "%s/%s" % (custCtx.getName(), profCtx.getName())
-        configPath = profCtx.getConfigPath()
-        pathAttr = custCtx.getPathAttributes()
+        name = "%s/%s" % (custCtx.name, profCtx.name)
+        configPath = profCtx.configPath
+        pathAttr = custCtx.pathAttributes
         config = createTranscodingConfigFromContext(profCtx)
-        priority = profCtx.getProcessPriority()
+        priority = profCtx.processPriority
         # for priority in [0,100] the nice level will be in  [19,0]
         # and for priority in [100-200] the nice level will be in [0,-15]
         niceLevel = (19 - (19 * min(100, max(0, priority)) / 100) 

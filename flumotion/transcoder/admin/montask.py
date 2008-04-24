@@ -33,7 +33,7 @@ class MonitoringTask(admintask.AdminTask):
     MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
     
     def __init__(self, logger, custCtx):
-        admintask.AdminTask.__init__(self, logger, custCtx.getMonitorLabel(),
+        admintask.AdminTask.__init__(self, logger, custCtx.monitorLabel,
                                      filemon.MonitorProperties.createFromContext(custCtx))
         self._custCtx = custCtx
         self._pendingMoves = [] # [VirtualPath, VirutalPath, [str]]
@@ -110,7 +110,7 @@ class MonitoringTask(admintask.AdminTask):
         if not profCtx:
             self.warning("File '%s' removed but no corresponding profile "
                          "found for customer '%s'", virtDir + file,
-                         self._custCtx.getName())
+                         self._custCtx.name)
             return
         self.emit("file-removed", profCtx, state)
     
@@ -120,7 +120,7 @@ class MonitoringTask(admintask.AdminTask):
         if not profCtx:
             self.warning("File '%s' added but no corresponding profile "
                          "found for customer '%s'", virtDir + file,
-                         self._custCtx.getName())
+                         self._custCtx.name)
             return
         self.emit("file-added", profCtx, state)
 
@@ -130,7 +130,7 @@ class MonitoringTask(admintask.AdminTask):
         if not profCtx:
             self.warning("File '%s' state changed but no corresponding "
                          "profile found for customer '%s'", virtDir + file,
-                         self._custCtx.getName())
+                         self._custCtx.name)
             return
         self.emit("file-state-changed", profCtx, state)
 
@@ -201,9 +201,9 @@ class MonitoringTask(admintask.AdminTask):
     
     def __file2profileContext(self, virtDir, file):
         virtPath = virtDir + file
-        for p in self._custCtx.iterProfileContexts(file):
-            if p.getInputPath() == virtPath:
-                return p
+        for profCtx in self._custCtx.iterProfileContexts(file):
+            if profCtx.inputPath == virtPath:
+                return profCtx
         return None
 
     def __asyncMovePendingFiles(self):

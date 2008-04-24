@@ -62,7 +62,7 @@ class StateContext(base.BaseStoreContext):
     
     def newTranscodingContext(self, label, state, profCtx, startTime=None):
         assert isinstance(profCtx, profile.ProfileContext)
-        inputRelPath = profCtx.getInputRelPath()
+        inputRelPath = profCtx.inputRelPath
         activStore = self.store.newTranscodingStore(label, state, profCtx.store,
                                                     inputRelPath, startTime)
         activCtx = self.getActivityContextFor(activStore)

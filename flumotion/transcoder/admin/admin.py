@@ -254,18 +254,18 @@ class TranscoderAdmin(log.Loggable):
     
     def __onMonitoredFileAdded(self, montask, profCtx, state):
         self.log("Monitoring task '%s' added profile '%s'",
-                 montask.label, profCtx.getInputPath())
+                 montask.label, profCtx.inputPath)
         self.__fileStateChanged(montask, profCtx, state)
         
     def __onMonitoredFileStateChanged(self, montask, profCtx, state):
         self.log("Monitoring task '%s' profile '%s' state "
                  "changed to %s", montask.label, 
-                 profCtx.getInputPath(), state.name)
+                 profCtx.inputPath, state.name)
         self.__fileStateChanged(montask, profCtx, state)
     
     def __onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
-                 montask.label, profCtx.getInputPath())
+                 montask.label, profCtx.inputPath)
         self._scheduler.removeProfile(profCtx)
 
     def __onFailToRunOnWorker(self, task, workerPxy):
@@ -291,10 +291,10 @@ class TranscoderAdmin(log.Loggable):
             # it propably segfault or has been killed.
             # So we have to move the input file to the
             # "fail" directory ourself.
-            ctx = task.getProfileContext()
+            profCtx = task.getProfileContext()
             self.debug("Transcoding task for '%s' segfaulted "
-                       "or has been kill", ctx.getInputPath())
-            self.__moveFailedInputFiles(ctx)
+                       "or has been kill", profCtx.inputPath)
+            self.__moveFailedInputFiles(profCtx)
     
     def __onTranscodingDone(self, sheduler, task):
         self.__setInputFileState(task.getProfileContext(),
@@ -313,8 +313,8 @@ class TranscoderAdmin(log.Loggable):
     def __fileStateChanged(self, montask, profCtx, state):
         
         def changeState(newState):
-            inputBase = profCtx.getInputBase()
-            relPath = profCtx.getInputRelPath()        
+            inputBase = profCtx.inputBase
+            relPath = profCtx.inputRelPath        
             montask.setFileState(inputBase, relPath, newState)
 
         # Schedule new file if not alreday scheduled
@@ -349,9 +349,9 @@ class TranscoderAdmin(log.Loggable):
     
     def __moveFailedInputFiles(self, profCtx):
         custCtx = profCtx.getCustomerContext()
-        inputBase = profCtx.getInputBase()
-        failedBase = profCtx.getFailedBase()
-        relPath = profCtx.getInputRelPath()
+        inputBase = profCtx.inputBase
+        failedBase = profCtx.failedBase
+        relPath = profCtx.inputRelPath
         task = self._monitoring.getTask(custCtx.identifier)
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
@@ -362,14 +362,14 @@ class TranscoderAdmin(log.Loggable):
     
     def __setInputFileState(self, profCtx, state):
         custCtx = profCtx.getCustomerContext()
-        inputBase = profCtx.getInputBase()
+        inputBase = profCtx.inputBase
         task = self._monitoring.getTask(custCtx.identifier)
         if not task:
             self.warning("No monitoring task found for customer '%s'; "
                          "cannot set file '%s' state to %s",
                          custCtx.label, inputBase, state.name)
             return
-        relPath = profCtx.getInputRelPath()        
+        relPath = profCtx.inputRelPath        
         task.setFileState(inputBase, relPath, state)
     
     def __startup(self):

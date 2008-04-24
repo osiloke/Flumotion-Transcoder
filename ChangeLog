@@ -1,5 +1,31 @@
 2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/mediums/config.py:
+	* flumotion/transcoder/admin/api/mediums/named.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/state.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/notifysubs.py:
+	* flumotion/transcoder/admin/property/filemon.py:
+	* flumotion/transcoder/admin/property/filetrans.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Now using the store and context element attributes.
+	Setting attribute value not yet working. 
+
+2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/test/test_storecontexts.py:
 	Updated the context test tu use attributes insteed of getter.
 

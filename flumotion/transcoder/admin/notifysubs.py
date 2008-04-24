@@ -89,14 +89,14 @@ class SourceNotificationVariables(NotificationVariables):
         custCtx = profCtx.getCustomerContext()
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)
-        self.addVar("inputFile", profCtx.getInputFile())
-        self.addVar("inputRelPath", profCtx.getInputRelPath())
-        self.addVar("customerName", custCtx.getName())
-        self.addVar("profileName", profCtx.getName())
+        self.addVar("inputFile", profCtx.inputFile)
+        self.addVar("inputRelPath", profCtx.inputRelPath)
+        self.addVar("customerName", custCtx.name)
+        self.addVar("profileName", profCtx.name)
         self.addVar("errorMessage", (report and report.fatalError) or "")
         self._targets = {}
         for targCtx in profCtx.iterTargetContexts():
-            key = targCtx.getName()
+            key = targCtx.name
             targReport = report and report.targets[key]
             vars = TargetNotificationVariables(self, targCtx, 
                                                trigger, targReport)
@@ -118,7 +118,7 @@ class SourceNotificationVariables(NotificationVariables):
             self.addVar('mediaSeconds', self["sourceSeconds"])
          
     def getTargetVariables(self, targCtx):
-        key = targCtx.getName()
+        key = targCtx.name
         return self._targets[key]
 
 
@@ -131,11 +131,11 @@ class TargetNotificationVariables(NotificationVariables):
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)
-        self.addVar("outputFile", targCtx.getOutputFile())
-        self.addVar("outputRelPath", targCtx.getOutputRelPath())
-        self.addVar("linkFile", targCtx.getLinkFile())
-        self.addVar("linkRelPath", targCtx.getLinkRelPath())
-        self.addVar("targetName", targCtx.getName())
+        self.addVar("outputFile", targCtx.outputFile)
+        self.addVar("outputRelPath", targCtx.outputRelPath)
+        self.addVar("linkFile", targCtx.linkFile)
+        self.addVar("linkRelPath", targCtx.linkRelPath)
+        self.addVar("targetName", targCtx.name)
             
         if self["targetDuration"] > 0:
             self.addVar('mediaDuration', self["targetDuration"])

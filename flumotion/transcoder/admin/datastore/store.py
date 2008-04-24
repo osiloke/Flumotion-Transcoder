@@ -170,7 +170,7 @@ class AdminStore(base.NotifyStore):
 
     def getCustomerStoreByName(self, custName, default=None):
         for custStore in self._customers.itervalues():
-            if custName == custStore.getName():
+            if custName == custStore.name:
                 return custStore
         return default
         
@@ -250,7 +250,7 @@ class AdminStore(base.NotifyStore):
                    custStore.label)
         if (custStore.identifier in self._customers):
             msg = ("Admin store already have a customer '%s', "
-                  "dropping the new one" % custStore.getName())
+                   "dropping the new one" % custStore.name)
             self.warning("%s", msg)
             error = admerrs.StoreError(msg)
             custStore._abort(error)

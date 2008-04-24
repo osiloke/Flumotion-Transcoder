@@ -231,7 +231,7 @@ def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return virtualpath.VirtualPath(value, parent.getRoot())
-        return parent.append(self.getSubdir())
+        return parent.append(self.subdir)
     return getter
 
 def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
@@ -354,8 +354,8 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
         if identifier is None:
             identifier = "%s.%s" % (custCtx.identifier, profStore.identifier)
         base.BaseStoreContext.__init__(self, custCtx, profStore, identifier=identifier)
-        self._variables.addVar("profileSubdir", self.getSubdir())
-        self._variables.addVar("profileName", self.getName())
+        self._variables.addVar("profileSubdir", self.subdir)
+        self._variables.addVar("profileName", self.name)
 
     def getAdminContext(self):
         return self.parent.getAdminContext()
@@ -371,12 +371,12 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
 
     @base.property_getter("subdir")
     def getSubdir(self):
-        subdir = self.store.getSubdir()
+        subdir = self.store.subdir
         if subdir != None:
             subdir = fileutils.str2path(subdir)
             subdir = fileutils.ensureRelDirPath(subdir)
             return fileutils.cleanupPath(subdir)
-        subdir = fileutils.str2filename(self.getName())
+        subdir = fileutils.str2filename(self.name)
         return fileutils.ensureDirPath(subdir)
 
 
@@ -491,24 +491,24 @@ class ProfileContext(UnboundProfileContext):
     
     @base.property_getter("configRelPath")
     def getConfigRelPath(self):
-        path = self._variables.substitute(self.getConfigFileTemplate())
+        path = self._variables.substitute(self.configFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
     @base.property_getter("tempRepRelPath")
     def getTempRepRelPath(self):
-        path = self._variables.substitute(self.getReportFileTemplate())
+        path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
 
     @base.property_getter("failedRepRelPath")
     def getFailedRepRelPath(self):
-        path = self._variables.substitute(self.getReportFileTemplate())
+        path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
     @base.property_getter("doneRepRelPath")
     def getDoneRepRelPath(self):
-        path = self._variables.substitute(self.getReportFileTemplate())
+        path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)

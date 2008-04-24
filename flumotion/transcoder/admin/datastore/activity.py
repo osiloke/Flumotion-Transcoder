@@ -282,9 +282,9 @@ class NotificationActivityStore(ActivityStore):
         custStore = notifStore.getCustomerStore()
         profStore = notifStore.getProfileStore()
         targStore = notifStore.getTargetStore()
-        self._data.customerName = custStore and custStore.getName()
-        self._data.profileName = profStore and profStore.getName()
-        self._data.targetName = targStore and targStore.getName()
+        self._data.customerIdentifier = custStore and custStore.identifier
+        self._data.profileIdentifier = profStore and profStore.identifier
+        self._data.targetIdentifier = targStore and targStore.identifier
         self._data.retryCount = 0
         self._touche()
     

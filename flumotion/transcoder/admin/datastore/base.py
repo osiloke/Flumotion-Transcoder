@@ -81,9 +81,7 @@ def readwrite_proxy(propertyName, fieldName=None, default=None,
 
     if setterFactory is None:
         def setter(self, value):
-            value = getattr(self._data, fieldName, None)
-            if value == None: value = default
-            return utils.deepCopy(value)
+            setattr(self._data, fieldName, utils.deepCopy(value))
     else:
         setter = setterFactory(propertyName, fieldName, setterName)
     
@@ -202,7 +200,7 @@ class NotifyStore(StoreElement):
                  self.__class__.__name__, self.label, len(notifStores))
         bag = dict([(t, dict()) for t in NotificationTriggerEnum])
         for notifStore in notifStores:
-            for t in notifStore.getTriggers():
+            for t in notifStore.triggers:
                 bag[t][notifStore.identifier] = notifStore
         self._notifications = bag
         return oldResult

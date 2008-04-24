@@ -37,10 +37,10 @@ class MonitorProperties(base.ComponentPropertiesMixin):
     def createFromContext(cls, custCtx):
         folders = []
         for profCtx in custCtx.iterUnboundProfileContexts():
-            folders.append(profCtx.getInputBase())
-        period = custCtx.getMonitoringPeriod()
-        pathAttr = custCtx.getPathAttributes()
-        return cls(custCtx.getName(), folders, period, pathAttr)
+            folders.append(profCtx.inputBase)
+        period = custCtx.monitoringPeriod
+        pathAttr = custCtx.pathAttributes
+        return cls(custCtx.name, folders, period, pathAttr)
     
     def __init__(self, name, virtDirs, scanPeriod=None, pathAttr=None):
         assert isinstance(virtDirs, list) or isinstance(virtDirs, tuple)
