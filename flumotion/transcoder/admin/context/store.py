@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import annotate
 
 from flumotion.transcoder import constants
@@ -17,7 +19,95 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.context import base, customer, state, notification
 
 
-class StoreContext(base.BaseStoreContext, notification.NotificationStoreMixin):
+class IStoreContext(base.IBaseStoreContext):
+
+    def getCustomerContextFor(self, custStore):
+        pass
+    
+    def getCustomerContextByName(self, custName):
+        pass
+    
+    def iterCustomerContexts(self):
+        pass
+
+    def getStateContext(self):
+        pass
+
+    def getOutputMediaTemplate(self):
+        pass
+    
+    def getOutputThumbTemplate(self):
+        pass
+    
+    def getLinkFileTemplate(self):
+        pass
+    
+    def getConfigFileTemplate(self):
+        pass
+    
+    def getReportFileTemplate(self):
+        pass
+    
+    def getLinkTemplate(self):
+        pass
+    
+    def getMonitoringPeriod(self):
+        pass
+    
+    def getAccessForceUser(self):
+        pass
+    
+    def getAccessForceGroup(self):
+        pass
+    
+    def getAccessForceDirMode(self):
+        pass
+    
+    def getAccessForceFileMode(self):
+        pass
+    
+    def getProcessPriority(self):
+        pass
+    
+    def getTranscodingPriority(self):
+        pass
+    
+    def getTranscodingTimeout(self):
+        pass
+    
+    def getPostprocessTimeout(self):
+        pass
+    
+    def getPreprocessTimeout(self):
+        pass
+    
+    def getMailSubjectTemplate(self):
+        pass
+    
+    def getMailBodyTemplate(self):
+        pass
+    
+    def getMailTimeout(self):
+        pass
+    
+    def getMailRetryMax(self):
+        pass
+    
+    def getMailRetrySleep(self):
+        pass
+    
+    def getHTTPRequestTimeout(self):
+        pass
+    
+    def getHTTPRequestRetryMax(self):
+        pass
+    
+    def getHTTPRequestRetrySleep(self):
+        pass
+
+
+class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
+    implements(IStoreContext)
     
     base.genStoreProxy("getOutputMediaTemplate",
                        adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)

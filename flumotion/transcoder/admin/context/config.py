@@ -10,13 +10,120 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 import datetime
 
 from flumotion.transcoder.admin.context import base
 from flumotion.transcoder.admin.datastore import config
 
 
+class IConfigContext(base.IBaseStoreContext):
+    
+    def getStoreContext(self):
+        pass
+    
+    def getCustomerContext(self):
+        pass
+    
+    def getProfileContext(self):
+        pass
+    
+    def getTargetContext(self):
+        pass
+
+    def getType(self):
+        pass
+
+
+class IIdentityConfigContext(IConfigContext):
+    pass
+
+
+class IAudioConfigContext(IConfigContext):
+    
+    def getMuxer(self):
+        pass
+
+    def getAudioEncoder(self):
+        pass
+    
+    def getAudioRate(self):
+        pass
+    
+    def getAudioChannels(self):
+        pass
+
+
+class IVideoConfigContext(IConfigContext):
+    
+    def getMuxer(self):
+        pass
+    
+    def getVideoEncoder(self):
+        pass
+    
+    def getVideoWidth(self):
+        pass
+    
+    def getVideoHeight(self):
+        pass
+    
+    def getVideoMaxWidth(self):
+        pass
+    
+    def getVideoMaxHeight(self):
+        pass
+    
+    def getVideoWidthMultiple(self):
+        pass
+    
+    def getVideoHeightMultiple(self):
+        pass
+    
+    def getVideoPAR(self):
+        pass
+    
+    def getVideoFramerate(self):
+        pass
+    
+    def getVideoScaleMethod(self):
+        pass
+
+
+class IAudioVideoConfigContext(IAudioConfigContext, IVideoConfigContext):
+    
+    def getTolerance(self):
+        pass
+
+
+class IThumbnailsConfigContext(IConfigContext):
+    
+    def getThumbsWidth(self):
+        pass
+    
+    def getThumbsHeight(self):
+        pass
+    
+    def getPeriodValue(self):
+        pass
+    
+    def getPeriodUnit(self):
+        pass
+    
+    def getMaxCount(self):
+        pass
+    
+    def getEnsureOne(self):
+        pass
+    
+    def getFormat(self):
+        pass
+
+
 class ConfigContext(base.BaseStoreContext):
+
+    implements(IConfigContext)
 
     base.genStoreProxy("getType")
     base.genStoreProxy("getIdentifier")
@@ -42,11 +149,15 @@ class ConfigContext(base.BaseStoreContext):
 
 class IdentityConfigContext(ConfigContext):
     
+    implements(IIdentityConfigContext)
+    
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 
 
 class ThumbnailsConfigContext(ConfigContext):
+
+    implements(IThumbnailsConfigContext)
 
     base.genStoreProxy("getThumbsWidth")
     base.genStoreProxy("getThumbsHeight")
@@ -62,6 +173,8 @@ class ThumbnailsConfigContext(ConfigContext):
 
 class AudioConfigContext(ConfigContext):
     
+    implements(IAudioConfigContext)
+    
     base.genStoreProxy("getMuxer")
     base.genStoreProxy("getAudioEncoder")
     base.genStoreProxy("getAudioRate")
@@ -72,6 +185,8 @@ class AudioConfigContext(ConfigContext):
 
 
 class VideoConfigContext(ConfigContext):
+
+    implements(IVideoConfigContext)
 
     base.genStoreProxy("getMuxer")
     base.genStoreProxy("getVideoEncoder")
@@ -90,6 +205,8 @@ class VideoConfigContext(ConfigContext):
 
 
 class AudioVideoConfigContext(ConfigContext):
+
+    implements(IAudioVideoConfigContext)
 
     base.genStoreProxy("getMuxer")
     base.genStoreProxy("getAudioEncoder")

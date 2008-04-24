@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import fileutils, annotate
 
 from flumotion.transcoder import constants, virtualpath
@@ -18,8 +20,139 @@ from flumotion.transcoder.admin.context import base, profile, notification
 
 #TODO: Do some value caching
 
+class ICustomerContext(base.IBaseStoreContext):
 
-class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin):
+    def getStoreContext(self):
+        pass
+
+    def getUnboundProfileContextByName(self, profName):
+        pass
+    
+    def getUnboundProfileContextFor(self, profStore):
+        pass
+    
+    def iterUnboundProfileContexts(self):
+        pass
+        
+    def getProfileContextByName(self, profName, input):
+        pass
+    
+    def getProfileContextFor(self, profStore, input):
+        pass
+
+    def iterProfileContexts(self, input):
+        pass
+        
+    def getPathAttributes(self):
+        pass
+    
+    def getMonitorLabel(self):
+        pass
+    
+    def getName(self):
+        pass
+    
+    def getCustomerPriority(self):
+        pass
+    
+    def getOutputMediaTemplate(self):
+        pass
+    
+    def getOutputThumbTemplate(self):
+        pass
+    
+    def getLinkFileTemplate(self):
+        pass
+    
+    def getConfigFileTemplate(self):
+        pass
+    
+    def getReportFileTemplate(self):
+        pass
+    
+    def getLinkTemplate(self):
+        pass
+    
+    def getLinkURLPrefix(self):
+        pass
+    
+    def getEnablePostprocessing(self):
+        pass
+    
+    def getEnablePreprocessing(self):
+        pass
+    
+    def getEnableLinkFiles(self):
+        pass
+    
+    def getTranscodingPriority(self):
+        pass
+    
+    def getProcessPriority(self):
+        pass
+    
+    def getPreprocessCommand(self):
+        pass
+    
+    def getPostprocessCommand(self):
+        pass
+    
+    def getPreprocessTimeout(self):
+        pass
+    
+    def getPostprocessTimeout(self):
+        pass
+    
+    def getTranscodingTimeout(self):
+        pass
+    
+    def getMonitoringPeriod(self):
+        pass
+    
+    def getAccessForceUser(self):
+        pass
+    
+    def getAccessForceGroup(self):
+        pass
+    
+    def getAccessForceDirMode(self):
+        pass
+    
+    def getAccessForceFileMode(self):
+        pass
+
+    def getInputBase(self):
+        pass
+
+    def getOutputBase(self):
+        pass
+    
+    def getFailedBase(self):
+        pass
+    
+    def getDoneBase(self):
+        pass
+    
+    def getLinkBase(self):
+        pass
+    
+    def getWorkBase(self):
+        pass
+    
+    def getConfigBase(self):
+        pass
+    
+    def getTempRepBase(self):
+        pass
+
+    def getFailedRepBase(self):
+        pass
+    
+    def getDoneRepBase(self):
+        pass
+
+
+class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
     The customer context define the default base directories.
     They are directly taken and expanded from the store get...Dir getter,
@@ -57,6 +190,8 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
                 getWorkBase: temp:/rtve/l2n/working/
                 ...
     """
+    
+    implements(ICustomerContext)
     
     base.genStoreProxy("getName")
     base.genStoreProxy("getCustomerPriority",
@@ -126,7 +261,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
         return fileutils.PathAttributes(forceUser, forceGroup,
                                         forceDirMode, forceFileMode)
     
-    def getSubdir(self):
+    def _getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -145,7 +280,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotificationStoreMixin
             folder = fileutils.ensureAbsDirPath(folder)
             folder = fileutils.cleanupPath(folder)
             return virtualpath.VirtualPath(folder, rootName)
-        subdir = self.getSubdir()
+        subdir = self._getSubdir()
         folder = fileutils.ensureAbsDirPath(template % subdir)
         folder = fileutils.cleanupPath(folder)
         return virtualpath.VirtualPath(folder, rootName)

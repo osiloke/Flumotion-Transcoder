@@ -118,7 +118,6 @@ class IThumbnailsConfigStore(IConfigStore):
         pass
 
 
-
 class ConfigStore(base.DataStore):
     implements(IConfigStore)
     

@@ -10,10 +10,32 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.transcoder.admin.context import base, activity, profile
 
 
+class IStateContext(base.IBaseStoreContext):
+    
+    def getStoreContext(self):
+        pass
+
+    def getActivityContextFor(self, activStore):
+        pass
+
+    def retrieveTranscodingContexts(self, states):
+        pass
+    
+    def retrieveNotificationContexts(self, states):
+        pass
+    
+    def newTranscodingContext(self, label, state, profCtx, startTime=None):
+        pass
+     
+
 class StateContext(base.BaseStoreContext):
+    
+    implements(IStateContext)
     
     def __init__(self, storeContext, stateStore):
         base.BaseStoreContext.__init__(self, storeContext, stateStore)

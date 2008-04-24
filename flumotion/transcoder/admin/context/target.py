@@ -10,11 +10,91 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import fileutils, annotate
 
 from flumotion.transcoder import virtualpath
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin.context import base, notification, config
+
+
+class ITargetContext(base.IBaseStoreContext):
+
+    def getStoreContext(self):
+        pass
+    
+    def getCustomerContext(self):
+        pass
+    
+    def getProfileContext(self):
+        pass
+
+    def getConfigContext(self):
+        pass
+
+    def getName(self):
+        pass
+    
+    def getExtension(self):
+        pass
+    
+    def getOutputFileTemplate(self):
+        pass
+    
+    def getLinkFileTemplate(self):
+        pass
+    
+    def getLinkTemplate(self):
+        pass
+    
+    def getLinkURLPrefix(self):
+        pass
+    
+    def getEnablePostprocessing(self):
+        pass
+    
+    def getEnableLinkFiles(self):
+        pass
+    
+    def getPostprocessCommand(self):
+        pass
+    
+    def getPostprocessTimeout(self):
+        pass
+
+    def getOutputBase(self):
+        pass
+    
+    def getLinkBase(self):
+        pass
+    
+    def getWorkBase(self):
+        pass
+
+    def getOutputRelPath(self):
+        pass
+    
+    def getLinkRelPath(self):
+        pass
+
+    def getOutputDir(self):
+        pass
+    
+    def getLinkDir(self):
+        pass
+
+    def getOutputPath(self):
+        pass
+    
+    def getLinkPath(self):
+        pass
+
+    def getOutputFile(self):
+        pass
+    
+    def getLinkFile(self):
+        pass
 
 
 def genBaseGetter(name):
@@ -69,7 +149,7 @@ def genGetters(name):
     annotate.addAnnotationMethod("genGetters", pathGetterName, pathGetter)
 
 
-class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
+class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
     The target context define the target-specific directories, files, 
     relative path and contextual path.
@@ -101,6 +181,8 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
                 getOutputPath: default:/fluendo/files/outgoing/ogg/subdir/file.avi.ogg
                 getLinkPath: default:/fluendo/files/link/ogg/subdir/file.avi.link
     """
+    
+    implements(ITargetContext)
     
     base.genStoreProxy("getName")
     base.genParentOverridingStoreProxy("getLinkFileTemplate")
@@ -157,7 +239,7 @@ class TargetContext(base.BaseStoreContext, notification.NotificationStoreMixin):
             return self.parent.getOutputMediaTemplate()
 
         
-    def getSubdir(self):
+    def _getSubdir(self):
         return self._variables["targetSubdir"]
     
     def getExtension(self):

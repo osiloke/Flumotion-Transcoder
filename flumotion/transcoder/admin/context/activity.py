@@ -10,13 +10,95 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 import datetime
 
 from flumotion.transcoder.admin.context import base
 from flumotion.transcoder.admin.datastore import activity
 
 
+class IActivityContext(base.IBaseStoreContext):
+    
+    def getStoreContext(self):
+        pass
+    
+    def getStatecontext(self):
+        pass
+
+    def getType(self):
+        pass
+    
+    def getSubType(self):
+        pass
+    
+    def getStartTime(self):
+        pass
+    
+    def getLastTime(self):
+        pass
+    
+    def getState(self):
+        pass
+
+
+class ITranscodingActivityContext(IActivityContext):
+    
+    def getCustomerContext(self):
+        pass
+    
+    def getProfileContext(self):
+        pass
+    
+    def getInputRelPath(self):
+        pass
+
+
+class INotificationActivityContext(IActivityContext):
+    
+    def getTimeLeftBeforeRetry(self):
+        pass
+    
+    def getTrigger(self):
+        pass
+    
+    def getTimeout(self):
+        pass
+    
+    def getRetryCount(self):
+        pass
+    
+    def getRetryMax(self):
+        pass
+    
+    def getRetrySleep(self):
+        pass
+
+
+class IHTTPActivityContext(INotificationActivityContext):
+
+    def getRequestURL(self):
+        pass
+
+
+class IMailActivityContext(INotificationActivityContext):
+    
+    def getSenderAddr(self):
+        pass
+    
+    def getRecipientsAddr(self):
+        pass
+    
+    def getSubject(self):
+        pass
+    
+    def getBody(self):
+        pass
+
+
 class ActivityContext(base.BaseStoreContext):
+
+    implements(IActivityContext)
 
     base.genStoreProxy("getType")
     base.genStoreProxy("getSubType")
@@ -42,6 +124,8 @@ class ActivityContext(base.BaseStoreContext):
     
 
 class TranscodingActivityContext(ActivityContext):
+    
+    implements(ITranscodingActivityContext)
     
     base.genStoreProxy("getInputRelPath")
     
@@ -69,6 +153,8 @@ class TranscodingActivityContext(ActivityContext):
         
 
 class NotificationActivityContext(ActivityContext):
+    
+    implements(INotificationActivityContext)
     
     base.genStoreProxy("getTrigger")
     base.genStoreProxy("getTimeout")
@@ -99,6 +185,8 @@ class NotificationActivityContext(ActivityContext):
 
 class MailActivityContext(NotificationActivityContext):
     
+    implements(IMailActivityContext)
+    
     base.genStoreProxy("getSenderAddr")
     base.genStoreProxy("getRecipientsAddr")
     base.genStoreProxy("getSubject")
@@ -109,6 +197,8 @@ class MailActivityContext(NotificationActivityContext):
     
 
 class HTTPActivityContext(NotificationActivityContext):
+    
+    implements(IHTTPActivityContext)
     
     base.genStoreProxy("getRequestURL")
     
@@ -124,4 +214,4 @@ def ActivityContextFactory(parentCtx, activStore):
 
 _contextLookup = {activity.TranscodingActivityStore: TranscodingActivityContext,
                   activity.MailActivityStore:        MailActivityContext,
-                  activity.HTTPRequestActivityStore: HTTPActivityContext}
+                  activity.HTTPActivityStore:        HTTPActivityContext}

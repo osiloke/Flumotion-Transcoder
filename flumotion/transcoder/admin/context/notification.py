@@ -10,13 +10,66 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import annotate
 
 from flumotion.transcoder.admin.context import base
 from flumotion.transcoder.admin.datastore import notification, base as storebase
 
 
-class NotificationStoreMixin(object):
+class INotificationContext(base.IBaseStoreContext):
+
+    def getStoreContext(self):
+        pass
+
+    def getType(self):
+        pass
+    
+    def getTriggers(self):
+        pass
+
+
+class IMailNotificationContext(INotificationContext):
+
+    def getAttachments(self):
+        pass
+    
+    def getRecipients(self):
+        pass
+    
+    def getSubjectTemplate(self):
+        pass
+    
+    def getBodyTemplate(self):
+        pass
+    
+    def getTimeout(self):
+        pass
+    
+    def getRetryMax(self):
+        pass
+    
+    def getRetrySleep(self):
+        pass
+
+
+class IHTTPNotificationContext(INotificationContext):
+
+    def getRequestTemplate(self):
+        pass
+    
+    def getTimeout(self):
+        pass
+    
+    def getRetryMax(self):
+        pass
+    
+    def getRetrySleep(self):
+        pass
+
+
+class NotifyStoreMixin(object):
     
     store = None
     
@@ -33,6 +86,8 @@ class NotificationStoreMixin(object):
 
 class NotificationContext(base.BaseStoreContext):
     
+    implements(INotificationContext)
+    
     base.genStoreProxy("getType")
     base.genStoreProxy("getTriggers")
     
@@ -48,6 +103,8 @@ class NotificationContext(base.BaseStoreContext):
 
 class MailNotificationContext(NotificationContext):
 
+    implements(IMailNotificationContext)
+
     base.genStoreProxy("getAttachments")
     base.genStoreProxy("getRecipients")
     base.genStoreOverridingStoreProxy("getSubjectTemplate", "getMailSubjectTemplate")
@@ -61,6 +118,8 @@ class MailNotificationContext(NotificationContext):
 
 
 class HTTPNotificationContext(NotificationContext):
+    
+    implements(IHTTPNotificationContext)
     
     base.genStoreProxy("getRequestTemplate")
     base.genStoreOverridingStoreProxy("getTimeout",    "getHTTPRequestTimeout")

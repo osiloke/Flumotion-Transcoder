@@ -10,6 +10,8 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import implements
+
 from flumotion.inhouse import fileutils, annotate
 
 from flumotion.transcoder import virtualpath
@@ -17,6 +19,207 @@ from flumotion.transcoder.admin.context import base, target, notification
 
 #TODO: Do some value caching
 
+class IUnboundProfileContext(base.IBaseStoreContext):
+
+    def getStoreContext(self):
+        pass
+    
+    def getCustomerContext(self):
+        pass
+
+    def isBound(self):
+        pass
+
+    def getName(self):
+        pass
+    
+    def getOutputMediaTemplate(self):
+        pass
+    
+    def getOutputThumbTemplate(self):
+        pass
+    
+    def getLinkFileTemplate(self):
+        pass
+    
+    def getConfigFileTemplate(self):
+        pass
+    
+    def getReportFileTemplate(self):
+        pass
+    
+    def getLinkTemplate(self):
+        pass
+    
+    def getLinkURLPrefix(self):
+        pass
+    
+    def getEnablePostprocessing(self):
+        pass
+    
+    def getEnablePreprocessing(self):
+        pass
+    
+    def getEnableLinkFiles(self):
+        pass
+    
+    def getTranscodingPriority(self):
+        pass
+    
+    def getProcessPriority(self):
+        pass
+    
+    def getPreprocessCommand(self):
+        pass
+    
+    def getPostprocessCommand(self):
+        pass
+    
+    def getPreprocessTimeout(self):
+        pass
+    
+    def getPostprocessTimeout(self):
+        pass
+    
+    def getTranscodingTimeout(self):
+        pass
+    
+    def getMonitoringPeriod(self):
+        pass
+
+    def getOutputBase(self):
+        pass
+    
+    def getLinkBase(self):
+        pass
+    
+    def getWorkBase(self):
+        pass
+    
+    def getInputBase(self):
+        pass
+    
+    def getFailedBase(self):
+        pass
+    
+    def getDoneBase(self):
+        pass
+    
+    def getConfigBase(self):
+        pass
+    
+    def getTempRepBase(self):
+        pass
+    
+    def getFailedRepBase(self):
+        pass
+    
+    def getDoneRepBase(self):
+        pass
+
+
+class IProfileContext(IUnboundProfileContext):
+    
+    def getTargetContextByName(self, targName):
+        pass
+
+    def getTargetContextFor(self, targStore):
+        pass
+
+    def iterTargetContexts(self):
+        pass
+
+    def getTranscoderLabel(self):
+        pass
+
+    def getActivityLabel(self):
+        pass
+
+    def getInputRelPath(self):
+        pass
+    
+    def getFailedRelPath(self):
+        pass
+    
+    def getDoneRelPath(self):
+        pass
+    
+    def getConfigRelPath(self):
+        pass
+    
+    def getTempRepRelPath(self):
+        pass
+
+    def getFailedRepRelPath(self):
+        pass
+    
+    def getDoneRepRelPath(self):
+        pass
+    
+    def getInputDir(self):
+        pass
+    
+    def getFailedDir(self):
+        pass
+    
+    def getDoneDir(self):
+        pass
+    
+    def getConfigDir(self):
+        pass
+    
+    def getTempRepDir(self):
+        pass
+    
+    def getFailedRepDir(self):
+        pass
+    
+    def getDoneRepDir(self):
+        pass
+    
+    def getInputPath(self):
+        pass
+    
+    def getFailedPath(self):
+        pass
+    
+    def getDonePath(self):
+        pass
+    
+    def getConfigPath(self):
+        pass
+    
+    def getTempRepPath(self):
+        pass
+    
+    def getFailedRepPath(self):
+        pass
+    
+    def getDoneRepPath(self):
+        pass
+    
+    def getInputFile(self):
+        pass
+    
+    def getFailedFile(self):
+        pass
+    
+    def getDoneFile(self):
+        pass
+    
+    def getConfigFile(self):
+        pass
+    
+    def getTempRepFile(self):
+        pass
+    
+    def getFailedRepFile(self):
+        pass
+    
+    def getDoneRepFile(self):
+        pass
+    
+    
 
 def genBaseGetter(name):
     storeGetterName = "get%sDir" % name
@@ -30,7 +233,7 @@ def genBaseGetter(name):
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return virtualpath.VirtualPath(value, parent.getRoot())
-        return parent.append(self.getSubdir())
+        return parent.append(self._getSubdir())
     
     annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)
 
@@ -62,7 +265,7 @@ def genGetters(name):
     annotate.addAnnotationMethod("genGetteres", dirGetterName, dirGetter)
     
 
-class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStoreMixin):
+class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
     A profile context independent of the input file.
     
@@ -87,6 +290,8 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
                 getFailedRepBase: default:/fluendo/reports/failed/ogg/
                 getDoneRepBase: default:/fluendo/reports/done/ogg/
     """
+    
+    implements(IUnboundProfileContext)
     
     base.genStoreProxy("getName")
     base.genParentOverridingStoreProxy("getOutputMediaTemplate")
@@ -123,7 +328,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
         if identifier is None:
             identifier = "%s.%s" % (custCtx.identifier, profStore.identifier)
         base.BaseStoreContext.__init__(self, custCtx, profStore, identifier=identifier)
-        self._variables.addVar("profileSubdir", self.getSubdir())
+        self._variables.addVar("profileSubdir", self._getSubdir())
         self._variables.addVar("profileName", self.getName())
 
     def getAdminContext(self):
@@ -138,7 +343,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotificationStor
     def isBound(self):
         return False
 
-    def getSubdir(self):
+    def _getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -203,6 +408,8 @@ class ProfileContext(UnboundProfileContext):
                 getFailedRepPath: default:/fluendo/reports/failed/ogg/subdir/file.avi.rep
                 getDoneRepPath: default:/fluendo/reports/done/ogg/subdir/file.avi.rep
     """
+    
+    implements(IProfileContext)
     
     genGetters("Input")
     genGetters("Failed")

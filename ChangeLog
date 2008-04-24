@@ -1,3 +1,20 @@
+2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/config.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/state.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	Added interrfaces to the stores' contexts for the API
+	to be able to adapte the contexts automatically with mediums 
+	
+
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxy/managerset.py:

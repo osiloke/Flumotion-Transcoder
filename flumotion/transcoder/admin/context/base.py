@@ -10,10 +10,28 @@
 
 # Headers in this file shall remain intact.
 
+from zope.interface import Interface, implements, Attribute
+
 from flumotion.inhouse import annotate
 
 from flumotion.transcoder import substitution
+from flumotion.transcoder.admin import interfaces
 
+
+class IBaseContext(interfaces.IAdminInterface):
+    
+    parent = Attribute("Parent context")
+    
+    def getAdminContext(self):
+        pass
+
+
+class IBaseStoreContext(IBaseContext):
+    
+    identifier = Attribute("Context identifier")
+    label = Attribute("Context label")
+    store = Attribute("context store reference")
+        
 
 class LazyContextIterator(object):
     
@@ -83,13 +101,18 @@ def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
 
 
 class BaseContext(object):
+    implements(IBaseContext)
     
     def __init__(self, parent):
         self.parent = parent
         self._variables = substitution.Variables(getattr(parent, "_variables", None))
+        
+    def getAdminContext(self):
+        raise NotImplementedError()
     
 
 class BaseStoreContext(BaseContext):
+    implements(IBaseStoreContext)
     
     def __init__(self, parent, store, identifier=None, label=None):
         BaseContext.__init__(self, parent)

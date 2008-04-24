@@ -99,14 +99,13 @@ class INotificationActivityStore(IActivityStore):
         pass
 
 
-class IHTTPRequestActivityStore(INotificationActivityStore):
+class IHTTPActivityStore(INotificationActivityStore):
 
     def getRequestURL(self):
         pass
     
     def setRequestURL(self, url):
         pass
-
 
 
 class IMailActivityStore(INotificationActivityStore):
@@ -296,8 +295,8 @@ class NotificationActivityStore(ActivityStore):
         self._data.retryCount = 0
         self._touche()
     
-class HTTPRequestActivityStore(NotificationActivityStore):
-    implements(IHTTPRequestActivityStore)
+class HTTPActivityStore(NotificationActivityStore):
+    implements(IHTTPActivityStore)
 
     genDataGetter("getRequestURL", "url")
     
@@ -339,7 +338,7 @@ class MailActivityStore(NotificationActivityStore):
 _activityLookup = {ActivityTypeEnum.transcoding: 
                    {TranscodingTypeEnum.normal:        TranscodingActivityStore},
                    ActivityTypeEnum.notification: 
-                   {NotificationTypeEnum.http_request: HTTPRequestActivityStore,
+                   {NotificationTypeEnum.http_request: HTTPActivityStore,
                     NotificationTypeEnum.email:        MailActivityStore}}
 
 
