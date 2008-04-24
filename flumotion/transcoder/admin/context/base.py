@@ -50,54 +50,7 @@ class LazyContextIterator(object):
         return self._cls(self.parent, nextValue, *self._args, **self._kwargs)
 
 
-def genStoreProxy(getterName, default=None):
-    def getter(self):
-        method = getattr(self.store, getterName, None)
-        if method is None:
-            raise ValueError("Context element %s do not have method %s"
-                             % (self.store, getterName))
-        value = method()
-        if value == None: value = default
-        return value
-    annotate.injectMethod("genStoreProxy", getterName, getter)
-
-def genParentOverridingStoreProxy(getterName, parentGetterName=None):
-    def getter(self):
-        method = getattr(self.store, getterName, None)
-        if method is None:
-            raise ValueError("Context element %s do not have method %s"
-                             % (self.store, getterName))
-        value = method()
-        if value != None:
-            return value
-        pGetterName = parentGetterName or getterName
-        if self.parent is None:
-            raise ValueError("Context element %s without parent" % self)
-        parentGetter = getattr(self.parent, pGetterName, None)
-        if parentGetter is None:
-            raise ValueError("Context element %s do not have method %s"
-                             % (self.parent, pGetterName))
-        return  parentGetter()
-    annotate.injectMethod("genParentOverridingStoreProxy", getterName, getter)
-
-def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
-    def getter(self):
-        method = getattr(self.store, getterName, None)
-        if method is None:
-            raise ValueError("Context element %s do not have method %s"
-                             % (self.store, getterName))
-        value = method()
-        if value != None: return value
-        sGetterName = storeGetterName or getterName
-        storeCtx = self.getStoreContext()
-        if storeCtx is None:
-            raise ValueError("Context element %s without store context" % self)
-        storeGetter = getattr(storeCtx, sGetterName, None)
-        if storeGetter is None:
-            raise ValueError("Context element %s do not have method %s"
-                             % (storeCtx, sGetterName))
-        return storeGetter()
-    annotate.injectMethod("genStoreOverridingStoreProxy", getterName, getter)
+## Class Annotations ##
 
 def store_proxy(propertyName, storePropertyName=None, getterName=None, default=None):
     if storePropertyName is None:
