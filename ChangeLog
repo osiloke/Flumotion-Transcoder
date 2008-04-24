@@ -1,5 +1,10 @@
 2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/test/test_storecontexts.py:
+	Updated the context test tu use attributes insteed of getter.
+
+2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/base.py:
 	removed unused code.
 
