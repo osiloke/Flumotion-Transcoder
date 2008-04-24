@@ -1,5 +1,28 @@
 2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/test/test_storecontexts.py:
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/config.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	* flumotion/transcoder/admin/notifier.py:
+	Prepared the store and context elements for using
+	dynamic attributes insteed of getters.
+
+2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/activity.py:
 	* flumotion/transcoder/admin/context/base.py:
 	* flumotion/transcoder/admin/context/config.py:
@@ -11,9 +34,8 @@
 	* flumotion/transcoder/admin/context/target.py:
 	* flumotion/transcoder/admin/datastore/activity.py:
 	* flumotion/transcoder/admin/datastore/config.py:
-	Added interrfaces to the stores' contexts for the API
+	Added interfaces to the stores' contexts for the API
 	to be able to adapte the contexts automatically with mediums 
-	
 
 2008-04-23  Sebastien Merle  <sebastien@fluendo.com>
 

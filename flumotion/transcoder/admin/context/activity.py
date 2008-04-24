@@ -29,7 +29,7 @@ class IActivityContext(base.IBaseStoreContext):
     def getType(self):
         pass
     
-    def getSubType(self):
+    def getSubtype(self):
         pass
     
     def getStartTime(self):
@@ -100,11 +100,11 @@ class ActivityContext(base.BaseStoreContext):
 
     implements(IActivityContext)
 
-    base.genStoreProxy("getType")
-    base.genStoreProxy("getSubType")
-    base.genStoreProxy("getStartTime")
-    base.genStoreProxy("getLastTime")
-    base.genStoreProxy("getState")
+    base.store_proxy("type")
+    base.store_proxy("subtype")
+    base.store_proxy("startTime")
+    base.store_proxy("lastTime")
+    base.store_proxy("state")
     
     def __init__(self, stateCtx, activStore):
         base.BaseStoreContext.__init__(self, stateCtx, activStore)
@@ -127,7 +127,7 @@ class TranscodingActivityContext(ActivityContext):
     
     implements(ITranscodingActivityContext)
     
-    base.genStoreProxy("getInputRelPath")
+    base.store_proxy("inputRelPath")
     
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
@@ -156,11 +156,11 @@ class NotificationActivityContext(ActivityContext):
     
     implements(INotificationActivityContext)
     
-    base.genStoreProxy("getTrigger")
-    base.genStoreProxy("getTimeout")
-    base.genStoreProxy("getRetryCount")
-    base.genStoreProxy("getRetryMax")
-    base.genStoreProxy("getRetrySleep")
+    base.store_proxy("trigger")
+    base.store_proxy("timeout")
+    base.store_proxy("retryCount")
+    base.store_proxy("retryMax")
+    base.store_proxy("retrySleep")
     
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
@@ -187,10 +187,10 @@ class MailActivityContext(NotificationActivityContext):
     
     implements(IMailActivityContext)
     
-    base.genStoreProxy("getSenderAddr")
-    base.genStoreProxy("getRecipientsAddr")
-    base.genStoreProxy("getSubject")
-    base.genStoreProxy("getBody")
+    base.store_proxy("senderAddr")
+    base.store_proxy("recipientsAddr")
+    base.store_proxy("subject")
+    base.store_proxy("body")
     
     def __init__(self, stateCtx, activStore):
         NotificationActivityContext.__init__(self, stateCtx, activStore)
@@ -200,7 +200,7 @@ class HTTPActivityContext(NotificationActivityContext):
     
     implements(IHTTPActivityContext)
     
-    base.genStoreProxy("getRequestURL")
+    base.store_proxy("requestURL")
     
     def __init__(self, stateCtx, activStore):
         NotificationActivityContext.__init__(self, stateCtx, activStore)

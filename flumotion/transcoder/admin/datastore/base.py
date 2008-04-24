@@ -41,14 +41,55 @@ class INotificationProvider(interfaces.IAdminInterface):
         pass
 
 
-## Method Generators ##
+## Class Annotations ##
 
-def genGetter(getterName, propertyName, default=None):
-    def getter(self):
-        value = getattr(self._data, propertyName, None)
-        if value == None: value = default
-        return utils.deepCopy(value)
-    annotate.addAnnotationMethod("genGetter", getterName, getter)
+def readonly_proxy(propertyName, fieldName=None, default=None,
+                   getterName=None, getterFactory=None):
+    if fieldName is None:
+        fieldName = propertyName 
+    if getterName is None:
+        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+    
+    if getterFactory is None:
+        def getter(self):
+            value = getattr(self._data, fieldName, None)
+            if value == None: value = default
+            return utils.deepCopy(value)
+    else:
+        getter = getterFactory(propertyName, fieldName, getterName, default)
+    
+    annotate.injectMethod("readonly_proxy", getterName, getter)
+    annotate.injectProperty("readonly_proxy", propertyName, getter)
+
+def readwrite_proxy(propertyName, fieldName=None, default=None,
+                    getterName=None, setterName=None,
+                    getterFactory=None, setterFactory=None):
+    if fieldName is None:
+        fieldName = propertyName 
+    if getterName is None:
+        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+    if setterName is None:
+        setterName = "set" + propertyName[0].upper() + propertyName[1:]
+    
+    if getterFactory is None:
+        def getter(self):
+            value = getattr(self._data, fieldName, None)
+            if value == None: value = default
+            return utils.deepCopy(value)
+    else:
+        getter = getterFactory(propertyName, fieldName, getterName, default)
+
+    if setterFactory is None:
+        def setter(self, value):
+            value = getattr(self._data, fieldName, None)
+            if value == None: value = default
+            return utils.deepCopy(value)
+    else:
+        setter = setterFactory(propertyName, fieldName, setterName)
+    
+    annotate.injectMethod("readwrite_proxy", getterName, getter)
+    annotate.injectMethod("readwrite_proxy", setterName, setter)
+    annotate.injectProperty("readwrite_proxy", propertyName, getter, setter)
 
 
 class SimpleStore(object):

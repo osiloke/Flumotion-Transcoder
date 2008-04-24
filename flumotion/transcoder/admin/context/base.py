@@ -59,7 +59,7 @@ def genStoreProxy(getterName, default=None):
         value = method()
         if value == None: value = default
         return value
-    annotate.addAnnotationMethod("genStoreProxy", getterName, getter)
+    annotate.injectMethod("genStoreProxy", getterName, getter)
 
 def genParentOverridingStoreProxy(getterName, parentGetterName=None):
     def getter(self):
@@ -78,7 +78,7 @@ def genParentOverridingStoreProxy(getterName, parentGetterName=None):
             raise ValueError("Context element %s do not have method %s"
                              % (self.parent, pGetterName))
         return  parentGetter()
-    annotate.addAnnotationMethod("genParentOverridingStoreProxy", getterName, getter)
+    annotate.injectMethod("genParentOverridingStoreProxy", getterName, getter)
 
 def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
     def getter(self):
@@ -97,7 +97,69 @@ def genStoreOverridingStoreProxy(getterName, storeGetterName=None):
             raise ValueError("Context element %s do not have method %s"
                              % (storeCtx, sGetterName))
         return storeGetter()
-    annotate.addAnnotationMethod("genStoreOverridingStoreProxy", getterName, getter)
+    annotate.injectMethod("genStoreOverridingStoreProxy", getterName, getter)
+
+def store_proxy(propertyName, storePropertyName=None, getterName=None, default=None):
+    if storePropertyName is None:
+        storePropertyName = propertyName
+    if getterName is None:
+        getterName = "get" + propertyName[0].upper() + propertyName[1:] 
+    
+    def getter(self):
+        value = getattr(self.store, storePropertyName)
+        if value == None:
+            return default
+        return value
+    
+    annotate.injectMethod("store_proxy", getterName, getter)
+    annotate.injectProperty("store_proxy", propertyName, getter)
+
+def store_parent_proxy(propertyName, parentPropertyName=None,
+                       storePropertyName=None, getterName=None):
+    if parentPropertyName is None:
+        parentPropertyName = propertyName
+    if storePropertyName is None:
+        storePropertyName = propertyName
+    if getterName is None:
+        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+    
+    def getter(self):
+        value = getattr(self.store, storePropertyName)
+        if value != None: return value
+        if self.parent is None:
+            raise AttributeError("Attribute %s of class %s not properly setup, "
+                                 "parent not found" % (propertyName, self))
+        return getattr(self.parent, parentPropertyName)
+    
+    annotate.injectMethod("store_parent_proxy", getterName, getter)
+    annotate.injectProperty("store_parent_proxy", propertyName, getter)
+
+def store_admin_proxy(propertyName, adminPropertyName=None,
+                      storePropertyName=None, getterName=None):
+    if adminPropertyName is None:
+        adminPropertyName = propertyName
+    if storePropertyName is None:
+        storePropertyName = propertyName
+    if getterName is None:
+        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+    
+    def getter(self):
+        value = getattr(self.store, storePropertyName)
+        if value != None: return value
+        storeCtx = self.getStoreContext()
+        if storeCtx is None:
+            raise AttributeError("Attribute %s of class %s not properly setup, "
+                                 "store context not found" % (propertyName, self))
+        return getattr(storeCtx, adminPropertyName)
+    
+    annotate.injectMethod("store_admin_proxy", getterName, getter)
+    annotate.injectProperty("store_admin_proxy", propertyName, getter)
+
+def property_getter(propertyName):
+    def decorator(func):
+        annotate.injectProperty("property_getter", propertyName, func)
+        return func
+    return decorator
 
 
 class BaseContext(object):

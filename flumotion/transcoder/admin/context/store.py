@@ -107,56 +107,58 @@ class IStoreContext(base.IBaseStoreContext):
 
 
 class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
+    
     implements(IStoreContext)
     
-    base.genStoreProxy("getOutputMediaTemplate",
-                       adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)
-    base.genStoreProxy("getOutputThumbTemplate",
-                       adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE)
-    base.genStoreProxy("getLinkFileTemplate",
-                       adminconsts.DEFAULT_LINK_FILE_TEMPLATE)
-    base.genStoreProxy("getConfigFileTemplate",
-                       adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE)
-    base.genStoreProxy("getReportFileTemplate",
-                       adminconsts.DEFAULT_REPORT_FILE_TEMPLATE)
-    base.genStoreProxy("getLinkTemplate",
-                       constants.LINK_TEMPLATE)
-    base.genStoreProxy("getMonitoringPeriod",
-                       adminconsts.DEFAULT_MONITORING_PERIOD)
-    base.genStoreProxy("getAccessForceUser",
-                       adminconsts.DEFAULT_ACCESS_FORCE_USER)
-    base.genStoreProxy("getAccessForceGroup",
-                       adminconsts.DEFAULT_ACCESS_FORCE_GROUP)
-    base.genStoreProxy("getAccessForceDirMode",
-                       adminconsts.DEFAULT_ACCESS_FORCE_DIR_MODE)
-    base.genStoreProxy("getAccessForceFileMode",
-                       adminconsts.DEFAULT_ACCESS_FORCE_FILE_MODE)
-    base.genStoreProxy("getProcessPriority",
-                       adminconsts.DEFAULT_PROCESS_PRIORITY)
-    base.genStoreProxy("getTranscodingPriority",
-                       adminconsts.DEFAULT_TRANSCODING_PRIORITY)
-    base.genStoreProxy("getTranscodingTimeout",
-                       adminconsts.DEFAULT_TRANSCODING_TIMEOUT)
-    base.genStoreProxy("getPostprocessTimeout",
-                       adminconsts.DEFAULT_POSTPROCESS_TIMEOUT)
-    base.genStoreProxy("getPreprocessTimeout",
-                       adminconsts.DEFAULT_PREPROCESS_TIMEOUT)
-    base.genStoreProxy("getMailSubjectTemplate",
-                       adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE)
-    base.genStoreProxy("getMailBodyTemplate",
-                       adminconsts.DEFAULT_MAIL_BODY_TEMPLATE)
-    base.genStoreProxy("getMailTimeout",
-                       adminconsts.DEFAULT_MAIL_TIMEOUT)
-    base.genStoreProxy("getMailRetryMax",
-                       adminconsts.DEFAULT_MAIL_RETRY_MAX)
-    base.genStoreProxy("getMailRetrySleep",
-                       adminconsts.DEFAULT_MAIL_RETRY_SLEEP)
-    base.genStoreProxy("getHTTPRequestTimeout",
-                        adminconsts.DEFAULT_HTTPREQUEST_TIMEOUT)
-    base.genStoreProxy("getHTTPRequestRetryMax",
-                       adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX)
-    base.genStoreProxy("getHTTPRequestRetrySleep",
-                       adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)
+    base.store_proxy("outputMediaTemplate",
+                     default=adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)
+    base.store_proxy("outputThumbTemplate",
+                     default=adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE)
+    base.store_proxy("linkFileTemplate",
+                     default=adminconsts.DEFAULT_LINK_FILE_TEMPLATE)
+    base.store_proxy("configFileTemplate",
+                     default=adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE)
+    base.store_proxy("reportFileTemplate",
+                     default=adminconsts.DEFAULT_REPORT_FILE_TEMPLATE)
+    base.store_proxy("linkTemplate",
+                     default=constants.LINK_TEMPLATE)
+    base.store_proxy("monitoringPeriod",
+                     default=adminconsts.DEFAULT_MONITORING_PERIOD)
+    base.store_proxy("accessForceUser",
+                     default=adminconsts.DEFAULT_ACCESS_FORCE_USER)
+    base.store_proxy("accessForceGroup",
+                     default=adminconsts.DEFAULT_ACCESS_FORCE_GROUP)
+    base.store_proxy("accessForceDirMode",
+                     default=adminconsts.DEFAULT_ACCESS_FORCE_DIR_MODE)
+    base.store_proxy("accessForceFileMode",
+                     default=adminconsts.DEFAULT_ACCESS_FORCE_FILE_MODE)
+    base.store_proxy("processPriority",
+                     default=adminconsts.DEFAULT_PROCESS_PRIORITY)
+    base.store_proxy("transcodingPriority",
+                     default=adminconsts.DEFAULT_TRANSCODING_PRIORITY)
+    base.store_proxy("transcodingTimeout",
+                     default=adminconsts.DEFAULT_TRANSCODING_TIMEOUT)
+    base.store_proxy("postprocessTimeout",
+                     default=adminconsts.DEFAULT_POSTPROCESS_TIMEOUT)
+    base.store_proxy("preprocessTimeout",
+                     default=adminconsts.DEFAULT_PREPROCESS_TIMEOUT)
+    base.store_proxy("mailSubjectTemplate",
+                     default=adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE)
+    base.store_proxy("mailBodyTemplate",
+                     default=adminconsts.DEFAULT_MAIL_BODY_TEMPLATE)
+    base.store_proxy("mailTimeout",
+                     default=adminconsts.DEFAULT_MAIL_TIMEOUT)
+    base.store_proxy("mailRetryMax",
+                     default=adminconsts.DEFAULT_MAIL_RETRY_MAX)
+    base.store_proxy("mailRetrySleep",
+                     default=adminconsts.DEFAULT_MAIL_RETRY_SLEEP)
+    base.store_proxy("HTTPRequestTimeout",
+                     default=adminconsts.DEFAULT_HTTPREQUEST_TIMEOUT)
+    base.store_proxy("HTTPRequestRetryMax",
+                     default=adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX)
+    base.store_proxy("HTTPRequestRetrySleep",
+                     default=adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)
+
 
     def __init__(self, adminContext, adminStore):
         base.BaseStoreContext.__init__(self, adminContext, adminStore)

@@ -400,7 +400,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         
     def __notificationSucceed(self, activCtx):
         self.info("%s notification '%s' for trigger '%s' succeed", 
-                  activCtx.getSubType().nick, activCtx.label, 
+                  activCtx.getSubtype().nick, activCtx.label, 
                   activCtx.getTrigger().nick)
         activStore = activCtx.store
         activStore.setState(ActivityStateEnum.done)
@@ -411,7 +411,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     
     def __notificationFailed(self, activCtx, desc=None):
         message = ("%s notification '%s' for trigger '%s' failed: %s"
-                   % (activCtx.getSubType().nick,
+                   % (activCtx.getSubtype().nick,
                       activCtx.label, 
                       activCtx.getTrigger().nick, desc))
         self.info("%s", message)
@@ -441,7 +441,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __cannotPerform(self, activCtx):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot perform"
-                   % (activCtx.getSubType().name, activCtx.label))
+                   % (activCtx.getSubtype().name, activCtx.label))
         self.warning("%s", message)
         raise admerrs.NotificationError(message)
     
@@ -453,7 +453,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __performNotification(self, activCtx):
         if _shutingDown: return
         self._retries[activCtx] = None
-        type = activCtx.getSubType()
+        type = activCtx.getSubtype()
         perform = self._performLookup.get(type, self.__cannotPerform)
         perform(self, activCtx)
         

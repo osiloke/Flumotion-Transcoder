@@ -141,41 +141,41 @@ class ICustomerStore(base.IBaseStore):
 class CustomerStore(base.NotifyStore):
     implements(ICustomerStore)
 
-    base.genGetter("getName",         "name")
-    base.genGetter("getSubdir",       "subdir")
-    base.genGetter("getInputDir",     "inputDir")
-    base.genGetter("getOutputDir",    "outputDir")
-    base.genGetter("getFailedDir",    "failedDir")
-    base.genGetter("getDoneDir",      "doneDir")
-    base.genGetter("getLinkDir",      "linkDir")
-    base.genGetter("getWorkDir",      "workDir")
-    base.genGetter("getConfigDir",    "configDir")
-    base.genGetter("getTempRepDir",   "tempRepDir")
-    base.genGetter("getFailedRepDir", "failedRepDir")
-    base.genGetter("getDoneRepDir",   "doneRepDir")
-    base.genGetter("getCustomerPriority",     "customerPriority")
-    base.genGetter("getOutputMediaTemplate",  "outputMediaTemplate")
-    base.genGetter("getOutputThumbTemplate",  "outputThumbTemplate")
-    base.genGetter("getLinkFileTemplate",     "linkFileTemplate")
-    base.genGetter("getConfigFileTemplate",   "configFileTemplate")
-    base.genGetter("getReportFileTemplate",   "reportFileTemplate")
-    base.genGetter("getLinkTemplate",         "linkTemplate")
-    base.genGetter("getLinkURLPrefix",        "linkURLPrefix")
-    base.genGetter("getEnablePostprocessing", "enablePostprocessing")
-    base.genGetter("getEnablePreprocessing",  "enablePreprocessing")
-    base.genGetter("getEnableLinkFiles",      "enableLinkFiles")
-    base.genGetter("getTranscodingPriority",  "transcodingPriority")
-    base.genGetter("getProcessPriority",      "processPriority")
-    base.genGetter("getPreprocessCommand",    "preprocessCommand")
-    base.genGetter("getPostprocessCommand",   "postprocessCommand")
-    base.genGetter("getPreprocessTimeout",    "preprocessTimeout")
-    base.genGetter("getPostprocessTimeout",   "postprocessTimeout")
-    base.genGetter("getTranscodingTimeout",   "transcodingTimeout")
-    base.genGetter("getMonitoringPeriod",     "monitoringPeriod")
-    base.genGetter("getAccessForceUser",      "accessForceUser")
-    base.genGetter("getAccessForceGroup",     "accessForceGroup")
-    base.genGetter("getAccessForceDirMode",   "accessForceDirMode")
-    base.genGetter("getAccessForceFileMode",  "accessForceFileMode")
+    base.readonly_proxy("name")
+    base.readonly_proxy("subdir")
+    base.readonly_proxy("inputDir")
+    base.readonly_proxy("outputDir")
+    base.readonly_proxy("failedDir")
+    base.readonly_proxy("doneDir")
+    base.readonly_proxy("linkDir")
+    base.readonly_proxy("workDir")
+    base.readonly_proxy("configDir")
+    base.readonly_proxy("tempRepDir")
+    base.readonly_proxy("failedRepDir")
+    base.readonly_proxy("doneRepDir")
+    base.readonly_proxy("customerPriority")
+    base.readonly_proxy("outputMediaTemplate")
+    base.readonly_proxy("outputThumbTemplate")
+    base.readonly_proxy("linkFileTemplate")
+    base.readonly_proxy("configFileTemplate")
+    base.readonly_proxy("reportFileTemplate")
+    base.readonly_proxy("linkTemplate")
+    base.readonly_proxy("linkURLPrefix")
+    base.readonly_proxy("enablePostprocessing")
+    base.readonly_proxy("enablePreprocessing")
+    base.readonly_proxy("enableLinkFiles")
+    base.readonly_proxy("transcodingPriority")
+    base.readonly_proxy("processPriority")
+    base.readonly_proxy("preprocessCommand")
+    base.readonly_proxy("postprocessCommand")
+    base.readonly_proxy("preprocessTimeout")
+    base.readonly_proxy("postprocessTimeout")
+    base.readonly_proxy("transcodingTimeout")
+    base.readonly_proxy("monitoringPeriod")
+    base.readonly_proxy("accessForceUser")
+    base.readonly_proxy("accessForceGroup")
+    base.readonly_proxy("accessForceDirMode")
+    base.readonly_proxy("accessForceFileMode")
 
     def __init__(self, logger, adminStore, dataSource, custData):
         base.NotifyStore.__init__(self, logger, adminStore, dataSource, custData)
@@ -187,9 +187,6 @@ class CustomerStore(base.NotifyStore):
         
         
     ## Public Methods ##
-
-    def getAdminStore(self):
-        return self.parent
 
     def getProfileStores(self):
         return self._profiles.values()
@@ -205,7 +202,10 @@ class CustomerStore(base.NotifyStore):
     
     def iterProfileStores(self):
         return self._profiles.itervalues()
-    
+
+    def getAdminStore(self):
+        return self.parent    
+
 
     ## Overridden Methods ##
 

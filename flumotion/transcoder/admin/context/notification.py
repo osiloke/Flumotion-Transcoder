@@ -88,8 +88,8 @@ class NotificationContext(base.BaseStoreContext):
     
     implements(INotificationContext)
     
-    base.genStoreProxy("getType")
-    base.genStoreProxy("getTriggers")
+    base.store_proxy("type")
+    base.store_proxy("triggers")
     
     def __init__(self, parentCtx, notifStore):
         base.BaseStoreContext.__init__(self, parentCtx, notifStore)
@@ -105,13 +105,13 @@ class MailNotificationContext(NotificationContext):
 
     implements(IMailNotificationContext)
 
-    base.genStoreProxy("getAttachments")
-    base.genStoreProxy("getRecipients")
-    base.genStoreOverridingStoreProxy("getSubjectTemplate", "getMailSubjectTemplate")
-    base.genStoreOverridingStoreProxy("getBodyTemplate",    "getMailBodyTemplate")
-    base.genStoreOverridingStoreProxy("getTimeout",         "getMailTimeout")
-    base.genStoreOverridingStoreProxy("getRetryMax",        "getMailRetryMax")
-    base.genStoreOverridingStoreProxy("getRetrySleep",      "getMailRetrySleep")
+    base.store_proxy("attachments")
+    base.store_proxy("recipients")
+    base.store_admin_proxy("subjectTemplate", "mailSubjectTemplate")
+    base.store_admin_proxy("bodyTemplate",    "mailBodyTemplate")
+    base.store_admin_proxy("timeout",         "mailTimeout")
+    base.store_admin_proxy("retryMax",        "mailRetryMax")
+    base.store_admin_proxy("retrySleep",      "mailRetrySleep")
     
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)
@@ -121,10 +121,10 @@ class HTTPNotificationContext(NotificationContext):
     
     implements(IHTTPNotificationContext)
     
-    base.genStoreProxy("getRequestTemplate")
-    base.genStoreOverridingStoreProxy("getTimeout",    "getHTTPRequestTimeout")
-    base.genStoreOverridingStoreProxy("getRetryMax",   "getHTTPRequestRetryMax")
-    base.genStoreOverridingStoreProxy("getRetrySleep", "getHTTPRequestRetrySleep")    
+    base.store_proxy("requestTemplate")
+    base.store_admin_proxy("timeout",    "HTTPRequestTimeout")
+    base.store_admin_proxy("retryMax",   "HTTPRequestRetryMax")
+    base.store_admin_proxy("tetrySleep", "HTTPRequestRetrySleep")    
     
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)

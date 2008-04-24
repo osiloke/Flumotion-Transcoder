@@ -97,56 +97,99 @@ class ITargetContext(base.IBaseStoreContext):
         pass
 
 
-def genBaseGetter(name):
-    baseGetterName = "get%sBase" % name
-    storeBaseGetterName = "get%sDir" % name
-    
+## Getter Factories ##
+
+def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
     def getter(self):
-        folder = getattr(self.store, storeBaseGetterName)()
+        folder = getattr(self.store, storePropertyName)
         if folder != None:
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return virtualpath.VirtualPath(value)
-        return getattr(self.parent, baseGetterName)()
-    
-    annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)
+        return getattr(self.parent, basePropertyName)
+    return getter
 
-
-def genGetters(name):
-    baseGetterName = "get%sBase" % name
-    dirGetterName = "get%sDir" % name
-    storeRelGetterName = "get%sFileTemplate" % name
-    relGetterName = "get%sRelPath" % name
-    pathGetterName = "get%sPath" % name
-    fileGetterName = "get%sFile" % name
-
-    def relGetter(self):
-        method = getattr(self, storeRelGetterName)
-        template = method()
+def _relGetterFactory(getterName, templatePropertyName):
+    def getter(self):
+        template = getattr(self, templatePropertyName)
         path = self._variables.substitute(template)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
+    return getter
 
-    def dirGetter(self):
-        folder = getattr(self, baseGetterName)()
-        relPath = getattr(self, relGetterName)()
-        path, file, ext = fileutils.splitPath(relPath)
+def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
+    def getter(self):
+        folder = getattr(self, basePropertyName)
+        relPath = getattr(self, relPropertyName)
+        path, file = fileutils.splitPath(relPath)[:2]
         return folder.append(path)
+    return getter
 
-    def fileGetter(self):
-        relPath = getattr(self, relGetterName)()
-        path, file, ext = fileutils.splitPath(relPath)
+def _fileGetterFactory(getterName, relPropertyName):
+    def getter(self):
+        relPath = getattr(self, relPropertyName)
+        file, ext = fileutils.splitPath(relPath)[1:3]
         return file + ext
+    return getter
 
-    def pathGetter(self):
-        folder = getattr(self, dirGetterName)()
-        return folder.append(getattr(self, fileGetterName)())
+def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
+    def getter(self):
+        folder = getattr(self, dirPropertyName)
+        file = getattr(self, filePropertyName)
+        return folder.append(file)
+    return getter
 
-    annotate.addAnnotationMethod("genGetters", relGetterName, relGetter)
-    annotate.addAnnotationMethod("genGetters", dirGetterName, dirGetter)
-    annotate.addAnnotationMethod("genGetters", fileGetterName, fileGetter)
-    annotate.addAnnotationMethod("genGetters", pathGetterName, pathGetter)
+
+## Class Annotations ##
+
+def base_getters(*names):
+    for name in names:
+        storePropertyName = name + "Dir"
+        basePropertyName = name + "Base"
+        propertyName = name + "Base"
+        getterName = "get" + name[0].upper() + name[1:] + "Base"
+        getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
+        annotate.injectMethod("base_getters", getterName, getter)
+        annotate.injectProperty("base_getters", propertyName, getter)
+
+def rel_getters(*names):
+    for name in names:
+        templatePropertyName = name + "FileTemplate"
+        propertyName = name + "RelPath"
+        getterName = "get" + name[0].upper() + name[1:] + "RelPath"
+        getter = _relGetterFactory(getterName, templatePropertyName)        
+        annotate.injectMethod("rel_getters", getterName, getter)
+        annotate.injectProperty("rel_getters", propertyName, getter)
+
+def dir_getters(*names):
+    for name in names:
+        relPropertyName = name + "RelPath"
+        basePropertyName = name + "Base"
+        propertyName = name + "Dir"
+        getterName = "get" + name[0].upper() + name[1:] + "Dir"
+        getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
+        annotate.injectMethod("dir_getters", getterName, getter)
+        annotate.injectProperty("dir_getters", propertyName, getter)
+
+def file_getters(*names):
+    for name in names:
+        relPropertyName = name + "RelPath"
+        propertyName = name + "File"
+        getterName = "get" + name[0].upper() + name[1:] + "File"
+        getter = _fileGetterFactory(getterName, relPropertyName)        
+        annotate.injectMethod("file_getters", getterName, getter)
+        annotate.injectProperty("file_getters", propertyName, getter)
+
+def path_getters(*names):
+    for name in names:
+        dirPropertyName = name + "Dir"
+        filePropertyName = name + "File"
+        propertyName = name + "Path"
+        getterName = "get" + name[0].upper() + name[1:] + "Path"
+        getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
+        annotate.injectMethod("path_getters", getterName, getter)
+        annotate.injectProperty("path_getters", propertyName, getter)
 
 
 class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
@@ -184,21 +227,20 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     implements(ITargetContext)
     
-    base.genStoreProxy("getName")
-    base.genParentOverridingStoreProxy("getLinkFileTemplate")
-    base.genParentOverridingStoreProxy("getLinkTemplate")
-    base.genParentOverridingStoreProxy("getLinkURLPrefix")
-    base.genParentOverridingStoreProxy("getEnablePostprocessing")
-    base.genParentOverridingStoreProxy("getEnableLinkFiles")
-    base.genParentOverridingStoreProxy("getPostprocessCommand")
-    base.genParentOverridingStoreProxy("getPostprocessTimeout")
+    base.store_proxy("name")
+    base.store_parent_proxy("linkFileTemplate")
+    base.store_parent_proxy("linkTemplate")
+    base.store_parent_proxy("linkURLPrefix")
+    base.store_parent_proxy("enablePostprocessing")
+    base.store_parent_proxy("enableLinkFiles")
+    base.store_parent_proxy("postprocessCommand")
+    base.store_parent_proxy("postprocessTimeout")
 
-    genBaseGetter("Output")
-    genBaseGetter("Link")
-    genBaseGetter("Work")
-    genGetters("Output")
-    genGetters("Link")
-    
+    base_getters("output", "link", "work")
+    rel_getters("output", "link")
+    dir_getters("output", "link")
+    file_getters("output", "link")
+    path_getters("output", "link")
     
     def __init__(self, profCtx, targStore):
         base.BaseStoreContext.__init__(self, profCtx, targStore)
@@ -229,6 +271,7 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         confStore = self.store.getConfigStore()
         return config.ConfigContextFactory(self, confStore)
 
+    @base.property_getter("outputFileTemplate")
     def getOutputFileTemplate(self):
         tmpl = self.store.getOutputFileTemplate()
         if tmpl: return tmpl
@@ -238,15 +281,19 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         else:
             return self.parent.getOutputMediaTemplate()
 
-        
-    def _getSubdir(self):
+    @base.property_getter("subdir")
+    def getSubdir(self):
         return self._variables["targetSubdir"]
     
+    @base.property_getter("extension")
     def getExtension(self):
         ext = self.store.getExtension()
         if ext :
             return '.' + ext.lstrip('.')
         return ""
+    
+    
+    # Private Methodes ## 
     
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.

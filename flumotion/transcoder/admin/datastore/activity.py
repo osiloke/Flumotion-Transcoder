@@ -38,7 +38,7 @@ class IActivityStore(base.IBaseStore):
     def getType(self):
         pass
     
-    def getSubType(self):
+    def getSubtype(self):
         pass
     
     def getStartTime(self):
@@ -136,39 +136,37 @@ class IMailActivityStore(INotificationActivityStore):
 
 
 
-## Method Generators ##
+## Getter Factories ##
 
-def genDataGetter(getterName, dataKey, default=None):
+def _setterFactory(propertyName, fieldName, setterName):
+    def setter(self, value):
+        assert not self._deleted
+        setattr(self._data, fieldName, utils.deepCopy(value))
+        self._touche()
+    return setter
+
+def _dataGetterFactory(propertyName, fieldName, getterName, default=None):
     def getter(self):
-        result = self._data.data.get(dataKey, default)
+        result = self._data.data.get(fieldName, default)
         return utils.deepCopy(result)
-    annotate.addAnnotationMethod("genDataGetter", getterName, getter)
+    return getter
 
-def genSetter(setterName, propertyName):
+def _dataSetterFactory(propertyName, fieldName, setterName):
     def setter(self, value):
         assert not self._deleted
-        setattr(self._data, propertyName, utils.deepCopy(value))
+        self._data.data[fieldName] = utils.deepCopy(value)
         self._touche()
-    annotate.addAnnotationMethod("genSetter", setterName, setter)
-
-def genDataSetter(setterName, dataKey):
-    def setter(self, value):
-        assert not self._deleted
-        self._data.data[dataKey] = utils.deepCopy(value)
-        self._touche()
-    annotate.addAnnotationMethod("genDataSetter", setterName, setter)    
+    return setter
 
 
 class ActivityStore(base.DataStore, log.LoggerProxy):
     implements(IActivityStore)
 
-    base.genGetter("getType",       "type")
-    base.genGetter("getSubType",    "subtype")
-    base.genGetter("getStartTime",  "startTime")
-    base.genGetter("getLastTime",   "lastTime")
-    base.genGetter("getState",      "state")
-    
-    genSetter("setState", "state")    
+    base.readonly_proxy("type")
+    base.readonly_proxy("subtype")
+    base.readonly_proxy("startTime")
+    base.readonly_proxy("lastTime")
+    base.readwrite_proxy("state", setterFactory=_setterFactory)
     
     def __init__(self, logger, stateStore, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
@@ -226,7 +224,7 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
 class TranscodingActivityStore(ActivityStore):
     implements(ITranscodingActivityStore)
     
-    base.genGetter("getInputRelPath", "inputRelPath")
+    base.readonly_proxy("inputRelPath")
     
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -260,16 +258,11 @@ class TranscodingActivityStore(ActivityStore):
 class NotificationActivityStore(ActivityStore):
     implements(INotificationActivityStore)
     
-    base.genGetter("getTrigger",    "trigger")
-    base.genGetter("getTimeout",    "timeout")
-    base.genGetter("getRetryCount", "retryCount")
-    base.genGetter("getRetryMax",   "retryMax")
-    base.genGetter("getRetrySleep", "retrySleep")
-    
-    genSetter("setTimeout",    "timeout")
-    genSetter("setRetryCount", "retryCount")
-    genSetter("setRetryMax",   "retryMax")
-    genSetter("setRetrySleep", "retrySleep")
+    base.readonly_proxy("trigger")
+    base.readwrite_proxy("timeout",    setterFactory=_setterFactory)
+    base.readwrite_proxy("retryCount", setterFactory=_setterFactory)
+    base.readwrite_proxy("retryMax",   setterFactory=_setterFactory)
+    base.readwrite_proxy("retrySleep", setterFactory=_setterFactory)
     
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -298,9 +291,9 @@ class NotificationActivityStore(ActivityStore):
 class HTTPActivityStore(NotificationActivityStore):
     implements(IHTTPActivityStore)
 
-    genDataGetter("getRequestURL", "url")
-    
-    genDataSetter("setRequestURL", "url")
+    base.readwrite_proxy("requestURL",
+                         getterFactory=_dataGetterFactory,
+                         setterFactory=_dataSetterFactory)
 
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -309,13 +302,15 @@ class HTTPActivityStore(NotificationActivityStore):
 class MailActivityStore(NotificationActivityStore):
     implements(IMailActivityStore)
 
-    genDataGetter("getSenderAddr", "sender")
-    genDataGetter("getSubject",    "subject")
-    genDataGetter("getBody",       "body")
-    
-    genDataSetter("setSenderAddr", "sender")
-    genDataSetter("setSubject",    "subject")
-    genDataSetter("setBody",       "body")
+    base.readwrite_proxy("senderAddr",
+                         getterFactory=_dataGetterFactory,
+                         setterFactory=_dataSetterFactory)
+    base.readwrite_proxy("subject",
+                         getterFactory=_dataGetterFactory,
+                         setterFactory=_dataSetterFactory)
+    base.readwrite_proxy("body",
+                         getterFactory=_dataGetterFactory,
+                         setterFactory=_dataSetterFactory)
 
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -333,6 +328,8 @@ class MailActivityStore(NotificationActivityStore):
         """
         data = ", ".join([e.strip() for e in recipients])
         self._data.data["recipients"] = data
+
+    recipientsAddr = property(getRecipientsAddr, setRecipientsAddr)
 
 
 _activityLookup = {ActivityTypeEnum.transcoding: 

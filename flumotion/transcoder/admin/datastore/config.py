@@ -121,8 +121,7 @@ class IThumbnailsConfigStore(IConfigStore):
 class ConfigStore(base.DataStore):
     implements(IConfigStore)
     
-    base.genGetter("getType",       "type")
-    base.genGetter("getIdentifier", "identifier")
+    base.readonly_proxy("type")
 
     def __init__(self, targStore, data):
         label = "%s config" % targStore.label
@@ -158,10 +157,10 @@ class AudioConfigStore(ConfigStore):
     
     implements(IAudioConfigStore)
     
-    base.genGetter("getMuxer",         "muxer")
-    base.genGetter("getAudioEncoder",  "audioEncoder")
-    base.genGetter("getAudioRate",     "audioRate")
-    base.genGetter("getAudioChannels", "audioChannels")
+    base.readonly_proxy("muxer")
+    base.readonly_proxy("audioEncoder")
+    base.readonly_proxy("audioRate")
+    base.readonly_proxy("audioChannels")
 
     def __init__(self, targStore, data):
         super(AudioConfigStore, self).__init__(targStore, data)
@@ -183,17 +182,17 @@ class VideoConfigStore(ConfigStore):
     
     implements(IVideoConfigStore)
     
-    base.genGetter("getMuxer",               "muxer")
-    base.genGetter("getVideoEncoder",        "videoEncoder")
-    base.genGetter("getVideoWidth",          "videoWidth")
-    base.genGetter("getVideoHeight",         "videoHeight")
-    base.genGetter("getVideoMaxWidth",       "videoMaxWidth")
-    base.genGetter("getVideoMaxHeight",      "videoMaxHeight")
-    base.genGetter("getVideoWidthMultiple",  "videoWidthMultiple")
-    base.genGetter("getVideoHeightMultiple", "videoHeightMultiple")
-    base.genGetter("getVideoPAR",            "videoPAR")
-    base.genGetter("getVideoFramerate",      "videoFramerate")
-    base.genGetter("getVideoScaleMethod",    "videoScaleMethod")
+    base.readonly_proxy("muxer")
+    base.readonly_proxy("videoEncoder")
+    base.readonly_proxy("videoWidth")
+    base.readonly_proxy("videoHeight")
+    base.readonly_proxy("videoMaxWidth")
+    base.readonly_proxy("videoMaxHeight")
+    base.readonly_proxy("videoWidthMultiple")
+    base.readonly_proxy("videoHeightMultiple")
+    base.readonly_proxy("videoPAR")
+    base.readonly_proxy("videoFramerate")
+    base.readonly_proxy("videoScaleMethod")
     
     def __init__(self, targStore, data):
         super(VideoConfigStore, self).__init__(targStore, data)
@@ -202,7 +201,7 @@ class VideoConfigStore(ConfigStore):
 class AudioVideoConfigStore(AudioConfigStore, VideoConfigStore):
     implements(IAudioVideoConfigStore)
     
-    base.genGetter("getTolerance", "tolerance")
+    base.readonly_proxy("tolerance")
     
     def __init__(self, targStore, data):
         super(AudioVideoConfigStore, self).__init__(targStore, data)
@@ -219,13 +218,13 @@ class ThumbnailsConfigStore(ConfigStore):
     
     implements(IThumbnailsConfigStore)
     
-    base.genGetter("getThumbsWidth",  "thumbsWidth")
-    base.genGetter("getThumbsHeight", "thumbsHeight")
-    base.genGetter("getPeriodValue",  "periodValue")
-    base.genGetter("getPeriodUnit",   "periodUnit")
-    base.genGetter("getMaxCount",     "maxCount")
-    base.genGetter("getEnsureOne",    "ensureOne")
-    base.genGetter("getFormat",       "format")
+    base.readonly_proxy("thumbsWidth")
+    base.readonly_proxy("thumbsHeight")
+    base.readonly_proxy("periodValue")
+    base.readonly_proxy("periodUnit")
+    base.readonly_proxy("maxCount")
+    base.readonly_proxy("ensureOne")
+    base.readonly_proxy("format")
     
     def __init__(self, targStore, data):
         super(ThumbnailsConfigStore, self).__init__(targStore, data)

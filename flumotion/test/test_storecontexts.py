@@ -32,14 +32,19 @@ class Dummy(object):
     def __getitem__(self, name):
         return self._items[name]
     def __getattr__(self, attr):
-        if not  (attr.startswith("get") or  attr.startswith("set")):
-            raise AttributeError(attr)
-        name = attr[3:]
-        if not  name in self._values:
-            raise AttributeError(attr)
-        if attr[:3] == "get":
+        if attr.startswith("get"):
+            name = attr[3].lower() + attr[4:]
+            if name not in self._values:
+                raise AttributeError(attr)
             return lambda : self._values[name]
-        return lambda val: self._values.__setitem__(name, val)
+        if attr.startswith("set"):
+            name = attr[3].lower() + attr[4:]
+            if name not in self._values:
+                raise AttributeError(attr)
+            return lambda val: self._values.__setitem__(name, val)
+        if attr not in self._values:
+            raise AttributeError(attr)
+        return self._values[attr]
     def getCustomerStoreByName(self, name):
         return self._items[name]
     def getProfileStoreByName(self, name):
@@ -52,46 +57,55 @@ class TestTranscoderContext(unittest.TestCase):
     def getContext(self, custName, custSubdir, profName, profSubdir, 
                       targName, targSubdir, targExt):
         target = Dummy({}, 
-                       {"Name": targName,
-                        "Subdir": targSubdir,
-                        "Extension": targExt,
-                        "OutputDir": None,
-                        "LinkDir": None,
-                        "OutputFileTemplate": 
+                       {"identifier": targName, 
+                        "label": targName,
+                        "name": targName,
+                        "subdir": targSubdir,
+                        "extension": targExt,
+                        "outputDir": None,
+                        "linkDir": None,
+                        "outputFileTemplate": 
                             adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE,
-                        "LinkFileTemplate": 
+                        "linkFileTemplate": 
                              adminconsts.DEFAULT_LINK_FILE_TEMPLATE})
         profile = Dummy({targName: target},
-                        {"Name": profName,
-                         "Subdir": profSubdir,
-                         "InputDir": None,
-                         "OutputDir": None,
-                         "FailedDir": None,
-                         "DoneDir": None,
-                         "LinkDir": None,
-                         "WorkDir": None,
-                         "ConfigDir": None,
-                         "TempRepDir": None,
-                         "FailedRepDir": None,
-                         "DoneRepDir": None,
-                         "ConfigFileTemplate": 
+                        {"identifier": profName,
+                         "label": profName,
+                         "name": profName,
+                         "subdir": profSubdir,
+                         "inputDir": None,
+                         "outputDir": None,
+                         "failedDir": None,
+                         "doneDir": None,
+                         "linkDir": None,
+                         "workDir": None,
+                         "configDir": None,
+                         "tempRepDir": None,
+                         "failedRepDir": None,
+                         "doneRepDir": None,
+                         "configFileTemplate": 
                              adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE,
-                         "ReportFileTemplate": 
+                         "reportFileTemplate": 
                              adminconsts.DEFAULT_REPORT_FILE_TEMPLATE})
         customer = Dummy({profName: profile},
-                         {"Name": custName,
-                          "Subdir": custSubdir,
-                          "InputDir": None,
-                          "OutputDir": None,
-                          "FailedDir": None,
-                          "DoneDir": None,
-                          "LinkDir": None,
-                          "WorkDir": None,
-                          "ConfigDir": None,
-                          "TempRepDir": None,
-                          "FailedRepDir": None,
-                          "DoneRepDir": None})
-        return store.StoreContext(None, Dummy({custName: customer}, {}))
+                         {"identifier": custName,
+                          "label": custName,
+                          "name": custName,
+                          "subdir": custSubdir,
+                          "inputDir": None,
+                          "outputDir": None,
+                          "failedDir": None,
+                          "doneDir": None,
+                          "linkDir": None,
+                          "workDir": None,
+                          "configDir": None,
+                          "tempRepDir": None,
+                          "failedRepDir": None,
+                          "doneRepDir": None})
+        return store.StoreContext(None, 
+                                  Dummy({custName: customer},
+                                        {"identifier": "dummy",
+                                         "label": "dummy"}))
 
 
     def testCustomerContext(self):

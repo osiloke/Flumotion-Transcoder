@@ -193,31 +193,31 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     implements(ICustomerContext)
     
-    base.genStoreProxy("getName")
-    base.genStoreProxy("getCustomerPriority",
-                       adminconsts.DEFAULT_CUSTOMER_PRIORITY)
-    base.genStoreProxy("getPreprocessCommand")
-    base.genStoreProxy("getPostprocessCommand")
-    base.genStoreProxy("getEnablePostprocessing")
-    base.genStoreProxy("getEnablePreprocessing")
-    base.genStoreProxy("getEnableLinkFiles")
-    base.genParentOverridingStoreProxy("getOutputMediaTemplate")
-    base.genParentOverridingStoreProxy("getOutputThumbTemplate")
-    base.genParentOverridingStoreProxy("getLinkFileTemplate")
-    base.genParentOverridingStoreProxy("getConfigFileTemplate")
-    base.genParentOverridingStoreProxy("getReportFileTemplate")
-    base.genParentOverridingStoreProxy("getLinkTemplate")
-    base.genParentOverridingStoreProxy("getLinkURLPrefix")
-    base.genParentOverridingStoreProxy("getTranscodingPriority")
-    base.genParentOverridingStoreProxy("getProcessPriority")
-    base.genParentOverridingStoreProxy("getPreprocessTimeout")
-    base.genParentOverridingStoreProxy("getPostprocessTimeout")
-    base.genParentOverridingStoreProxy("getTranscodingTimeout")
-    base.genParentOverridingStoreProxy("getMonitoringPeriod")
-    base.genParentOverridingStoreProxy("getAccessForceUser")
-    base.genParentOverridingStoreProxy("getAccessForceGroup")
-    base.genParentOverridingStoreProxy("getAccessForceDirMode")
-    base.genParentOverridingStoreProxy("getAccessForceFileMode")
+    base.store_proxy("name")
+    base.store_proxy("customerPriority",
+                     default=adminconsts.DEFAULT_CUSTOMER_PRIORITY)
+    base.store_proxy("preprocessCommand")
+    base.store_proxy("postprocessCommand")
+    base.store_proxy("enablePostprocessing")
+    base.store_proxy("enablePreprocessing")
+    base.store_proxy("enableLinkFiles")
+    base.store_parent_proxy("outputMediaTemplate")
+    base.store_parent_proxy("outputThumbTemplate")
+    base.store_parent_proxy("linkFileTemplate")
+    base.store_parent_proxy("configFileTemplate")
+    base.store_parent_proxy("reportFileTemplate")
+    base.store_parent_proxy("linkTemplate")
+    base.store_parent_proxy("linkURLPrefix")
+    base.store_parent_proxy("transcodingPriority")
+    base.store_parent_proxy("processPriority")
+    base.store_parent_proxy("preprocessTimeout")
+    base.store_parent_proxy("postprocessTimeout")
+    base.store_parent_proxy("transcodingTimeout")
+    base.store_parent_proxy("monitoringPeriod")
+    base.store_parent_proxy("accessForceUser")
+    base.store_parent_proxy("accessForceGroup")
+    base.store_parent_proxy("accessForceDirMode")
+    base.store_parent_proxy("accessForceFileMode")
     
     def __init__(self, storeCtx, custStore):
         base.BaseStoreContext.__init__(self, storeCtx, custStore)
@@ -252,7 +252,8 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def iterProfileContexts(self, input):
         profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.ProfileContext, profIter, input)
-        
+    
+    @base.property_getter("pathAttributes")
     def getPathAttributes(self):
         forceUser = self.getAccessForceUser()
         forceGroup = self.getAccessForceGroup()
@@ -260,8 +261,14 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         forceFileMode = self.getAccessForceFileMode()
         return fileutils.PathAttributes(forceUser, forceGroup,
                                         forceDirMode, forceFileMode)
+
+    @base.property_getter("monitorLabel")
+    def getMonitorLabel(self):
+        template = self.getAdminContext().config.monitorLabelTemplate
+        return self._variables.substitute(template)
     
-    def _getSubdir(self):
+    @base.property_getter("subdir")
+    def getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -269,7 +276,70 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
             return fileutils.cleanupPath(subdir)
         subdir = fileutils.str2filename(self.store.getName())
         return fileutils.ensureDirPath(subdir)
-        
+            
+    @base.property_getter("inputBase")
+    def getInputBase(self):
+        folder = self.store.getInputDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_INPUT_DIR)
+
+    @base.property_getter("outputBase")
+    def getOutputBase(self):
+        folder = self.store.getOutputDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_OUTPUT_DIR)
+    
+    @base.property_getter("failedBase")
+    def getFailedBase(self):
+        folder = self.store.getFailedDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_FAILED_DIR)
+    
+    @base.property_getter("doneBase")
+    def getDoneBase(self):
+        folder = self.store.getDoneDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_DONE_DIR)
+    
+    @base.property_getter("linkBase")
+    def getLinkBase(self):
+        folder = self.store.getLinkDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_LINK_DIR)
+    
+    @base.property_getter("workBase")
+    def getWorkBase(self):
+        folder = self.store.getWorkDir()
+        return self._getDir(constants.TEMP_ROOT, folder, 
+                             adminconsts.DEFAULT_WORK_DIR)
+    
+    @base.property_getter("configBase")
+    def getConfigBase(self):
+        folder = self.store.getConfigDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_CONFIG_DIR)
+    
+    @base.property_getter("tempRepBase")
+    def getTempRepBase(self):
+        folder = self.store.getTempRepDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_TEMPREP_DIR)
+
+    @base.property_getter("failedRepBase")
+    def getFailedRepBase(self):
+        folder = self.store.getFailedRepDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                            adminconsts.DEFAULT_FAILEDREP_DIR)
+    
+    @base.property_getter("doneRepBase")
+    def getDoneRepBase(self):
+        folder = self.store.getDoneRepDir()
+        return self._getDir(constants.DEFAULT_ROOT, folder, 
+                             adminconsts.DEFAULT_DONEREP_DIR)
+    
+
+    ## Private Methodes ##
+    
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
         return folder
@@ -280,62 +350,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
             folder = fileutils.ensureAbsDirPath(folder)
             folder = fileutils.cleanupPath(folder)
             return virtualpath.VirtualPath(folder, rootName)
-        subdir = self._getSubdir()
+        subdir = self.getSubdir()
         folder = fileutils.ensureAbsDirPath(template % subdir)
         folder = fileutils.cleanupPath(folder)
         return virtualpath.VirtualPath(folder, rootName)
-        
-    def getInputBase(self):
-        folder = self.store.getInputDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_INPUT_DIR)
-
-    def getOutputBase(self):
-        folder = self.store.getOutputDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_OUTPUT_DIR)
-    
-    def getFailedBase(self):
-        folder = self.store.getFailedDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_FAILED_DIR)
-    
-    def getDoneBase(self):
-        folder = self.store.getDoneDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_DONE_DIR)
-    
-    def getLinkBase(self):
-        folder = self.store.getLinkDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_LINK_DIR)
-    
-    def getWorkBase(self):
-        folder = self.store.getWorkDir()
-        return self._getDir(constants.TEMP_ROOT, folder, 
-                            adminconsts.DEFAULT_WORK_DIR)
-    
-    def getConfigBase(self):
-        folder = self.store.getConfigDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_CONFIG_DIR)
-    
-    def getTempRepBase(self):
-        folder = self.store.getTempRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_TEMPREP_DIR)
-
-    def getFailedRepBase(self):
-        folder = self.store.getFailedRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_FAILEDREP_DIR)
-    
-    def getDoneRepBase(self):
-        folder = self.store.getDoneRepDir()
-        return self._getDir(constants.DEFAULT_ROOT, folder, 
-                            adminconsts.DEFAULT_DONEREP_DIR)
-
-    def getMonitorLabel(self):
-        template = self.getAdminContext().config.monitorLabelTemplate
-        return self._variables.substitute(template)
-    

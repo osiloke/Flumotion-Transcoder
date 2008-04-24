@@ -116,30 +116,30 @@ class StoreLogger(log.Loggable):
 class AdminStore(base.NotifyStore):
     implements(IAdminStore)
     
-    base.genGetter("getOutputMediaTemplate", "outputMediaTemplate")
-    base.genGetter("getOutputThumbTemplate", "outputThumbTemplate")
-    base.genGetter("getLinkFileTemplate", "linkFileTemplate")
-    base.genGetter("getConfigFileTemplate", "configFileTemplate")
-    base.genGetter("getReportFileTemplate", "reportFileTemplate")
-    base.genGetter("getLinkTemplate", "linkTemplate")
-    base.genGetter("getMonitoringPeriod", "monitoringPeriod")
-    base.genGetter("getAccessForceUser", "accessForceUser")
-    base.genGetter("getAccessForceGroup", "accessForceGroup")
-    base.genGetter("getAccessForceDirMode", "accessForceDirMode")
-    base.genGetter("getAccessForceFileMode", "accessForceFileMode")
-    base.genGetter("getProcessPriority", "processPriority")
-    base.genGetter("getTranscodingPriority", "transcodingPriority")
-    base.genGetter("getTranscodingTimeout", "transcodingTimeout")
-    base.genGetter("getPostprocessTimeout", "postprocessTimeout")
-    base.genGetter("getPreprocessTimeout", "preprocessTimeout")
-    base.genGetter("getMailSubjectTemplate", "mailSubjectTemplate")
-    base.genGetter("getMailBodyTemplate", "mailBodyTemplate")
-    base.genGetter("getMailTimeout", "mailTimeout")
-    base.genGetter("getMailRetryMax", "mailRetryMax")
-    base.genGetter("getMailRetrySleep", "mailRetrySleep")
-    base.genGetter("getHTTPRequestTimeout", "HTTPRequestTimeout")
-    base.genGetter("getHTTPRequestRetryMax", "HTTPRequestRetryMax")
-    base.genGetter("getHTTPRequestRetrySleep", "HTTPRequestRetrySleep")
+    base.readonly_proxy("outputMediaTemplate")
+    base.readonly_proxy("outputThumbTemplate")
+    base.readonly_proxy("linkFileTemplate")
+    base.readonly_proxy("configFileTemplate")
+    base.readonly_proxy("reportFileTemplate")
+    base.readonly_proxy("linkTemplate")
+    base.readonly_proxy("monitoringPeriod")
+    base.readonly_proxy("accessForceUser")
+    base.readonly_proxy("accessForceGroup")
+    base.readonly_proxy("accessForceDirMode")
+    base.readonly_proxy("accessForceFileMode")
+    base.readonly_proxy("processPriority")
+    base.readonly_proxy("transcodingPriority")
+    base.readonly_proxy("transcodingTimeout")
+    base.readonly_proxy("postprocessTimeout")
+    base.readonly_proxy("preprocessTimeout")
+    base.readonly_proxy("mailSubjectTemplate")
+    base.readonly_proxy("mailBodyTemplate")
+    base.readonly_proxy("mailTimeout")
+    base.readonly_proxy("mailRetryMax")
+    base.readonly_proxy("mailRetrySleep")
+    base.readonly_proxy("HTTPRequestTimeout")
+    base.readonly_proxy("HTTPRequestRetryMax")
+    base.readonly_proxy("HTTPRequestRetrySleep")
 
     def __init__(self, dataSource):
         identifier = "store.admin"
@@ -159,6 +159,9 @@ class AdminStore(base.NotifyStore):
     def getAdminStore(self):
         return self
     
+    def getStateStore(self):
+        return self._state
+
     def getCustomerStores(self):
         return self._customers.values()
     
@@ -173,10 +176,7 @@ class AdminStore(base.NotifyStore):
         
     def iterCustomerStores(self):
         self._customers.itervalues()
-    
-    def getStateStore(self):
-        return self._state
-    
+        
     
     ## Overridden Methods ##
 

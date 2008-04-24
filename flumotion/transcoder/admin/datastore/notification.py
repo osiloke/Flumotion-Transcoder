@@ -70,9 +70,8 @@ class IHTTPNotificationStore(INotificationStore):
 class NotificationStore(base.DataStore):
     implements(INotificationStore)
     
-    base.genGetter("getIdentifier", "identifier")
-    base.genGetter("getType",       "type")
-    base.genGetter("getTriggers",   "triggers")
+    base.readonly_proxy("type")
+    base.readonly_proxy("triggers")
     
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore, label=None):
@@ -98,13 +97,13 @@ class NotificationStore(base.DataStore):
 class MailNotificationStore(NotificationStore):
     implements(IMailNotificationStore)
     
-    base.genGetter("getAttachments", "attachments", set([]))
-    base.genGetter("getRecipients", "recipients", dict())
-    base.genGetter("getSubjectTemplate", "subjectTemplate")
-    base.genGetter("getBodyTemplate", "bodyTemplate")
-    base.genGetter("getTimeout", "timeout")
-    base.genGetter("getRetryMax", "retryMax")
-    base.genGetter("getRetrySleep", "retrySleep")
+    base.readonly_proxy("attachments", default=set([]))
+    base.readonly_proxy("recipients", default=dict())
+    base.readonly_proxy("subjectTemplate")
+    base.readonly_proxy("bodyTemplate")
+    base.readonly_proxy("timeout")
+    base.readonly_proxy("retryMax")
+    base.readonly_proxy("retrySleep")
     
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore):
@@ -117,10 +116,10 @@ class MailNotificationStore(NotificationStore):
 class HTTPNotificationStore(NotificationStore):
     implements(IHTTPNotificationStore)
     
-    base.genGetter("getRequestTemplate", "requestTemplate", set([]))
-    base.genGetter("getTimeout", "timeout")
-    base.genGetter("getRetryMax", "retryMax")
-    base.genGetter("getRetrySleep", "retrySleep")
+    base.readonly_proxy("requestTemplate", default=set([]))
+    base.readonly_proxy("timeout")
+    base.readonly_proxy("retryMax")
+    base.readonly_proxy("retrySleep")
     
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
         label = "HTTP Notification to %s" % data.requestTemplate

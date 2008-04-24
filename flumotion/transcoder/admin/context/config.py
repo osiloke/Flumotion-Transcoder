@@ -125,8 +125,7 @@ class ConfigContext(base.BaseStoreContext):
 
     implements(IConfigContext)
 
-    base.genStoreProxy("getType")
-    base.genStoreProxy("getIdentifier")
+    base.store_proxy("type")   
 
     def __init__(self, targCtx, confStore):
         base.BaseStoreContext.__init__(self, targCtx, confStore)
@@ -159,13 +158,13 @@ class ThumbnailsConfigContext(ConfigContext):
 
     implements(IThumbnailsConfigContext)
 
-    base.genStoreProxy("getThumbsWidth")
-    base.genStoreProxy("getThumbsHeight")
-    base.genStoreProxy("getPeriodValue")
-    base.genStoreProxy("getPeriodUnit")
-    base.genStoreProxy("getMaxCount")
-    base.genStoreProxy("getEnsureOne")
-    base.genStoreProxy("getFormat")
+    base.store_proxy("thumbsWidth")
+    base.store_proxy("thumbsHeight")
+    base.store_proxy("periodValue")
+    base.store_proxy("periodUnit")
+    base.store_proxy("maxCount")
+    base.store_proxy("ensureOne")
+    base.store_proxy("format")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -175,10 +174,10 @@ class AudioConfigContext(ConfigContext):
     
     implements(IAudioConfigContext)
     
-    base.genStoreProxy("getMuxer")
-    base.genStoreProxy("getAudioEncoder")
-    base.genStoreProxy("getAudioRate")
-    base.genStoreProxy("getAudioChannels")
+    base.store_proxy("muxer")
+    base.store_proxy("audioEncoder")
+    base.store_proxy("audioRate")
+    base.store_proxy("audioChannels")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -188,17 +187,17 @@ class VideoConfigContext(ConfigContext):
 
     implements(IVideoConfigContext)
 
-    base.genStoreProxy("getMuxer")
-    base.genStoreProxy("getVideoEncoder")
-    base.genStoreProxy("getVideoWidth")
-    base.genStoreProxy("getVideoHeight")
-    base.genStoreProxy("getVideoMaxWidth")
-    base.genStoreProxy("getVideoMaxHeight")
-    base.genStoreProxy("getVideoWidthMultiple")
-    base.genStoreProxy("getVideoHeightMultiple")
-    base.genStoreProxy("getVideoPAR")
-    base.genStoreProxy("getVideoFramerate")
-    base.genStoreProxy("getVideoScaleMethod")
+    base.store_proxy("muxer")
+    base.store_proxy("videoEncoder")
+    base.store_proxy("videoWidth")
+    base.store_proxy("videoHeight")
+    base.store_proxy("videoMaxWidth")
+    base.store_proxy("videoMaxHeight")
+    base.store_proxy("videoWidthMultiple")
+    base.store_proxy("videoHeightMultiple")
+    base.store_proxy("videoPAR")
+    base.store_proxy("videoFramerate")
+    base.store_proxy("videoScaleMethod")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -208,21 +207,21 @@ class AudioVideoConfigContext(ConfigContext):
 
     implements(IAudioVideoConfigContext)
 
-    base.genStoreProxy("getMuxer")
-    base.genStoreProxy("getAudioEncoder")
-    base.genStoreProxy("getAudioRate")
-    base.genStoreProxy("getAudioChannels")
-    base.genStoreProxy("getVideoEncoder")
-    base.genStoreProxy("getVideoWidth")
-    base.genStoreProxy("getVideoHeight")
-    base.genStoreProxy("getVideoMaxWidth")
-    base.genStoreProxy("getVideoMaxHeight")
-    base.genStoreProxy("getVideoWidthMultiple")
-    base.genStoreProxy("getVideoHeightMultiple")
-    base.genStoreProxy("getVideoPAR")
-    base.genStoreProxy("getVideoFramerate")
-    base.genStoreProxy("getVideoScaleMethod")
-    base.genStoreProxy("getTolerance")
+    base.store_proxy("muxer")
+    base.store_proxy("audioEncoder")
+    base.store_proxy("audioRate")
+    base.store_proxy("audioChannels")
+    base.store_proxy("videoEncoder")
+    base.store_proxy("videoWidth")
+    base.store_proxy("videoHeight")
+    base.store_proxy("videoMaxWidth")
+    base.store_proxy("videoMaxHeight")
+    base.store_proxy("videoWidthMultiple")
+    base.store_proxy("videoHeightMultiple")
+    base.store_proxy("videoPAR")
+    base.store_proxy("videoFramerate")
+    base.store_proxy("videoScaleMethod")
+    base.store_proxy("tolerance")
         
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)

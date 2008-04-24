@@ -218,52 +218,86 @@ class IProfileContext(IUnboundProfileContext):
     
     def getDoneRepFile(self):
         pass
-    
-    
 
-def genBaseGetter(name):
-    storeGetterName = "get%sDir" % name
-    baseGetterName = "get%sBase" % name
-    
+
+## Getter Factories ##
+
+def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
     def getter(self):
-        folder = getattr(self.store, storeGetterName)()
-        parent = getattr(self.parent, baseGetterName)()
+        parent = getattr(self.parent, basePropertyName)
+        folder = getattr(self.store, storePropertyName)
         if folder != None:
             value = self._expandDir(folder)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
             return virtualpath.VirtualPath(value, parent.getRoot())
-        return parent.append(self._getSubdir())
-    
-    annotate.addAnnotationMethod("genBaseGetter", baseGetterName, getter)
+        return parent.append(self.getSubdir())
+    return getter
 
-
-def genGetters(name):
-    dirGetterName = "get%sDir" % name
-    relGetterName = "get%sRelPath" % name
-    baseGetterName = "get%sBase" % name
-    pathGetterName = "get%sPath" % name
-    fileGetterName = "get%sFile" % name
-    
-    def dirGetter(self):
-        folder = getattr(self, baseGetterName)()
-        relPath = getattr(self, relGetterName)()
-        path, file, ext = fileutils.splitPath(relPath)
+def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
+    def getter(self):
+        folder = getattr(self, basePropertyName)
+        relPath = getattr(self, relPropertyName)
+        path = fileutils.splitPath(relPath)[0]
         return folder.append(path)
-    
-    def fileGetter(self):
-        relPath = getattr(self, relGetterName)()
-        path, file, ext = fileutils.splitPath(relPath)
+    return getter
+
+def _fileGetterFactory(getterName, relPropertyName):
+    def getter(self):
+        relPath = getattr(self, relPropertyName)
+        file, ext = fileutils.splitPath(relPath)[1:3]
         return file + ext
-    
-    def pathGetter(self):
-        folder = getattr(self, dirGetterName)()
-        return folder.append(getattr(self, fileGetterName)())
-    
-    annotate.addAnnotationMethod("genGetteres", fileGetterName, fileGetter)
-    annotate.addAnnotationMethod("genGetteres", pathGetterName, pathGetter)
-    annotate.addAnnotationMethod("genGetteres", dirGetterName, dirGetter)
-    
+    return getter
+
+def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
+    def getter(self):
+        folder = getattr(self, dirPropertyName)
+        file = getattr(self, filePropertyName)
+        return folder.append(file)
+    return getter
+
+
+## Class Annotations ##
+
+def base_getters(*names):
+    for name in names:
+        storePropertyName = name + "Dir"
+        basePropertyName = name + "Base"
+        propertyName = name + "Base"
+        getterName = "get" + name[0].upper() + name[1:] + "Base"
+        getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
+        annotate.injectMethod("base_getters", getterName, getter)
+        annotate.injectProperty("base_getters", propertyName, getter)
+
+def dir_getters(*names):
+    for name in names:
+        relPropertyName = name + "RelPath"
+        basePropertyName = name + "Base"
+        propertyName = name + "Dir"
+        getterName = "get" + name[0].upper() + name[1:] + "Dir"
+        getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
+        annotate.injectMethod("dir_getters", getterName, getter)
+        annotate.injectProperty("dir_getters", propertyName, getter)
+
+def file_getters(*names):
+    for name in names:
+        relPropertyName = name + "RelPath"
+        propertyName = name + "File"
+        getterName = "get" + name[0].upper() + name[1:] + "File"
+        getter = _fileGetterFactory(getterName, relPropertyName)        
+        annotate.injectMethod("file_getters", getterName, getter)
+        annotate.injectProperty("file_getters", propertyName, getter)
+
+def path_getters(*names):
+    for name in names:
+        dirPropertyName = name + "Dir"
+        filePropertyName = name + "File"
+        propertyName = name + "Path"
+        getterName = "get" + name[0].upper() + name[1:] + "Path"
+        getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
+        annotate.injectMethod("path_getters", getterName, getter)
+        annotate.injectProperty("path_getters", propertyName, getter)
+
 
 class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
@@ -293,42 +327,34 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
     
     implements(IUnboundProfileContext)
     
-    base.genStoreProxy("getName")
-    base.genParentOverridingStoreProxy("getOutputMediaTemplate")
-    base.genParentOverridingStoreProxy("getOutputThumbTemplate")
-    base.genParentOverridingStoreProxy("getLinkFileTemplate")
-    base.genParentOverridingStoreProxy("getConfigFileTemplate")
-    base.genParentOverridingStoreProxy("getReportFileTemplate")
-    base.genParentOverridingStoreProxy("getLinkTemplate")
-    base.genParentOverridingStoreProxy("getLinkURLPrefix")
-    base.genParentOverridingStoreProxy("getEnablePostprocessing")
-    base.genParentOverridingStoreProxy("getEnablePreprocessing")
-    base.genParentOverridingStoreProxy("getEnableLinkFiles")
-    base.genParentOverridingStoreProxy("getTranscodingPriority")
-    base.genParentOverridingStoreProxy("getProcessPriority")
-    base.genParentOverridingStoreProxy("getPreprocessCommand")
-    base.genParentOverridingStoreProxy("getPostprocessCommand")
-    base.genParentOverridingStoreProxy("getPreprocessTimeout")
-    base.genParentOverridingStoreProxy("getPostprocessTimeout")
-    base.genParentOverridingStoreProxy("getTranscodingTimeout")
-    base.genParentOverridingStoreProxy("getMonitoringPeriod")
+    base.store_proxy("name")
+    base.store_parent_proxy("outputMediaTemplate")
+    base.store_parent_proxy("outputThumbTemplate")
+    base.store_parent_proxy("linkFileTemplate")
+    base.store_parent_proxy("configFileTemplate")
+    base.store_parent_proxy("reportFileTemplate")
+    base.store_parent_proxy("linkTemplate")
+    base.store_parent_proxy("linkURLPrefix")
+    base.store_parent_proxy("enablePostprocessing")
+    base.store_parent_proxy("enablePreprocessing")
+    base.store_parent_proxy("enableLinkFiles")
+    base.store_parent_proxy("transcodingPriority")
+    base.store_parent_proxy("processPriority")
+    base.store_parent_proxy("preprocessCommand")
+    base.store_parent_proxy("postprocessCommand")
+    base.store_parent_proxy("preprocessTimeout")
+    base.store_parent_proxy("postprocessTimeout")
+    base.store_parent_proxy("transcodingTimeout")
+    base.store_parent_proxy("monitoringPeriod")
 
-    genBaseGetter("Output")
-    genBaseGetter("Link")
-    genBaseGetter("Work")
-    genBaseGetter("Input")
-    genBaseGetter("Failed")
-    genBaseGetter("Done")
-    genBaseGetter("Config")
-    genBaseGetter("TempRep")
-    genBaseGetter("FailedRep")
-    genBaseGetter("DoneRep")
+    base_getters("output", "link", "work", "input", "failed", "done",
+                 "config", "tempRep", "failedRep", "doneRep")
 
     def __init__(self, custCtx, profStore, identifier=None):
         if identifier is None:
             identifier = "%s.%s" % (custCtx.identifier, profStore.identifier)
         base.BaseStoreContext.__init__(self, custCtx, profStore, identifier=identifier)
-        self._variables.addVar("profileSubdir", self._getSubdir())
+        self._variables.addVar("profileSubdir", self.getSubdir())
         self._variables.addVar("profileName", self.getName())
 
     def getAdminContext(self):
@@ -343,7 +369,8 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
     def isBound(self):
         return False
 
-    def _getSubdir(self):
+    @base.property_getter("subdir")
+    def getSubdir(self):
         subdir = self.store.getSubdir()
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -351,6 +378,9 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
             return fileutils.cleanupPath(subdir)
         subdir = fileutils.str2filename(self.getName())
         return fileutils.ensureDirPath(subdir)
+
+
+    ## Private Methodes ##
 
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
@@ -411,13 +441,9 @@ class ProfileContext(UnboundProfileContext):
     
     implements(IProfileContext)
     
-    genGetters("Input")
-    genGetters("Failed")
-    genGetters("Done")
-    genGetters("Config")
-    genGetters("TempRep")
-    genGetters("FailedRep")
-    genGetters("DoneRep")
+    dir_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
+    file_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
+    path_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
     
     def __init__(self, custCtx, profStore, inputAbstractPath):
         postfix = inputAbstractPath.strip('/')
@@ -441,39 +467,48 @@ class ProfileContext(UnboundProfileContext):
         targIter = self.store.iterTargetStores()
         return base.LazyContextIterator(self, target.TargetContext, targIter)
 
+    @base.property_getter("transcoderLabel")
+    def getTranscoderLabel(self):
+        tmpl = self.getAdminContext().config.transcoderLabelTemplate
+        return self._variables.substitute(tmpl)
+
+    @base.property_getter("activityLabel")
+    def getActivityLabel(self):
+        tmpl = self.getAdminContext().config.activityLabelTemplate
+        return self._variables.substitute(tmpl)
+
+    @base.property_getter("inputRelPath")
     def getInputRelPath(self):
         return self._variables["sourcePath"]
     
+    @base.property_getter("failedRelPath")
     def getFailedRelPath(self):
         return self._variables["sourcePath"]
     
+    @base.property_getter("doneRelPath")
     def getDoneRelPath(self):
         return self._variables["sourcePath"]
     
+    @base.property_getter("configRelPath")
     def getConfigRelPath(self):
         path = self._variables.substitute(self.getConfigFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
+    @base.property_getter("tempRepRelPath")
     def getTempRepRelPath(self):
         path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
 
+    @base.property_getter("failedRepRelPath")
     def getFailedRepRelPath(self):
         path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
+    @base.property_getter("doneRepRelPath")
     def getDoneRepRelPath(self):
         path = self._variables.substitute(self.getReportFileTemplate())
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
-    
-    def getTranscoderLabel(self):
-        tmpl = self.getAdminContext().config.transcoderLabelTemplate
-        return self._variables.substitute(tmpl)
-
-    def getActivityLabel(self):
-        tmpl = self.getAdminContext().config.activityLabelTemplate
-        return self._variables.substitute(tmpl)
