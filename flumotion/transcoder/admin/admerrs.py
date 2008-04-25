@@ -79,4 +79,4 @@ class DocumentError(errors.TranscoderError):
     A documetn related error.
     """
     def __init__(self, *args, **kwargs):
-        TranscoderError.__init__(self, *args, **kwargs)
+        errors.TranscoderError.__init__(self, *args, **kwargs)

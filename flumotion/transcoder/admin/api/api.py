@@ -57,16 +57,14 @@ class Medium(mediums.ServerMedium, annotate.Annotable):
       
 
 def registerMedium(mediumIface, objectIface):
-    annotate.addClassAnnotation(0, "registerMedium", "_registerMedium",
-                                mediumIface, objectIface)
+    annotate.injectClassCallback("registerMedium", "_registerMedium",
+                                 mediumIface, objectIface)
 
 
 def remote(prefix=None):
     def decorator(method):
         methodName = (prefix or _DEFAULT_PREFIX) + method.__name__
-        annotate.addMethodAnnotation(0, "remote",
-                                     method, "_addRemote",
-                                     methodName, method)
+        annotate.injectClassCallback("remote", "_addRemote", methodName, method)
         return method
     return decorator
 

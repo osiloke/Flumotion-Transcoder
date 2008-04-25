@@ -64,8 +64,10 @@ def store_proxy(propertyName, storePropertyName=None, getterName=None, default=N
             return default
         return value
     
-    annotate.injectMethod("store_proxy", getterName, getter)
-    annotate.injectProperty("store_proxy", propertyName, getter)
+    getter.__name__ = getterName
+    annotate.injectAttribute("store_proxy", getterName, getter)
+    prop = property(getter)
+    annotate.injectAttribute("store_proxy", propertyName, prop)
 
 def store_parent_proxy(propertyName, parentPropertyName=None,
                        storePropertyName=None, getterName=None):
@@ -84,8 +86,10 @@ def store_parent_proxy(propertyName, parentPropertyName=None,
                                  "parent not found" % (propertyName, self))
         return getattr(self.parent, parentPropertyName)
     
-    annotate.injectMethod("store_parent_proxy", getterName, getter)
-    annotate.injectProperty("store_parent_proxy", propertyName, getter)
+    getter.__name__ = getterName
+    annotate.injectAttribute("store_parent_proxy", getterName, getter)
+    prop = property(getter)
+    annotate.injectAttribute("store_parent_proxy", propertyName, prop)
 
 def store_admin_proxy(propertyName, adminPropertyName=None,
                       storePropertyName=None, getterName=None):
@@ -105,12 +109,15 @@ def store_admin_proxy(propertyName, adminPropertyName=None,
                                  "store context not found" % (propertyName, self))
         return getattr(storeCtx, adminPropertyName)
     
-    annotate.injectMethod("store_admin_proxy", getterName, getter)
-    annotate.injectProperty("store_admin_proxy", propertyName, getter)
+    getter.__name__ = getterName
+    annotate.injectAttribute("store_admin_proxy", getterName, getter)
+    prop = property(getter)
+    annotate.injectAttribute("store_admin_proxy", propertyName, prop)
 
 def property_getter(propertyName):
     def decorator(func):
-        annotate.injectProperty("property_getter", propertyName, func)
+        prop = property(func)
+        annotate.injectAttribute("property_getter", propertyName, prop)
         return func
     return decorator
 
@@ -126,7 +133,7 @@ class BaseContext(object):
         raise NotImplementedError()
     
 
-class BaseStoreContext(BaseContext):
+class BaseStoreContext(BaseContext, annotate.Annotable):
     implements(IBaseStoreContext)
     
     def __init__(self, parent, store, identifier=None, label=None):

@@ -232,6 +232,7 @@ def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
             value = fileutils.cleanupPath(value)
             return virtualpath.VirtualPath(value, parent.getRoot())
         return parent.append(self.subdir)
+    getter.__name__ = getterName
     return getter
 
 def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
@@ -240,6 +241,7 @@ def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
         relPath = getattr(self, relPropertyName)
         path = fileutils.splitPath(relPath)[0]
         return folder.append(path)
+    getter.__name__ = getterName
     return getter
 
 def _fileGetterFactory(getterName, relPropertyName):
@@ -247,6 +249,7 @@ def _fileGetterFactory(getterName, relPropertyName):
         relPath = getattr(self, relPropertyName)
         file, ext = fileutils.splitPath(relPath)[1:3]
         return file + ext
+    getter.__name__ = getterName
     return getter
 
 def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
@@ -254,6 +257,7 @@ def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
         folder = getattr(self, dirPropertyName)
         file = getattr(self, filePropertyName)
         return folder.append(file)
+    getter.__name__ = getterName
     return getter
 
 
@@ -266,8 +270,9 @@ def base_getters(*names):
         propertyName = name + "Base"
         getterName = "get" + name[0].upper() + name[1:] + "Base"
         getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
-        annotate.injectMethod("base_getters", getterName, getter)
-        annotate.injectProperty("base_getters", propertyName, getter)
+        annotate.injectAttribute("base_getters", getterName, getter)
+        prop = property(getter)
+        annotate.injectAttribute("base_getters", propertyName, prop)
 
 def dir_getters(*names):
     for name in names:
@@ -276,17 +281,19 @@ def dir_getters(*names):
         propertyName = name + "Dir"
         getterName = "get" + name[0].upper() + name[1:] + "Dir"
         getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
-        annotate.injectMethod("dir_getters", getterName, getter)
-        annotate.injectProperty("dir_getters", propertyName, getter)
+        annotate.injectAttribute("dir_getters", getterName, getter)
+        prop = property(getter)
+        annotate.injectAttribute("dir_getters", propertyName, prop)
 
 def file_getters(*names):
     for name in names:
         relPropertyName = name + "RelPath"
         propertyName = name + "File"
         getterName = "get" + name[0].upper() + name[1:] + "File"
-        getter = _fileGetterFactory(getterName, relPropertyName)        
-        annotate.injectMethod("file_getters", getterName, getter)
-        annotate.injectProperty("file_getters", propertyName, getter)
+        getter = _fileGetterFactory(getterName, relPropertyName)   
+        annotate.injectAttribute("file_getters", getterName, getter)
+        prop = property(getter)
+        annotate.injectAttribute("file_getters", propertyName, prop)
 
 def path_getters(*names):
     for name in names:
@@ -295,8 +302,9 @@ def path_getters(*names):
         propertyName = name + "Path"
         getterName = "get" + name[0].upper() + name[1:] + "Path"
         getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
-        annotate.injectMethod("path_getters", getterName, getter)
-        annotate.injectProperty("path_getters", propertyName, getter)
+        annotate.injectAttribute("path_getters", getterName, getter)
+        prop = property(getter)
+        annotate.injectAttribute("path_getters", propertyName, prop)
 
 
 class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin):

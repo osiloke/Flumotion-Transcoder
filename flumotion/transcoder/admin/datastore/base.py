@@ -55,11 +55,13 @@ def readonly_proxy(propertyName, fieldName=None, default=None,
             value = getattr(self._data, fieldName, None)
             if value == None: value = default
             return utils.deepCopy(value)
+        getter.__name__ = getterName
     else:
-        getter = getterFactory(propertyName, fieldName, getterName, default)
+        getter = getterFactory(getterName, propertyName, fieldName, default)
     
-    annotate.injectMethod("readonly_proxy", getterName, getter)
-    annotate.injectProperty("readonly_proxy", propertyName, getter)
+    annotate.injectAttribute("readonly_proxy", getterName, getter)
+    prop = property(getter)
+    annotate.injectAttribute("readonly_proxy", propertyName, prop)
 
 def readwrite_proxy(propertyName, fieldName=None, default=None,
                     getterName=None, setterName=None,
@@ -76,21 +78,24 @@ def readwrite_proxy(propertyName, fieldName=None, default=None,
             value = getattr(self._data, fieldName, None)
             if value == None: value = default
             return utils.deepCopy(value)
+        getter.__name__ = getterName
     else:
-        getter = getterFactory(propertyName, fieldName, getterName, default)
+        getter = getterFactory(getterName, propertyName, fieldName, default)
 
     if setterFactory is None:
         def setter(self, value):
             setattr(self._data, fieldName, utils.deepCopy(value))
+        setter.__name__ = setterName
     else:
-        setter = setterFactory(propertyName, fieldName, setterName)
+        setter = setterFactory(setterName, propertyName, fieldName)
     
-    annotate.injectMethod("readwrite_proxy", getterName, getter)
-    annotate.injectMethod("readwrite_proxy", setterName, setter)
-    annotate.injectProperty("readwrite_proxy", propertyName, getter, setter)
+    annotate.injectAttribute("readwrite_proxy", getterName, getter)
+    annotate.injectAttribute("readwrite_proxy", setterName, setter)
+    prop = property(getter, setter)
+    annotate.injectAttribute("readwrite_proxy", propertyName, prop)
 
 
-class SimpleStore(object):
+class SimpleStore(annotate.Annotable):
     implements(IBaseStore)
     
     identifier = None
@@ -111,7 +116,7 @@ class DataStore(SimpleStore):
         self._data = data
 
 
-class StoreElement(adminelement.AdminElement):
+class StoreElement(adminelement.AdminElement, annotate.Annotable):
     implements(IBaseStore, IStoreElement)
     
     def __init__(self, logger, parentStore, data, identifier=None, label=None):

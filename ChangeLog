@@ -1,3 +1,16 @@
+2008-04-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/admerrs.py:
+	Minor fix.
+	* flumotion/transcoder/admin/api/api.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	Updated to use the new annotation functions
+	injectClassCallback and injectAttribute.
+
 2008-04-24  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:

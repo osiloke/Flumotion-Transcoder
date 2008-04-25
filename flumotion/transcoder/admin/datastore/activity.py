@@ -135,27 +135,29 @@ class IMailActivityStore(INotificationActivityStore):
         pass
 
 
-
 ## Getter Factories ##
 
-def _setterFactory(propertyName, fieldName, setterName):
+def _setterFactory(setterName, propertyName, fieldName):
     def setter(self, value):
         assert not self._deleted
         setattr(self._data, fieldName, utils.deepCopy(value))
         self._touche()
+    setter.__name__ = setterName
     return setter
 
-def _dataGetterFactory(propertyName, fieldName, getterName, default=None):
+def _dataGetterFactory(getterName, propertyName, fieldName, default=None):
     def getter(self):
         result = self._data.data.get(fieldName, default)
         return utils.deepCopy(result)
+    getter.__name__ = getterName
     return getter
 
-def _dataSetterFactory(propertyName, fieldName, setterName):
+def _dataSetterFactory(setterName, propertyName, fieldName):
     def setter(self, value):
         assert not self._deleted
         self._data.data[fieldName] = utils.deepCopy(value)
         self._touche()
+    setter.__name__ = setterName
     return setter
 
 
