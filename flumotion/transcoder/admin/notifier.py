@@ -416,7 +416,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                       activCtx.trigger.nick, desc))
         self.info("%s", message)
         activStore = activCtx.store
-        activStore.State = ActivityStateEnum.failed
+        activStore.state = ActivityStateEnum.failed
         activStore.store()
         self._results[activCtx].errback(Failure(admerrs.NotificationError(message)))
         self.__notificationTerminated(activCtx)
