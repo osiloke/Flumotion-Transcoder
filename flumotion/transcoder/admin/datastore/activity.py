@@ -12,7 +12,7 @@
 
 import datetime
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log, utils, annotate
 
@@ -26,6 +26,12 @@ from flumotion.transcoder.admin.datastore import base, profile, notification
 
 class IActivityStore(base.IBaseStore):
     
+    type      = Attribute("The type of activity")
+    subtype   = Attribute("The sub-type of activity")
+    startTime = Attribute("The time the activity was started")
+    lastTime  = Attribute("The last time the activity was attempted")
+    state     = Attribute("Activity's state")
+    
     def store(self):
         pass
     
@@ -34,141 +40,74 @@ class IActivityStore(base.IBaseStore):
 
     def reset(self):
         pass
-        
-    def getType(self):
-        pass
-    
-    def getSubtype(self):
-        pass
-    
-    def getStartTime(self):
-        pass
-    
-    def getLastTime(self):
-        pass
-    
-    def getState(self):
-        pass
-    
-    def setState(self, state):
-        pass    
 
 
 class ITranscodingActivityStore(IActivityStore):
+    
+    inputRelPath = Attribute("Transcoded file relative path")
     
     def getCustomerStore(self):
         pass
     
     def getProfileStore(self):
         pass
-    
-    def getInputRelPath(self):
-        pass
 
 
 class INotificationActivityStore(IActivityStore):
     
-    def incRetryCount(self):
-        pass
-    
-    def getTrigger(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryCount(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
-
-    def setTimeout(self):
-        pass
-    
-    def setRetryCount(self):
-        pass
-    
-    def setRetryMax(self):
-        pass
-    
-    def setRetrySleep(self):
-        pass
+    trigger    = Attribute("What has triggered this notification")
+    timeout    = Attribute("Timeout to perform the notification")
+    retryCount = Attribute("How many times the notification has been attempted")
+    retryMax   = Attribute("Maximum time the notification should be attempted")
+    retrySleep = Attribute("Time to wait between notification attempts")
 
 
 class IHTTPActivityStore(INotificationActivityStore):
 
-    def getRequestURL(self):
-        pass
-    
-    def setRequestURL(self, url):
-        pass
+    url = Attribute("URL used to notify over HTTP") 
 
 
 class IMailActivityStore(INotificationActivityStore):
     
-    def getSenderAddr(self):
-        pass
-    
-    def getRecipientsAddr(self):
-        pass
-    
-    def getSubject(self):
-        pass
-    
-    def getBody(self):
-        pass
-    
-    def setSenderAddr(self, sender):
-        pass
-    
-    def setRecipientsAddr(self, recipients):
-        pass
-    
-    def setSubject(self, subject):
-        pass
-    
-    def setBody(self, body):
-        pass
+    senderAddr = Attribute("Sender e-mail addresse")
+    subject    = Attribute("Mail subject")
+    body       = Attribute("Mail body")
 
 
-## Getter Factories ##
+## Proxy Descriptors ##
 
-def _setterFactory(setterName, propertyName, fieldName):
-    def setter(self, value):
-        assert not self._deleted
-        setattr(self._data, fieldName, utils.deepCopy(value))
-        self._touche()
-    setter.__name__ = setterName
-    return setter
+class ReadWriteProxy(base.ReadOnlyProxy):
+    def __init__(self, fieldName, default=None):
+        base.ReadOnlyProxy.__init__(self, fieldName, default)
+    def __set__(self, obj, value):
+        assert not obj._deleted
+        setattr(obj._data, self._fieldName, utils.deepCopy(value))
+        obj._touche()
 
-def _dataGetterFactory(getterName, propertyName, fieldName, default=None):
-    def getter(self):
-        result = self._data.data.get(fieldName, default)
+
+class ReadWriteDataProxy(object):
+    def __init__(self, fieldName, default=None):
+        self._fieldName = fieldName
+        self._default= default
+    def __get__(self, obj, type=None):
+        result = obj._data.data.get(self._fieldName, self._default)
         return utils.deepCopy(result)
-    getter.__name__ = getterName
-    return getter
-
-def _dataSetterFactory(setterName, propertyName, fieldName):
-    def setter(self, value):
-        assert not self._deleted
-        self._data.data[fieldName] = utils.deepCopy(value)
-        self._touche()
-    setter.__name__ = setterName
-    return setter
+    def __set__(self, obj, value):
+        assert not obj._deleted
+        self._data.data[self._fieldName] = utils.deepCopy(value)
+        obj._touche()
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")
 
 
 class ActivityStore(base.DataStore, log.LoggerProxy):
     implements(IActivityStore)
 
-    base.readonly_proxy("type")
-    base.readonly_proxy("subtype")
-    base.readonly_proxy("startTime")
-    base.readonly_proxy("lastTime")
-    base.readwrite_proxy("state", setterFactory=_setterFactory)
+    type      = base.ReadOnlyProxy("type")
+    subtype   = base.ReadOnlyProxy("subtype")
+    startTime = base.ReadOnlyProxy("startTime")
+    lastTime  = base.ReadOnlyProxy("lastTime")
+    state     = ReadWriteProxy("state")
     
     def __init__(self, logger, stateStore, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
@@ -226,7 +165,7 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
 class TranscodingActivityStore(ActivityStore):
     implements(ITranscodingActivityStore)
     
-    base.readonly_proxy("inputRelPath")
+    inputRelPath = base.ReadOnlyProxy("inputRelPath")
     
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -260,11 +199,11 @@ class TranscodingActivityStore(ActivityStore):
 class NotificationActivityStore(ActivityStore):
     implements(INotificationActivityStore)
     
-    base.readonly_proxy("trigger")
-    base.readwrite_proxy("timeout",    setterFactory=_setterFactory)
-    base.readwrite_proxy("retryCount", setterFactory=_setterFactory)
-    base.readwrite_proxy("retryMax",   setterFactory=_setterFactory)
-    base.readwrite_proxy("retrySleep", setterFactory=_setterFactory)
+    trigger    = base.ReadOnlyProxy("trigger")
+    timeout    = ReadWriteProxy("timeout")
+    retryCount = ReadWriteProxy("retryCount")
+    retryMax   = ReadWriteProxy("retryMax")
+    retrySleep = ReadWriteProxy("retrySleep")
     
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -293,9 +232,7 @@ class NotificationActivityStore(ActivityStore):
 class HTTPActivityStore(NotificationActivityStore):
     implements(IHTTPActivityStore)
 
-    base.readwrite_proxy("requestURL",
-                         getterFactory=_dataGetterFactory,
-                         setterFactory=_dataSetterFactory)
+    url = ReadWriteDataProxy("requestURL")
 
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -304,34 +241,28 @@ class HTTPActivityStore(NotificationActivityStore):
 class MailActivityStore(NotificationActivityStore):
     implements(IMailActivityStore)
 
-    base.readwrite_proxy("senderAddr",
-                         getterFactory=_dataGetterFactory,
-                         setterFactory=_dataSetterFactory)
-    base.readwrite_proxy("subject",
-                         getterFactory=_dataGetterFactory,
-                         setterFactory=_dataSetterFactory)
-    base.readwrite_proxy("body",
-                         getterFactory=_dataGetterFactory,
-                         setterFactory=_dataSetterFactory)
-
+    senderAddr = ReadWriteDataProxy("senderAddr")
+    subject    = ReadWriteDataProxy("subject")
+    body       = ReadWriteDataProxy("body")
+    
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
 
-    def getRecipientsAddr(self):
+    def _getRecipientsAddr(self):
         """
         Not created by metaclass because it convert from str to list
         """
         recipients = self._data.data.get("recipients", "")
         return [e.strip() for e  in recipients.split(", ")]
 
-    def setRecipientsAddr(self, recipients):
+    def _setRecipientsAddr(self, recipients):
         """
         Not created by metaclass because it convert from list to str
         """
         data = ", ".join([e.strip() for e in recipients])
         self._data.data["recipients"] = data
 
-    recipientsAddr = property(getRecipientsAddr, setRecipientsAddr)
+    recipientsAddr = property(_getRecipientsAddr, _setRecipientsAddr)
 
 
 _activityLookup = {ActivityTypeEnum.transcoding: 

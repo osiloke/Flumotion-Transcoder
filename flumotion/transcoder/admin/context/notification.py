@@ -121,7 +121,7 @@ class HTTPNotificationContext(NotificationContext):
     
     implements(IHTTPNotificationContext)
     
-    base.store_proxy("requestTemplate")
+    base.store_proxy("urlTemplate")
     base.store_admin_proxy("timeout",    "HTTPRequestTimeout")
     base.store_admin_proxy("retryMax",   "HTTPRequestRetryMax")
     base.store_admin_proxy("tetrySleep", "HTTPRequestRetrySleep")    

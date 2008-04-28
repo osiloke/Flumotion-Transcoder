@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log, defer
 
@@ -18,6 +18,21 @@ from flumotion.transcoder.admin.datastore import base, config, notification
 
 
 class ITargetStore(base.IBaseStore):
+
+    name                 = Attribute("Target's name")
+    subdir               = Attribute("Target's sub-directory")
+    outputDir            = Attribute("Output files directory")
+    linkDir              = Attribute("Links directory")
+    workDir              = Attribute("Temporary directory")
+    extension            = Attribute("Output file extension")
+    outputFileTemplate   = Attribute("Output file template")
+    linkFileTemplate     = Attribute("Link file template")
+    linkTemplate         = Attribute("Link template")
+    linkURLPrefix        = Attribute("Link URL prefix")
+    enablePostprocessing = Attribute("Enable post-processing")
+    enableLinkFiles      = Attribute("Enable link file generation")
+    postprocessCommand   = Attribute("Post-processing command line")
+    postprocessTimeout   = Attribute("Post-processing timeout")
 
     def getCustomerStore(self):
         pass
@@ -28,66 +43,24 @@ class ITargetStore(base.IBaseStore):
     def getConfigStore(self):
         pass
 
-    def getName(self):
-        pass
-    
-    def getSubdir(self):
-        pass
-    
-    def getOutputDir(self):
-        pass
-    
-    def getLinkDir(self):
-        pass
-    
-    def getWorkDir(self):
-        pass
-    
-    def getExtension(self):
-        pass
-    
-    def getOutputFileTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getLinkURLPrefix(self):
-        pass
-    
-    def getEnablePostprocessing(self):
-        pass
-    
-    def getEnableLinkFiles(self):
-        pass
-    
-    def getPostprocessCommand(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-
 
 class TargetStore(base.NotifyStore):
     implements(ITargetStore)
 
-    base.readonly_proxy("name")
-    base.readonly_proxy("subdir")
-    base.readonly_proxy("outputDir")
-    base.readonly_proxy("linkDir")
-    base.readonly_proxy("workDir")
-    base.readonly_proxy("extension")
-    base.readonly_proxy("outputFileTemplate")
-    base.readonly_proxy("linkFileTemplate")
-    base.readonly_proxy("linkTemplate")
-    base.readonly_proxy("linkURLPrefix")
-    base.readonly_proxy("enablePostprocessing")
-    base.readonly_proxy("enableLinkFiles")
-    base.readonly_proxy("postprocessCommand")
-    base.readonly_proxy("postprocessTimeout")
+    name                 = base.ReadOnlyProxy("name")
+    subdir               = base.ReadOnlyProxy("subdir")
+    outputDir            = base.ReadOnlyProxy("outputDir")
+    linkDir              = base.ReadOnlyProxy("linkDir")
+    workDir              = base.ReadOnlyProxy("workDir")
+    extension            = base.ReadOnlyProxy("extension")
+    outputFileTemplate   = base.ReadOnlyProxy("outputFileTemplate")
+    linkFileTemplate     = base.ReadOnlyProxy("linkFileTemplate")
+    linkTemplate         = base.ReadOnlyProxy("linkTemplate")
+    linkURLPrefix        = base.ReadOnlyProxy("linkURLPrefix")
+    enablePostprocessing = base.ReadOnlyProxy("enablePostprocessing")
+    enableLinkFiles      = base.ReadOnlyProxy("enableLinkFiles")
+    postprocessCommand   = base.ReadOnlyProxy("postprocessCommand")
+    postprocessTimeout   = base.ReadOnlyProxy("postprocessTimeout")
 
     def __init__(self, logger, profStore, dataSource, targData):
         base.NotifyStore.__init__(self, logger, profStore, dataSource, targData)

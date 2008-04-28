@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log, defer
 
@@ -20,6 +20,31 @@ from flumotion.transcoder.admin.datastore import base, customer, state, activity
 
 
 class IAdminStore(base.IBaseStore):
+
+    outputMediaTemplate   = Attribute("Output media file template")
+    outputThumbTemplate   = Attribute("Output thumbnail file temaplte")
+    linkFileTemplate      = Attribute("Link file template")
+    configFileTemplate    = Attribute("Configuration file template")
+    reportFileTemplate    = Attribute("Report file template")
+    linkTemplate          = Attribute("Link template")
+    monitoringPeriod      = Attribute("Monitoring period")
+    accessForceUser       = Attribute("Force user of new files and directories")
+    accessForceGroup      = Attribute("Force group of new files and directories")
+    accessForceDirMode    = Attribute("Force rights of new directories")
+    accessForceFileMode   = Attribute("Force rights of new files")
+    processPriority       = Attribute("Transcoding process priority")
+    transcodingPriority   = Attribute("Transcoding priority")
+    transcodingTimeout    = Attribute("Transcoding timeout")
+    postprocessTimeout    = Attribute("Post-processing timeout")
+    preprocessTimeout     = Attribute("Pre-processing timeout")
+    mailSubjectTemplate   = Attribute("Mail notifications subject template")
+    mailBodyTemplate      = Attribute("Mail notifications body template")
+    mailTimeout           = Attribute("Mail notifications timeout")
+    mailRetryMax          = Attribute("Maximum mail notification attempts")
+    mailRetrySleep        = Attribute("Time to wait between mail notification attempts")
+    HTTPRequestTimeout    = Attribute("HTTP notifications timeout")
+    HTTPRequestRetryMax   = Attribute("HTTP notifications maximum attempt count")
+    HTTPRequestRetrySleep = Attribute("Time to wait between HTTP notification attempts")
 
     def getCustomerStores(self):
         pass
@@ -36,78 +61,6 @@ class IAdminStore(base.IBaseStore):
     def getStateStore(self):
         pass
 
-    def getOutputMediaTemplate(self):
-        pass
-    
-    def getOutputThumbTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getConfigFileTemplate(self):
-        pass
-    
-    def getReportFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getMonitoringPeriod(self):
-        pass
-    
-    def getAccessForceUser(self):
-        pass
-    
-    def getAccessForceGroup(self):
-        pass
-    
-    def getAccessForceDirMode(self):
-        pass
-    
-    def getAccessForceFileMode(self):
-        pass
-    
-    def getProcessPriority(self):
-        pass
-    
-    def getTranscodingPriority(self):
-        pass
-    
-    def getTranscodingTimeout(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-    
-    def getPreprocessTimeout(self):
-        pass
-    
-    def getMailSubjectTemplate(self):
-        pass
-    
-    def getMailBodyTemplate(self):
-        pass
-    
-    def getMailTimeout(self):
-        pass
-    
-    def getMailRetryMax(self):
-        pass
-    
-    def getMailRetrySleep(self):
-        pass
-    
-    def getHTTPRequestTimeout(self):
-        pass
-    
-    def getHTTPRequestRetryMax(self):
-        pass
-    
-    def getHTTPRequestRetrySleep(self):
-        pass
-
 
 class StoreLogger(log.Loggable):
     logCategory = adminconsts.STORES_LOG_CATEGORY
@@ -116,30 +69,30 @@ class StoreLogger(log.Loggable):
 class AdminStore(base.NotifyStore):
     implements(IAdminStore)
     
-    base.readonly_proxy("outputMediaTemplate")
-    base.readonly_proxy("outputThumbTemplate")
-    base.readonly_proxy("linkFileTemplate")
-    base.readonly_proxy("configFileTemplate")
-    base.readonly_proxy("reportFileTemplate")
-    base.readonly_proxy("linkTemplate")
-    base.readonly_proxy("monitoringPeriod")
-    base.readonly_proxy("accessForceUser")
-    base.readonly_proxy("accessForceGroup")
-    base.readonly_proxy("accessForceDirMode")
-    base.readonly_proxy("accessForceFileMode")
-    base.readonly_proxy("processPriority")
-    base.readonly_proxy("transcodingPriority")
-    base.readonly_proxy("transcodingTimeout")
-    base.readonly_proxy("postprocessTimeout")
-    base.readonly_proxy("preprocessTimeout")
-    base.readonly_proxy("mailSubjectTemplate")
-    base.readonly_proxy("mailBodyTemplate")
-    base.readonly_proxy("mailTimeout")
-    base.readonly_proxy("mailRetryMax")
-    base.readonly_proxy("mailRetrySleep")
-    base.readonly_proxy("HTTPRequestTimeout")
-    base.readonly_proxy("HTTPRequestRetryMax")
-    base.readonly_proxy("HTTPRequestRetrySleep")
+    outputMediaTemplate   = base.ReadOnlyProxy("outputMediaTemplate")
+    outputThumbTemplate   = base.ReadOnlyProxy("outputThumbTemplate")
+    linkFileTemplate      = base.ReadOnlyProxy("linkFileTemplate")
+    configFileTemplate    = base.ReadOnlyProxy("configFileTemplate")
+    reportFileTemplate    = base.ReadOnlyProxy("reportFileTemplate")
+    linkTemplate          = base.ReadOnlyProxy("linkTemplate")
+    monitoringPeriod      = base.ReadOnlyProxy("monitoringPeriod")
+    accessForceUser       = base.ReadOnlyProxy("accessForceUser")
+    accessForceGroup      = base.ReadOnlyProxy("accessForceGroup")
+    accessForceDirMode    = base.ReadOnlyProxy("accessForceDirMode")
+    accessForceFileMode   = base.ReadOnlyProxy("accessForceFileMode")
+    processPriority       = base.ReadOnlyProxy("processPriority")
+    transcodingPriority   = base.ReadOnlyProxy("transcodingPriority")
+    transcodingTimeout    = base.ReadOnlyProxy("transcodingTimeout")
+    postprocessTimeout    = base.ReadOnlyProxy("postprocessTimeout")
+    preprocessTimeout     = base.ReadOnlyProxy("preprocessTimeout")
+    mailSubjectTemplate   = base.ReadOnlyProxy("mailSubjectTemplate")
+    mailBodyTemplate      = base.ReadOnlyProxy("mailBodyTemplate")
+    mailTimeout           = base.ReadOnlyProxy("mailTimeout")
+    mailRetryMax          = base.ReadOnlyProxy("mailRetryMax")
+    mailRetrySleep        = base.ReadOnlyProxy("mailRetrySleep")
+    HTTPRequestTimeout    = base.ReadOnlyProxy("HTTPRequestTimeout")
+    HTTPRequestRetryMax   = base.ReadOnlyProxy("HTTPRequestRetryMax")
+    HTTPRequestRetrySleep = base.ReadOnlyProxy("HTTPRequestRetrySleep")
 
     def __init__(self, dataSource):
         identifier = "store.admin"

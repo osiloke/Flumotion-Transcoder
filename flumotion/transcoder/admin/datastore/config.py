@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.admin import interfaces
@@ -18,6 +18,8 @@ from flumotion.transcoder.admin.datastore import base
 
 
 class IConfigStore(base.IBaseStore):
+    
+    type = Attribute("The type of taget config")
     
     def getCustomerStore(self):
         pass
@@ -27,9 +29,6 @@ class IConfigStore(base.IBaseStore):
     
     def getTargetStore(self):
         pass
-    
-    def getType(self):
-        pass
 
 
 class IIdentityConfigStore(IConfigStore):
@@ -38,90 +37,47 @@ class IIdentityConfigStore(IConfigStore):
 
 class IAudioConfigStore(IConfigStore):
     
-    def getMuxer(self):
-        pass
-
-    def getAudioEncoder(self):
-        pass
-    
-    def getAudioRate(self):
-        pass
-    
-    def getAudioChannels(self):
-        pass
-
+    muxer         = Attribute("Muxing pipeline")
+    audioEncoder  = Attribute("Audio encoding pipeline")
+    audioRate     = Attribute("Audio rate")
+    audioChannels = Attribute("Audio channels count")
 
 
 class IVideoConfigStore(IConfigStore):
     
-    def getMuxer(self):
-        pass
-    
-    def getVideoEncoder(self):
-        pass
-    
-    def getVideoWidth(self):
-        pass
-    
-    def getVideoHeight(self):
-        pass
-    
-    def getVideoMaxWidth(self):
-        pass
-    
-    def getVideoMaxHeight(self):
-        pass
-    
-    def getVideoWidthMultiple(self):
-        pass
-    
-    def getVideoHeightMultiple(self):
-        pass
-    
-    def getVideoPAR(self):
-        pass
-    
-    def getVideoFramerate(self):
-        pass
-    
-    def getVideoScaleMethod(self):
-        pass
+    muxer               = Attribute("Muxing pipeline")
+    videoEncoder        = Attribute("Video encoding pipeline")
+    videoWidth          = Attribute("Video width")
+    videoHeight         = Attribute("Video height")
+    videoMaxWidth       = Attribute("Video maximum width")
+    videoMaxHeight      = Attribute("Video maximum height")
+    videoWidthMultiple  = Attribute("Video width multiple")
+    videoHeightMultiple = Attribute("Video height multiple")
+    videoPAR            = Attribute("Video pixel-aspect-ratio")
+    videoFramerate      = Attribute("Video frame-rate")
+    videoScaleMethod    = Attribute("Video scalling method")
 
 
 class IAudioVideoConfigStore(IAudioConfigStore, IVideoConfigStore):
     
-    def getTolerance(self):
-        pass
+    tolerance = Attribute("Audio/Video tolerance")
 
 
 class IThumbnailsConfigStore(IConfigStore):
-    
-    def getThumbsWidth(self):
-        pass
-    
-    def getThumbsHeight(self):
-        pass
-    
-    def getPeriodValue(self):
-        pass
-    
-    def getPeriodUnit(self):
-        pass
-    
-    def getMaxCount(self):
-        pass
-    
-    def getEnsureOne(self):
-        pass
-    
-    def getFormat(self):
-        pass
 
+    thumbsWidth  = Attribute("Thumbnails' width")
+    thumbsHeight = Attribute("Thumbnails' height")
+    periodValue  = Attribute("Period between thumbnails snapshots")
+    periodUnit   = Attribute("Unit of the snapshot period value")
+    maxCount     = Attribute("Maximum number of snapshots to take")
+    ensureOne    = Attribute("Ensure they will be at least on thumbnail")
+    format       = Attribute("Thumbnails image format")
+    
 
 class ConfigStore(base.DataStore):
     implements(IConfigStore)
     
-    base.readonly_proxy("type")
+    type = base.ReadOnlyProxy("type")
 
     def __init__(self, targStore, data):
         label = "%s config" % targStore.label
@@ -157,10 +113,10 @@ class AudioConfigStore(ConfigStore):
     
     implements(IAudioConfigStore)
     
-    base.readonly_proxy("muxer")
-    base.readonly_proxy("audioEncoder")
-    base.readonly_proxy("audioRate")
-    base.readonly_proxy("audioChannels")
+    muxer         = base.ReadOnlyProxy("muxer")
+    audioEncoder  = base.ReadOnlyProxy("audioEncoder")
+    audioRate     = base.ReadOnlyProxy("audioRate")
+    audioChannels = base.ReadOnlyProxy("audioChannels")
 
     def __init__(self, targStore, data):
         super(AudioConfigStore, self).__init__(targStore, data)
@@ -182,17 +138,17 @@ class VideoConfigStore(ConfigStore):
     
     implements(IVideoConfigStore)
     
-    base.readonly_proxy("muxer")
-    base.readonly_proxy("videoEncoder")
-    base.readonly_proxy("videoWidth")
-    base.readonly_proxy("videoHeight")
-    base.readonly_proxy("videoMaxWidth")
-    base.readonly_proxy("videoMaxHeight")
-    base.readonly_proxy("videoWidthMultiple")
-    base.readonly_proxy("videoHeightMultiple")
-    base.readonly_proxy("videoPAR")
-    base.readonly_proxy("videoFramerate")
-    base.readonly_proxy("videoScaleMethod")
+    muxer               = base.ReadOnlyProxy("muxer")
+    videoEncoder        = base.ReadOnlyProxy("videoEncoder")
+    videoWidth          = base.ReadOnlyProxy("videoWidth")
+    videoHeight         = base.ReadOnlyProxy("videoHeight")
+    videoMaxWidth       = base.ReadOnlyProxy("videoMaxWidth")
+    videoMaxHeight      = base.ReadOnlyProxy("videoMaxHeight")
+    videoWidthMultiple  = base.ReadOnlyProxy("videoWidthMultiple")
+    videoHeightMultiple = base.ReadOnlyProxy("videoHeightMultiple")
+    videoPAR            = base.ReadOnlyProxy("videoPAR")
+    videoFramerate      = base.ReadOnlyProxy("videoFramerate")
+    videoScaleMethod    = base.ReadOnlyProxy("videoScaleMethod")
     
     def __init__(self, targStore, data):
         super(VideoConfigStore, self).__init__(targStore, data)
@@ -201,8 +157,8 @@ class VideoConfigStore(ConfigStore):
 class AudioVideoConfigStore(AudioConfigStore, VideoConfigStore):
     implements(IAudioVideoConfigStore)
     
-    base.readonly_proxy("tolerance")
-    
+    tolerance = base.ReadOnlyProxy("tolerance")
+
     def __init__(self, targStore, data):
         super(AudioVideoConfigStore, self).__init__(targStore, data)
 
@@ -218,13 +174,13 @@ class ThumbnailsConfigStore(ConfigStore):
     
     implements(IThumbnailsConfigStore)
     
-    base.readonly_proxy("thumbsWidth")
-    base.readonly_proxy("thumbsHeight")
-    base.readonly_proxy("periodValue")
-    base.readonly_proxy("periodUnit")
-    base.readonly_proxy("maxCount")
-    base.readonly_proxy("ensureOne")
-    base.readonly_proxy("format")
+    thumbsWidth  = base.ReadOnlyProxy("thumbsWidth")
+    thumbsHeight = base.ReadOnlyProxy("thumbsHeight")
+    periodValue  = base.ReadOnlyProxy("periodValue")
+    periodUnit   = base.ReadOnlyProxy("periodUnit")
+    maxCount     = base.ReadOnlyProxy("maxCount")
+    ensureOne    = base.ReadOnlyProxy("ensureOne")
+    format       = base.ReadOnlyProxy("format")
     
     def __init__(self, targStore, data):
         super(ThumbnailsConfigStore, self).__init__(targStore, data)

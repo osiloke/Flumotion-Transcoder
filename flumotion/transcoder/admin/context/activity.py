@@ -206,7 +206,7 @@ class HTTPActivityContext(NotificationActivityContext):
     
     implements(IHTTPActivityContext)
     
-    base.store_proxy("requestURL")
+    base.store_proxy("url")
     
     def __init__(self, stateCtx, activStore):
         NotificationActivityContext.__init__(self, stateCtx, activStore)

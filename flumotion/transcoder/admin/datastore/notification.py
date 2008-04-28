@@ -12,7 +12,7 @@
 
 from flumotion.inhouse import log, utils
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.transcoder.admin import interfaces
 from flumotion.transcoder.admin.enums import NotificationTypeEnum
@@ -21,38 +21,34 @@ from flumotion.transcoder.admin.datastore import base
 
 class INotificationStore(base.IBaseStore):
 
-    def getType(self):
+    type       = Attribute("Type of notification")
+    triggers   = Attribute("What's trigger the notification")
+    timeout    = Attribute("Maximum time to perform the notification") 
+    retryMax   = Attribute("How many times the notification should be attempted")
+    retrySleep = Attribute("Time to sleep between notification attempts") 
+
+    def getCustomerStore(self):
         pass
     
-    def getTriggers(self):
+    def getProfileStore(self):
+        pass
+    
+    def getTargetStore(self):
         pass
 
 
 class IMailNotificationStore(INotificationStore):
 
-    def getAttachments(self):
-        pass
-    
-    def getRecipients(self):
-        pass
-    
-    def getSubjectTemplate(self):
-        pass
-    
-    def getBodyTemplate(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
+    attachments     = Attribute("What should be attached to the mail")
+    recipients      = Attribute("The recipients of the notification mail")
+    subjectTemplate = Attribute("Template of the mail subject")
+    bodyTemplate    = Attribute("Template of the mail body")
+
 
 
 class IHTTPNotificationStore(INotificationStore):
+
+    urlTemplate = Attribute("URL of the HTTP notification")
 
     def getRequestTemplate(self):
         pass
@@ -70,8 +66,11 @@ class IHTTPNotificationStore(INotificationStore):
 class NotificationStore(base.DataStore):
     implements(INotificationStore)
     
-    base.readonly_proxy("type")
-    base.readonly_proxy("triggers")
+    type       = base.ReadOnlyProxy("type")
+    triggers   = base.ReadOnlyProxy("triggers")
+    timeout    = base.ReadOnlyProxy("timeout")
+    retryMax   = base.ReadOnlyProxy("retryMax")
+    retrySleep = base.ReadOnlyProxy("retrySleep")
     
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore, label=None):
@@ -97,13 +96,10 @@ class NotificationStore(base.DataStore):
 class MailNotificationStore(NotificationStore):
     implements(IMailNotificationStore)
     
-    base.readonly_proxy("attachments", default=set([]))
-    base.readonly_proxy("recipients", default=dict())
-    base.readonly_proxy("subjectTemplate")
-    base.readonly_proxy("bodyTemplate")
-    base.readonly_proxy("timeout")
-    base.readonly_proxy("retryMax")
-    base.readonly_proxy("retrySleep")
+    attachments     = base.ReadOnlyProxy("attachments", set([]))
+    recipients      = base.ReadOnlyProxy("recipients", dict())
+    subjectTemplate = base.ReadOnlyProxy("subjectTemplate")
+    bodyTemplate    = base.ReadOnlyProxy("bodyTemplate")
     
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore):
@@ -116,13 +112,10 @@ class MailNotificationStore(NotificationStore):
 class HTTPNotificationStore(NotificationStore):
     implements(IHTTPNotificationStore)
     
-    base.readonly_proxy("requestTemplate", default=set([]))
-    base.readonly_proxy("timeout")
-    base.readonly_proxy("retryMax")
-    base.readonly_proxy("retrySleep")
+    urlTemplate = base.ReadOnlyProxy("requestTemplate")
     
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
-        label = "HTTP Notification to %s" % data.requestTemplate
+        label = "HTTP Notification to %s" % data.urlTemplate
         NotificationStore.__init__(self, parentStore, data, adminStore,
                                    custStore, profStore, targStore, label=label)
     

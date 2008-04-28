@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log, defer
 
@@ -19,6 +19,37 @@ from flumotion.transcoder.admin.datastore import base, target, notification
 
 
 class IProfileStore(base.IBaseStore):
+
+    name                 = Attribute("Name of the profile")
+    subdir               = Attribute("Profile's sub-directory")
+    inputDir             = Attribute("Input files directory")
+    outputDir            = Attribute("Output files directory")
+    failedDir            = Attribute("Failed files directory")
+    doneDir              = Attribute("Done files directory")
+    linkDir              = Attribute("Links directory")
+    workDir              = Attribute("Temporary directory")
+    configDir            = Attribute("Transcoding configuration files directory")
+    tempRepDir           = Attribute("Reports' temporary directory")
+    failedRepDir         = Attribute("Failed reports directory")
+    doneRepDir           = Attribute("Done reports directory")
+    outputMediaTemplate  = Attribute("Output media file template")
+    outputThumbTemplate  = Attribute("Output thumbnail file temaplte")
+    linkFileTemplate     = Attribute("Link file template")
+    configFileTemplate   = Attribute("Configuration file template")
+    reportFileTemplate   = Attribute("Report file template")
+    linkTemplate         = Attribute("Link template")
+    linkURLPrefix        = Attribute("link URL prefix")
+    enablePostprocessing = Attribute("Enable post-processing")
+    enablePreprocessing  = Attribute("Enable pre-processing")
+    enableLinkFiles      = Attribute("Enable link file generation")
+    transcodingPriority  = Attribute("Transcoding priority")
+    processPriority      = Attribute("Transcoding process priority")
+    preprocessCommand    = Attribute("Pre-processing command line")
+    postprocessCommand   = Attribute("Post-processing command line")
+    preprocessTimeout    = Attribute("Pre-processing timeout")
+    postprocessTimeout   = Attribute("Post-processing timeout")
+    transcodingTimeout   = Attribute("Transcoding timeout")
+    monitoringPeriod     = Attribute("Monitoring period")
 
     def getCustomerStore(self):
         pass
@@ -35,130 +66,41 @@ class IProfileStore(base.IBaseStore):
     def iterTargetStores(self):
         pass
 
-    def getName(self):
-        pass
-    
-    def getSubdir(self):
-        pass
-    
-    def getInputDir(self):
-        pass
-    
-    def getOutputDir(self):
-        pass
-    
-    def getFailedDir(self):
-        pass
-    
-    def getDoneDir(self):
-        pass
-    
-    def getLinkDir(self):
-        pass
-    
-    def getWorkDir(self):
-        pass
-    
-    def getConfigDir(self):
-        pass
-    
-    def getTempRepDir(self):
-        pass
-    
-    def getFailedRepDir(self):
-        pass
-    
-    def getDoneRepDir(self):
-        pass
-    
-    def getOutputMediaTemplate(self):
-        pass
-    
-    def getOutputThumbTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getConfigFileTemplate(self):
-        pass
-    
-    def getReportFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getLinkURLPrefix(self):
-        pass
-    
-    def getEnablePostprocessing(self):
-        pass
-    
-    def getEnablePreprocessing(self):
-        pass
-    
-    def getEnableLinkFiles(self):
-        pass
-    
-    def getTranscodingPriority(self):
-        pass
-    
-    def getProcessPriority(self):
-        pass
-    
-    def getPreprocessCommand(self):
-        pass
-    
-    def getPostprocessCommand(self):
-        pass
-    
-    def getPreprocessTimeout(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-    
-    def getTranscodingTimeout(self):
-        pass
-    
-    def getMonitoringPeriod(self):
-        pass
-
 
 class ProfileStore(base.NotifyStore):
     implements(IProfileStore)
     
-    base.readonly_proxy("name")
-    base.readonly_proxy("subdir")
-    base.readonly_proxy("inputDir")
-    base.readonly_proxy("outputDir")
-    base.readonly_proxy("failedDir")
-    base.readonly_proxy("doneDir")
-    base.readonly_proxy("linkDir")
-    base.readonly_proxy("workDir")
-    base.readonly_proxy("configDir")
-    base.readonly_proxy("tempRepDir")
-    base.readonly_proxy("failedRepDir")
-    base.readonly_proxy("doneRepDir")
-    base.readonly_proxy("outputMediaTemplate")
-    base.readonly_proxy("outputThumbTemplate")
-    base.readonly_proxy("linkFileTemplate")
-    base.readonly_proxy("configFileTemplate")
-    base.readonly_proxy("reportFileTemplate")
-    base.readonly_proxy("linkTemplate")
-    base.readonly_proxy("linkURLPrefix")
-    base.readonly_proxy("enablePostprocessing")
-    base.readonly_proxy("enablePreprocessing")
-    base.readonly_proxy("enableLinkFiles")
-    base.readonly_proxy("transcodingPriority")
-    base.readonly_proxy("processPriority")
-    base.readonly_proxy("preprocessCommand")
-    base.readonly_proxy("postprocessCommand")
-    base.readonly_proxy("preprocessTimeout")
-    base.readonly_proxy("postprocessTimeout")
-    base.readonly_proxy("transcodingTimeout")
-    base.readonly_proxy("monitoringPeriod")
+    name                 = base.ReadOnlyProxy("name")
+    subdir               = base.ReadOnlyProxy("subdir")
+    inputDir             = base.ReadOnlyProxy("inputDir")
+    outputDir            = base.ReadOnlyProxy("outputDir")
+    failedDir            = base.ReadOnlyProxy("failedDir")
+    doneDir              = base.ReadOnlyProxy("doneDir")
+    linkDir              = base.ReadOnlyProxy("linkDir")
+    workDir              = base.ReadOnlyProxy("workDir")
+    configDir            = base.ReadOnlyProxy("configDir")
+    tempRepDir           = base.ReadOnlyProxy("tempRepDir")
+    failedRepDir         = base.ReadOnlyProxy("failedRepDir")
+    doneRepDir           = base.ReadOnlyProxy("doneRepDir")
+    outputMediaTemplate  = base.ReadOnlyProxy("outputMediaTemplate")
+    outputThumbTemplate  = base.ReadOnlyProxy("outputThumbTemplate")
+    linkFileTemplate     = base.ReadOnlyProxy("linkFileTemplate")
+    configFileTemplate   = base.ReadOnlyProxy("configFileTemplate")
+    reportFileTemplate   = base.ReadOnlyProxy("reportFileTemplate")
+    linkTemplate         = base.ReadOnlyProxy("linkTemplate")
+    linkURLPrefix        = base.ReadOnlyProxy("linkURLPrefix")
+    enablePostprocessing = base.ReadOnlyProxy("enablePostprocessing")
+    enablePreprocessing  = base.ReadOnlyProxy("enablePreprocessing")
+    enableLinkFiles      = base.ReadOnlyProxy("enableLinkFiles")
+    transcodingPriority  = base.ReadOnlyProxy("transcodingPriority")
+    processPriority      = base.ReadOnlyProxy("processPriority")
+    preprocessCommand    = base.ReadOnlyProxy("preprocessCommand")
+    postprocessCommand   = base.ReadOnlyProxy("postprocessCommand")
+    preprocessTimeout    = base.ReadOnlyProxy("preprocessTimeout")
+    postprocessTimeout   = base.ReadOnlyProxy("postprocessTimeout")
+    transcodingTimeout   = base.ReadOnlyProxy("transcodingTimeout")
+    monitoringPeriod     = base.ReadOnlyProxy("monitoringPeriod")
+
     
     def __init__(self, logger, custStore, dataSource, profData):
         base.NotifyStore.__init__(self, logger, custStore, dataSource, profData)

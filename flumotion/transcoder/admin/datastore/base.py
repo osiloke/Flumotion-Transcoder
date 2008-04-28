@@ -12,7 +12,7 @@
 
 from zope.interface import Attribute, implements
 
-from flumotion.inhouse import log, defer, utils, annotate, waiters
+from flumotion.inhouse import log, defer, utils, waiters
 
 from flumotion.transcoder.admin import adminconsts, interfaces, adminelement
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
@@ -22,7 +22,7 @@ from flumotion.transcoder.admin.datasource import datasource
 class IBaseStore(interfaces.IAdminInterface):
     
     identifier = Attribute("Unique identifier of the store element")
-    label = Attribute("Label of the store element")
+    label      = Attribute("Label of the store element")
     
     def getAdminStore(self):
         pass
@@ -41,61 +41,23 @@ class INotificationProvider(interfaces.IAdminInterface):
         pass
 
 
-## Class Annotations ##
+## Proxy Descriptor ##
 
-def readonly_proxy(propertyName, fieldName=None, default=None,
-                   getterName=None, getterFactory=None):
-    if fieldName is None:
-        fieldName = propertyName 
-    if getterName is None:
-        getterName = "get" + propertyName[0].upper() + propertyName[1:]
-    
-    if getterFactory is None:
-        def getter(self):
-            value = getattr(self._data, fieldName, None)
-            if value == None: value = default
-            return utils.deepCopy(value)
-        getter.__name__ = getterName
-    else:
-        getter = getterFactory(getterName, propertyName, fieldName, default)
-    
-    annotate.injectAttribute("readonly_proxy", getterName, getter)
-    prop = property(getter)
-    annotate.injectAttribute("readonly_proxy", propertyName, prop)
-
-def readwrite_proxy(propertyName, fieldName=None, default=None,
-                    getterName=None, setterName=None,
-                    getterFactory=None, setterFactory=None):
-    if fieldName is None:
-        fieldName = propertyName 
-    if getterName is None:
-        getterName = "get" + propertyName[0].upper() + propertyName[1:]
-    if setterName is None:
-        setterName = "set" + propertyName[0].upper() + propertyName[1:]
-    
-    if getterFactory is None:
-        def getter(self):
-            value = getattr(self._data, fieldName, None)
-            if value == None: value = default
-            return utils.deepCopy(value)
-        getter.__name__ = getterName
-    else:
-        getter = getterFactory(getterName, propertyName, fieldName, default)
-
-    if setterFactory is None:
-        def setter(self, value):
-            setattr(self._data, fieldName, utils.deepCopy(value))
-        setter.__name__ = setterName
-    else:
-        setter = setterFactory(setterName, propertyName, fieldName)
-    
-    annotate.injectAttribute("readwrite_proxy", getterName, getter)
-    annotate.injectAttribute("readwrite_proxy", setterName, setter)
-    prop = property(getter, setter)
-    annotate.injectAttribute("readwrite_proxy", propertyName, prop)
+class ReadOnlyProxy(object):
+    def __init__(self, fieldName, default=None):
+        self._fieldName = fieldName
+        self._default= default
+    def __get__(self, obj, type=None):
+        value = getattr(obj._data, self._fieldName, None)
+        if value == None: value = self._default
+        return utils.deepCopy(value)
+    def __set__(self, obj, value):
+        raise AttributeError("Attribute read-only")
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")
 
 
-class SimpleStore(annotate.Annotable):
+class SimpleStore(object):
     implements(IBaseStore)
     
     identifier = None
@@ -116,7 +78,7 @@ class DataStore(SimpleStore):
         self._data = data
 
 
-class StoreElement(adminelement.AdminElement, annotate.Annotable):
+class StoreElement(adminelement.AdminElement):
     implements(IBaseStore, IStoreElement)
     
     def __init__(self, logger, parentStore, data, identifier=None, label=None):

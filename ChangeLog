@@ -1,5 +1,21 @@
 2008-04-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	* flumotion/transcoder/admin/datastore/profile.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/target.py:
+	* flumotion/transcoder/admin/notifier.py:
+	Update the store elements to use python's descriptor protocol.
+	Updated the interfaces with attributes insteed of methods.
+
+2008-04-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifier.py:
 	Fixed typo from the last commit.
 

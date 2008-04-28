@@ -255,8 +255,8 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         activCtx = stateCtx.newNotificationContext(NotificationTypeEnum.http_request,
                                                    label, ActivityStateEnum.started,
                                                    notifCtx, trigger)
-        url = vars.substituteURL(notifCtx.requestTemplate)
-        activCtx.store.requestURL = url
+        url = vars.substituteURL(notifCtx.urlTemplate)
+        activCtx.store.url = url
         return activCtx
 
     def __doPrepareMailPost(self, label, trigger, notifCtx, vars, docs):
@@ -329,9 +329,8 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __doPerformGetRequest(self, activCtx):
         assert isinstance(activCtx, activity.HTTPActivityContext)
         self.debug("GET request '%s' initiated with URL %s" 
-                   % (activCtx.label, activCtx.requestURL))
-        d = self._performGetRequest(activCtx.requestURL, 
-                                    timeout=activCtx.timeout)
+                   % (activCtx.label, activCtx.url))
+        d = self._performGetRequest(activCtx.url, timeout=activCtx.timeout)
         args = (activCtx,)
         d.addCallbacks(self.__cbGetPageSucceed, self.__ebGetPageFailed,
                        callbackArgs=args, errbackArgs=args)
