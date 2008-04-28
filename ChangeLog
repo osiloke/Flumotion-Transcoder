@@ -1,3 +1,9 @@
+2008-04-28  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	Updated to use the store attributes to modify values.
+
 2008-04-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admerrs.py:

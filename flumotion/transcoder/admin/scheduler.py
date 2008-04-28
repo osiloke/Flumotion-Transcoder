@@ -159,7 +159,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     def __onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.store
-        activStore.setState(ActivityStateEnum.failed)
+        activStore.state = ActivityStateEnum.failed
         activStore.store()
         self.emit("transcoding-failed", task)
         if transPxy is not None:
@@ -171,7 +171,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     def __onTranscodingDone(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.store
-        activStore.setState(ActivityStateEnum.done)
+        activStore.state = ActivityStateEnum.done
         activStore.store()
         self.emit("transcoding-done", task)
         if transPxy is not None:

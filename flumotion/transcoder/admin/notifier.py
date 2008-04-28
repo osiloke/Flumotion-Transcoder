@@ -256,7 +256,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                                                    label, ActivityStateEnum.started,
                                                    notifCtx, trigger)
         url = vars.substituteURL(notifCtx.requestTemplate)
-        activCtx.store.setRequestURL(url)
+        activCtx.store.requestURL = url
         return activCtx
 
     def __doPrepareMailPost(self, label, trigger, notifCtx, vars, docs):
@@ -270,9 +270,9 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         activStore.senderAddr = senderAddr
         recipients = notifCtx.recipients
         allRecipientsAddr = [f[1] for l in recipients.values() for f in l]
-        activStore.setRecipientsAddr(allRecipientsAddr)
+        activStore.recipientsAddr = allRecipientsAddr
         subject = vars.substitute(notifCtx.subjectTemplate)
-        activStore.setSubject(subject)
+        activStore.subject = subject
         
         toRecipientsFields = recipients.get(MailAddressTypeEnum.to, [])
         toRecipients = utils.joinMailRecipients(toRecipientsFields)
@@ -301,7 +301,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                     data.add_header('Content-Disposition', 'attachment', 
                                     filename=doc.label)
                     msg.attach(data)
-        activStore.setBody(str(msg))
+        activStore.body = str(msg)
         
         return activCtx
 
@@ -387,7 +387,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
 
     def __retryNotification(self, activCtx):
         activStore = activCtx.store
-        activStore.incRetryCount()
+        activStore.retryCount += 1
         if activStore.retryCount > activCtx.retryMax:
             desc = "Retry count exceeded %d" % activCtx.retryMax
             self.__notificationFailed(activCtx, desc)
@@ -403,7 +403,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                   activCtx.subtype.nick, activCtx.label, 
                   activCtx.trigger.nick)
         activStore = activCtx.store
-        activStore.setState(ActivityStateEnum.done)
+        activStore.STATE = ActivityStateEnum.done
         activStore.store()
         self._results[activCtx].callback(activCtx)
         self.__notificationTerminated(activCtx)
@@ -416,7 +416,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                       activCtx.trigger.nick, desc))
         self.info("%s", message)
         activStore = activCtx.store
-        activStore.setState(ActivityStateEnum.failed)
+        activStore.State = ActivityStateEnum.failed
         activStore.store()
         self._results[activCtx].errback(Failure(admerrs.NotificationError(message)))
         self.__notificationTerminated(activCtx)
