@@ -57,55 +57,6 @@ class ITargetContext(base.IBaseStoreContext):
         pass
 
 
-### Getter Factories ##
-#
-#def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
-#    def getter(self):
-#        folder = getattr(self.store, storePropertyName)
-#        if folder != None:
-#            value = self._expandDir(folder)
-#            value = fileutils.ensureAbsDirPath(value)
-#            value = fileutils.cleanupPath(value)
-#            return virtualpath.VirtualPath(value)
-#        return getattr(self.parent, basePropertyName)
-#    getter.__name__ = getterName
-#    return getter
-#
-#def _relGetterFactory(getterName, templatePropertyName):
-#    def getter(self):
-#        template = getattr(self, templatePropertyName)
-#        path = self._variables.substitute(template)
-#        path = fileutils.ensureRelPath(path)
-#        return fileutils.cleanupPath(path)
-#    getter.__name__ = getterName
-#    return getter
-#
-#def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
-#    def getter(self):
-#        folder = getattr(self, basePropertyName)
-#        relPath = getattr(self, relPropertyName)
-#        path, file = fileutils.splitPath(relPath)[:2]
-#        return folder.append(path)
-#    getter.__name__ = getterName
-#    return getter
-#
-#def _fileGetterFactory(getterName, relPropertyName):
-#    def getter(self):
-#        relPath = getattr(self, relPropertyName)
-#        file, ext = fileutils.splitPath(relPath)[1:3]
-#        return file + ext
-#    getter.__name__ = getterName
-#    return getter
-#
-#def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
-#    def getter(self):
-#        folder = getattr(self, dirPropertyName)
-#        file = getattr(self, filePropertyName)
-#        return folder.append(file)
-#    getter.__name__ = getterName
-#    return getter
-
-
 ## Descriptors ##
 
 class ReadOnlyProperty(object):
@@ -167,62 +118,6 @@ class FilePath(ReadOnlyProperty):
         folder = getattr(obj, self._dirPropertyName)
         file = getattr(self, self._filePropertyName)
         return folder.append(file)
-
-
-### Class Annotations ##
-#
-#def base_getters(*names):
-#    for name in names:
-#        storePropertyName = name + "Dir"
-#        basePropertyName = name + "Base"
-#        propertyName = name + "Base"
-#        getterName = "get" + name[0].upper() + name[1:] + "Base"
-#        getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
-#        annotate.injectAttribute("base_getters", getterName, getter)
-#        prop = property(getter)
-#        annotate.injectAttribute("base_getters", propertyName, prop)
-#
-#def rel_getters(*names):
-#    for name in names:
-#        templatePropertyName = name + "FileTemplate"
-#        propertyName = name + "RelPath"
-#        getterName = "get" + name[0].upper() + name[1:] + "RelPath"
-#        getter = _relGetterFactory(getterName, templatePropertyName)        
-#        annotate.injectAttribute("rel_getters", getterName, getter)
-#        prop = property(getter)
-#        annotate.injectAttribute("rel_getters", propertyName, prop)
-#
-#def dir_getters(*names):
-#    for name in names:
-#        relPropertyName = name + "RelPath"
-#        basePropertyName = name + "Base"
-#        propertyName = name + "Dir"
-#        getterName = "get" + name[0].upper() + name[1:] + "Dir"
-#        getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
-#        annotate.injectAttribute("dir_getters", getterName, getter)
-#        prop = property(getter)
-#        annotate.injectAttribute("dir_getters", propertyName, prop)
-#
-#def file_getters(*names):
-#    for name in names:
-#        relPropertyName = name + "RelPath"
-#        propertyName = name + "File"
-#        getterName = "get" + name[0].upper() + name[1:] + "File"
-#        getter = _fileGetterFactory(getterName, relPropertyName)        
-#        annotate.injectAttribute("file_getters", getterName, getter)
-#        prop = property(getter)
-#        annotate.injectAttribute("file_getters", propertyName, prop)
-#
-#def path_getters(*names):
-#    for name in names:
-#        dirPropertyName = name + "Dir"
-#        filePropertyName = name + "File"
-#        propertyName = name + "Path"
-#        getterName = "get" + name[0].upper() + name[1:] + "Path"
-#        getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
-#        annotate.injectAttribute("path_getters", getterName, getter)
-#        prop = property(getter)
-#        annotate.injectAttribute("path_getters", propertyName, prop)
 
 
 class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):

@@ -1,5 +1,12 @@
 2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/target.py:
+	Removed forgotten commented code.
+
+2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/activity.py:
 	* flumotion/transcoder/admin/context/base.py:
 	* flumotion/transcoder/admin/context/config.py:
