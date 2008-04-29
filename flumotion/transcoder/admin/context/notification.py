@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 from flumotion.inhouse import annotate
 
@@ -20,53 +20,27 @@ from flumotion.transcoder.admin.datastore import notification, base as storebase
 
 class INotificationContext(base.IBaseStoreContext):
 
-    def getStoreContext(self):
-        pass
+    type       = Attribute("Type of notification")
+    triggers   = Attribute("What's trigger the notification")
+    timeout    = Attribute("Maximum time to perform the notification") 
+    retryMax   = Attribute("How many times the notification should be attempted")
+    retrySleep = Attribute("Time to sleep between notification attempts") 
 
-    def getType(self):
-        pass
-    
-    def getTriggers(self):
+    def getStoreContext(self):
         pass
 
 
 class IMailNotificationContext(INotificationContext):
 
-    def getAttachments(self):
-        pass
-    
-    def getRecipients(self):
-        pass
-    
-    def getSubjectTemplate(self):
-        pass
-    
-    def getBodyTemplate(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
+    attachments     = Attribute("What should be attached to the mail")
+    recipients      = Attribute("The recipients of the notification mail")
+    subjectTemplate = Attribute("Template of the mail subject")
+    bodyTemplate    = Attribute("Template of the mail body")
 
 
 class IHTTPNotificationContext(INotificationContext):
 
-    def getRequestTemplate(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
+    urlTemplate = Attribute("URL of the HTTP notification")
 
 
 class NotifyStoreMixin(object):
@@ -88,8 +62,11 @@ class NotificationContext(base.BaseStoreContext):
     
     implements(INotificationContext)
     
-    base.store_proxy("type")
-    base.store_proxy("triggers")
+    type       = base.StoreProxy("type")
+    triggers   = base.StoreProxy("triggers")
+    timeout    = base.StoreAdminProxy("timeout",    "mailTimeout")
+    retryMax   = base.StoreAdminProxy("retryMax",   "mailRetryMax")
+    retrySleep = base.StoreAdminProxy("retrySleep", "mailRetrySleep")
     
     def __init__(self, parentCtx, notifStore):
         base.BaseStoreContext.__init__(self, parentCtx, notifStore)
@@ -105,13 +82,10 @@ class MailNotificationContext(NotificationContext):
 
     implements(IMailNotificationContext)
 
-    base.store_proxy("attachments")
-    base.store_proxy("recipients")
-    base.store_admin_proxy("subjectTemplate", "mailSubjectTemplate")
-    base.store_admin_proxy("bodyTemplate",    "mailBodyTemplate")
-    base.store_admin_proxy("timeout",         "mailTimeout")
-    base.store_admin_proxy("retryMax",        "mailRetryMax")
-    base.store_admin_proxy("retrySleep",      "mailRetrySleep")
+    attachments     = base.StoreProxy("attachments")
+    recipients      = base.StoreProxy("recipients")
+    subjectTemplate = base.StoreAdminProxy("subjectTemplate", "mailSubjectTemplate")
+    bodyTemplate    = base.StoreAdminProxy("bodyTemplate",    "mailBodyTemplate")
     
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)
@@ -121,10 +95,10 @@ class HTTPNotificationContext(NotificationContext):
     
     implements(IHTTPNotificationContext)
     
-    base.store_proxy("urlTemplate")
-    base.store_admin_proxy("timeout",    "HTTPRequestTimeout")
-    base.store_admin_proxy("retryMax",   "HTTPRequestRetryMax")
-    base.store_admin_proxy("tetrySleep", "HTTPRequestRetrySleep")    
+    urlTemplate = base.StoreProxy("urlTemplate")
+    timeout     = base.StoreAdminProxy("timeout",    "HTTPRequestTimeout")
+    retryMax    = base.StoreAdminProxy("retryMax",   "HTTPRequestRetryMax")
+    tetrySleep  = base.StoreAdminProxy("tetrySleep", "HTTPRequestRetrySleep")    
     
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)

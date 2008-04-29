@@ -10,9 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
-
-from flumotion.inhouse import annotate
+from zope.interface import implements, Attribute
 
 from flumotion.transcoder import constants
 from flumotion.transcoder.admin import adminconsts
@@ -20,6 +18,31 @@ from flumotion.transcoder.admin.context import base, customer, state, notificati
 
 
 class IStoreContext(base.IBaseStoreContext):
+
+    outputMediaTemplate   = Attribute("Output media file template")
+    outputThumbTemplate   = Attribute("Output thumbnail file temaplte")
+    linkFileTemplate      = Attribute("Link file template")
+    configFileTemplate    = Attribute("Configuration file template")
+    reportFileTemplate    = Attribute("Report file template")
+    linkTemplate          = Attribute("Link template")
+    monitoringPeriod      = Attribute("Monitoring period")
+    accessForceUser       = Attribute("Force user of new files and directories")
+    accessForceGroup      = Attribute("Force group of new files and directories")
+    accessForceDirMode    = Attribute("Force rights of new directories")
+    accessForceFileMode   = Attribute("Force rights of new files")
+    processPriority       = Attribute("Transcoding process priority")
+    transcodingPriority   = Attribute("Transcoding priority")
+    transcodingTimeout    = Attribute("Transcoding timeout")
+    postprocessTimeout    = Attribute("Post-processing timeout")
+    preprocessTimeout     = Attribute("Pre-processing timeout")
+    mailSubjectTemplate   = Attribute("Mail notifications subject template")
+    mailBodyTemplate      = Attribute("Mail notifications body template")
+    mailTimeout           = Attribute("Mail notifications timeout")
+    mailRetryMax          = Attribute("Maximum mail notification attempts")
+    mailRetrySleep        = Attribute("Time to wait between mail notification attempts")
+    HTTPRequestTimeout    = Attribute("HTTP notifications timeout")
+    HTTPRequestRetryMax   = Attribute("HTTP notifications maximum attempt count")
+    HTTPRequestRetrySleep = Attribute("Time to wait between HTTP notification attempts")
 
     def getCustomerContextFor(self, custStore):
         pass
@@ -33,131 +56,59 @@ class IStoreContext(base.IBaseStoreContext):
     def getStateContext(self):
         pass
 
-    def getOutputMediaTemplate(self):
-        pass
-    
-    def getOutputThumbTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getConfigFileTemplate(self):
-        pass
-    
-    def getReportFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getMonitoringPeriod(self):
-        pass
-    
-    def getAccessForceUser(self):
-        pass
-    
-    def getAccessForceGroup(self):
-        pass
-    
-    def getAccessForceDirMode(self):
-        pass
-    
-    def getAccessForceFileMode(self):
-        pass
-    
-    def getProcessPriority(self):
-        pass
-    
-    def getTranscodingPriority(self):
-        pass
-    
-    def getTranscodingTimeout(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-    
-    def getPreprocessTimeout(self):
-        pass
-    
-    def getMailSubjectTemplate(self):
-        pass
-    
-    def getMailBodyTemplate(self):
-        pass
-    
-    def getMailTimeout(self):
-        pass
-    
-    def getMailRetryMax(self):
-        pass
-    
-    def getMailRetrySleep(self):
-        pass
-    
-    def getHTTPRequestTimeout(self):
-        pass
-    
-    def getHTTPRequestRetryMax(self):
-        pass
-    
-    def getHTTPRequestRetrySleep(self):
-        pass
-
 
 class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     
     implements(IStoreContext)
     
-    base.store_proxy("outputMediaTemplate",
-                     default=adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)
-    base.store_proxy("outputThumbTemplate",
-                     default=adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE)
-    base.store_proxy("linkFileTemplate",
-                     default=adminconsts.DEFAULT_LINK_FILE_TEMPLATE)
-    base.store_proxy("configFileTemplate",
-                     default=adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE)
-    base.store_proxy("reportFileTemplate",
-                     default=adminconsts.DEFAULT_REPORT_FILE_TEMPLATE)
-    base.store_proxy("linkTemplate",
-                     default=constants.LINK_TEMPLATE)
-    base.store_proxy("monitoringPeriod",
-                     default=adminconsts.DEFAULT_MONITORING_PERIOD)
-    base.store_proxy("accessForceUser",
-                     default=adminconsts.DEFAULT_ACCESS_FORCE_USER)
-    base.store_proxy("accessForceGroup",
-                     default=adminconsts.DEFAULT_ACCESS_FORCE_GROUP)
-    base.store_proxy("accessForceDirMode",
-                     default=adminconsts.DEFAULT_ACCESS_FORCE_DIR_MODE)
-    base.store_proxy("accessForceFileMode",
-                     default=adminconsts.DEFAULT_ACCESS_FORCE_FILE_MODE)
-    base.store_proxy("processPriority",
-                     default=adminconsts.DEFAULT_PROCESS_PRIORITY)
-    base.store_proxy("transcodingPriority",
-                     default=adminconsts.DEFAULT_TRANSCODING_PRIORITY)
-    base.store_proxy("transcodingTimeout",
-                     default=adminconsts.DEFAULT_TRANSCODING_TIMEOUT)
-    base.store_proxy("postprocessTimeout",
-                     default=adminconsts.DEFAULT_POSTPROCESS_TIMEOUT)
-    base.store_proxy("preprocessTimeout",
-                     default=adminconsts.DEFAULT_PREPROCESS_TIMEOUT)
-    base.store_proxy("mailSubjectTemplate",
-                     default=adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE)
-    base.store_proxy("mailBodyTemplate",
-                     default=adminconsts.DEFAULT_MAIL_BODY_TEMPLATE)
-    base.store_proxy("mailTimeout",
-                     default=adminconsts.DEFAULT_MAIL_TIMEOUT)
-    base.store_proxy("mailRetryMax",
-                     default=adminconsts.DEFAULT_MAIL_RETRY_MAX)
-    base.store_proxy("mailRetrySleep",
-                     default=adminconsts.DEFAULT_MAIL_RETRY_SLEEP)
-    base.store_proxy("HTTPRequestTimeout",
-                     default=adminconsts.DEFAULT_HTTPREQUEST_TIMEOUT)
-    base.store_proxy("HTTPRequestRetryMax",
-                     default=adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX)
-    base.store_proxy("HTTPRequestRetrySleep",
-                     default=adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)
+    outputMediaTemplate   = base.StoreProxy("outputMediaTemplate",
+                                            adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)
+    outputThumbTemplate   = base.StoreProxy("outputThumbTemplate",
+                                            adminconsts.DEFAULT_OUTPUT_THUMB_TEMPLATE)
+    linkFileTemplate      = base.StoreProxy("linkFileTemplate",
+                                            adminconsts.DEFAULT_LINK_FILE_TEMPLATE)
+    configFileTemplate    = base.StoreProxy("configFileTemplate",
+                                            adminconsts.DEFAULT_CONFIG_FILE_TEMPLATE)
+    reportFileTemplate    = base.StoreProxy("reportFileTemplate",
+                                            adminconsts.DEFAULT_REPORT_FILE_TEMPLATE)
+    linkTemplate          = base.StoreProxy("linkTemplate",
+                                            constants.LINK_TEMPLATE)
+    monitoringPeriod      = base.StoreProxy("monitoringPeriod",
+                                            adminconsts.DEFAULT_MONITORING_PERIOD)
+    accessForceUser       = base.StoreProxy("accessForceUser",
+                                            adminconsts.DEFAULT_ACCESS_FORCE_USER)
+    accessForceGroup      = base.StoreProxy("accessForceGroup",
+                                            adminconsts.DEFAULT_ACCESS_FORCE_GROUP)
+    accessForceDirMode    = base.StoreProxy("accessForceDirMode",
+                                            adminconsts.DEFAULT_ACCESS_FORCE_DIR_MODE)
+    accessForceFileMode   = base.StoreProxy("accessForceFileMode",
+                                            adminconsts.DEFAULT_ACCESS_FORCE_FILE_MODE)
+    processPriority       = base.StoreProxy("processPriority",
+                                            adminconsts.DEFAULT_PROCESS_PRIORITY)
+    transcodingPriority   = base.StoreProxy("transcodingPriority",
+                                            adminconsts.DEFAULT_TRANSCODING_PRIORITY)
+    transcodingTimeout    = base.StoreProxy("transcodingTimeout",
+                                            adminconsts.DEFAULT_TRANSCODING_TIMEOUT)
+    postprocessTimeout    = base.StoreProxy("postprocessTimeout",
+                                            adminconsts.DEFAULT_POSTPROCESS_TIMEOUT)
+    preprocessTimeout     = base.StoreProxy("preprocessTimeout",
+                                            adminconsts.DEFAULT_PREPROCESS_TIMEOUT)
+    mailSubjectTemplate   = base.StoreProxy("mailSubjectTemplate",
+                                            adminconsts.DEFAULT_MAIL_SUBJECT_TEMPLATE)
+    mailBodyTemplate      = base.StoreProxy("mailBodyTemplate",
+                                            adminconsts.DEFAULT_MAIL_BODY_TEMPLATE)
+    mailTimeout           = base.StoreProxy("mailTimeout",
+                                            adminconsts.DEFAULT_MAIL_TIMEOUT)
+    mailRetryMax          = base.StoreProxy("mailRetryMax",
+                                            adminconsts.DEFAULT_MAIL_RETRY_MAX)
+    mailRetrySleep        = base.StoreProxy("mailRetrySleep",
+                                            adminconsts.DEFAULT_MAIL_RETRY_SLEEP)
+    HTTPRequestTimeout    = base.StoreProxy("HTTPRequestTimeout",
+                                            adminconsts.DEFAULT_HTTPREQUEST_TIMEOUT)
+    HTTPRequestRetryMax   = base.StoreProxy("HTTPRequestRetryMax",
+                                            adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX)
+    HTTPRequestRetrySleep = base.StoreProxy("HTTPRequestRetrySleep",
+                                            adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)
 
 
     def __init__(self, adminContext, adminStore):

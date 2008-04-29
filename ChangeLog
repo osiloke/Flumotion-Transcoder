@@ -1,5 +1,19 @@
 2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/base.py:
+	* flumotion/transcoder/admin/context/config.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/context/target.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	Update the context elements to use python's descriptor protocol.
+	Updated the interfaces with attributes insteed of methods.
+
+2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datastore/notification.py:
 	Removed some old declarations form interface.
 

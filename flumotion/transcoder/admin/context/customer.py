@@ -10,9 +10,9 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
-from flumotion.inhouse import fileutils, annotate
+from flumotion.inhouse import fileutils
 
 from flumotion.transcoder import constants, virtualpath
 from flumotion.transcoder.admin import adminconsts
@@ -21,6 +21,44 @@ from flumotion.transcoder.admin.context import base, profile, notification
 #TODO: Do some value caching
 
 class ICustomerContext(base.IBaseStoreContext):
+
+    name                 = Attribute("Name of the customer")
+    subdir               = Attribute("Customer files sub-directory")
+    customerPriority     = Attribute("Customer transcoding priority")
+    outputMediaTemplate  = Attribute("Output media file template")
+    outputThumbTemplate  = Attribute("Output thumbnail file temaplte")
+    linkFileTemplate     = Attribute("Link file template")
+    configFileTemplate   = Attribute("Configuration file template")
+    reportFileTemplate   = Attribute("Report file template")
+    linkTemplate         = Attribute("Link template")
+    linkURLPrefix        = Attribute("link URL prefix")
+    enablePostprocessing = Attribute("Enable post-processing")
+    enablePreprocessing  = Attribute("Enable pre-processing")
+    enableLinkFiles      = Attribute("Enable link file generation")
+    transcodingPriority  = Attribute("Transcoding priority")
+    processPriority      = Attribute("Transcoding process priority")
+    preprocessCommand    = Attribute("Pre-processing command line")
+    postprocessCommand   = Attribute("Post-processing command line")
+    preprocessTimeout    = Attribute("Pre-processing timeout")
+    postprocessTimeout   = Attribute("Post-processing timeout")
+    transcodingTimeout   = Attribute("Transcoding timeout")
+    monitoringPeriod     = Attribute("Monitoring period")
+    accessForceUser      = Attribute("Force user of new files and directories")
+    accessForceGroup     = Attribute("Force group of new files and directories")
+    accessForceDirMode   = Attribute("Force rights of new directories")
+    accessForceFileMode  = Attribute("Force rights of new files")
+    pathAttributes       = Attribute("Path rights, user and group specifications")
+    monitorLabel         = Attribute("Monitor components label")
+    inputBase            = Attribute("Input file base directory")
+    outputBase           = Attribute("Output file base directory")
+    failedBase           = Attribute("Failed transcoding base directory")
+    doneBase             = Attribute("Succeed transocding base directory")
+    linkBase             = Attribute("Link files base directory")
+    workBase             = Attribute("Temporary files directory")
+    configBase           = Attribute("Transcoding configuration files base directory")
+    tempRepBase          = Attribute("Temporary reports base directory")
+    failedRepBase        = Attribute("Failed reports base directory")
+    doneRepBase          = Attribute("Succeed reports base directory")
 
     def getStoreContext(self):
         pass
@@ -43,114 +81,6 @@ class ICustomerContext(base.IBaseStoreContext):
     def iterProfileContexts(self, input):
         pass
         
-    def getPathAttributes(self):
-        pass
-    
-    def getMonitorLabel(self):
-        pass
-    
-    def getName(self):
-        pass
-    
-    def getCustomerPriority(self):
-        pass
-    
-    def getOutputMediaTemplate(self):
-        pass
-    
-    def getOutputThumbTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getConfigFileTemplate(self):
-        pass
-    
-    def getReportFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getLinkURLPrefix(self):
-        pass
-    
-    def getEnablePostprocessing(self):
-        pass
-    
-    def getEnablePreprocessing(self):
-        pass
-    
-    def getEnableLinkFiles(self):
-        pass
-    
-    def getTranscodingPriority(self):
-        pass
-    
-    def getProcessPriority(self):
-        pass
-    
-    def getPreprocessCommand(self):
-        pass
-    
-    def getPostprocessCommand(self):
-        pass
-    
-    def getPreprocessTimeout(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-    
-    def getTranscodingTimeout(self):
-        pass
-    
-    def getMonitoringPeriod(self):
-        pass
-    
-    def getAccessForceUser(self):
-        pass
-    
-    def getAccessForceGroup(self):
-        pass
-    
-    def getAccessForceDirMode(self):
-        pass
-    
-    def getAccessForceFileMode(self):
-        pass
-
-    def getInputBase(self):
-        pass
-
-    def getOutputBase(self):
-        pass
-    
-    def getFailedBase(self):
-        pass
-    
-    def getDoneBase(self):
-        pass
-    
-    def getLinkBase(self):
-        pass
-    
-    def getWorkBase(self):
-        pass
-    
-    def getConfigBase(self):
-        pass
-    
-    def getTempRepBase(self):
-        pass
-
-    def getFailedRepBase(self):
-        pass
-    
-    def getDoneRepBase(self):
-        pass
-
 
 class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
@@ -163,61 +93,62 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         Ex: customer data => store.get...Dir()=None
                              name="Fluendo"
                              subdir=None
-                getInputBase: default:/fluendo/files/incoming/
-                getoutputBase: default:/fluendo/files/outgoing/
-                getFailedBase: default:/fluendo/files/failed/
-                getDoneBase: default:/fluendo/files/done/
-                getLinkBase: default:/fluendo/files/links/
-                getWorkBase: temp:/fluendo/working/
-                getConfBase: default:/fluendo/configs/
-                getTempRepBase: default:/fluendo/reports/pending/
-                getFailedRepBase: default:/fluendo/reports/failed/
-                getDoneRepBase: default:/fluendo/reports/done/
+                inputBase: default:/fluendo/files/incoming/
+                outputBase: default:/fluendo/files/outgoing/
+                failedBase: default:/fluendo/files/failed/
+                doneBase: default:/fluendo/files/done/
+                linkBase: default:/fluendo/files/links/
+                workBase: temp:/fluendo/working/
+                confBase: default:/fluendo/configs/
+                tempRepBase: default:/fluendo/reports/pending/
+                failedRepBase: default:/fluendo/reports/failed/
+                doneRepBase: default:/fluendo/reports/done/
     
-        Ex: customer data => store.get...Dir()=None
+        Ex: customer data => store.xxxDir()=None
                              name="Big/Comp (1)"
                              subdir=None
-                getInputBase: default:/big_comp_(1)/files/incoming/
-                getoutputBase: default:/big_comp_(1)/files/outgoing/
-                getWorkBase: temp:/big_comp_(1)/working/
+                inputBase: default:/big_comp_(1)/files/incoming/
+                outputBase: default:/big_comp_(1)/files/outgoing/
+                workBase: temp:/big_comp_(1)/working/
                 ...
     
-        Ex: customer data => store.get...Dir()=None
+        Ex: customer data => store.xxxDir()=None
                              name="RTVE"
                              subdir="rtve/l2n"
-                getInputBase: default:/rtve/l2n/files/incoming/
-                getoutputBase: default:/rtve/l2n/files/outgoing/
-                getWorkBase: temp:/rtve/l2n/working/
+                inputBase: default:/rtve/l2n/files/incoming/
+                outputBase: default:/rtve/l2n/files/outgoing/
+                workBase: temp:/rtve/l2n/working/
                 ...
     """
     
     implements(ICustomerContext)
     
-    base.store_proxy("name")
-    base.store_proxy("customerPriority",
-                     default=adminconsts.DEFAULT_CUSTOMER_PRIORITY)
-    base.store_proxy("preprocessCommand")
-    base.store_proxy("postprocessCommand")
-    base.store_proxy("enablePostprocessing")
-    base.store_proxy("enablePreprocessing")
-    base.store_proxy("enableLinkFiles")
-    base.store_parent_proxy("outputMediaTemplate")
-    base.store_parent_proxy("outputThumbTemplate")
-    base.store_parent_proxy("linkFileTemplate")
-    base.store_parent_proxy("configFileTemplate")
-    base.store_parent_proxy("reportFileTemplate")
-    base.store_parent_proxy("linkTemplate")
-    base.store_parent_proxy("linkURLPrefix")
-    base.store_parent_proxy("transcodingPriority")
-    base.store_parent_proxy("processPriority")
-    base.store_parent_proxy("preprocessTimeout")
-    base.store_parent_proxy("postprocessTimeout")
-    base.store_parent_proxy("transcodingTimeout")
-    base.store_parent_proxy("monitoringPeriod")
-    base.store_parent_proxy("accessForceUser")
-    base.store_parent_proxy("accessForceGroup")
-    base.store_parent_proxy("accessForceDirMode")
-    base.store_parent_proxy("accessForceFileMode")
+    name                 = base.StoreProxy("name")
+    customerPriority     = base.StoreProxy("customerPriority",
+                                           adminconsts.DEFAULT_CUSTOMER_PRIORITY)
+    preprocessCommand    = base.StoreProxy("preprocessCommand")
+    postprocessCommand   = base.StoreProxy("postprocessCommand")
+    enablePostprocessing = base.StoreProxy("enablePostprocessing")
+    enablePreprocessing  = base.StoreProxy("enablePreprocessing")
+    enableLinkFiles      = base.StoreProxy("enableLinkFiles")
+    outputMediaTemplate  = base.StoreParentProxy("outputMediaTemplate")
+    outputThumbTemplate  = base.StoreParentProxy("outputThumbTemplate")
+    linkFileTemplate     = base.StoreParentProxy("linkFileTemplate")
+    configFileTemplate   = base.StoreParentProxy("configFileTemplate")
+    reportFileTemplate   = base.StoreParentProxy("reportFileTemplate")
+    linkTemplate         = base.StoreParentProxy("linkTemplate")
+    linkURLPrefix        = base.StoreParentProxy("linkURLPrefix")
+    transcodingPriority  = base.StoreParentProxy("transcodingPriority")
+    processPriority      = base.StoreParentProxy("processPriority")
+    preprocessTimeout    = base.StoreParentProxy("preprocessTimeout")
+    postprocessTimeout   = base.StoreParentProxy("postprocessTimeout")
+    transcodingTimeout   = base.StoreParentProxy("transcodingTimeout")
+    monitoringPeriod     = base.StoreParentProxy("monitoringPeriod")
+    accessForceUser      = base.StoreParentProxy("accessForceUser")
+    accessForceGroup     = base.StoreParentProxy("accessForceGroup")
+    accessForceDirMode   = base.StoreParentProxy("accessForceDirMode")
+    accessForceFileMode  = base.StoreParentProxy("accessForceFileMode")
+
     
     def __init__(self, storeCtx, custStore):
         base.BaseStoreContext.__init__(self, storeCtx, custStore)
@@ -253,20 +184,20 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.ProfileContext, profIter, input)
     
-    @base.property_getter("pathAttributes")
-    def getPathAttributes(self):
+    @property
+    def pathAttributes(self):
         return fileutils.PathAttributes(self.accessForceUser,
                                         self.accessForceGroup,
                                         self.accessForceDirMode,
                                         self.accessForceFileMode)
 
-    @base.property_getter("monitorLabel")
-    def getMonitorLabel(self):
+    @property
+    def monitorLabel(self):
         template = self.getAdminContext().config.monitorLabelTemplate
         return self._variables.substitute(template)
     
-    @base.property_getter("subdir")
-    def getSubdir(self):
+    @property
+    def subdir(self):
         subdir = self.store.subdir
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -275,62 +206,62 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         subdir = fileutils.str2filename(self.store.name)
         return fileutils.ensureDirPath(subdir)
             
-    @base.property_getter("inputBase")
-    def getInputBase(self):
+    @property
+    def inputBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.inputDir, 
                             adminconsts.DEFAULT_INPUT_DIR)
 
-    @base.property_getter("outputBase")
-    def getOutputBase(self):
+    @property
+    def outputBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.outputDir, 
                             adminconsts.DEFAULT_OUTPUT_DIR)
     
-    @base.property_getter("failedBase")
-    def getFailedBase(self):
+    @property
+    def failedBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.failedDir, 
                             adminconsts.DEFAULT_FAILED_DIR)
     
-    @base.property_getter("doneBase")
-    def getDoneBase(self):
+    @property
+    def doneBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.doneDir, 
                             adminconsts.DEFAULT_DONE_DIR)
     
-    @base.property_getter("linkBase")
-    def getLinkBase(self):
+    @property
+    def linkBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.linkDir,
                             adminconsts.DEFAULT_LINK_DIR)
     
-    @base.property_getter("workBase")
-    def getWorkBase(self):
+    @property
+    def workBase(self):
         return self._getDir(constants.TEMP_ROOT,
                             self.store.workDir, 
                             adminconsts.DEFAULT_WORK_DIR)
     
-    @base.property_getter("configBase")
-    def getConfigBase(self):
+    @property
+    def configBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.configDir, 
                             adminconsts.DEFAULT_CONFIG_DIR)
     
-    @base.property_getter("tempRepBase")
-    def getTempRepBase(self):
+    @property
+    def tempRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.tempRepDir, 
                             adminconsts.DEFAULT_TEMPREP_DIR)
 
-    @base.property_getter("failedRepBase")
-    def getFailedRepBase(self):
+    @property
+    def failedRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.failedRepDir, 
                             adminconsts.DEFAULT_FAILEDREP_DIR)
     
-    @base.property_getter("doneRepBase")
-    def getDoneRepBase(self):
+    @property
+    def doneRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.doneRepDir, 
                             adminconsts.DEFAULT_DONEREP_DIR)

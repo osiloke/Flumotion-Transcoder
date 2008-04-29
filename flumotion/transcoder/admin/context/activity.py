@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
 import datetime
 
@@ -20,91 +20,63 @@ from flumotion.transcoder.admin.datastore import activity
 
 class IActivityContext(base.IBaseStoreContext):
     
+    type      = Attribute("The type of activity")
+    subtype   = Attribute("The sub-type of activity")
+    startTime = Attribute("The time the activity was started")
+    lastTime  = Attribute("The last time the activity was attempted")
+    state     = Attribute("Activity's state")
+    
     def getStoreContext(self):
         pass
     
     def getStatecontext(self):
         pass
 
-    def getType(self):
-        pass
-    
-    def getSubtype(self):
-        pass
-    
-    def getStartTime(self):
-        pass
-    
-    def getLastTime(self):
-        pass
-    
-    def getState(self):
-        pass
-
 
 class ITranscodingActivityContext(IActivityContext):
+    
+    inputRelPath = Attribute("Transcoded file relative path")
     
     def getCustomerContext(self):
         pass
     
     def getProfileContext(self):
         pass
-    
-    def getInputRelPath(self):
-        pass
 
 
 class INotificationActivityContext(IActivityContext):
     
+    trigger    = Attribute("What has triggered this notification")
+    timeout    = Attribute("Timeout to perform the notification")
+    retryCount = Attribute("How many times the notification has been attempted")
+    retryMax   = Attribute("Maximum time the notification should be attempted")
+    retrySleep = Attribute("Time to wait between notification attempts")
+
     def getTimeLeftBeforeRetry(self):
         pass
     
-    def getTrigger(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryCount(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
-
 
 class IHTTPActivityContext(INotificationActivityContext):
 
-    def getRequestURL(self):
-        pass
+    url = Attribute("URL used to notify over HTTP")
 
 
 class IMailActivityContext(INotificationActivityContext):
     
-    def getSenderAddr(self):
-        pass
-    
-    def getRecipientsAddr(self):
-        pass
-    
-    def getSubject(self):
-        pass
-    
-    def getBody(self):
-        pass
+    senderAddr = Attribute("Sender e-mail addresse")
+    subject    = Attribute("Mail subject")
+    body       = Attribute("Mail body")
 
 
 class ActivityContext(base.BaseStoreContext):
 
     implements(IActivityContext)
 
-    base.store_proxy("type")
-    base.store_proxy("subtype")
-    base.store_proxy("startTime")
-    base.store_proxy("lastTime")
-    base.store_proxy("state")
+    type      = base.StoreProxy("type")
+    subtype   = base.StoreProxy("subtype")
+    startTime = base.StoreProxy("startTime")
+    lastTime  = base.StoreProxy("lastTime")
+    state     = base.StoreProxy("state")
     
     def __init__(self, stateCtx, activStore):
         base.BaseStoreContext.__init__(self, stateCtx, activStore)
@@ -129,7 +101,7 @@ class TranscodingActivityContext(ActivityContext):
     
     implements(ITranscodingActivityContext)
     
-    base.store_proxy("inputRelPath")
+    inputRelPath = base.StoreProxy("inputRelPath")
     
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
@@ -161,11 +133,11 @@ class NotificationActivityContext(ActivityContext):
     
     implements(INotificationActivityContext)
     
-    base.store_proxy("trigger")
-    base.store_proxy("timeout")
-    base.store_proxy("retryCount")
-    base.store_proxy("retryMax")
-    base.store_proxy("retrySleep")
+    trigger    = base.StoreProxy("trigger")
+    timeout    = base.StoreProxy("timeout")
+    retryCount = base.StoreProxy("retryCount")
+    retryMax   = base.StoreProxy("retryMax")
+    retrySleep = base.StoreProxy("retrySleep")
     
     def __init__(self, stateCtx, activStore):
         ActivityContext.__init__(self, stateCtx, activStore)
@@ -193,10 +165,10 @@ class MailActivityContext(NotificationActivityContext):
     
     implements(IMailActivityContext)
     
-    base.store_proxy("senderAddr")
-    base.store_proxy("recipientsAddr")
-    base.store_proxy("subject")
-    base.store_proxy("body")
+    senderAddr     = base.StoreProxy("senderAddr")
+    recipientsAddr = base.StoreProxy("recipientsAddr")
+    subject        = base.StoreProxy("subject")
+    body           = base.StoreProxy("body")
     
     def __init__(self, stateCtx, activStore):
         NotificationActivityContext.__init__(self, stateCtx, activStore)
@@ -206,7 +178,7 @@ class HTTPActivityContext(NotificationActivityContext):
     
     implements(IHTTPActivityContext)
     
-    base.store_proxy("url")
+    url = base.StoreProxy("url")
     
     def __init__(self, stateCtx, activStore):
         NotificationActivityContext.__init__(self, stateCtx, activStore)

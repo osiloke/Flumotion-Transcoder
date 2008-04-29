@@ -10,9 +10,9 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
+from zope.interface import implements, Attribute
 
-from flumotion.inhouse import fileutils, annotate
+from flumotion.inhouse import fileutils
 
 from flumotion.transcoder import virtualpath
 from flumotion.transcoder.admin.context import base, target, notification
@@ -20,6 +20,38 @@ from flumotion.transcoder.admin.context import base, target, notification
 #TODO: Do some value caching
 
 class IUnboundProfileContext(base.IBaseStoreContext):
+
+    name                 = Attribute("Name of the profile")
+    subdir               = Attribute("Profile's sub-directory")
+    outputMediaTemplate  = Attribute("Output media file template")
+    outputThumbTemplate  = Attribute("Output thumbnail file temaplte")
+    linkFileTemplate     = Attribute("Link file template")
+    configFileTemplate   = Attribute("Configuration file template")
+    reportFileTemplate   = Attribute("Report file template")
+    linkTemplate         = Attribute("Link template")
+    linkURLPrefix        = Attribute("link URL prefix")
+    enablePostprocessing = Attribute("Enable post-processing")
+    enablePreprocessing  = Attribute("Enable pre-processing")
+    enableLinkFiles      = Attribute("Enable link file generation")
+    transcodingPriority  = Attribute("Transcoding priority")
+    processPriority      = Attribute("Transcoding process priority")
+    preprocessCommand    = Attribute("Pre-processing command line")
+    postprocessCommand   = Attribute("Post-processing command line")
+    preprocessTimeout    = Attribute("Pre-processing timeout")
+    postprocessTimeout   = Attribute("Post-processing timeout")
+    transcodingTimeout   = Attribute("Transcoding timeout")
+    monitoringPeriod     = Attribute("Monitoring period")
+    inputBase            = Attribute("Input file base directory")
+    outputBase           = Attribute("Output file base directory")
+    failedBase           = Attribute("Failed transcoding base directory")
+    doneBase             = Attribute("Succeed transocding base directory")
+    linkBase             = Attribute("Link files base directory")
+    workBase             = Attribute("Temporary files directory")
+    configBase           = Attribute("Transcoding configuration files base directory")
+    tempRepBase          = Attribute("Temporary reports base directory")
+    failedRepBase        = Attribute("Failed reports base directory")
+    doneRepBase          = Attribute("Succeed reports base directory")
+
 
     def getStoreContext(self):
         pass
@@ -30,95 +62,39 @@ class IUnboundProfileContext(base.IBaseStoreContext):
     def isBound(self):
         pass
 
-    def getName(self):
-        pass
-    
-    def getOutputMediaTemplate(self):
-        pass
-    
-    def getOutputThumbTemplate(self):
-        pass
-    
-    def getLinkFileTemplate(self):
-        pass
-    
-    def getConfigFileTemplate(self):
-        pass
-    
-    def getReportFileTemplate(self):
-        pass
-    
-    def getLinkTemplate(self):
-        pass
-    
-    def getLinkURLPrefix(self):
-        pass
-    
-    def getEnablePostprocessing(self):
-        pass
-    
-    def getEnablePreprocessing(self):
-        pass
-    
-    def getEnableLinkFiles(self):
-        pass
-    
-    def getTranscodingPriority(self):
-        pass
-    
-    def getProcessPriority(self):
-        pass
-    
-    def getPreprocessCommand(self):
-        pass
-    
-    def getPostprocessCommand(self):
-        pass
-    
-    def getPreprocessTimeout(self):
-        pass
-    
-    def getPostprocessTimeout(self):
-        pass
-    
-    def getTranscodingTimeout(self):
-        pass
-    
-    def getMonitoringPeriod(self):
-        pass
-
-    def getOutputBase(self):
-        pass
-    
-    def getLinkBase(self):
-        pass
-    
-    def getWorkBase(self):
-        pass
-    
-    def getInputBase(self):
-        pass
-    
-    def getFailedBase(self):
-        pass
-    
-    def getDoneBase(self):
-        pass
-    
-    def getConfigBase(self):
-        pass
-    
-    def getTempRepBase(self):
-        pass
-    
-    def getFailedRepBase(self):
-        pass
-    
-    def getDoneRepBase(self):
-        pass
-
 
 class IProfileContext(IUnboundProfileContext):
+    
+    transcoderLabel  = Attribute("Transcoding component's label")
+    activityLabel    = Attribute("Transcoding activities' label")
+    inputRelPath     = Attribute("Input file relative path")
+    failedRelPath    = Attribute("Failed file relative path")
+    doneRelPath      = Attribute("Transcoded file relative path")
+    configRelPath    = Attribute("Configuration file relative path")
+    tempRepRelPath   = Attribute("Temporary report relative path")
+    failedRepRelPath = Attribute("Failed report relative path")
+    doneRepRelPath   = Attribute("Succeed report relative path")
+    inputDir         = Attribute("Input file directory")
+    failedDir        = Attribute("Failed file directory")
+    doneDir          = Attribute("Transcoded file directory")
+    configDir        = Attribute("Transocding configuration file directory")
+    tempRepDir       = Attribute("Report temporary directory")
+    failedRepDir     = Attribute("Failed report directory")
+    doneRepDir       = Attribute("Succeed report directory")
+    inputFile        = Attribute("Input file name")
+    failedFile       = Attribute("Failed file name")
+    doneFile         = Attribute("Succeed file name")
+    configFile       = Attribute("Transocding configuration file name")
+    tempRepFile      = Attribute("Temporary report file name")
+    failedRepFile    = Attribute("Failed report file name")
+    doneRepFile      = Attribute("Succeed report file name")    
+    inputPath        = Attribute("Input file path")
+    failedPath       = Attribute("Failed file path")
+    donePath         = Attribute("Transcoded file path")
+    configPath       = Attribute("Transcoding configuration file path")
+    tempRepPath      = Attribute("Temporary report file path")
+    failedRepPath    = Attribute("Failed report file path")
+    doneRepPath      = Attribute("Succeed report file path")
     
     def getTargetContextByName(self, targName):
         pass
@@ -129,182 +105,143 @@ class IProfileContext(IUnboundProfileContext):
     def iterTargetContexts(self):
         pass
 
-    def getTranscoderLabel(self):
-        pass
-
-    def getActivityLabel(self):
-        pass
-
-    def getInputRelPath(self):
-        pass
-    
-    def getFailedRelPath(self):
-        pass
-    
-    def getDoneRelPath(self):
-        pass
-    
-    def getConfigRelPath(self):
-        pass
-    
-    def getTempRepRelPath(self):
-        pass
-
-    def getFailedRepRelPath(self):
-        pass
-    
-    def getDoneRepRelPath(self):
-        pass
-    
-    def getInputDir(self):
-        pass
-    
-    def getFailedDir(self):
-        pass
-    
-    def getDoneDir(self):
-        pass
-    
-    def getConfigDir(self):
-        pass
-    
-    def getTempRepDir(self):
-        pass
-    
-    def getFailedRepDir(self):
-        pass
-    
-    def getDoneRepDir(self):
-        pass
-    
-    def getInputPath(self):
-        pass
-    
-    def getFailedPath(self):
-        pass
-    
-    def getDonePath(self):
-        pass
-    
-    def getConfigPath(self):
-        pass
-    
-    def getTempRepPath(self):
-        pass
-    
-    def getFailedRepPath(self):
-        pass
-    
-    def getDoneRepPath(self):
-        pass
-    
-    def getInputFile(self):
-        pass
-    
-    def getFailedFile(self):
-        pass
-    
-    def getDoneFile(self):
-        pass
-    
-    def getConfigFile(self):
-        pass
-    
-    def getTempRepFile(self):
-        pass
-    
-    def getFailedRepFile(self):
-        pass
-    
-    def getDoneRepFile(self):
-        pass
-
 
 ## Getter Factories ##
+#def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
+#    def getter(self):
+#        parent = getattr(self.parent, basePropertyName)
+#        folder = getattr(self.store, storePropertyName)
+#        if folder != None:
+#            value = self._expandDir(folder)
+#            value = fileutils.ensureAbsDirPath(value)
+#            value = fileutils.cleanupPath(value)
+#            return virtualpath.VirtualPath(value, parent.getRoot())
+#        return parent.append(self.subdir)
+#    getter.__name__ = getterName
+#    return getter
+#
+#def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
+#    def getter(self):
+#        folder = getattr(self, basePropertyName)
+#        relPath = getattr(self, relPropertyName)
+#        path = fileutils.splitPath(relPath)[0]
+#        return folder.append(path)
+#    getter.__name__ = getterName
+#    return getter
+#
+#def _fileGetterFactory(getterName, relPropertyName):
+#    def getter(self):
+#        relPath = getattr(self, relPropertyName)
+#        file, ext = fileutils.splitPath(relPath)[1:3]
+#        return file + ext
+#    getter.__name__ = getterName
+#    return getter
+#
+#def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
+#    def getter(self):
+#        folder = getattr(self, dirPropertyName)
+#        file = getattr(self, filePropertyName)
+#        return folder.append(file)
+#    getter.__name__ = getterName
+#    return getter
 
-def _baseGetterFactory(getterName, basePropertyName, storePropertyName):
-    def getter(self):
-        parent = getattr(self.parent, basePropertyName)
-        folder = getattr(self.store, storePropertyName)
-        if folder != None:
-            value = self._expandDir(folder)
+
+## Descriptors ##
+
+class ReadOnlyProperty(object):
+    def __set__(self, obj, value):
+        raise AttributeError("Attribute is read-only")
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")    
+
+
+class BaseDir(ReadOnlyProperty):
+    def __init__(self, name):
+        self._basePropertyName = name + "Base"
+        self._storePropertyName = name + "Dir"
+    def __get__(self, obj, type=None):
+        parentValue = getattr(obj.parent, self._basePropertyName)
+        storeValue = getattr(obj.store, self._storePropertyName)
+        if storeValue != None:
+            value = obj._expandDir(storeValue)
             value = fileutils.ensureAbsDirPath(value)
             value = fileutils.cleanupPath(value)
-            return virtualpath.VirtualPath(value, parent.getRoot())
-        return parent.append(self.subdir)
-    getter.__name__ = getterName
-    return getter
+            return virtualpath.VirtualPath(value, parentValue.getRoot())
+        return parentValue.append(obj.subdir)
 
-def _dirGetterFactory(getterName, basePropertyName, relPropertyName):
-    def getter(self):
-        folder = getattr(self, basePropertyName)
-        relPath = getattr(self, relPropertyName)
+
+class FileDir(ReadOnlyProperty):
+    def __init__(self, name):
+        self._basePropertyName = name + "Base"
+        self._relPropertyName = name + "RelPath"
+    def __get__(self, obj, type=None):
+        basePath = getattr(obj, self._basePropertyName)
+        relPath = getattr(obj, self._relPropertyName)
         path = fileutils.splitPath(relPath)[0]
-        return folder.append(path)
-    getter.__name__ = getterName
-    return getter
+        return basePath.append(path)
 
-def _fileGetterFactory(getterName, relPropertyName):
-    def getter(self):
-        relPath = getattr(self, relPropertyName)
+
+class FileName(ReadOnlyProperty):
+    def __init__(self, name):
+        self._relPropertyName = name + "RelPath"
+    def __get__(self, obj, type=None):
+        relPath = getattr(obj, self._relPropertyName)
         file, ext = fileutils.splitPath(relPath)[1:3]
         return file + ext
-    getter.__name__ = getterName
-    return getter
 
-def _pathGetterFactory(getterName, dirPropertyName, filePropertyName):
-    def getter(self):
-        folder = getattr(self, dirPropertyName)
-        file = getattr(self, filePropertyName)
+
+class FilePath(ReadOnlyProperty):
+    def __init__(self, name):
+        self._dirPropertyName = name + "Dir"
+        self._filePropertyName = name + "File"
+    def __get__(self, obj, type=None):
+        folder = getattr(obj, self._dirPropertyName)
+        file = getattr(obj, self._filePropertyName)
         return folder.append(file)
-    getter.__name__ = getterName
-    return getter
 
 
-## Class Annotations ##
-
-def base_getters(*names):
-    for name in names:
-        storePropertyName = name + "Dir"
-        basePropertyName = name + "Base"
-        propertyName = name + "Base"
-        getterName = "get" + name[0].upper() + name[1:] + "Base"
-        getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
-        annotate.injectAttribute("base_getters", getterName, getter)
-        prop = property(getter)
-        annotate.injectAttribute("base_getters", propertyName, prop)
-
-def dir_getters(*names):
-    for name in names:
-        relPropertyName = name + "RelPath"
-        basePropertyName = name + "Base"
-        propertyName = name + "Dir"
-        getterName = "get" + name[0].upper() + name[1:] + "Dir"
-        getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
-        annotate.injectAttribute("dir_getters", getterName, getter)
-        prop = property(getter)
-        annotate.injectAttribute("dir_getters", propertyName, prop)
-
-def file_getters(*names):
-    for name in names:
-        relPropertyName = name + "RelPath"
-        propertyName = name + "File"
-        getterName = "get" + name[0].upper() + name[1:] + "File"
-        getter = _fileGetterFactory(getterName, relPropertyName)   
-        annotate.injectAttribute("file_getters", getterName, getter)
-        prop = property(getter)
-        annotate.injectAttribute("file_getters", propertyName, prop)
-
-def path_getters(*names):
-    for name in names:
-        dirPropertyName = name + "Dir"
-        filePropertyName = name + "File"
-        propertyName = name + "Path"
-        getterName = "get" + name[0].upper() + name[1:] + "Path"
-        getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
-        annotate.injectAttribute("path_getters", getterName, getter)
-        prop = property(getter)
-        annotate.injectAttribute("path_getters", propertyName, prop)
+#def base_getters(*names):
+#    for name in names:
+#        storePropertyName = name + "Dir"
+#        basePropertyName = name + "Base"
+#        propertyName = name + "Base"
+#        getterName = "get" + name[0].upper() + name[1:] + "Base"
+#        getter = _baseGetterFactory(getterName, basePropertyName, storePropertyName)
+#        annotate.injectAttribute("base_getters", getterName, getter)
+#        prop = property(getter)
+#        annotate.injectAttribute("base_getters", propertyName, prop)
+#
+#def dir_getters(*names):
+#    for name in names:
+#        relPropertyName = name + "RelPath"
+#        basePropertyName = name + "Base"
+#        propertyName = name + "Dir"
+#        getterName = "get" + name[0].upper() + name[1:] + "Dir"
+#        getter = _dirGetterFactory(getterName, basePropertyName, relPropertyName)        
+#        annotate.injectAttribute("dir_getters", getterName, getter)
+#        prop = property(getter)
+#        annotate.injectAttribute("dir_getters", propertyName, prop)
+#
+#def file_getters(*names):
+#    for name in names:
+#        relPropertyName = name + "RelPath"
+#        propertyName = name + "File"
+#        getterName = "get" + name[0].upper() + name[1:] + "File"
+#        getter = _fileGetterFactory(getterName, relPropertyName)   
+#        annotate.injectAttribute("file_getters", getterName, getter)
+#        prop = property(getter)
+#        annotate.injectAttribute("file_getters", propertyName, prop)
+#
+#def path_getters(*names):
+#    for name in names:
+#        dirPropertyName = name + "Dir"
+#        filePropertyName = name + "File"
+#        propertyName = name + "Path"
+#        getterName = "get" + name[0].upper() + name[1:] + "Path"
+#        getter = _pathGetterFactory(getterName, dirPropertyName, filePropertyName)        
+#        annotate.injectAttribute("path_getters", getterName, getter)
+#        prop = property(getter)
+#        annotate.injectAttribute("path_getters", propertyName, prop)
 
 
 class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin):
@@ -321,42 +258,49 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
                             name="OGG/Theora-Vorbis"
                             subdir="ogg"
                 
-                getInputBase: default:/fluendo/files/incoming/ogg/
-                getoutputBase: default:/fluendo/files/outgoing/ogg/
-                getFailedBase: default:/fluendo/files/failed/ogg/
-                getDoneBase: default:/fluendo/files/done/ogg/
-                getLinkBase: default:/fluendo/files/links/ogg/
-                getWorkBase: temp:/fluendo/working/ogg/
-                getConfBase: default:/fluendo/configs/ogg/
-                getTempRepBase: default:/fluendo/reports/pending/ogg/
-                getFailedRepBase: default:/fluendo/reports/failed/ogg/
-                getDoneRepBase: default:/fluendo/reports/done/ogg/
+                inputBase: default:/fluendo/files/incoming/ogg/
+                outputBase: default:/fluendo/files/outgoing/ogg/
+                failedBase: default:/fluendo/files/failed/ogg/
+                doneBase: default:/fluendo/files/done/ogg/
+                linkBase: default:/fluendo/files/links/ogg/
+                workBase: temp:/fluendo/working/ogg/
+                confBase: default:/fluendo/configs/ogg/
+                tempRepBase: default:/fluendo/reports/pending/ogg/
+                failedRepBase: default:/fluendo/reports/failed/ogg/
+                doneRepBase: default:/fluendo/reports/done/ogg/
     """
     
     implements(IUnboundProfileContext)
     
-    base.store_proxy("name")
-    base.store_parent_proxy("outputMediaTemplate")
-    base.store_parent_proxy("outputThumbTemplate")
-    base.store_parent_proxy("linkFileTemplate")
-    base.store_parent_proxy("configFileTemplate")
-    base.store_parent_proxy("reportFileTemplate")
-    base.store_parent_proxy("linkTemplate")
-    base.store_parent_proxy("linkURLPrefix")
-    base.store_parent_proxy("enablePostprocessing")
-    base.store_parent_proxy("enablePreprocessing")
-    base.store_parent_proxy("enableLinkFiles")
-    base.store_parent_proxy("transcodingPriority")
-    base.store_parent_proxy("processPriority")
-    base.store_parent_proxy("preprocessCommand")
-    base.store_parent_proxy("postprocessCommand")
-    base.store_parent_proxy("preprocessTimeout")
-    base.store_parent_proxy("postprocessTimeout")
-    base.store_parent_proxy("transcodingTimeout")
-    base.store_parent_proxy("monitoringPeriod")
-
-    base_getters("output", "link", "work", "input", "failed", "done",
-                 "config", "tempRep", "failedRep", "doneRep")
+    name                 = base.StoreProxy("name")
+    outputMediaTemplate  = base.StoreParentProxy("outputMediaTemplate")
+    outputThumbTemplate  = base.StoreParentProxy("outputThumbTemplate")
+    linkFileTemplate     = base.StoreParentProxy("linkFileTemplate")
+    configFileTemplate   = base.StoreParentProxy("configFileTemplate")
+    reportFileTemplate   = base.StoreParentProxy("reportFileTemplate")
+    linkTemplate         = base.StoreParentProxy("linkTemplate")
+    linkURLPrefix        = base.StoreParentProxy("linkURLPrefix")
+    enablePostprocessing = base.StoreParentProxy("enablePostprocessing")
+    enablePreprocessing  = base.StoreParentProxy("enablePreprocessing")
+    enableLinkFiles      = base.StoreParentProxy("enableLinkFiles")
+    transcodingPriority  = base.StoreParentProxy("transcodingPriority")
+    processPriority      = base.StoreParentProxy("processPriority")
+    preprocessCommand    = base.StoreParentProxy("preprocessCommand")
+    postprocessCommand   = base.StoreParentProxy("postprocessCommand")
+    preprocessTimeout    = base.StoreParentProxy("preprocessTimeout")
+    postprocessTimeout   = base.StoreParentProxy("postprocessTimeout")
+    transcodingTimeout   = base.StoreParentProxy("transcodingTimeout")
+    monitoringPeriod     = base.StoreParentProxy("monitoringPeriod")
+    outputBase           = BaseDir("output")
+    linkBase             = BaseDir("link")
+    workBase             = BaseDir("work")
+    inputBase            = BaseDir("input")
+    failedBase           = BaseDir("failed")
+    doneBase             = BaseDir("done")
+    configBase           = BaseDir("config")
+    tempRepBase          = BaseDir("tempRep")
+    failedRepBase        = BaseDir("failedRep")
+    doneRepBase          = BaseDir("doneRep")
 
     def __init__(self, custCtx, profStore, identifier=None):
         if identifier is None:
@@ -377,8 +321,8 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
     def isBound(self):
         return False
 
-    @base.property_getter("subdir")
-    def getSubdir(self):
+    @property
+    def subdir(self):
         subdir = self.store.subdir
         if subdir != None:
             subdir = fileutils.str2path(subdir)
@@ -409,49 +353,68 @@ class ProfileContext(UnboundProfileContext):
                             subdir="ogg"
             source path => "/subdir/file.avi"
                 
-                getInputBase: default:/fluendo/files/incoming/ogg/
-                getoutputBase: default:/fluendo/files/outgoing/ogg/
-                getFailedBase: default:/fluendo/files/failed/ogg/
-                getDoneBase: default:/fluendo/files/done/ogg/
-                getLinkBase: default:/fluendo/files/links/ogg/
-                getWorkBase: temp:/fluendo/working/ogg/
-                getConfBase: default:/fluendo/configs/ogg/
-                getTempRepBase: default:/fluendo/reports/pending/ogg/
-                getFailedRepBase: default:/fluendo/reports/failed/ogg/
-                getDoneRepBase: default:/fluendo/reports/done/ogg/
+                inputBase: default:/fluendo/files/incoming/ogg/
+                outputBase: default:/fluendo/files/outgoing/ogg/
+                failedBase: default:/fluendo/files/failed/ogg/
+                doneBase: default:/fluendo/files/done/ogg/
+                linkBase: default:/fluendo/files/links/ogg/
+                workBase: temp:/fluendo/working/ogg/
+                confBase: default:/fluendo/configs/ogg/
+                tempRepBase: default:/fluendo/reports/pending/ogg/
+                failedRepBase: default:/fluendo/reports/failed/ogg/
+                doneRepBase: default:/fluendo/reports/done/ogg/
                 
-                getInputDir: default:/fluendo/files/incoming/ogg/subdir/
-                getFailedDir: default:/fluendo/files/failed/ogg/subdir/
-                getDoneDir: default:/fluendo/files/done/ogg/subdir/
-                getConfDir: default:/fluendo/configs/ogg/subdir/
-                getTempRepDir: default:/fluendo/reports/pending/ogg/subdir/
-                getFailedRepDir: default:/fluendo/reports/failed/ogg/subdir/
-                getDoneRepDir: default:/fluendo/reports/done/ogg/subdir/
+                inputDir: default:/fluendo/files/incoming/ogg/subdir/
+                failedDir: default:/fluendo/files/failed/ogg/subdir/
+                doneDir: default:/fluendo/files/done/ogg/subdir/
+                confDir: default:/fluendo/configs/ogg/subdir/
+                tempRepDir: default:/fluendo/reports/pending/ogg/subdir/
+                failedRepDir: default:/fluendo/reports/failed/ogg/subdir/
+                doneRepDir: default:/fluendo/reports/done/ogg/subdir/
                 
-                getInputFile: file.avi
-                getConfFile: file.avi.conf
-                getTempRepFile: file.avi.rep
-                getFailedRepFile: file.avi.rep
-                getDoneRepFile: file.avi.rep
+                inputFile: file.avi
+                confFile: file.avi.conf
+                tempRepFile: file.avi.rep
+                failedRepFile: file.avi.rep
+                doneRepFile: file.avi.rep
                 
-                getInputRelPath: /subdir/file.avi
-                getConfRelPath: /subdir/file.avi.conf
-                getTempRepRelPath: /subdir/file.avi.rep
-                getFailedRepRelPath: /subdir/file.avi.rep
-                getDoneRepRelPath: /subdir/file.avi.rep
+                inputRelPath: /subdir/file.avi
+                confRelPath: /subdir/file.avi.conf
+                tempRepRelPath: /subdir/file.avi.rep
+                failedRepRelPath: /subdir/file.avi.rep
+                doneRepRelPath: /subdir/file.avi.rep
                 
-                getInputPath: default:/fluendo/files/incoming/ogg/subdir/file.avi
-                getConfPath: default:/fluendo/configs/ogg/subdir/file.avi.conf
-                getTempRepPath: default:/fluendo/reports/pending/ogg/subdir/file.avi.rep
-                getFailedRepPath: default:/fluendo/reports/failed/ogg/subdir/file.avi.rep
-                getDoneRepPath: default:/fluendo/reports/done/ogg/subdir/file.avi.rep
+                inputPath: default:/fluendo/files/incoming/ogg/subdir/file.avi
+                confPath: default:/fluendo/configs/ogg/subdir/file.avi.conf
+                tempRepPath: default:/fluendo/reports/pending/ogg/subdir/file.avi.rep
+                failedRepPath: default:/fluendo/reports/failed/ogg/subdir/file.avi.rep
+                doneRepPath: default:/fluendo/reports/done/ogg/subdir/file.avi.rep
+
     """
     
     implements(IProfileContext)
     
-    dir_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
-    file_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
-    path_getters("input", "failed", "done", "config", "tempRep", "failedRep", "doneRep")
+    inputDir      = FileDir("input")
+    failedDir     = FileDir("failed")
+    doneDir       = FileDir("done")
+    configDir     = FileDir("config")
+    tempRepDir    = FileDir("tempRep")
+    failedRepDir  = FileDir("failedRep")
+    doneRepDir    = FileDir("doneRep")
+    inputFile     = FileName("input")
+    failedFile    = FileName("failed")
+    doneFile      = FileName("done")
+    configFile    = FileName("config")
+    tempRepFile   = FileName("tempRep")
+    failedRepFile = FileName("failedRep")
+    doneRepFile   = FileName("doneRep")    
+    inputPath     = FilePath("input")
+    failedPath    = FilePath("failed")
+    donePath      = FilePath("done")
+    configPath    = FilePath("config")
+    tempRepPath   = FilePath("tempRep")
+    failedRepPath = FilePath("failedRep")
+    doneRepPath   = FilePath("doneRep")    
     
     def __init__(self, custCtx, profStore, inputAbstractPath):
         postfix = inputAbstractPath.strip('/')
@@ -475,48 +438,48 @@ class ProfileContext(UnboundProfileContext):
         targIter = self.store.iterTargetStores()
         return base.LazyContextIterator(self, target.TargetContext, targIter)
 
-    @base.property_getter("transcoderLabel")
-    def getTranscoderLabel(self):
+    @property
+    def transcoderLabel(self):
         tmpl = self.getAdminContext().config.transcoderLabelTemplate
         return self._variables.substitute(tmpl)
 
-    @base.property_getter("activityLabel")
-    def getActivityLabel(self):
+    @property
+    def activityLabel(self):
         tmpl = self.getAdminContext().config.activityLabelTemplate
         return self._variables.substitute(tmpl)
 
-    @base.property_getter("inputRelPath")
-    def getInputRelPath(self):
+    @property
+    def inputRelPath(self):
         return self._variables["sourcePath"]
     
-    @base.property_getter("failedRelPath")
-    def getFailedRelPath(self):
+    @property
+    def failedRelPath(self):
         return self._variables["sourcePath"]
     
-    @base.property_getter("doneRelPath")
-    def getDoneRelPath(self):
+    @property
+    def doneRelPath(self):
         return self._variables["sourcePath"]
     
-    @base.property_getter("configRelPath")
-    def getConfigRelPath(self):
+    @property
+    def configRelPath(self):
         path = self._variables.substitute(self.configFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
-    @base.property_getter("tempRepRelPath")
-    def getTempRepRelPath(self):
+    @property
+    def tempRepRelPath(self):
         path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
 
-    @base.property_getter("failedRepRelPath")
-    def getFailedRepRelPath(self):
+    @property
+    def failedRepRelPath(self):
         path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)
     
-    @base.property_getter("doneRepRelPath")
-    def getDoneRepRelPath(self):
+    @property
+    def doneRepRelPath(self):
         path = self._variables.substitute(self.reportFileTemplate)
         path = fileutils.ensureRelPath(path)
         return fileutils.cleanupPath(path)

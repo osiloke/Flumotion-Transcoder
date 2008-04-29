@@ -12,8 +12,6 @@
 
 from zope.interface import Interface, implements, Attribute
 
-from flumotion.inhouse import annotate
-
 from flumotion.transcoder import substitution
 from flumotion.transcoder.admin import interfaces
 
@@ -29,8 +27,8 @@ class IBaseContext(interfaces.IAdminInterface):
 class IBaseStoreContext(IBaseContext):
     
     identifier = Attribute("Context identifier")
-    label = Attribute("Context label")
-    store = Attribute("context store reference")
+    label      = Attribute("Context label")
+    store      = Attribute("context store reference")
         
 
 class LazyContextIterator(object):
@@ -50,94 +48,151 @@ class LazyContextIterator(object):
         return self._cls(self.parent, nextValue, *self._args, **self._kwargs)
 
 
-## Class Annotations ##
+## Descriptors ##
 
-def store_proxy(propertyName, storePropertyName=None, getterName=None, default=None):
-    if storePropertyName is None:
-        storePropertyName = propertyName
-    if getterName is None:
-        getterName = "get" + propertyName[0].upper() + propertyName[1:] 
-    
-    def getter(self):
-        value = getattr(self.store, storePropertyName)
+class StoreProxy(object):
+    def __init__(self, propertyName, default=None):
+        self._propertyName = propertyName
+        self._default = default
+    def __get__(self, obj, type=None):
+        value = getattr(obj.store, self._propertyName)
         if value == None:
-            return default
+            return self._default
         return value
-    
-    getter.__name__ = getterName
-    annotate.injectAttribute("store_proxy", getterName, getter)
-    prop = property(getter)
-    annotate.injectAttribute("store_proxy", propertyName, prop)
+    def __set__(self, obj, value):
+        raise AttributeError("Attribute read-only")
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")
 
-def store_parent_proxy(propertyName, parentPropertyName=None,
-                       storePropertyName=None, getterName=None):
-    if parentPropertyName is None:
-        parentPropertyName = propertyName
-    if storePropertyName is None:
-        storePropertyName = propertyName
-    if getterName is None:
-        getterName = "get" + propertyName[0].upper() + propertyName[1:]
-    
-    def getter(self):
-        value = getattr(self.store, storePropertyName)
+class StoreParentProxy(object):
+    def __init__(self, propertyName, parentPropertyName=None):
+        self._propertyName = propertyName
+        self._parentPropertyName = parentPropertyName or propertyName         
+    def __get__(self, obj, type=None):
+        value = getattr(obj.store, self._propertyName)
         if value != None: return value
-        if self.parent is None:
-            raise AttributeError("Attribute %s of class %s not properly setup, "
-                                 "parent not found" % (propertyName, self))
-        return getattr(self.parent, parentPropertyName)
-    
-    getter.__name__ = getterName
-    annotate.injectAttribute("store_parent_proxy", getterName, getter)
-    prop = property(getter)
-    annotate.injectAttribute("store_parent_proxy", propertyName, prop)
+        if obj.parent is None:
+            raise AttributeError("Instance %s does not have parent" % self)
+        return getattr(obj.parent, self._parentPropertyName)
+    def __set__(self, obj, value):
+        raise AttributeError("Attribute read-only")
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")
 
-def store_admin_proxy(propertyName, adminPropertyName=None,
-                      storePropertyName=None, getterName=None):
-    if adminPropertyName is None:
-        adminPropertyName = propertyName
-    if storePropertyName is None:
-        storePropertyName = propertyName
-    if getterName is None:
-        getterName = "get" + propertyName[0].upper() + propertyName[1:]
-    
-    def getter(self):
-        value = getattr(self.store, storePropertyName)
+
+class StoreAdminProxy(object):
+    def __init__(self, propertyName, adminPropertyName=None):
+        self._propertyName = propertyName
+        self._adminPropertyName = adminPropertyName or propertyName         
+    def __get__(self, obj, type=None):
+        value = getattr(obj.store, self._propertyName)
         if value != None: return value
-        storeCtx = self.getStoreContext()
+        storeCtx = obj.getStoreContext()
         if storeCtx is None:
-            raise AttributeError("Attribute %s of class %s not properly setup, "
-                                 "store context not found" % (propertyName, self))
-        return getattr(storeCtx, adminPropertyName)
-    
-    getter.__name__ = getterName
-    annotate.injectAttribute("store_admin_proxy", getterName, getter)
-    prop = property(getter)
-    annotate.injectAttribute("store_admin_proxy", propertyName, prop)
+            raise AttributeError("Instance %s does not have store reference" % self)
+        return getattr(storeCtx, self._adminPropertyName)
+    def __set__(self, obj, value):
+        raise AttributeError("Attribute read-only")
+    def __delete__(self, obj):
+        raise AttributeError("Attribute cannot be deleted")
+        
 
-def property_getter(propertyName):
-    def decorator(func):
-        prop = property(func)
-        annotate.injectAttribute("property_getter", propertyName, prop)
-        return func
-    return decorator
+#def store_proxy(propertyName, storePropertyName=None, getterName=None, default=None):
+#    if storePropertyName is None:
+#        storePropertyName = propertyName
+#    if getterName is None:
+#        getterName = "get" + propertyName[0].upper() + propertyName[1:] 
+#    
+#    def getter(self):
+#        value = getattr(self.store, storePropertyName)
+#        if value == None:
+#            return default
+#        return value
+#    
+#    getter.__name__ = getterName
+#    annotate.injectAttribute("store_proxy", getterName, getter)
+#    prop = property(getter)
+#    annotate.injectAttribute("store_proxy", propertyName, prop)
+#
+#def store_parent_proxy(propertyName, parentPropertyName=None,
+#                       storePropertyName=None, getterName=None):
+#    if parentPropertyName is None:
+#        parentPropertyName = propertyName
+#    if storePropertyName is None:
+#        storePropertyName = propertyName
+#    if getterName is None:
+#        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+#    
+#    def getter(self):
+#        value = getattr(self.store, storePropertyName)
+#        if value != None: return value
+#        if self.parent is None:
+#            raise AttributeError("Attribute %s of class %s not properly setup, "
+#                                 "parent not found" % (propertyName, self))
+#        return getattr(self.parent, parentPropertyName)
+#    
+#    getter.__name__ = getterName
+#    annotate.injectAttribute("store_parent_proxy", getterName, getter)
+#    prop = property(getter)
+#    annotate.injectAttribute("store_parent_proxy", propertyName, prop)
+#
+#def store_admin_proxy(propertyName, adminPropertyName=None,
+#                      storePropertyName=None, getterName=None):
+#    if adminPropertyName is None:
+#        adminPropertyName = propertyName
+#    if storePropertyName is None:
+#        storePropertyName = propertyName
+#    if getterName is None:
+#        getterName = "get" + propertyName[0].upper() + propertyName[1:]
+#    
+#    def getter(self):
+#        value = getattr(self.store, storePropertyName)
+#        if value != None: return value
+#        storeCtx = self.getStoreContext()
+#        if storeCtx is None:
+#            raise AttributeError("Attribute %s of class %s not properly setup, "
+#                                 "store context not found" % (propertyName, self))
+#        return getattr(storeCtx, adminPropertyName)
+#    
+#    getter.__name__ = getterName
+#    annotate.injectAttribute("store_admin_proxy", getterName, getter)
+#    prop = property(getter)
+#    annotate.injectAttribute("store_admin_proxy", propertyName, prop)
+#
+#def property_getter(propertyName):
+#    def decorator(func):
+#        prop = property(func)
+#        annotate.injectAttribute("property_getter", propertyName, prop)
+#        return func
+#    return decorator
 
 
 class BaseContext(object):
     implements(IBaseContext)
     
-    def __init__(self, parent):
-        self.parent = parent
-        self._variables = substitution.Variables(getattr(parent, "_variables", None))
-        
+    def __init__(self, parentContext):
+        object.__setattr__(self, "parent", parentContext)
+        parentVars = getattr(parentContext, "_variables", None)
+        self._variables = substitution.Variables(parentVars)
+
     def getAdminContext(self):
         raise NotImplementedError()
     
 
-class BaseStoreContext(BaseContext, annotate.Annotable):
+class BaseStoreContext(BaseContext):
     implements(IBaseStoreContext)
     
     def __init__(self, parent, store, identifier=None, label=None):
         BaseContext.__init__(self, parent)
-        self.store = store
-        self.identifier = identifier or store.identifier
-        self.label = label or store.label
+        object.__setattr__(self, "store", store)
+        object.__setattr__(self, "identifier", identifier or store.identifier)
+        object.__setattr__(self, "label", label or store.label)
+
+    def __setattr__(self, attr, value):
+        """
+        Prevent adding new attributes.
+        Allow early detection of attributes spelling mistakes. 
+        """
+        if attr.startswith("_") or hasattr(self, attr):
+            return object.__setattr__(self, attr, value)
+        raise AttributeError("Attribute %s cannot be added to %s" % (attr, self))

@@ -10,15 +10,15 @@
 
 # Headers in this file shall remain intact.
 
-from zope.interface import implements
-
-import datetime
+from zope.interface import implements, Attribute
 
 from flumotion.transcoder.admin.context import base
 from flumotion.transcoder.admin.datastore import config
 
 
 class IConfigContext(base.IBaseStoreContext):
+    
+    type = Attribute("The type of taget config")
     
     def getStoreContext(self):
         pass
@@ -32,9 +32,6 @@ class IConfigContext(base.IBaseStoreContext):
     def getTargetContext(self):
         pass
 
-    def getType(self):
-        pass
-
 
 class IIdentityConfigContext(IConfigContext):
     pass
@@ -42,90 +39,48 @@ class IIdentityConfigContext(IConfigContext):
 
 class IAudioConfigContext(IConfigContext):
     
-    def getMuxer(self):
-        pass
-
-    def getAudioEncoder(self):
-        pass
-    
-    def getAudioRate(self):
-        pass
-    
-    def getAudioChannels(self):
-        pass
+    muxer         = Attribute("Muxing pipeline")
+    audioEncoder  = Attribute("Audio encoding pipeline")
+    audioRate     = Attribute("Audio rate")
+    audioChannels = Attribute("Audio channels count")
 
 
 class IVideoConfigContext(IConfigContext):
     
-    def getMuxer(self):
-        pass
-    
-    def getVideoEncoder(self):
-        pass
-    
-    def getVideoWidth(self):
-        pass
-    
-    def getVideoHeight(self):
-        pass
-    
-    def getVideoMaxWidth(self):
-        pass
-    
-    def getVideoMaxHeight(self):
-        pass
-    
-    def getVideoWidthMultiple(self):
-        pass
-    
-    def getVideoHeightMultiple(self):
-        pass
-    
-    def getVideoPAR(self):
-        pass
-    
-    def getVideoFramerate(self):
-        pass
-    
-    def getVideoScaleMethod(self):
-        pass
+    muxer               = Attribute("Muxing pipeline")
+    videoEncoder        = Attribute("Video encoding pipeline")
+    videoWidth          = Attribute("Video width")
+    videoHeight         = Attribute("Video height")
+    videoMaxWidth       = Attribute("Video maximum width")
+    videoMaxHeight      = Attribute("Video maximum height")
+    videoWidthMultiple  = Attribute("Video width multiple")
+    videoHeightMultiple = Attribute("Video height multiple")
+    videoPAR            = Attribute("Video pixel-aspect-ratio")
+    videoFramerate      = Attribute("Video frame-rate")
+    videoScaleMethod    = Attribute("Video scalling method")
 
 
 class IAudioVideoConfigContext(IAudioConfigContext, IVideoConfigContext):
     
-    def getTolerance(self):
-        pass
+    tolerance = Attribute("Audio/Video tolerance")
 
 
 class IThumbnailsConfigContext(IConfigContext):
     
-    def getThumbsWidth(self):
-        pass
-    
-    def getThumbsHeight(self):
-        pass
-    
-    def getPeriodValue(self):
-        pass
-    
-    def getPeriodUnit(self):
-        pass
-    
-    def getMaxCount(self):
-        pass
-    
-    def getEnsureOne(self):
-        pass
-    
-    def getFormat(self):
-        pass
+    thumbsWidth  = Attribute("Thumbnails' width")
+    thumbsHeight = Attribute("Thumbnails' height")
+    periodValue  = Attribute("Period between thumbnails snapshots")
+    periodUnit   = Attribute("Unit of the snapshot period value")
+    maxCount     = Attribute("Maximum number of snapshots to take")
+    ensureOne    = Attribute("Ensure they will be at least on thumbnail")
+    format       = Attribute("Thumbnails image format")
 
 
 class ConfigContext(base.BaseStoreContext):
 
     implements(IConfigContext)
 
-    base.store_proxy("type")   
+    type = base.StoreProxy("type")   
 
     def __init__(self, targCtx, confStore):
         base.BaseStoreContext.__init__(self, targCtx, confStore)
@@ -158,13 +113,13 @@ class ThumbnailsConfigContext(ConfigContext):
 
     implements(IThumbnailsConfigContext)
 
-    base.store_proxy("thumbsWidth")
-    base.store_proxy("thumbsHeight")
-    base.store_proxy("periodValue")
-    base.store_proxy("periodUnit")
-    base.store_proxy("maxCount")
-    base.store_proxy("ensureOne")
-    base.store_proxy("format")
+    thumbsWidth  = base.StoreProxy("thumbsWidth")
+    thumbsHeight = base.StoreProxy("thumbsHeight")
+    periodValue  = base.StoreProxy("periodValue")
+    periodUnit   = base.StoreProxy("periodUnit")
+    maxCount     = base.StoreProxy("maxCount")
+    ensureOne    = base.StoreProxy("ensureOne")
+    format       = base.StoreProxy("format")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -174,10 +129,10 @@ class AudioConfigContext(ConfigContext):
     
     implements(IAudioConfigContext)
     
-    base.store_proxy("muxer")
-    base.store_proxy("audioEncoder")
-    base.store_proxy("audioRate")
-    base.store_proxy("audioChannels")
+    muxer         = base.StoreProxy("muxer")
+    audioEncoder  = base.StoreProxy("audioEncoder")
+    audioRate     = base.StoreProxy("audioRate")
+    audioChannels = base.StoreProxy("audioChannels")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -187,17 +142,17 @@ class VideoConfigContext(ConfigContext):
 
     implements(IVideoConfigContext)
 
-    base.store_proxy("muxer")
-    base.store_proxy("videoEncoder")
-    base.store_proxy("videoWidth")
-    base.store_proxy("videoHeight")
-    base.store_proxy("videoMaxWidth")
-    base.store_proxy("videoMaxHeight")
-    base.store_proxy("videoWidthMultiple")
-    base.store_proxy("videoHeightMultiple")
-    base.store_proxy("videoPAR")
-    base.store_proxy("videoFramerate")
-    base.store_proxy("videoScaleMethod")
+    muxer               = base.StoreProxy("muxer")
+    videoEncoder        = base.StoreProxy("videoEncoder")
+    videoWidth          = base.StoreProxy("videoWidth")
+    videoHeight         = base.StoreProxy("videoHeight")
+    videoMaxWidth       = base.StoreProxy("videoMaxWidth")
+    videoMaxHeight      = base.StoreProxy("videoMaxHeight")
+    videoWidthMultiple  = base.StoreProxy("videoWidthMultiple")
+    videoHeightMultiple = base.StoreProxy("videoHeightMultiple")
+    videoPAR            = base.StoreProxy("videoPAR")
+    videoFramerate      = base.StoreProxy("videoFramerate")
+    videoScaleMethod    = base.StoreProxy("videoScaleMethod")
     
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
@@ -207,21 +162,21 @@ class AudioVideoConfigContext(ConfigContext):
 
     implements(IAudioVideoConfigContext)
 
-    base.store_proxy("muxer")
-    base.store_proxy("audioEncoder")
-    base.store_proxy("audioRate")
-    base.store_proxy("audioChannels")
-    base.store_proxy("videoEncoder")
-    base.store_proxy("videoWidth")
-    base.store_proxy("videoHeight")
-    base.store_proxy("videoMaxWidth")
-    base.store_proxy("videoMaxHeight")
-    base.store_proxy("videoWidthMultiple")
-    base.store_proxy("videoHeightMultiple")
-    base.store_proxy("videoPAR")
-    base.store_proxy("videoFramerate")
-    base.store_proxy("videoScaleMethod")
-    base.store_proxy("tolerance")
+    muxer               = base.StoreProxy("muxer")
+    audioEncoder        = base.StoreProxy("audioEncoder")
+    audioRate           = base.StoreProxy("audioRate")
+    audioChannels       = base.StoreProxy("audioChannels")
+    videoEncoder        = base.StoreProxy("videoEncoder")
+    videoWidth          = base.StoreProxy("videoWidth")
+    videoHeight         = base.StoreProxy("videoHeight")
+    videoMaxWidth       = base.StoreProxy("videoMaxWidth")
+    videoMaxHeight      = base.StoreProxy("videoMaxHeight")
+    videoWidthMultiple  = base.StoreProxy("videoWidthMultiple")
+    videoHeightMultiple = base.StoreProxy("videoHeightMultiple")
+    videoPAR            = base.StoreProxy("videoPAR")
+    videoFramerate      = base.StoreProxy("videoFramerate")
+    videoScaleMethod    = base.StoreProxy("videoScaleMethod")
+    tolerance           = base.StoreProxy("tolerance")
         
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
