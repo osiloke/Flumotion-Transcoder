@@ -48,14 +48,14 @@ class ProxyElement(adminelement.AdminElement):
         label = label or name
         adminelement.AdminElement.__init__(self, logger, parentPxy,
                                            identifier, label)
-        self.name = name or identifier
+        self._name = name or identifier
         self._pendingElements = {} # {attr: {identifier: ProxyElement}}        
 
 
     ## IProxyElement Methods ##
 
     def getName(self):
-        return self.name
+        return self._name
     
 
     ## Virtual Methods ##
