@@ -116,7 +116,7 @@ class FilePath(ReadOnlyProperty):
         self._filePropertyName = name + "File"
     def __get__(self, obj, type=None):
         folder = getattr(obj, self._dirPropertyName)
-        file = getattr(self, self._filePropertyName)
+        file = getattr(obj, self._filePropertyName)
         return folder.append(file)
 
 
