@@ -52,7 +52,7 @@ class ReadOnlyProxy(object):
         if value == None: value = self._default
         return utils.deepCopy(value)
     def __set__(self, obj, value):
-        raise AttributeError("Attribute read-only")
+        raise AttributeError("Attribute is read-only")
     def __delete__(self, obj):
         raise AttributeError("Attribute cannot be deleted")
 
@@ -64,11 +64,20 @@ class SimpleStore(object):
     label = None
     
     def __init__(self, parentStore, identifier=None, label=None):
-        self.parent = parentStore
+        object.__setattr__(self, "parent", parentStore)
         if identifier is not None:
-            self.identifier = identifier
+            object.__setattr__(self, "identifier", identifier)
         if label is not None:
-            self.label = label
+            object.__setattr__(self, "label", label)
+
+    def __setattr__(self, attr, value):
+        """
+        Prevent adding new attributes.
+        Allow early detection of attributes spelling mistakes. 
+        """
+        if attr.startswith("_") or hasattr(self, attr):
+            return object.__setattr__(self, attr, value)
+        raise AttributeError("Attribute %s cannot be added to %s" % (attr, self))
 
 
 class DataStore(SimpleStore):

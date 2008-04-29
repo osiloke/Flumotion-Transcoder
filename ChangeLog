@@ -1,3 +1,15 @@
+2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/adminelement.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	Added a check to prevent adding attributes.
+	Used for early detection of attribute spelling mistakes.
+	* flumotion/transcoder/admin/datastore/activity.py:
+	Fixed a bug where the descriptor was used insteed of the object.
+	* flumotion/transcoder/admin/notifier.py:
+	Fixed an attribute spelling mistake
+	
+
 2008-04-28  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/context/activity.py:

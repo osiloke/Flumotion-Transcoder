@@ -46,13 +46,13 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     def __init__(self, logger, parent, identifier=None, label=None):
         assert (parent == None) or isinstance(parent, AdminElement)
         log.LoggerProxy.__init__(self, logger)
-        self.parent = parent
+        object.__setattr__(self, "parent", parent)
         if identifier is not None:
-            self.identifier = identifier
+            object.__setattr__(self, "identifier", identifier)
         if label is not None:
-            self.label = label
+            object.__setattr__(self, "label", label)
         elif identifier is not None:
-            self.label = identifier
+            object.__setattr__(self, "label", identifier)
         self._triggered = False
         self._active = False
         self._failure = None
@@ -61,6 +61,15 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         self._idleWaiters = waiters.CounterWaiters("Element Idle", 0, 0, self)
         self._activeWaiters = waiters.PassiveWaiters("Element Activation")
         self._activeChildWaiters = waiters.PassiveWaiters("Element Child Activation")
+
+    def __setattr__(self, attr, value):
+        """
+        Prevent adding new attributes.
+        Allow early detection of attributes spelling mistakes. 
+        """
+        if attr.startswith("_") or hasattr(self, attr):
+            return object.__setattr__(self, attr, value)
+        raise AttributeError("Attribute %s cannot be added to %s" % (attr, self))
 
 
     ## Public Methods ##

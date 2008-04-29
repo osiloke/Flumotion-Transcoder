@@ -94,7 +94,7 @@ class ReadWriteDataProxy(object):
         return utils.deepCopy(result)
     def __set__(self, obj, value):
         assert not obj._deleted
-        self._data.data[self._fieldName] = utils.deepCopy(value)
+        obj._data.data[self._fieldName] = utils.deepCopy(value)
         obj._touche()
     def __delete__(self, obj):
         raise AttributeError("Attribute cannot be deleted")

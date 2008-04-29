@@ -402,7 +402,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                   activCtx.subtype.nick, activCtx.label, 
                   activCtx.trigger.nick)
         activStore = activCtx.store
-        activStore.STATE = ActivityStateEnum.done
+        activStore.state = ActivityStateEnum.done
         activStore.store()
         self._results[activCtx].callback(activCtx)
         self.__notificationTerminated(activCtx)
