@@ -14,80 +14,97 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import config
+from flumotion.transcoder.admin.context import config
 from flumotion.transcoder.admin.api import interfaces, api  
 
 
 class BaseConfigMedium(api.Medium):
+    
     implements(interfaces.IConfigMedium)
     
-    def __init__(self, configStore):
-        self._reference = configStore
+    api.readonly_store_property("type")
     
-    
-    ## IConfigMedium Methodes ##
-
-    @api.remote()
-    def getType(self):
-        return self._reference.type
+    def __init__(self, confCtx):
+        super(BaseConfigMedium, self).__init__(confCtx)
 
 
 class IdentityConfigMedium(BaseConfigMedium):
+
     implements(interfaces.IIdentityConfigMedium)
-    api.registerMedium(interfaces.IIdentityConfigMedium,
-                       config.IIdentityConfigStore)
     
-    def __init__(self, config):
-        BaseConfigMedium.__init__(self, config)
+    api.register_medium(interfaces.IIdentityConfigMedium,
+                        config.IIdentityConfigContext)
     
-    
-    ## IIdentityConfigMedium Methodes ##
+    def __init__(self, confCtx):
+        super(IdentityConfigMedium, self).__init__(confCtx)
 
 
 class AudioConfigMedium(BaseConfigMedium):
+    
     implements(interfaces.IAudioConfigMedium)
-    api.registerMedium(interfaces.IAudioConfigMedium,
-                       config.IAudioConfigStore)
     
-    def __init__(self, config):
-        BaseConfigMedium.__init__(self, config)
+    api.register_medium(interfaces.IAudioConfigMedium,
+                        config.IAudioConfigContext)
     
-    
-    ## IAudioConfigMedium Methodes ##
+    api.readonly_store_property("muxer")
+    api.readonly_store_property("audioEncoder")
+    api.readonly_store_property("audioRate")
+    api.readonly_store_property("audioChannels")
+
+    def __init__(self, confCtx):
+        super(AudioConfigMedium, self).__init__(confCtx)
 
 
 class VideoConfigMedium(BaseConfigMedium):
+    
     implements(interfaces.IVideoConfigMedium)
-    api.registerMedium(interfaces.IVideoConfigMedium,
-                       config.IVideoConfigStore)
     
-    def __init__(self, config):
-        BaseConfigMedium.__init__(self, config)
+    api.register_medium(interfaces.IVideoConfigMedium,
+                        config.IVideoConfigContext)
+
+    api.readonly_store_property("muxer")
+    api.readonly_store_property("videoEncoder")
+    api.readonly_store_property("videoWidth")
+    api.readonly_store_property("videoHeight")
+    api.readonly_store_property("videoMaxWidth")
+    api.readonly_store_property("videoMaxHeight")
+    api.readonly_store_property("videoWidthMultiple")
+    api.readonly_store_property("videoHeightMultiple")
+    api.readonly_store_property("videoPAR")
+    api.readonly_store_property("videoFramerate")
+    api.readonly_store_property("videoScaleMethod")
     
-    
-    ## IVideoConfigMedium Methodes ##
+    def __init__(self, confCtx):
+        super(VideoConfigMedium, self).__init__(confCtx)
 
 
 class AudioVideoConfigMedium(AudioConfigMedium, VideoConfigMedium):
+    
     implements(interfaces.IAudioVideoConfigMedium)
-    api.registerMedium(interfaces.IAudioVideoConfigMedium,
-                       config.IAudioVideoConfigStore)
     
-    def __init__(self, config):
-        AudioConfigMedium.__init__(self, config)
-        VideoConfigMedium.__init__(self, config)
+    api.register_medium(interfaces.IAudioVideoConfigMedium,
+                        config.IAudioVideoConfigContext)
     
+    api.readonly_store_property("tolerance")
     
-    ## IAudioVideoConfigMedium Methodes ##
+    def __init__(self, confCtx):
+        super(AudioVideoConfigMedium, self).__init__(confCtx)
 
 
 class ThumbnailsConfigMedium(BaseConfigMedium):
+    
     implements(interfaces.IThumbnailsConfigMedium)
-    api.registerMedium(interfaces.IThumbnailsConfigMedium,
-                       config.IThumbnailsConfigStore)
     
-    def __init__(self, config):
-        BaseConfigMedium.__init__(self, config)
+    api.register_medium(interfaces.IThumbnailsConfigMedium,
+                        config.IThumbnailsConfigContext)
     
+    api.readonly_store_property("thumbsWidth")
+    api.readonly_store_property("thumbsHeight")
+    api.readonly_store_property("periodValue")
+    api.readonly_store_property("periodUnit")
+    api.readonly_store_property("maxCount")
+    api.readonly_store_property("ensureOne")
+    api.readonly_store_property("format")
     
-    ## IThumbnailsConfigMedium Methodes ##
+    def __init__(self, confCtx):
+        super(ThumbnailsConfigMedium, self).__init__(confCtx)

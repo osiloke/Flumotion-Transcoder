@@ -1,5 +1,25 @@
 2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/api/api.py:
+	* flumotion/transcoder/admin/api/gateway.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/api/mediums/Makefile.am:
+	* flumotion/transcoder/admin/api/mediums/__init__.py:
+	* flumotion/transcoder/admin/api/mediums/config.py:
+	* flumotion/transcoder/admin/api/mediums/customer.py:
+	* flumotion/transcoder/admin/api/mediums/named.py:
+	* flumotion/transcoder/admin/api/mediums/profile.py:
+	* flumotion/transcoder/admin/api/mediums/scheduler.py:
+	* flumotion/transcoder/admin/api/mediums/store.py:
+	* flumotion/transcoder/admin/api/mediums/target.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/api/mediums/workerset.py:
+	Updated the API to use context insteed of store elements.
+	Proxy the store elements properties.
+
+2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/context/base.py:
 	* flumotion/transcoder/admin/context/profile.py:
 	* flumotion/transcoder/admin/context/target.py:

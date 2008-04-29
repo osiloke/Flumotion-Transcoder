@@ -14,26 +14,58 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import profile
+from flumotion.transcoder.admin.context import profile
 from flumotion.transcoder.admin.api import interfaces, api
-from flumotion.transcoder.admin.api.mediums import named  
 
 
-class ProfileMedium(named.NamedMedium):
-    implements(interfaces.IProfileMedium)
-    api.registerMedium(interfaces.IProfileMedium,
-                       profile.IProfileStore)
+class ProfileMedium(api.NamedMedium):
     
-    def __init__(self, profile):
-        named.NamedMedium.__init__(self, profile)
+    implements(interfaces.IProfileMedium)
+    
+    api.register_medium(interfaces.IProfileMedium,
+                        profile.IUnboundProfileContext)
+
+    api.readonly_store_property("name")
+    api.readonly_store_property("subdir")
+    api.readonly_store_property("inputDir")
+    api.readonly_store_property("outputDir")
+    api.readonly_store_property("failedDir")
+    api.readonly_store_property("doneDir")
+    api.readonly_store_property("linkDir")
+    api.readonly_store_property("workDir")
+    api.readonly_store_property("configDir")
+    api.readonly_store_property("tempRepDir")
+    api.readonly_store_property("failedRepDir")
+    api.readonly_store_property("doneRepDir")
+    api.readonly_store_property("outputMediaTemplate")
+    api.readonly_store_property("outputThumbTemplate")
+    api.readonly_store_property("linkFileTemplate")
+    api.readonly_store_property("configFileTemplate")
+    api.readonly_store_property("reportFileTemplate")
+    api.readonly_store_property("linkTemplate")
+    api.readonly_store_property("linkURLPrefix")
+    api.readonly_store_property("enablePostprocessing")
+    api.readonly_store_property("enablePreprocessing")
+    api.readonly_store_property("enableLinkFiles")
+    api.readonly_store_property("transcodingPriority")
+    api.readonly_store_property("processPriority")
+    api.readonly_store_property("preprocessCommand")
+    api.readonly_store_property("postprocessCommand")
+    api.readonly_store_property("preprocessTimeout")
+    api.readonly_store_property("postprocessTimeout")
+    api.readonly_store_property("transcodingTimeout")
+    api.readonly_store_property("monitoringPeriod")
+    
+    def __init__(self, profCtx):
+        api.NamedMedium.__init__(self, profCtx)
     
     
     ## IProfilesMedium Methodes ##
 
-    @api.remote()
+    @api.make_remote()
     def getTargets(self):
-        return self._reference.getTargetStores()
+        return self.reference.getTargetContexts()
 
-    @api.remote()
+    @api.make_remote()
     def getTarget(self, identifier):
-        return self._reference.getTargetStore(identifier)
+        return self.reference.getTargetContext(identifier)

@@ -14,7 +14,6 @@
 
 __all__ = ()
 
-from flumotion.transcoder.admin.api.mediums.named import *
 from flumotion.transcoder.admin.api.mediums.workerset import *
 from flumotion.transcoder.admin.api.mediums.worker import *
 from flumotion.transcoder.admin.api.mediums.store import *

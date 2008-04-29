@@ -126,8 +126,8 @@ class TranscoderAdmin(log.Loggable):
     def getWorkerProxySet(self):
         return self._workerPxySet
 
-    def getStore(self):
-        return self._adminStore
+    def getStoreContext(self):
+        return self._storeCtx
 
     def getScheduler(self):
         return self._scheduler

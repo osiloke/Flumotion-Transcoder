@@ -17,6 +17,18 @@ class IMedium(mediums.IServerMedium):
     pass
 
 
+class INamedMedium(IMedium):
+
+    def getIdentifier(self):
+        pass
+
+    def getName(self):
+        pass
+
+    def getLabel(self):
+        pass
+
+
 class ITranscoderGateway(IMedium):
     
     def getWorkerSet(self):
@@ -29,12 +41,22 @@ class ITranscoderGateway(IMedium):
         pass
 
 
+class ISchedulerMedium(IMedium):
+    pass
+    
+
 class IWorkerSetMedium(IMedium):
 
-    def getWorkerProxies(self):
+    def getWorkers(self):
         pass
     
-    def getWorkerProxy(self, identifier):
+    def getWorker(self, identifier):
+        pass
+
+
+class IWorkerMedium(INamedMedium):
+
+    def getHost(self):
         pass
 
 
@@ -50,34 +72,117 @@ class IStoreMedium(IMedium):
         pass
     
 
-class ISchedulerMedium(IMedium):
-    pass
-
-
-class INamedMedium(IMedium):
-
-    def getIdentifier(self):
-        pass
-    
-    def getName(self):
-        pass
-    
-    def getLabel(self):
-        pass
-
-
-class IWorkerMedium(INamedMedium):
-
-    def getHost(self):
-        pass
-
-
 class ICustomerMedium(INamedMedium):
     
     def getProfiles(self):
         pass
     
     def getProfile(self, identifier):
+        pass
+
+    def getName(self):
+        pass
+
+    def getSubdir(self):
+        pass
+
+    def getInputDir(self):
+        pass
+
+    def getOutputDir(self):
+        pass
+
+    def getFailedDir(self):
+        pass
+
+    def getDoneDir(self):
+        pass
+
+    def getLinkDir(self):
+        pass
+
+    def getWorkDir(self):
+        pass
+
+    def getConfigDir(self):
+        pass
+
+    def getTempRepDir(self):
+        pass
+
+    def getFailedRepDir(self):
+        pass
+
+    def getDoneRepDir(self):
+        pass
+
+    def getCustomerPriority(self):
+        pass
+
+    def getOutputMediaTemplate(self):
+        pass
+
+    def getOutputThumbTemplate(self):
+        pass
+
+    def getLinkFileTemplate(self):
+        pass
+
+    def getConfigFileTemplate(self):
+        pass
+
+    def getReportFileTemplate(self):
+        pass
+
+    def getLinkTemplate(self):
+        pass
+
+    def getLinkURLPrefix(self):
+        pass
+
+    def getEnablePostprocessing(self):
+        pass
+
+    def getEnablePreprocessing(self):
+        pass
+
+    def getEnableLinkFiles(self):
+        pass
+
+    def getTranscodingPriority(self):
+        pass
+
+    def getProcessPriority(self):
+        pass
+
+    def getPreprocessCommand(self):
+        pass
+
+    def getPostprocessCommand(self):
+        pass
+
+    def getPreprocessTimeout(self):
+        pass
+
+    def getPostprocessTimeout(self):
+        pass
+
+    def getTranscodingTimeout(self):
+        pass
+
+    def getMonitoringPeriod(self):
+        pass
+
+    def getAccessForceUser(self):
+        pass
+
+    def getAccessForceGroup(self):
+        pass
+
+    def getAccessForceDirMode(self):
+        pass
+
+    def getAccessForceFileMode(self):
         pass
 
     
@@ -89,12 +194,144 @@ class IProfileMedium(INamedMedium):
     def getTarget(self, identifier):
         pass
 
+    def getName(self):
+        pass
+
+    def getSubdir(self):
+        pass
+
+    def getInputDir(self):
+        pass
+
+    def getOutputDir(self):
+        pass
+
+    def getFailedDir(self):
+        pass
+
+    def getDoneDir(self):
+        pass
+
+    def getLinkDir(self):
+        pass
+
+    def getWorkDir(self):
+        pass
+
+    def getConfigDir(self):
+        pass
+
+    def getTempRepDir(self):
+        pass
+
+    def getFailedRepDir(self):
+        pass
+
+    def getDoneRepDir(self):
+        pass
+
+    def getOutputMediaTemplate(self):
+        pass
+
+    def getOutputThumbTemplate(self):
+        pass
+
+    def getLinkFileTemplate(self):
+        pass
+
+    def getConfigFileTemplate(self):
+        pass
+
+    def getReportFileTemplate(self):
+        pass
+
+    def getLinkTemplate(self):
+        pass
+
+    def getLinkURLPrefix(self):
+        pass
+
+    def getEnablePostprocessing(self):
+        pass
+
+    def getEnablePreprocessing(self):
+        pass
+
+    def getEnableLinkFiles(self):
+        pass
+
+    def getTranscodingPriority(self):
+        pass
+
+    def getProcessPriority(self):
+        pass
+
+    def getPreprocessCommand(self):
+        pass
+
+    def getPostprocessCommand(self):
+        pass
+
+    def getPreprocessTimeout(self):
+        pass
+
+    def getPostprocessTimeout(self):
+        pass
+
+    def getTranscodingTimeout(self):
+        pass
+
+    def getMonitoringPeriod(self):
+        pass
+
 
 class ITargetMedium(INamedMedium):
     
     def getConfig(self):
         pass
 
+    def getName(self):
+        pass
+
+    def getSubdir(self):
+        pass
+
+    def getOutputDir(self):
+        pass
+
+    def getLinkDir(self):
+        pass
+
+    def getWorkDir(self):
+        pass
+
+    def getExtension(self):
+        pass
+
+    def getOutputFileTemplate(self):
+        pass
+
+    def getLinkFileTemplate(self):
+        pass
+
+    def getLinkTemplate(self):
+        pass
+
+    def getLinkURLPrefix(self):
+        pass
+
+    def getEnablePostprocessing(self):
+        pass
+
+    def getEnableLinkFiles(self):
+        pass
+
+    def getPostprocessCommand(self):
+        pass
+
+    def getPostprocessTimeout(self):
+        pass
+    
 
 class IConfigMedium(IMedium):
     
@@ -107,16 +344,81 @@ class IIdentityConfigMedium(IConfigMedium):
 
 
 class IAudioConfigMedium(IConfigMedium):
-    pass
+
+    def getMuxer(self):
+        pass
+
+    def getAudioEncoder(self):
+        pass
+
+    def getAudioRate(self):
+        pass
+
+    def getAudioChannels(self):
+        pass
 
 
 class IVideoConfigMedium(IConfigMedium):
-    pass
+
+    def getMuxer(self):
+        pass
+
+    def getVideoEncoder(self):
+        pass
+
+    def getVideoWidth(self):
+        pass
+
+    def getVideoHeight(self):
+        pass
+
+    def getVideoMaxWidth(self):
+        pass
+
+    def getVideoMaxHeight(self):
+        pass
+
+    def getVideoWidthMultiple(self):
+        pass
+
+    def getVideoHeightMultiple(self):
+        pass
+
+    def getVideoPAR(self):
+        pass
+
+    def getVideoFramerate(self):
+        pass
+
+    def getVideoScaleMethod(self):
+        pass
 
 
 class IAudioVideoConfigMedium(IAudioConfigMedium, IVideoConfigMedium):
-    pass
+
+    def getTolerance(self):
+        pass
 
 
 class IThumbnailsConfigMedium(IConfigMedium):
-    pass
+
+    def getThumbsWidth(self):
+        pass
+
+    def getThumbsHeight(self):
+        pass
+
+    def getPeriodValue(self):
+        pass
+
+    def getPeriodUnit(self):
+        pass
+
+    def getMaxCount(self):
+        pass
+
+    def getEnsureOne(self):
+        pass
+
+    def getFormat(self):
+        pass

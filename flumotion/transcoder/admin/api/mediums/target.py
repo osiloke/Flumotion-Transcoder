@@ -14,23 +14,38 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.datastore import target
+from flumotion.transcoder.admin.context import target
 from flumotion.transcoder.admin.api import interfaces, api
-from flumotion.transcoder.admin.api.mediums import named  
 
 
-class TargetMedium(named.NamedMedium):
+class TargetMedium(api.NamedMedium):
+    
     implements(interfaces.IConfigMedium)
-    api.registerMedium(interfaces.IConfigMedium,
-                       target.ITargetStore)
     
+    api.register_medium(interfaces.IConfigMedium,
+                        target.ITargetContext)
     
-    def __init__(self, target):
-        named.NamedMedium.__init__(self, target)
+    api.readonly_store_property("name")
+    api.readonly_store_property("subdir")
+    api.readonly_store_property("outputDir")
+    api.readonly_store_property("linkDir")
+    api.readonly_store_property("workDir")
+    api.readonly_store_property("extension")
+    api.readonly_store_property("outputFileTemplate")
+    api.readonly_store_property("linkFileTemplate")
+    api.readonly_store_property("linkTemplate")
+    api.readonly_store_property("linkURLPrefix")
+    api.readonly_store_property("enablePostprocessing")
+    api.readonly_store_property("enableLinkFiles")
+    api.readonly_store_property("postprocessCommand")
+    api.readonly_store_property("postprocessTimeout")    
+    
+    def __init__(self, targCtx):
+        api.NamedMedium.__init__(self, targCtx)
     
     
     ## ITargetsMedium Methodes ##
 
-    @api.remote()
+    @api.make_remote()
     def getConfig(self):
-        return self._reference.getConfigStore()
+        return self.reference.getConfigContext()

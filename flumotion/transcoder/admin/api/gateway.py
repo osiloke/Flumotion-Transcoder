@@ -33,7 +33,7 @@ class Avatar(avatars.Avatar):
         return api.adapt(self._admin.getWorkerProxySet())
     
     def getStore(self):
-        return api.adapt(self._admin.getStore())
+        return api.adapt(self._admin.getStoreContext())
     
     def getScheduler(self):
         return api.adapt(self._admin.getScheduler())

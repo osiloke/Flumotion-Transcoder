@@ -19,8 +19,10 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class SchedulerMedium(api.Medium):
+    
     implements(interfaces.ISchedulerMedium)
-    api.registerMedium(interfaces.ISchedulerMedium,
+    
+    api.register_medium(interfaces.ISchedulerMedium,
                        scheduler.IScheduler)
     
     

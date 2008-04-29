@@ -19,20 +19,22 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class WorkerSetMedium(api.Medium):
-    implements(interfaces.IWorkerSetMedium)
-    api.registerMedium(interfaces.IWorkerSetMedium,
-                       workerset.IWorkerSet)
     
-    def __init__(self, workers):
-        self._reference = workers
+    implements(interfaces.IWorkerSetMedium)
+    
+    api.register_medium(interfaces.IWorkerSetMedium,
+                        workerset.IWorkerSet)
+    
+    def __init__(self, workerPxySet):
+        api.Medium.__init__(self, workerPxySet)
     
     
     ## IWorkerSetMedium Methodes ##
 
-    @api.remote()
+    @api.make_remote()
     def getWorkers(self):
-        return self._reference.getWorkerProxies()
+        return self.reference.getWorkerProxies()
 
-    @api.remote()
+    @api.make_remote()
     def getWorker(self, identifier):
-        return self._reference.getWorkerProxy(identifier)
+        return self.reference.getWorkerProxy(identifier)
