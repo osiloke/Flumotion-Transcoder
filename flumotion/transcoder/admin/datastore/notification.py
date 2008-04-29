@@ -50,18 +50,6 @@ class IHTTPNotificationStore(INotificationStore):
 
     urlTemplate = Attribute("URL of the HTTP notification")
 
-    def getRequestTemplate(self):
-        pass
-    
-    def getTimeout(self):
-        pass
-    
-    def getRetryMax(self):
-        pass
-    
-    def getRetrySleep(self):
-        pass
-
 
 class NotificationStore(base.DataStore):
     implements(INotificationStore)

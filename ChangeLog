@@ -1,4 +1,9 @@
 2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datastore/notification.py:
+	Removed some old declarations form interface.
+
+2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
 	
 	* flumotion/transcoder/admin/proxy/base.py:
 	Made the attribute name private for now.
