@@ -44,7 +44,13 @@ class IStoreContext(base.IBaseStoreContext):
     HTTPRequestRetryMax   = Attribute("HTTP notifications maximum attempt count")
     HTTPRequestRetrySleep = Attribute("Time to wait between HTTP notification attempts")
 
+    def getCustomerContexts(self):
+        pass
+
     def getCustomerContextFor(self, custStore):
+        pass
+
+    def getCustomerContext(self, identifier):
         pass
     
     def getCustomerContextByName(self, custName):
@@ -117,12 +123,22 @@ class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def getAdminContext(self):
         return self.parent
 
+    def getCustomerContexts(self):
+        return [customer.CustomerContext(self, s)
+                for s in self.store.getCustomerStores()] 
+    
+    def getCustomerContext(self, identifier):
+        custStore = self.store.getCustomerStore(identifier)
+        if custStore is None: return None
+        return customer.CustomerContext(self, custStore)
+    
     def getCustomerContextFor(self, custStore):
         assert custStore.parent == self.store
         return customer.CustomerContext(self, custStore)
     
     def getCustomerContextByName(self, custName):
         custStore = self.store.getCustomerStoreByName(custName)
+        if custStore is None: return None
         return customer.CustomerContext(self, custStore)
     
     def iterCustomerContexts(self):

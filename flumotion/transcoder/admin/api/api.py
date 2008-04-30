@@ -45,23 +45,23 @@ def adapt(value):
 
 ## Annotations ##
 
-def readonly_context_property(propertyName):
+def readonly_property(propertyName):
     def getter(self):
         return getattr(self.reference, propertyName)
-    methodName = "get" + propertyName[0].upper() + propertyName[0]
+    methodName = "get" + propertyName[0].upper() + propertyName[1:]
     getter.__name__ = methodName 
-    annotate.injectAttribute("readonly_context_property", methodName, getter)
-    annotate.injectClassCallback("readonly_context_property", "_makeRemote", methodName)
+    annotate.injectAttribute("readonly_reference_property", methodName, getter)
+    annotate.injectClassCallback("readonly_reference_property", "_makeRemote", methodName)
 
 def readonly_store_property(propertyName):
     def getter(self):
         return getattr(self.reference.store, propertyName)
-    methodName = "get" + propertyName[0].upper() + propertyName[0]
+    methodName = "get" + propertyName[0].upper() + propertyName[1:]
     getter.__name__ = methodName 
     annotate.injectAttribute("readonly_store_property", methodName, getter)
     annotate.injectClassCallback("readonly_store_property", "_makeRemote", methodName)
 
-def readonly_proxy_getter(getterName):
+def readonly_getter(getterName):
     def getter(self):
         return getattr(self.reference, getterName)()
     methodName = getterName
@@ -106,13 +106,12 @@ class Medium(mediums.ServerMedium, annotate.Annotable):
         self.reference = reference 
 
 
-class NamedMedium(Medium):
+class IdentifiedMedium(Medium):
     
-    implements(interfaces.INamedMedium)
+    implements(interfaces.IIdentifiedMedium)
     
-    readonly_context_property("identifier")
-    readonly_context_property("name")
-    readonly_context_property("label")
+    readonly_property("identifier")
+    readonly_property("label")
     
     def __init__(self, reference):
         Medium.__init__(self, reference)

@@ -96,6 +96,12 @@ class IProfileContext(IUnboundProfileContext):
     failedRepPath    = Attribute("Failed report file path")
     doneRepPath      = Attribute("Succeed report file path")
     
+    def getTargetContexts(self):
+        pass
+    
+    def getTargetContext(self, identifier):
+        pass
+    
     def getTargetContextByName(self, targName):
         pass
 
@@ -218,10 +224,8 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
     failedRepBase        = BaseDir("failedRep")
     doneRepBase          = BaseDir("doneRep")
 
-    def __init__(self, custCtx, profStore, identifier=None):
-        if identifier is None:
-            identifier = "%s.%s" % (custCtx.identifier, profStore.identifier)
-        base.BaseStoreContext.__init__(self, custCtx, profStore, identifier=identifier)
+    def __init__(self, custCtx, profStore):
+        base.BaseStoreContext.__init__(self, custCtx, profStore)
         self._variables.addVar("profileSubdir", self.subdir)
         self._variables.addVar("profileName", self.name)
 
@@ -333,14 +337,19 @@ class ProfileContext(UnboundProfileContext):
     doneRepPath   = FilePath("doneRep")    
     
     def __init__(self, custCtx, profStore, inputAbstractPath):
-        postfix = inputAbstractPath.strip('/')
-        identifier = "%s.%s.%s" % (custCtx.identifier,
-                                   profStore.identifier, postfix)
-        UnboundProfileContext.__init__(self, custCtx, profStore, identifier=identifier)
+        UnboundProfileContext.__init__(self, custCtx, profStore)
         self._variables.addFileVars(inputAbstractPath.strip('/'), "source")
 
     def isBound(self):
         return True
+
+    def getUnboundProfileContexts(self):
+        return [target.TargetContext(self, s)
+                for s in self.store.getTargetStores()] 
+
+    def getTargetContext(self, identifier):
+        targStore = self.store.getTargetStore(identifier)
+        return target.TargetContext(self, targStore)
 
     def getTargetContextByName(self, targName):
         targStore = self.store.getTargetStoreByName(targName)

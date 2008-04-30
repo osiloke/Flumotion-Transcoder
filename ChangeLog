@@ -1,3 +1,19 @@
+2008-04-30  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/api/api.py:
+	* flumotion/transcoder/admin/api/interfaces.py:
+	* flumotion/transcoder/admin/api/mediums/config.py:
+	* flumotion/transcoder/admin/api/mediums/customer.py:
+	* flumotion/transcoder/admin/api/mediums/profile.py:
+	* flumotion/transcoder/admin/api/mediums/store.py:
+	* flumotion/transcoder/admin/api/mediums/target.py:
+	* flumotion/transcoder/admin/api/mediums/worker.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/context/store.py:
+	Rollback to use store element for the API because
+	using context would imply ceating unbound target and config elements.
+
 2008-04-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/context/target.py:

@@ -17,12 +17,9 @@ class IMedium(mediums.IServerMedium):
     pass
 
 
-class INamedMedium(IMedium):
+class IIdentifiedMedium(IMedium):
 
     def getIdentifier(self):
-        pass
-
-    def getName(self):
         pass
 
     def getLabel(self):
@@ -54,7 +51,10 @@ class IWorkerSetMedium(IMedium):
         pass
 
 
-class IWorkerMedium(INamedMedium):
+class IWorkerMedium(IIdentifiedMedium):
+
+    def getName(self):
+        pass
 
     def getHost(self):
         pass
@@ -72,7 +72,7 @@ class IStoreMedium(IMedium):
         pass
     
 
-class ICustomerMedium(INamedMedium):
+class ICustomerMedium(IIdentifiedMedium):
     
     def getProfiles(self):
         pass
@@ -186,7 +186,7 @@ class ICustomerMedium(INamedMedium):
         pass
 
     
-class IProfileMedium(INamedMedium):
+class IProfileMedium(IIdentifiedMedium):
     
     def getTargets(self):
         pass
@@ -285,7 +285,7 @@ class IProfileMedium(INamedMedium):
         pass
 
 
-class ITargetMedium(INamedMedium):
+class ITargetMedium(IIdentifiedMedium):
     
     def getConfig(self):
         pass

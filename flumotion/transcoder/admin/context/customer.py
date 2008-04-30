@@ -63,6 +63,12 @@ class ICustomerContext(base.IBaseStoreContext):
     def getStoreContext(self):
         pass
 
+    def getUnboundProfileContexts(self):
+        pass
+
+    def getUnboundProfileContext(self, identifier):
+        pass
+
     def getUnboundProfileContextByName(self, profName):
         pass
     
@@ -72,6 +78,12 @@ class ICustomerContext(base.IBaseStoreContext):
     def iterUnboundProfileContexts(self):
         pass
         
+    def getProfileContexts(self, input):
+        pass
+    
+    def getProfileContext(self, identifier, input):
+        pass
+    
     def getProfileContextByName(self, profName, input):
         pass
     
@@ -160,8 +172,18 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def getStoreContext(self):
         return self.parent
 
+    def getUnboundProfileContexts(self):
+        return [profile.UnboundProfileContext(self, s)
+                for s in self.store.getProfileStores()] 
+
+    def getUnboundProfileContext(self, identifier):
+        profStore = self.store.getProfileStore(identifier)
+        if profStore is None: return None 
+        return profile.UnboundProfileContext(self, profStore)
+
     def getUnboundProfileContextByName(self, profName):
         profStore = self.store.getProfileStoreByName(profName)
+        if profStore is None: return None
         return profile.UnboundProfileContext(self, profStore)
     
     def getUnboundProfileContextFor(self, profStore):
@@ -172,8 +194,18 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.UnboundProfileContext, profIter)
         
+    def getProfileContexts(self, input):
+        return [profile.ProfileContext(self, s, input)
+                for s in self.store.getProfileStores()] 
+
+    def getProfileContext(self, identifier, input):
+        profStore = self.store.getProfileStore(identifier)
+        if profStore is None: return None
+        return profile.ProfileContext(self, profStore, input)
+
     def getProfileContextByName(self, profName, input):
         profStore = self.store.getProfileStoreByName(profName)
+        if profStore is None: return None
         return profile.ProfileContext(self, profStore, input)
     
     def getProfileContextFor(self, profStore, input):

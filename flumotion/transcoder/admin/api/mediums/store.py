@@ -37,9 +37,9 @@ class StoreMedium(api.Medium):
 
     @api.make_remote()
     def getCustomers(self):
-        return self.reference.getCustomerContexts()
+        return self.reference.store.getCustomerStores()
 
     @api.make_remote()
     def getCustomer(self, identifier):
-        return self.reference.getCustomerContext(identifier)
+        return self.reference.store.getCustomerStore(identifier)
 

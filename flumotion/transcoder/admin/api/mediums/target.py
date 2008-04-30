@@ -14,38 +14,38 @@
 
 from zope.interface import implements
 
-from flumotion.transcoder.admin.context import target
+from flumotion.transcoder.admin.datastore import target
 from flumotion.transcoder.admin.api import interfaces, api
 
 
-class TargetMedium(api.NamedMedium):
+class TargetMedium(api.IdentifiedMedium):
     
     implements(interfaces.IConfigMedium)
     
     api.register_medium(interfaces.IConfigMedium,
-                        target.ITargetContext)
+                        target.ITargetStore)
     
-    api.readonly_store_property("name")
-    api.readonly_store_property("subdir")
-    api.readonly_store_property("outputDir")
-    api.readonly_store_property("linkDir")
-    api.readonly_store_property("workDir")
-    api.readonly_store_property("extension")
-    api.readonly_store_property("outputFileTemplate")
-    api.readonly_store_property("linkFileTemplate")
-    api.readonly_store_property("linkTemplate")
-    api.readonly_store_property("linkURLPrefix")
-    api.readonly_store_property("enablePostprocessing")
-    api.readonly_store_property("enableLinkFiles")
-    api.readonly_store_property("postprocessCommand")
-    api.readonly_store_property("postprocessTimeout")    
+    api.readonly_property("name")
+    api.readonly_property("subdir")
+    api.readonly_property("outputDir")
+    api.readonly_property("linkDir")
+    api.readonly_property("workDir")
+    api.readonly_property("extension")
+    api.readonly_property("outputFileTemplate")
+    api.readonly_property("linkFileTemplate")
+    api.readonly_property("linkTemplate")
+    api.readonly_property("linkURLPrefix")
+    api.readonly_property("enablePostprocessing")
+    api.readonly_property("enableLinkFiles")
+    api.readonly_property("postprocessCommand")
+    api.readonly_property("postprocessTimeout")    
     
-    def __init__(self, targCtx):
-        api.NamedMedium.__init__(self, targCtx)
+    def __init__(self, targStore):
+        api.IdentifiedMedium.__init__(self, targStore)
     
     
     ## ITargetsMedium Methodes ##
 
     @api.make_remote()
     def getConfig(self):
-        return self.reference.getConfigContext()
+        return self.reference.getConfigStore()

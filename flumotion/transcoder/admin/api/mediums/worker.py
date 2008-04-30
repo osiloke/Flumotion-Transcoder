@@ -18,14 +18,15 @@ from flumotion.transcoder.admin.proxy import worker
 from flumotion.transcoder.admin.api import interfaces, api
 
 
-class WorkerMedium(api.NamedMedium):
+class WorkerMedium(api.IdentifiedMedium):
     
     implements(interfaces.IWorkerMedium)
     
     api.register_medium(interfaces.IWorkerMedium,
                         worker.IWorkerProxy)
     
-    api.readonly_proxy_getter("getHost")
+    api.readonly_getter("getName")
+    api.readonly_getter("getHost")
 
     def __init__(self, workerPxy):
-        api.NamedMedium__init__(self, workerPxy)
+        api.IdentifiedMedium.__init__(self, workerPxy)
