@@ -21,7 +21,7 @@ from flumotion.transcoder.admin.datastore import base, profile, notification
 class ICustomerStore(base.IBaseStore):
 
     name                 = Attribute("Name of the customer")
-    subdir               = Attribute("Customer files sub-directory")
+    subdir               = Attribute("Customer sub-directory")
     inputDir             = Attribute("Input files directory")
     outputDir            = Attribute("Output files directory")
     failedDir            = Attribute("Failure directory")
@@ -29,9 +29,9 @@ class ICustomerStore(base.IBaseStore):
     linkDir              = Attribute("Links directory")
     workDir              = Attribute("Temporary directory")
     configDir            = Attribute("Transcoding configuration directory")
-    tempRepDir           = Attribute("Reports' temporary directory")
-    failedRepDir         = Attribute("Report's failure directory")
-    doneRepDir           = Attribute("Reports' success directory")
+    tempRepDir           = Attribute("Reports temporary directory")
+    failedRepDir         = Attribute("Reports failure directory")
+    doneRepDir           = Attribute("Reports success directory")
     customerPriority     = Attribute("Customer transcoding priority")
     outputMediaTemplate  = Attribute("Output media file template")
     outputThumbTemplate  = Attribute("Output thumbnail file temaplte")

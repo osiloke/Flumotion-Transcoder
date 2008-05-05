@@ -65,8 +65,8 @@ class IAudioVideoConfigStore(IAudioConfigStore, IVideoConfigStore):
 
 class IThumbnailsConfigStore(IConfigStore):
 
-    thumbsWidth  = Attribute("Thumbnails' width")
-    thumbsHeight = Attribute("Thumbnails' height")
+    thumbsWidth  = Attribute("Thumbnails width")
+    thumbsHeight = Attribute("Thumbnails height")
     periodValue  = Attribute("Period between thumbnails snapshots")
     periodUnit   = Attribute("Unit of the snapshot period value")
     maxCount     = Attribute("Maximum number of snapshots to take")
