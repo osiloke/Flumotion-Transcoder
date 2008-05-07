@@ -596,7 +596,8 @@ class FileDataSource(log.Loggable):
                                     "Fail to load customer data "
                                     "from file '%s'", absDir + f)
                 continue
-            self._customersData[f] = data
+            identifier = f.rsplit(os.path.extsep, 1)[0]
+            self._customersData[identifier] = data
         
     def __loadActivityData(self):
         basePath = os.path.dirname(self._adminPath)

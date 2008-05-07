@@ -1,3 +1,8 @@
+2008-05-07  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	Removed the file extension from the customer identifier. 
+
 2008-05-05  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datastore/config.py:
