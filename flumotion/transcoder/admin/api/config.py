@@ -25,6 +25,6 @@ class BouncerConfig(properties.PropertyBag):
 class APIConfig(properties.PropertyBag):
     bouncer = properties.Child("bouncer", BouncerConfig)
     host = properties.String('host', "localhost", False)
-    port = properties.Integer('port', 7667, False)
+    port = properties.Integer('port', 7600, False)
     useSSL = properties.Boolean('use-ssl', True)
     certificate = properties.String('certificate', "default.pem")    

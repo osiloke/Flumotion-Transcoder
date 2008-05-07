@@ -85,7 +85,7 @@
     [admin:api]
     # host and port to listen for low-level API client connections
     #host = localhost
-    #port = 7667
+    #port = 7600
     
     # Use SSL
     #use-ssl = True

@@ -1,5 +1,12 @@
 2008-05-07  Sebastien Merle  <sebastien@fluendo.com>
 
+	* conf/transcoder/transcoder-admin.ini:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/api/config.py:
+	Updated to use the new ports.
+
+2008-05-07  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/datasource/filesource.py:
 	Removed the file extension from the customer identifier. 
 
