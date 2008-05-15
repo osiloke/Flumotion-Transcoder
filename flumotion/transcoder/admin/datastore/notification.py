@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.inhouse import log, utils
+from flumotion.inhouse import log, utils, database
 
 from zope.interface import implements, Attribute
 
@@ -49,6 +49,17 @@ class IMailNotificationStore(INotificationStore):
 class IHTTPNotificationStore(INotificationStore):
 
     urlTemplate = Attribute("URL of the HTTP notification")
+
+
+class ISQLNotificationStore(INotificationStore):
+    
+    databaseModule   = Attribute("DBAPI 2.0 Python Module")
+    databaseHost     = Attribute("Database host")
+    databasePort     = Attribute("Database port")
+    databaseUsername = Attribute("Database username")
+    databasePassword = Attribute("Database password")
+    databaseName     = Attribute("Database name")
+    sqlTemplate      = Attribute("SQL statement template")
 
 
 class NotificationStore(base.DataStore):
@@ -106,10 +117,23 @@ class HTTPNotificationStore(NotificationStore):
         label = "HTTP Notification to %s" % data.urlTemplate
         NotificationStore.__init__(self, parentStore, data, adminStore,
                                    custStore, profStore, targStore, label=label)
+
+
+class SQLNotificationStore(NotificationStore):
+    implements(ISQLNotificationStore)
+    
+    databaseURI = base.ReadOnlyProxy("databaseURI")
+    sqlTemplate = base.ReadOnlyProxy("sqlTemplate")
+    
+    def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
+        label = "SQL Notification to %s" % database.filter_uri(data.databaseURI)
+        NotificationStore.__init__(self, parentStore, data, adminStore,
+                                   custStore, profStore, targStore, label=label)
     
 
 _notifLookup = {NotificationTypeEnum.http_request: HTTPNotificationStore,
-                NotificationTypeEnum.email:        MailNotificationStore}
+                NotificationTypeEnum.email:        MailNotificationStore,
+                NotificationTypeEnum.sql:          SQLNotificationStore}
 
 
 def NotificationFactory(parentStore, data, adminStore,

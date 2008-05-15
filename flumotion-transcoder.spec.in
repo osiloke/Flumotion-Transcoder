@@ -90,6 +90,7 @@ fi
 %{_libdir}/flumotion
 %{_libdir}/pkgconfig/flumotion-transcoder.pc
 %{_libdir}/python?.?/site-packages/transcoder
+%{_datadir}/flumotion-transcoder-@VERSION@
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin
 %attr(750,root,flumotion) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
@@ -104,6 +105,9 @@ fi
 %dir %attr(770,root,flumotion) %{_localstatedir}/cache/flumotion/transcoder
 
 %changelog
+* Wed May 14 2008 Sebastien Merle <sebastien@fluendo.com>
+- Added data directory.
+
 * Thu Sep 25 2007 Sebastien Merle <sebastien@fluendo.com>
 - Use flumotion for managing manager and worker.
 

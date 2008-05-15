@@ -15,6 +15,10 @@ import urllib
 from flumotion.inhouse import utils, fileutils
 
 
+def escape_url_value(value):
+    return (isinstance(value, (str, unicode)) and urllib.quote(value)) or value
+
+
 class Variables(object):
     
     def __init__(self, *otherVars):
@@ -23,16 +27,16 @@ class Variables(object):
             if s:
                 self._variables.update(s._variables)
 
-    def substitute(self, value):
+    def substitute(self, value, escape=None):
         #FIXME: Better error handling
         format = utils.filterFormat(value, self._variables)
-        return format % self._variables
+        if escape is None:
+            return format % self._variables
+        vars = dict([(k, escape(v)) for k, v in self._variables.iteritems()])
+        return format % vars
     
     def substituteURL(self, value):
-        format = utils.filterFormat(value, self._variables)
-        urlVars = dict([(k, (isinstance(v, str) and urllib.quote(v)) or v)
-                        for k, v in self._variables.iteritems()])
-        return format % urlVars
+        return self.substitute(value, escape=escape_url_value)
             
     def __iter__(self):
         return iter(self._variables)

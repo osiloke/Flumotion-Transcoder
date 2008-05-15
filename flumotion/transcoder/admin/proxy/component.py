@@ -464,7 +464,7 @@ class BaseComponentProxy(base.BaseProxy):
                 msg = ("Forced Stop/Delete of component '%s' aborted "
                        "because the remote connection was lost" % self.label)
                 self.warning("%s", msg)
-                error = admerrs.OperationAbortedError(msg, cause=failure.value)
+                error = admerrs.OperationAbortedError(msg, cause=failure)
                 resultDef.errback(error)
                 return True
             status['last-message'] = log.getFailureMessage(failure)

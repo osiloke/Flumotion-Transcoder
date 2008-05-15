@@ -92,6 +92,8 @@ class TargetData(properties.PropertyBag):
     enableLinkFiles = properties.Boolean('link-files-enabled', None)
     postprocessCommand = properties.String('post-process-command', None)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
+    notifyParams = properties.Dict(properties.String('notify', None))
+    notifyDoneSQL = properties.List(properties.String('notify-done-sql', None))
     notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
     config = properties.DynEnumChild('config', 'type', 
                                      {TargetTypeEnum.audio: AudioData,
@@ -131,6 +133,9 @@ class ProfileData(properties.PropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    notifyParams = properties.Dict(properties.String('notify', None))
+    notifyDoneSQL = properties.List(properties.String('notify-done-sql', None))
+    notifyFailedSQL = properties.List(properties.String('notify-failed-sql', None))
     notifyDoneRequests = properties.List(properties.String('notify-done-requests', None))
     notifyFailedRequests = properties.List(properties.String('notify-failed-requests', None))
     notifyFailedMailRecipients = properties.String('notify-failed-mail-recipients', None)
@@ -139,6 +144,13 @@ class ProfileData(properties.PropertyBag):
 
 class CustomerData(properties.RootPropertyBag):
     """
+    Changes from 1.0 to 1.1:
+        Added notify, notify-done-sql, and notify-failed-sql to profile sections.
+        Added notify and notify-done-sql to target sections.
+    """    
+    
+    VERSION = (1, 1)
+    COMMENTS = """
     File Data-Source Customer Properties File.
     
     This file define the properties of a customer.
@@ -241,10 +253,23 @@ class CustomerData(properties.RootPropertyBag):
     #failed-report-dir = /fluendo/reports/failed/default/profile/
     #done-report-dir = /fluendo/reports/done/default/profile/
     
+    # Notification Parameters
+    notify#database-module = MySQLdb
+    notify#database-host = localhost
+    notify#database-port = 3306
+    notify#database-username = user
+    notify#database-password = test
+    notify#database-name = database
+    
+    # SQL to execute when a source file has been
+    # successfully transcoded or failed with this profile
+    notify-done-sql#01 = 'INSERT INTO succeed (\'%(inputRelFile)s\')'
+    notify-failed-sql#01 = 'INSERT INTO failed (\'%(inputRelFile)s\')'    
+    
     # HTTP GET requests to perform when a source file has been 
     # successfully transcoded or failed with this profile.
-    notify-done-requests#01 = http://backoffice.flumotion.com/cgi?file=%(outputRelFile)s&status=%(success)d
-    notify-failed-requests#01 = http://backoffice.flumotion.com/cgi?file=%(outputRelFile)s&status=%(success)d
+    notify-done-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelFile)s&status=%(success)d
+    notify-failed-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelFile)s&status=%(success)d
     
     # Recipients of the mail send when a transcodification fail for this profile
     notify-failed-mail-recipients = Sebastien Merle <sebastien@fluendo.com>
@@ -286,7 +311,19 @@ class CustomerData(properties.RootPropertyBag):
     # Target subdirectory; if not specified TARGET NAME WILL NOT BE USED.
     subdir = high
 
-    # The HTTP GET REquests to perform when this target 
+    # Notification Parameters
+    notify#database-module = MySQLdb
+    notify#database-host = localhost
+    notify#database-port = 3306
+    notify#database-username = user
+    notify#database-password = test
+    notify#database-name = database
+    
+    # SQL to execute when when this target 
+    # has been successfuly transcoded.
+    notify-done-sql#01 = 'INSERT INTO succeed (\'%(outputRelFile)s\')'
+    
+    # The HTTP GET Requests to perform when this target 
     # has been successfuly transcoded.
     notify-done-requests#01 = http://backoffice.flumotion.com/cgi?file=%(outputRelFile)s&status=%(success)d
     
@@ -345,10 +382,7 @@ class CustomerData(properties.RootPropertyBag):
     # The format of the ouput file, can be png od jpg
     output-format = png
 
-    ------------------------------------------------------------"""    
-    
-    VERSION = (1, 0)
-    COMMENTS = __doc__.split('\n')
+    ------------------------------------------------------------""".split('\n')
     
     name = properties.String('name', None, True)
     subdir = properties.String('subdir', None)
@@ -390,6 +424,12 @@ class CustomerData(properties.RootPropertyBag):
 
 class AdminData(properties.RootPropertyBag):
     """
+    Changed from 1.0 to 1.1:
+        Added sql-timeout, sql-retry-max and sql-retry-sleep to the global section.
+    """
+    
+    VERSION = (1, 1)
+    COMMENTS = """
     File Data-Source Global Properties File.
     
     This file set the global and default property values, and specify 
@@ -432,6 +472,9 @@ class AdminData(properties.RootPropertyBag):
     #http-request-timeout = 30
     #http-request-retry-max = 3
     #http-request-retry-sleep = 60
+    #sql-timeout = 30
+    #sql-retry-max = 3
+    #sql-retry-sleep = 60
     #output-media-template = "%(targetPath)s"
     #output-thumb-template = "%(targetDir)s%(targetBasename)s.%%(index)03d%(targetExtension)s"
     #link-file-template = "%(targetPath)s.link"
@@ -443,10 +486,7 @@ class AdminData(properties.RootPropertyBag):
     # Default Values not yet used
     #discoverer-max-interleave = 1.0
 
-    ------------------------------------------------------------"""
-    
-    VERSION = (1, 0)
-    COMMENTS = __doc__.split('\n')
+    ------------------------------------------------------------""".split('\n')
     
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
     transcodingPriority = properties.Integer('transcoding-priority', None, False, True)
@@ -466,6 +506,9 @@ class AdminData(properties.RootPropertyBag):
     HTTPRequestTimeout = properties.Integer('http-request-timeout', None, False, True)
     HTTPRequestRetryMax = properties.Integer('http-request-retry-max', None, False, True)
     HTTPRequestRetrySleep = properties.Integer('http-request-retry-sleep', None, False, True)
+    sqlTimeout = properties.Integer('sql-timeout', None, False, True)
+    sqlRetryMax = properties.Integer('sql-retry-max', None, False, True)
+    sqlRetrySleep = properties.Integer('sql-retry-sleep', None, False, True)
     accessForceGroup = properties.String('access-force-group', None)
     accessForceUser = properties.String('access-force-user', None)
     accessForceDirMode = properties.Octal('access-force-dir-mode', None)

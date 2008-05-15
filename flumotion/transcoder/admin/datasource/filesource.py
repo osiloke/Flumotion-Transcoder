@@ -135,7 +135,13 @@ class MutableDataWrapper(object):
             fileutils.ensureDirExists(os.path.dirname(newTmpPath),
                                       "activities")
             saver = inifile.IniFile()
-            saver.saveToFile(data, newTmpPath)
+            # The activities can contains sensitive information (passwords)
+            # so we don't want it to be readable by others
+            oldmask = os.umask(0137)
+            try:
+                saver.saveToFile(data, newTmpPath)
+            finally:
+                os.umask(oldmask)
         except Exception, e:
             log.notifyException(self._source, e,
                                 "File to save activity data file '%s'",
@@ -277,6 +283,16 @@ REQ_NOT_TMPL = {'type': NotificationTypeEnum.http_request,
                 'retrySleep': None,
                 'requestTemplate': None}
 
+
+SQL_NOT_TMPL = {'type': NotificationTypeEnum.sql,
+                'triggers': set([]),
+                'timeout': None,
+                'retryMax': None,
+                'retrySleep': None,
+                'databaseURI': None,
+                'sqlTemplate': None}
+
+
 CUST_INFO_TMPL = {'name': None,
                   'contact': None,
                   'adresses': None,
@@ -305,6 +321,18 @@ def _createMailNotif(wrapper, succeed, recipients):
     t = MailAddressTypeEnum.to
     fields['recipients'][t] = utils.deepCopy(recipients)
     ident = (wrapper.identifier, trigger, "email")
+    return ImmutableWrapper(ident, fields)
+
+def _createSQLNotif(wrapper, succeed, params, sqlTmpl):
+    if succeed:
+        trigger = NotificationTriggerEnum.done
+    else:
+        trigger = NotificationTriggerEnum.failed
+    fields = utils.deepCopy(SQL_NOT_TMPL)
+    fields['triggers'] = set([trigger])
+    fields['databaseURI'] = params.get('database-uri', None)
+    fields['sqlTemplate'] = sqlTmpl
+    ident = (wrapper.identifier, trigger, "sql")
     return ImmutableWrapper(ident, fields)
 
 
@@ -405,6 +433,13 @@ class FileDataSource(log.Loggable):
             for req in d.notifyDoneRequests:
                 if req:
                     result.append(_createReqNotif(profData, True, req))
+            params = d.notifyParams
+            for sql in d.notifyFailedSQL:
+                if sql:
+                    result.append(_createSQLNotif(profData, False, params, sql))
+            for sql in d.notifyDoneSQL:
+                if sql:
+                    result.append(_createSQLNotif(profData, True, params, sql))
             recipientsLine = d.notifyFailedMailRecipients
             if recipientsLine:
                 recipients = utils.splitMailRecipients(recipientsLine)
@@ -426,6 +461,10 @@ class FileDataSource(log.Loggable):
             for req in d.notifyDoneRequests:
                 if req:
                     result.append(_createReqNotif(targData, True, req))
+            params = d.notifyParams
+            for sql in d.notifyDoneSQL:
+                if sql:
+                    result.append(_createSQLNotif(targData, True, params, sql))
             return defer.succeed(result)
         except Exception, e:
             msg = "Failed to retrieve target notifications data"
@@ -651,4 +690,4 @@ class FileDataSource(log.Loggable):
         if failure.check(datasource.InitializationError):
             return failure
         msg = "Failed to initialize file data-source"
-        raise datasource.InitializationError(msg, cause=failure.value)        
+        raise datasource.InitializationError(msg, cause=failure)        

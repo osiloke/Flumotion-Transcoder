@@ -1,5 +1,34 @@
 2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* Makefile.am:
+	* configure.ac:
+	* data/Makefile.am:
+	* data/database/Makefile.am:
+	* data/database/mysql/Makefile.am:
+	* data/database/mysql/initial_data.sql:
+	* data/database/mysql/preamble.sql:
+	* data/database/mysql/schema.sql:
+	* data/database/mysql/user_setup.sql:
+	* flumotion-transcoder.spec.in:
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/context/activity.py:
+	* flumotion/transcoder/admin/context/notification.py:
+	* flumotion/transcoder/admin/context/store.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/activity.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/enums.py:
+	* flumotion/transcoder/admin/notifier.py:
+	* flumotion/transcoder/admin/notifysubs.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/substitution.py:
+	"Forward" ported the SQL statement notification from platform 4.
+
+2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
 	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
 	Updated to match renaming in flumotion trunk. glade_file => gladeFile.

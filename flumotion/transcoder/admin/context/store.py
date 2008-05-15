@@ -43,6 +43,9 @@ class IStoreContext(base.IBaseStoreContext):
     HTTPRequestTimeout    = Attribute("HTTP notifications timeout")
     HTTPRequestRetryMax   = Attribute("HTTP notifications maximum attempt count")
     HTTPRequestRetrySleep = Attribute("Time to wait between HTTP notification attempts")
+    sqlTimeout            = Attribute("SQL notifications timeout")
+    sqlRetryMax           = Attribute("Maximum SQL notification attempts")
+    sqlRetrySleep         = Attribute("Time to wait between SQL notification attempts")
 
     def getCustomerContexts(self):
         pass
@@ -115,7 +118,12 @@ class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                                             adminconsts.DEFAULT_HTTPREQUEST_RETRY_MAX)
     HTTPRequestRetrySleep = base.StoreProxy("HTTPRequestRetrySleep",
                                             adminconsts.DEFAULT_HTTPREQUEST_RETRY_SLEEP)
-
+    sqlTimeout            = base.StoreProxy("sqlTimeout",
+                                            adminconsts.DEFAULT_SQL_TIMEOUT)
+    sqlRetryMax           = base.StoreProxy("sqlRetryMax",
+                                            adminconsts.DEFAULT_SQL_RETRY_MAX)
+    sqlRetrySleep         = base.StoreProxy("sqlRetrySleep",
+                                            adminconsts.DEFAULT_SQL_RETRY_SLEEP)
 
     def __init__(self, adminContext, adminStore):
         base.BaseStoreContext.__init__(self, adminContext, adminStore)

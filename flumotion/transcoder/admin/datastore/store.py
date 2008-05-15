@@ -45,6 +45,9 @@ class IAdminStore(base.IBaseStore):
     HTTPRequestTimeout    = Attribute("HTTP notifications timeout")
     HTTPRequestRetryMax   = Attribute("HTTP notifications maximum attempt count")
     HTTPRequestRetrySleep = Attribute("Time to wait between HTTP notification attempts")
+    sqlTimeout            = Attribute("SQL notifications timeout")
+    sqlRetryMax           = Attribute("Maximum SQL notification attempts")
+    sqlRetrySleep         = Attribute("Time to wait between SQL notification attempts")
 
     def getCustomerStores(self):
         pass
@@ -93,6 +96,9 @@ class AdminStore(base.NotifyStore):
     HTTPRequestTimeout    = base.ReadOnlyProxy("HTTPRequestTimeout")
     HTTPRequestRetryMax   = base.ReadOnlyProxy("HTTPRequestRetryMax")
     HTTPRequestRetrySleep = base.ReadOnlyProxy("HTTPRequestRetrySleep")
+    sqlTimeout            = base.ReadOnlyProxy("sqlTimeout")
+    sqlRetryMax           = base.ReadOnlyProxy("sqlRetryMax")
+    sqlRetrySleep         = base.ReadOnlyProxy("sqlRetrySleep")
 
     def __init__(self, dataSource):
         identifier = "store.admin"

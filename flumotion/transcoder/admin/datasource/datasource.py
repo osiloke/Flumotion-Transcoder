@@ -128,6 +128,12 @@ class IDataSource(Interface):
             HTTPRequestRetrySleep (int) can be None:
                 Gives the default time between retry 
                 for HTTP request notifications.
+            sqlTimeout (int) can be None:
+                Gives the default timeout for sql notifications.
+            sqlRetryCount (int) can be None:
+                Gives the default retry count for sql notifications.
+            sqlRetrySleep (int) can be None:
+                Gives the default time between retry for sql notifications.
         """
         
     def retrieveCustomers(self):
@@ -303,6 +309,9 @@ class IDataSource(Interface):
                     where name can be None
             For type == NotificationTypeEnum.http_request:
                 requestTemplate (str)
+            For type == NotificationTypeEnum.sql:
+                databaseURI (str)
+                sqlTemplate (str)                
         """
         
     def retrieveCustomerNotifications(self, custData):

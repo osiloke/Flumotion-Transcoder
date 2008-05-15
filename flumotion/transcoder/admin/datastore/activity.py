@@ -74,6 +74,12 @@ class IMailActivityStore(INotificationActivityStore):
     body       = Attribute("Mail body")
 
 
+class ISQLActivityStore(INotificationActivityStore):
+    
+    databaseURI  = Attribute("Database connection URI")
+    sqlStatement = Attribute("SQL statement to execute")
+
+
 ## Proxy Descriptors ##
 
 class ReadWriteProxy(base.ReadOnlyProxy):
@@ -228,6 +234,7 @@ class NotificationActivityStore(ActivityStore):
         self._data.targetIdentifier = targStore and targStore.identifier
         self._data.retryCount = 0
         self._touche()
+
     
 class HTTPActivityStore(NotificationActivityStore):
     implements(IHTTPActivityStore)
@@ -265,11 +272,30 @@ class MailActivityStore(NotificationActivityStore):
     recipientsAddr = property(_getRecipientsAddr, _setRecipientsAddr)
 
 
+class SQLActivityStore(NotificationActivityStore):
+    implements(ISQLActivityStore)
+
+    databaseURI  = ReadWriteDataProxy("uri")
+    sqlStatement = ReadWriteDataProxy("sql")
+
+    def __init__(self, logger, stateStore, data, isNew=True):
+        NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
+
+
+    ## Protected Methods ##
+    
+    def _setup(self, notifStore, trigger):
+        NotificationActivityStore._setup(self, notifStore, trigger)
+        uri = notifStore.databaseURI
+        if uri is not None: self._data.data["uri"] = uri
+
+
 _activityLookup = {ActivityTypeEnum.transcoding: 
                    {TranscodingTypeEnum.normal:        TranscodingActivityStore},
                    ActivityTypeEnum.notification: 
                    {NotificationTypeEnum.http_request: HTTPActivityStore,
-                    NotificationTypeEnum.email:        MailActivityStore}}
+                    NotificationTypeEnum.email:        MailActivityStore,
+                    NotificationTypeEnum.sql:          SQLActivityStore}}
 
 
 def ActivityFactory(logger, parent, data, isNew=True):

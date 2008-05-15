@@ -22,7 +22,7 @@ from twisted.internet import reactor
 from twisted.web import client
 from twisted.mail.smtp import ESMTPSenderFactory
 
-from flumotion.inhouse import log, defer, utils, events
+from flumotion.inhouse import log, defer, utils, events, database
 
 from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
@@ -46,14 +46,15 @@ _debugRecipients = "sebastien@fluendo.com"
 _shutingDown = False
 
 
-## Disable notifications when shuting down
+## Disable notifications when shutting down
 def _disableNotification():
     global _shutingDown
     _shutingDown = True
     log.info("Disabling notifications during shutdown",
              category=adminconsts.NOTIFIER_LOG_CATEGORY)
-    
+
 reactor.addSystemEventTrigger("before", "shutdown", _disableNotification)
+
 
 ## Notification Function ###
 
@@ -240,6 +241,14 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         return client.getPage(url, timeout=timeout,
                               agent=adminconsts.GET_REQUEST_AGENT)
     
+    @staticmethod
+    def _performSQLExecution(uri, sql, params=None):
+        #FIXME: cache the database connections
+        db = database.Connection()
+        db.open(uri, params)
+        return db.execute(sql)
+    
+    
     ## Private Methods ##
     
     def __cbRestoreNotifications(self, activCtxs):
@@ -303,6 +312,15 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                     msg.attach(data)
         activStore.body = str(msg)
         
+        return activCtx
+
+    def __doPrepareSQLExec(self, label, trigger, notifCtx, vars, docs):
+        stateCtx = self._storeCtx.getStateContext()
+        activCtx = stateCtx.newNotificationContext(NotificationTypeEnum.sql,
+                                                   label, ActivityStateEnum.started,
+                                                   notifCtx, trigger)
+        sql = vars.substitute(notifCtx.sqlTemplate, escape=database.escape_value)
+        activCtx.store.sqlStatement = sql
         return activCtx
 
     def __startupNotification(self, activCtx, delay=0):
@@ -384,6 +402,31 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                    log.getFailureMessage(failure))
         self.__retryNotification(activCtx)
 
+    def __doPerformSQLExec(self, activCtx):
+        assert isinstance(activCtx, activity.SQLActivityContext)
+        self.debug("SQL execution '%s' initiated with SQL \"%s\"" 
+                   % (activCtx.label, activCtx.sqlStatement))
+        uri = activCtx.databaseURI
+        timeout = activCtx.timeout
+        params = {}
+        if timeout is not None: params['connect-timeout'] = timeout 
+        d = self._performSQLExecution(uri, activCtx.sqlStatement, params)
+        args = (activCtx,)
+        d.addCallbacks(self.__cbSQLExecSucceed, self.__ebSQLExecFailed,
+                       callbackArgs=args, errbackArgs=args)
+        return d
+
+    def __cbSQLExecSucceed(self, result, activity):
+        self.debug("SQL execution '%s' succeed", activity.label)
+        self.__notificationSucceed(activity)
+    
+    def __ebSQLExecFailed(self, failure, activity):
+        retryLeftDesc = self.__getRetriesLeftDesc(activity)
+        self.debug("SQL execution '%s' failed (%s): %s",
+                   activity.label, retryLeftDesc,
+                   log.getFailureMessage(failure))
+        self.__retryNotification(activity)
+
     def __retryNotification(self, activCtx):
         activStore = activCtx.store
         activStore.retryCount += 1
@@ -425,10 +468,12 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         self._results.pop(activCtx)
         
     _prepareLookup = {NotificationTypeEnum.http_request: __doPrepareGetRequest,
-                      NotificationTypeEnum.email: __doPrepareMailPost}
+                      NotificationTypeEnum.email:        __doPrepareMailPost,
+                      NotificationTypeEnum.sql:          __doPrepareSQLExec}
     
     _performLookup = {NotificationTypeEnum.http_request: __doPerformGetRequest,
-                      NotificationTypeEnum.email: __doPerformMailPost}
+                      NotificationTypeEnum.email:        __doPerformMailPost,
+                      NotificationTypeEnum.sql:          __doPerformSQLExec}
     
     def __cannotPrepare(self, label, trigger, notif, vars, docs):
         message = ("Unsuported type '%s' for "

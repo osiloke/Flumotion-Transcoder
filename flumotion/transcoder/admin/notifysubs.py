@@ -15,19 +15,20 @@ from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 
 class NotificationVariables(substitution.Variables):
     
-    def __init__(self, parent, prefix, analysisReport):
+    def __init__(self, parent, prefix, analysisReport, fileSize=None):
         substitution.Variables.__init__(self, parent)
-        self._addAnalysisResult(prefix, analysisReport)
+        self._addAnalysisResult(prefix, analysisReport, fileSize)
 
     ## Protected Methods ##
             
-    def _addAnalysisResult(self, p, a):
+    def _addAnalysisResult(self, p, a, s=None):
         mimeType = ""
         hasVideo = 0
         hasAudio = 0
         videoWidth = 0
         videoHeight = 0
         duration = 0.0
+        bitrate = 0
         length = 0
         hours = 0
         minutes = 0
@@ -59,6 +60,9 @@ class NotificationVariables(substitution.Variables):
             else:
                 length = a.audioLength or 0
 
+            if s:
+                bitrate = int(round(s / duration))
+
             # PyChecker isn't smart enough to see I first convert to int
             __pychecker__ = "no-intdivide"
             seconds = int(round(duration))
@@ -73,6 +77,7 @@ class NotificationVariables(substitution.Variables):
         self.addVar(p + "VideoWidth", videoWidth)
         self.addVar(p + "VideoHeight", videoHeight)
         self.addVar(p + 'Duration', duration)
+        self.addVar(p + 'Bitrate', bitrate)
         self.addVar(p + 'Length', length)
         self.addVar(p + 'Hours', hours)
         self.addVar(p + 'Minutes', minutes)
@@ -83,8 +88,9 @@ class SourceNotificationVariables(NotificationVariables):
     
     def __init__(self, profCtx, trigger, report):
         analysisReport = report and report.source.analysis
-        NotificationVariables.__init__(self, None,
-                                       "source", analysisReport)
+        fileSize = report and report.source.fileSize
+        NotificationVariables.__init__(self, None, "source",
+                                       analysisReport, fileSize)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
         custCtx = profCtx.getCustomerContext()
         self.addVar("success", success)
@@ -126,8 +132,9 @@ class TargetNotificationVariables(NotificationVariables):
     
     def __init__(self, sourceVars, targCtx, trigger, targReport):
         analysisReport = targReport and targReport.analysis
-        NotificationVariables.__init__(self, sourceVars,
-                                       "target", analysisReport)
+        fileSize = targReport and targReport.fileSize
+        NotificationVariables.__init__(self, sourceVars, "target",
+                                       analysisReport, fileSize)
         success = ((trigger == NotificationTriggerEnum.done) and 1) or 0
         self.addVar("success", success)
         self.addVar("trigger", trigger.name)

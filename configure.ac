@@ -70,6 +70,9 @@ common/Makefile
 conf/Makefile
 misc/Makefile
 doc/Makefile
+data/Makefile
+data/database/Makefile
+data/database/mysql/Makefile
 transcoder/Makefile
 flumotion/Makefile
 flumotion/test/Makefile

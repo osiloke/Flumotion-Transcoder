@@ -61,9 +61,11 @@ TranscodingTypeEnum = EnumClass("TranscodingTypeEnum",
 
 NotificationTypeEnum =  EnumClass("NotificationTypeEnum",
                                   ("http_request",
-                                   "email"),
+                                   "email",
+                                   "sql"),
                                    ("HTTP Request",
-                                   "EMail"))
+                                   "EMail",
+                                   "SQL"))
 
 NotificationTriggerEnum =  EnumClass("NotificationTriggerEnum",
                                      ("done",

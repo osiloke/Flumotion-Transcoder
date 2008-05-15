@@ -68,6 +68,12 @@ class IMailActivityContext(INotificationActivityContext):
     body       = Attribute("Mail body")
 
 
+class ISQLActivityContext(INotificationActivityContext):
+    
+    databaseURI  = Attribute("Database connection URI")
+    sqlStatement = Attribute("SQL statement to execute")
+
+
 class ActivityContext(base.BaseStoreContext):
 
     implements(IActivityContext)
@@ -184,6 +190,17 @@ class HTTPActivityContext(NotificationActivityContext):
         NotificationActivityContext.__init__(self, stateCtx, activStore)
 
 
+class SQLActivityContext(NotificationActivityContext):
+    
+    implements(ISQLActivityContext)
+    
+    databaseURI  = base.StoreProxy("databaseURI")
+    sqlStatement = base.StoreProxy("sqlStatement")
+    
+    def __init__(self, stateCtx, activStore):
+        NotificationActivityContext.__init__(self, stateCtx, activStore)
+
+
 def ActivityContextFactory(parentCtx, activStore):
     return _contextLookup[type(activStore)](parentCtx, activStore)
  
@@ -192,4 +209,5 @@ def ActivityContextFactory(parentCtx, activStore):
 
 _contextLookup = {activity.TranscodingActivityStore: TranscodingActivityContext,
                   activity.MailActivityStore:        MailActivityContext,
-                  activity.HTTPActivityStore:        HTTPActivityContext}
+                  activity.HTTPActivityStore:        HTTPActivityContext,
+                  activity.SQLActivityStore:         SQLActivityContext}
