@@ -364,6 +364,12 @@ class ProfileContext(UnboundProfileContext):
         return base.LazyContextIterator(self, target.TargetContext, targIter)
 
     @property
+    def uid(self):
+        return "%s.%s.%s" % (self.parent.identifier,
+                             self.identifier,
+                             self.inputRelPath)
+        
+    @property
     def transcoderLabel(self):
         tmpl = self.getAdminContext().config.transcoderLabelTemplate
         return self._variables.substitute(tmpl)

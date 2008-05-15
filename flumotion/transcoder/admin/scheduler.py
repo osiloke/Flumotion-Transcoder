@@ -19,6 +19,7 @@ from flumotion.transcoder.admin import adminconsts, transtask, notifysubs
 from flumotion.transcoder.admin.enums import ActivityTypeEnum
 from flumotion.transcoder.admin.enums import ActivityStateEnum
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
+from flumotion.transcoder.admin.context import profile
 
 #TODO: Implement a faire scheduler and prevent the possibility
 #      of the profile priority making the overhaul customer priority
@@ -41,8 +42,8 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._notifier = notifier
         self._transcoding = transcoding
         self._diagnostician = diagnostician
-        self._order = [] # [identifier]
-        self._queue = {} # {identifier: ProfileContext}
+        self._order = [] # [puid]
+        self._queue = {} # {puid: ProfileContext}
         self._activities = {} # {transtask.TranscodingTask: ActivityContext}
         self._started = False
         self._paused = False
@@ -96,35 +97,34 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         return defer.succeed(self)
         
     def addProfile(self, profCtx):
-        inputPath = profCtx.inputPath
-        identifier = profCtx.identifier
+        assert isinstance(profCtx, profile.ProfileContext)
         if self.isProfileQueued(profCtx):
-            self.log("Added an already queued profile '%s'", inputPath)
-        elif self._transcoding.getTask(identifier):
-            self.log("Added an already transcoding profile '%s'", inputPath)
+            self.log("Added an already queued profile '%s'", profCtx.inputPath)
+        elif self._transcoding.getTask(profCtx.uid):
+            self.log("Profile '%s' already scheduled", profCtx.inputPath)
         else:
-            self.debug("Queued profile '%s'", inputPath)
+            self.debug("Queued profile '%s'", profCtx.inputPath)
             self.__queueProfile(profCtx)
             self.__startupTasks()
             self.emit("profile-queued", profCtx)
     
     def removeProfile(self, profCtx):
-        inputPath = profCtx.inputPath
-        identifier = profCtx.identifier
+        assert isinstance(profCtx, profile.ProfileContext)
         if self.isProfileQueued(profCtx):
-            self.debug("Unqueue profile '%s'", inputPath)
+            self.debug("Unqueue profile '%s'", profCtx.inputPath)
             self.__unqueuProfile(profCtx)
-        trantask = self._transcoding.getTask(identifier, None)
+        trantask = self._transcoding.getTask(profCtx.uid, None)
         if trantask and not trantask.isAcknowledging():
-            self.debug("Cancel transcoding of profile '%s'", inputPath)
-            self._transcoding.removeTask(identifier)
+            self.debug("Cancel transcoding of profile '%s'", profCtx.inputPath)
+            self._transcoding.removeTask(profCtx.uid)
     
     def isProfileQueued(self, profCtx):
-        return profCtx.identifier in self._queue
+        assert isinstance(profCtx, profile.ProfileContext)
+        return profCtx.uid in self._queue
     
     def isProfileActive(self, profCtx):
-        identifier = profCtx.identifier
-        trantask = self._transcoding.getTask(identifier, None)
+        assert isinstance(profCtx, profile.ProfileContext)
+        trantask = self._transcoding.getTask(profCtx.uid, None)
         return trantask != None
     
     def waitIdle(self, timeout=None):
@@ -184,7 +184,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.info("Transcoding task '%s' %s", task.label, 
                   (succeed and "succeed") or "failed")
         profCtx = task.getProfileContext()
-        self._transcoding.removeTask(profCtx.identifier)
+        self._transcoding.removeTask(profCtx.uid)
         self._activities.pop(task)
 
         
@@ -315,10 +315,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._startDelay = utils.callNext(self.__asyncStartTask)
         
     def __startTranscodingTask(self, profCtx, activCtx=None):
-        identifier = profCtx.identifier
         task = transtask.TranscodingTask(self._transcoding, profCtx)
         self.info("Starting transcoding task '%s'",  task.label)
-        self._transcoding.addTask(identifier, task)
+        self._transcoding.addTask(profCtx.uid, task)
         self.emit("transcoding-started", task)
         if not activCtx:
             stateCtx = self._storeCtx.getStateContext()
@@ -338,23 +337,23 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         return self.__getProfilePriority(self._queue[key])
 
     def __queueProfile(self, profCtx):
-        profIdent = profCtx.identifier
-        assert not (profIdent in self._queue)
-        self._queue[profIdent] =  profCtx
-        self._order.append(profIdent)
+        puid = profCtx.uid
+        assert not (puid in self._queue)
+        self._queue[puid] =  profCtx
+        self._order.append(puid)
         self._order.sort(key=self.__getKeyPriority)
     
     def __unqueuProfile(self, profCtx):
-        profIdent = profCtx.identifier
-        assert profIdent in self._queue
-        del self._queue[profIdent]
-        self._order.remove(profIdent)
+        puid = profCtx.uid
+        assert puid in self._queue
+        del self._queue[puid]
+        self._order.remove(puid)
 
     def __popNextProfile(self):
         if not self._order:
             return None
-        profIdent = self._order.pop()
-        profCtx = self._queue.pop(profIdent)
+        puid = self._order.pop()
+        profCtx = self._queue.pop(puid)
         return profCtx
     
     def __clearQueue(self):

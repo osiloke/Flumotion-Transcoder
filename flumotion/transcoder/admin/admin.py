@@ -317,7 +317,7 @@ class TranscoderAdmin(log.Loggable):
             relPath = profCtx.inputRelPath        
             montask.setFileState(inputBase, relPath, newState)
 
-        # Schedule new file if not alreday scheduled
+        # Schedule new file if not already scheduled
         # and synchronize the file states
         queued = self._scheduler.isProfileQueued(profCtx)
         active = self._scheduler.isProfileActive(profCtx)

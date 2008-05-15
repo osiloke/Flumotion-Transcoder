@@ -1,5 +1,16 @@
 2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/context/profile.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	Fixed a BIG bug introduced by cleaning the identifiers.
+	The scheduler was relying on the profile's identifier
+	to be GLOBALY uniqu, and not only unique for a customer.
+	Resolved by creating a context-level unique identifier
+	for the profiles named uid.
+
+2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
+
 	* Makefile.am:
 	* configure.ac:
 	* data/Makefile.am:
