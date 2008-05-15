@@ -25,8 +25,8 @@ from flumotion.component.base.admin_gtk import BaseAdminGtk, BaseAdminGtkNode
 _ = common.gettexter('flumotion-transcoder')
 
 class FileMonitorAdminGtkNode(BaseAdminGtkNode):
-    glade_file = os.path.join('flumotion', 'component', 
-                              'transcoder', 'filemonitor.glade')
+    gladeFile = os.path.join('flumotion', 'component', 
+                             'transcoder', 'filemonitor.glade')
     gettext_domain = "flumotion-transcoder"
 
     def __init__(self, *args, **kwargs):

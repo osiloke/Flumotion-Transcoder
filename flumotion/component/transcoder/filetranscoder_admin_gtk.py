@@ -40,8 +40,8 @@ def _normal(text):
 
 class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
 
-    glade_file = os.path.join('flumotion', 'component', 
-                              'transcoder', 'filetranscoder.glade')
+    gladeFile = os.path.join('flumotion', 'component', 
+                             'transcoder', 'filetranscoder.glade')
     
     gettext_domain = "flumotion-transcoder"
 

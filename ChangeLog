@@ -1,3 +1,9 @@
+2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+	Updated to match renaming in flumotion trunk. glade_file => gladeFile.
+
 2008-05-14  Sebastien Merle  <sebastien@fluendo.com>
 
 	* configure.ac:
