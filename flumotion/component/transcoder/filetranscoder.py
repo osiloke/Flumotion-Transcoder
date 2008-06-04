@@ -20,6 +20,7 @@ from twisted.python.failure import Failure
 from flumotion.component import component
 from flumotion.component.component import moods
 from flumotion.common import errors, messages
+from flumotion.common.i18n import gettexter, N_
 
 from flumotion.inhouse import log, defer, properties
 from flumotion.inhouse import utils, fileutils
@@ -38,8 +39,7 @@ from flumotion.transcoder.transreport import TranscodingReport
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.local import Local
 
-from flumotion.common.messages import N_
-T_ = messages.gettexter('flumotion-transcoder')
+T_ = gettexter('flumotion-transcoder')
 
 
 class FileTranscoderMedium(component.BaseComponentMedium):

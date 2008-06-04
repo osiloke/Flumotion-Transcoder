@@ -1,3 +1,11 @@
+2008-06-04  Johan Dahlin  <johan@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+	Update to the latest flumotion import changes
+
 2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/admin.py:

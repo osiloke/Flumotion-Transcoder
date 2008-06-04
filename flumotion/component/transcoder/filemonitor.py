@@ -18,7 +18,8 @@ import shutil
 from twisted.internet import reactor, error
 from twisted.python.failure import Failure
 
-from flumotion.common import common, messages
+from flumotion.common import messages
+from flumotion.common.i18n import gettexter, N_
 from flumotion.component import component
 from flumotion.component.component import moods
 
@@ -34,8 +35,7 @@ from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import DirectoryWatcher
 
-from flumotion.common.messages import N_
-T_ = messages.gettexter('flumotion-transcoder')
+T_ = gettexter('flumotion-transcoder')
 
 
 class FileMonitorMedium(component.BaseComponentMedium):
