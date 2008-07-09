@@ -132,7 +132,8 @@ class ComponentGroupProxy(base.BaseProxy):
                                             compId, componentLabel, 
                                             props, workerPxy.getName())
         to = utils.createTimeout(timeout or adminconsts.LOAD_COMPONENT_TIMEOUT,
-                                 self.__asyncComponentLoadedTimeout, callDef)
+                                 self.__asyncComponentLoadedTimeout,
+                                 callDef, componentLabel)
         args = (identifier, initDef, resDef, to)
         callDef.addCallbacks(self.__cbComponentLoaded, 
                              self.__ebComponentLoadingFailed,

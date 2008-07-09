@@ -1,10 +1,7 @@
-2008-06-04  Johan Dahlin  <johan@flumotion.com>
+2008-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
-	* flumotion/component/transcoder/filemonitor.py:
-	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
-	* flumotion/component/transcoder/filetranscoder.py:
-	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
-	Update to the latest flumotion import changes
+	* flumotion/transcoder/admin/proxies/groupproxy.py:
+	Fixed a bug when a call timeout.
 
 2008-05-15  Sebastien Merle  <sebastien@fluendo.com>
 
@@ -13,7 +10,7 @@
 	* flumotion/transcoder/admin/scheduler.py:
 	Fixed a BIG bug introduced by cleaning the identifiers.
 	The scheduler was relying on the profile's identifier
-	to be GLOBALY uniqu, and not only unique for a customer.
+	to be GLOBALY unique, and not only unique for a customer.
 	Resolved by creating a context-level unique identifier
 	for the profiles named uid.
 
