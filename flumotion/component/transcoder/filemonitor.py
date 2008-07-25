@@ -190,27 +190,36 @@ class FileMonitor(component.BaseComponent):
     def _file_removed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File removed '%s'", localFile)
-        self.uiState.delitem('pending-files', (virtBase, file))
+        self.__delUIItem('pending-files', (virtBase, file))
     
     
     ## Private Methods ##
     
     def __updateUIItem(self, key, subkey, value):
-        self._uiItemDelta[(key, subkey)] = (self.__doUpdateItem, value)
+        self._uiItemDelta[(key, subkey)] = ("file state updating",
+                                            self.__doUpdateItem, (value,))
         self.__smoothUpdate()
     
     def __setUIItem(self, key, subkey, value):
-        self._uiItemDelta[(key, subkey)] = (self.uiState.setitem, value)
+        self._uiItemDelta[(key, subkey)] = ("file state setting",
+                                            self.uiState.setitem, (value,))
         self.__smoothUpdate()
     
-    def __delUIItem(self, key, subkey, value):
-        self._uiItemDelta[(key, subkey)] = (self.uiState.delitem, value)
-        self.__smoothUpdate()
+    def __delUIItem(self, key, subkey):
+        if (subkey in self.uiState.get(key)):
+            self.uiState.delitem(key, subkey)
+        if (key, subkey) in self._uiItemDelta:
+            del self._uiItemDelta[(key, subkey)]
     
     def __doUpdateItem(self, key, subkey, value):
         state = self.uiState.get(key)
         if (subkey in state) and (state.get(subkey) != value):
             self.uiState.setitem(key, subkey, value)
+
+    def __doRemoveItem(self, key, subkey):
+        state = self.uiState.get(key)
+        if (subkey in state) and (state.get(subkey) != value):
+            self.uiState.delitem(key, subkey)
     
     def __smoothUpdate(self):
         if (not self._uiItemDelay) and self._uiItemDelta:
@@ -222,8 +231,12 @@ class FileMonitor(component.BaseComponent):
         if self._uiItemDelta:
             itemKey = self._uiItemDelta.iterkeys().next()
             key, subkey = itemKey
-            func, val = self._uiItemDelta.pop(itemKey)
-            func(key, subkey, val)
+            desc, func, args = self._uiItemDelta.pop(itemKey)
+            try:
+                func(key, subkey, *args)
+            except Exception, e:
+                log.notifyException(self, e, "Failed during %s", desc,
+                                    cleanTraceback=True)
         self.__smoothUpdate()
     
     def __notifyDebug(self, msg, info=None, debug=None, failure=None,

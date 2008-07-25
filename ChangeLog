@@ -1,5 +1,11 @@
 2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor.py:
+	Merged patch from platform-4 branch, changeset 11687.
+	Fixed a bug that appears when removing files from incoming.
+
+2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/proxy/component.py:
 	Now retry to stop a component when the deletion fail.
 	It fixes a problem with some version of flumotion where
