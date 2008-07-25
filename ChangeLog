@@ -1,3 +1,12 @@
+2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/basetargets.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/transcoder/admin/adminconsts.py:
+	Merged patch from platform-4 branche, changeset 11479.
+	Made the file copying/moving asynchronous by using deferToThread.
+	It prevent the components going lost when copying/moving very big files.
+
 2008-07-09  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxies/groupproxy.py:

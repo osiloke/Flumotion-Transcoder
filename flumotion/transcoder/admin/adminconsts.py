@@ -80,8 +80,10 @@ MONITORING_POTENTIAL_WORKER_TIMEOUT = 20
 
 # Maximum time an elected transcoder can stay sad before starting another one
 TRANSCODER_SAD_TIMEOUT = 120
-# Maximum time a component can take to acknowledge
-TRANSCODER_ACK_TIMEOUT = 60
+# Maximum time a component can take to acknowledge.
+# Take into account that a lots of files are copied/moved
+# during acknowledgement, so it can take a long time
+TRANSCODER_ACK_TIMEOUT = 60*12
 TRANSCODER_MAX_RETRIES = 2
 TRANSCODING_POTENTIAL_WORKER_TIMEOUT = 20
 

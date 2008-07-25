@@ -16,6 +16,7 @@ import shutil
 
 from zope.interface import implements
 from twisted.python.failure import Failure
+from twisted.internet import threads
 
 from flumotion.common import common
 from flumotion.inhouse import log, defer, fileutils
@@ -188,9 +189,8 @@ class IdentityTarget(TargetProcessing):
         destPath = targCtx.getOutputWorkPath()
         fileutils.ensureDirExists(os.path.dirname(destPath),
                                   "identity output")
-        shutil.copy(sourcePath, destPath)
         self._outputs.append(destPath)
-        return self
-
-
+        d = threads.deferToThread(shutil.copy, sourcePath, destPath)
+        d.addCallback(defer.overrideResult, self)
+        return d
 

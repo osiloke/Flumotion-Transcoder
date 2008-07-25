@@ -19,7 +19,7 @@ import gobject
 gobject.threads_init()
 import gst
 
-from twisted.internet import reactor, error
+from twisted.internet import reactor, error, threads
 from twisted.python.failure import Failure
 
 from flumotion.common import common
@@ -728,23 +728,16 @@ class TranscodingJob(log.LoggerProxy):
         if succeed:
             context.debug("Moving output files")
             self._setJobState(JobStateEnum.output_file_moving)
+            d = defer.succeed(context)
             for targetCtx in context.getTargetContexts():
                 for src, dest in targetCtx.reporter.getFiles():
-                    context.log("Moving '%s' to '%s'", src, dest)
-                    fileutils.ensureDirExists(os.path.dirname(dest),
-                                              "transcoding done",
-                                              self._pathAttr)
-                    if os.path.exists(dest):
-                        context.debug("Output file '%s' already exists; "
-                                      "deleting it", dest)
-                        os.remove(dest)
-                    shutil.move(src, dest)
-                    if self._pathAttr:
-                        self._pathAttr.apply(dest)
+                    d.addCallback(self.__asyncMove, src, dest, self._pathAttr)
+            d.addCallback(defer.overrideResult, succeed)
+            return d
         else:
             context.debug("Skipping moving output files, "
                           "because transcoding fail")
-        return succeed
+            return succeed
 
     ### Called by Deferreds ###
     def __bbMoveInputFile(self, succeedOrFailure, context):
@@ -774,45 +767,43 @@ class TranscodingJob(log.LoggerProxy):
             error = None
             succeed = succeedOrFailure
             
-        def moveSource(to):
-            source = sourceCtx.getInputPath()
-            context.debug("Moving input file to '%s'", to)
-            context.log("Moving '%s' to '%s'", source, to)
-            fileutils.ensureDirExists(os.path.dirname(to),
-                                      "transcoding done",
-                                      self._pathAttr)
-            if os.path.exists(to):
-                context.debug("Input file '%s' already exists; "
-                              "deleting it", to)
-                os.remove(to)
-            shutil.move(source, to)
-            
+        def moveSource(dest, oldResult):
+            src = sourceCtx.getInputPath()
+            context.debug("Moving input file to '%s'", dest)
+            d = self.__asyncMove(context, src, dest, self._pathAttr)
+            d.addCallback(moveSucceed, dest, oldResult)
+            return d
+
+        def moveSucceed(_, path, oldResult):
+            context.reporter.setCurrentPath(path)
+            return oldResult
+
+        def moveToDoneFailure(failure, otherDest):
+            context.warning("Failed to move input file: %s", 
+                            log.getFailureMessage(failure))
+            context.reporter.addError(failure)
+            context.reporter.setFatalError(failure.getErrorMessage())
+            self._fireError(context, failure.getErrorMessage())
+            d = moveSource(otherDest, failure)
+            d.addErrback(totalFailure, failure)
+            return d
+
+        def totalFailure(failure, oldFailure):
+            context.warning("Failed to move input file: %s", 
+                            log.getFailureMessage(failure))
+            context.reporter.addError(failure)
+            self._fireError(context, failure.getErrorMessage())
+            return oldFailure or failure
+
         if (not error) and succeed:
-            try:
-                newFile = sourceCtx.getDoneInputPath()
-                moveSource(newFile)
-                context.reporter.setCurrentPath(newFile)
-            except Exception, e:
-                context.warning("Failed to move input file: %s", 
-                                log.getExceptionMessage(e))
-                error = Failure()
-                context.reporter.addError(error)
-                context.reporter.setFatalError(error.getErrorMessage())
-                self._fireError(context, error.getErrorMessage())
-        if error or (not succeed):
-            try:
-                newFile = sourceCtx.getFailedInputPath()
-                moveSource(newFile)
-                context.reporter.setCurrentPath(newFile)
-            except Exception, e:
-                context.warning("Failed to move input file: %s", 
-                                log.getExceptionMessage(e))
-                context.reporter.addError(e)
-                self._fireError(context, str(e))
-        
-        if error:
-            return error
-        return succeedOrFailure
+            d = defer.succeed(sourceCtx.getDoneInputPath())
+            d.addCallback(moveSource, succeedOrFailure)
+            d.addErrback(moveToDoneFailure, sourceCtx.getFailedInputPath())
+            return d
+        d = defer.succeed(sourceCtx.getFailedInputPath()) 
+        d.addCallback(moveSource, succeedOrFailure)
+        d.addErrback(totalFailure, error)
+        return d
 
     ### Called by Deferreds ###
     def __cbTargetAnalysisOutputFile(self, result, targetCtx):
@@ -977,3 +968,14 @@ class TranscodingJob(log.LoggerProxy):
         context.debug("Some Targets Failed")
         #context.reporter.setFatalError(failure.getErrorMessage())
         return failure
+
+    def __asyncMove(self, logger, src, dest, pathAttr=None):
+        logger.log("Moving '%s' to '%s'", src, dest)
+        fileutils.ensureDirExists(os.path.dirname(dest), "", pathAttr)
+        if os.path.exists(dest):
+            logger.debug("Output file '%s' already exists; deleting it", dest)
+        d = threads.deferToThread(shutil.move, src, dest)
+        if pathAttr:
+            d.addCallback(defer.dropResult, pathAttr.apply, dest)
+        d.addCallback(defer.overrideResult, logger)
+        return d
