@@ -216,11 +216,6 @@ class FileMonitor(component.BaseComponent):
         if (subkey in state) and (state.get(subkey) != value):
             self.uiState.setitem(key, subkey, value)
 
-    def __doRemoveItem(self, key, subkey):
-        state = self.uiState.get(key)
-        if (subkey in state) and (state.get(subkey) != value):
-            self.uiState.delitem(key, subkey)
-    
     def __smoothUpdate(self):
         if (not self._uiItemDelay) and self._uiItemDelta:
             delay = compconsts.SMOOTH_UPTDATE_DELAY
