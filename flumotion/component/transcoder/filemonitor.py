@@ -15,7 +15,7 @@
 import os
 import shutil
 
-from twisted.internet import reactor, error
+from twisted.internet import reactor, error, threads
 from twisted.python.failure import Failure
 
 from flumotion.common import messages
@@ -69,24 +69,39 @@ class FileMonitor(component.BaseComponent):
                 self.warning("Forbidden to move files from '%s'", virtSrcBase)
                 raise TranscoderError("Forbidden to move a file from other "
                                       "directories than the monitored ones")
+        
+        def moveFile(result, src, dest, attr=None):
+
+            def moveFailed(failure):
+                msg = ("Fail to move file '%s' to '%s': %s" 
+                       % (src, dest, log.getFailureMessage(failure)))
+                self.warning("%s", msg)
+                if isinstance(result, Failure):
+                    return result
+                raise TranscoderError(msg, cause=failure)
+
+            self.debug("Moving file '%s' to '%s'", src, dest)
+            destDir = os.path.dirname(dest)
+            fileutils.ensureDirExists(destDir, "input file destination", attr)
+            d = threads.deferToThread(shutil.move, src, dest)
+            d.addCallbacks(defer.overrideResult, moveFailed,
+                           callbackArgs=(result,))
+            return d
+
+        def moveFailed(failure, src, dest):
+            msg = ("Fail to move file '%s' to '%s': %s" 
+                   % (src, dest, log.getFailureMessage(failure)))
+            self.warning("%s", msg)
+            raise TranscoderError(msg, cause=e)
+        
+        d = defer.succeed(self)
         for relFile in relFiles:
             locSrcPath = virtSrcBase.append(relFile).localize(self._local)
             locDestPath = virtDestBase.append(relFile).localize(self._local)
             locSrcPath = os.path.realpath(locSrcPath)
             locDestPath = os.path.realpath(locDestPath)
-            locDestDir = os.path.dirname(locDestPath)
-            self.debug("Moving file '%s' to '%s'", locSrcPath, locDestPath)
-            try:
-                fileutils.ensureDirExists(locDestDir,
-                                          "input file destination",
-                                          self._pathAttr)
-                shutil.move(locSrcPath, locDestPath)
-            except Exception, e:
-                msg = ("Fail to move file '%s' to '%s': %s" 
-                       % (locSrcPath, locDestPath, log.getExceptionMessage(e)))
-                self.warning("%s", msg)
-                raise TranscoderError(msg, cause=e)
-
+            d.addBoth(moveFile, locSrcPath, locDestPath, self._pathAttr)
+        return d
     
     ## Overriden Methods ##
 
