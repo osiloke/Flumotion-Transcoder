@@ -1,5 +1,13 @@
 2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxy/component.py:
+	Now retry to stop a component when the deletion fail.
+	It fixes a problem with some version of flumotion where
+	stopping a component that is sad but running not really stop it,
+	but only stop the process and keep the sad mood. 
+
+2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/notifysubs.py:
 	Merged patch from platform-4 branch, changeset 11486.
 	Fixed a 'divide by zero' bug.

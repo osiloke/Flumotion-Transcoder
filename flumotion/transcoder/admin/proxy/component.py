@@ -560,7 +560,7 @@ class BaseComponentProxy(base.BaseProxy):
             # The component is buzy changing mood,
             # so wait mood change (with a larger timeout)    
             d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
-            d.addBoth(self.__asyncForceStop, status, label, resultDef)
+            d.addBoth(self.__stopOrDelete, status, label, resultDef)
             return
         # FIXME: make flumotion raise a specific exception 
         # when there is mood conflicts
@@ -587,7 +587,7 @@ class BaseComponentProxy(base.BaseProxy):
             # The component is buzy changing mood,
             # so wait mood change (with a larger timeout)    
             d = self.waitMoodChange(adminconsts.FORCED_DELETION_BUZY_TIMEOUT)
-            d.addBoth(self.__asyncForceDelete, status, label, resultDef)
+            d.addBoth(self.__stopOrDelete, status, label, resultDef)
             return
         self.warning("Fail to delete component '%s': %s",
                      label, log.getFailureMessage(failure))
