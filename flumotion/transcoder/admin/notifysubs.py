@@ -60,7 +60,7 @@ class NotificationVariables(substitution.Variables):
             else:
                 length = a.audioLength or 0
 
-            if s:
+            if s and (duration > 0.0):
                 bitrate = int(round(s / duration))
 
             # PyChecker isn't smart enough to see I first convert to int
