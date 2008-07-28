@@ -1,5 +1,11 @@
 2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	Fixed a bug where the monitor tree vew was cleared and refreshed
+	every time a state value changed, making the tree collapse.
+
+2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/base.xml:
 	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
 	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:

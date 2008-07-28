@@ -108,9 +108,6 @@ class FileMonitorAdminGtkNode(BaseAdminGtkNode):
         del self.model[files[name]]
         del files[name]
     
-    def stateSet(self, state, key, value):
-        self.refreshUIState()
-
     def stateAppend(self, state, key, value):
         if key == "monitored-directories":
             self._addDirectory(value)
