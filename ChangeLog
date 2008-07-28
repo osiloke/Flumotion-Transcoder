@@ -1,3 +1,8 @@
+2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion-transcoder.spec.in:
+	Set the flumotion-inhouse required version number. 
+
 2008-07-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor.py:

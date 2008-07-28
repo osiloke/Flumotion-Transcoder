@@ -18,7 +18,7 @@ Requires:       flumotion-inhouse
 # sigh, libtool
 BuildRequires:  gcc-c++
 BuildRequires:	flumotion >= @FLUMOTION_REQ@
-BuildRequires:  flumotion-inhouse
+BuildRequires:  flumotion-inhouse >= @INHOUSE_REQ@
 
 %description
 Flumotion Transcoder.
