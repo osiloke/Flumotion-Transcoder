@@ -6,7 +6,7 @@ pythondir = $(libdir)/flumotion/python/flumotion/transcoder
 
 python_PYTHON = __init__.py transconfig.py transreport.py \
                 pipelinecrawler.py substitution.py \
-                errors.py enums.py \
+                errors.py enums.py i18n.py \
                 virtualpath.py local.py constants.py
                  
 

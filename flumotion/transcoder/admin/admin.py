@@ -13,7 +13,7 @@
 from zope.interface import implements
 from twisted.internet import reactor
 
-from flumotion.common import messages
+from flumotion.common import i18n
 from flumotion.common.enum import EnumClass
 
 from flumotion.inhouse import log, defer, utils, errors as iherrors
@@ -63,7 +63,7 @@ class TranscoderAdmin(log.Loggable):
         schedulerCtx = self._adminCtx.getSchedulerContext()
         self._scheduler = Scheduler(schedulerCtx, self._storeCtx, self._notifier, 
                                     self._transcoding, self._diagnostician)
-        self._translator = messages.Translator()
+        self._translator = i18n.Translator()
         self._api = apiserver.Server(self._adminCtx.getAPIContext(), self)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)

@@ -13,7 +13,7 @@
 import os
 import re
 
-from flumotion.common import messages
+from flumotion.common import i18n
 
 from flumotion.inhouse import log, defer, utils, decorators
 
@@ -30,7 +30,7 @@ class Diagnostician(object):
         self._managerPxySet = managerPxySet
         self._workerPxySet = workerPxySet
         self._compPxySet = compPxySet
-        self._translator = messages.Translator()
+        self._translator = i18n.Translator()
         
     
     ## Public Methods ##

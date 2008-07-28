@@ -15,15 +15,15 @@ import os
 import gtk
 
 from flumotion.common import errors
-from flumotion.common.i18n import gettexter
 
-from flumotion.component.base.admin_gtk import BaseAdminGtk, BaseAdminGtkNode
 from flumotion.transcoder import enums
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
+from flumotion.transcoder.i18n import _
 from flumotion.transcoder.virtualpath import VirtualPath
+from flumotion.component.base.admin_gtk import BaseAdminGtk
+from flumotion.component.base.baseadminnode import BaseAdminGtkNode
 
-_ = gettexter('flumotion-transcoder')
 
 DEFAULT_VALUE = "<i>Unknown</i>"
 #DEFAULT_VALUE = "Unknown"

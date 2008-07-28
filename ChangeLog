@@ -1,5 +1,16 @@
 2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/base.xml:
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	* flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+	* flumotion/transcoder/Makefile.am:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/i18n.py:
+	Updated to match i18n changes in flumotion.
+
+2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion-transcoder.spec.in:
 	Set the flumotion-inhouse required version number. 
 

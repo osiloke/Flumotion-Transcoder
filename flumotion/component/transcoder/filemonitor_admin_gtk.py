@@ -16,14 +16,14 @@ import os
 import gtk
 
 from flumotion.common import errors
-from flumotion.common.i18n import gettexter
 
 from flumotion.transcoder import enums
+from flumotion.transcoder.i18n import _
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.virtualpath import VirtualPath
-from flumotion.component.base.admin_gtk import BaseAdminGtk, BaseAdminGtkNode
+from flumotion.component.base.admin_gtk import BaseAdminGtk
+from flumotion.component.base.baseadminnode import BaseAdminGtkNode
 
-_ = gettexter('flumotion-transcoder')
 
 class FileMonitorAdminGtkNode(BaseAdminGtkNode):
     gladeFile = os.path.join('flumotion', 'component', 

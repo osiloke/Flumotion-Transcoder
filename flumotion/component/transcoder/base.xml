@@ -12,6 +12,7 @@
           <filename location="__init__.py" />
           <filename location="errors.py" />
           <filename location="enums.py" />
+          <filename location="i18n.py" />
           <filename location="constants.py" />
           <filename location="local.py" />
           <filename location="virtualpath.py" />
