@@ -1,3 +1,8 @@
+2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* env.in:
+	Use absolute path to allow links the the env script.
+	
 2008-07-28  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
