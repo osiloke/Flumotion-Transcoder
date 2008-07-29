@@ -1,5 +1,11 @@
 2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/main.py:
+	Updated to match flumotion trunk. All PID related
+	function moved to the module flumotion.common.process.
+
+2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* Makefile.am:
 	* flumotion/transcoder/admin/property/Makefile.am:
 	More build fixes.

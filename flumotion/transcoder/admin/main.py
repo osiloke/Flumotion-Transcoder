@@ -19,7 +19,7 @@ import optparse
 
 from twisted.internet import reactor
 
-from flumotion.common import common
+from flumotion.common import common, process
 from flumotion.configure import configure
 
 from flumotion.inhouse import inifile, log, defer, errors as iherrors
@@ -92,34 +92,34 @@ def possess(daemonizeTo=None):
     if not daemonizeTo:
         daemonizeTo = '/'
 
-    pid = common.getPid('transcoder-admin')
+    pid = process.getPid('transcoder-admin')
     if pid:
-        if common.checkPidRunning(pid):
+        if process.checkPidRunning(pid):
             raise iherrors.SystemError(
                 'A flumotion-transcoder-admin is already running '
                 + 'as pid %d' % pid)
         else:
             log.warning("flumotion-transcoder-admin should have been "
                         "running with pid %s.  Restarting", str(pid))
-            common.deletePidFile('transcoder-admin')
+            process.deletePidFile('transcoder-admin')
 
     logPath = os.path.join(configure.logdir, 'transcoder-admin.log')
 
     # here we daemonize; so we also change our pid
     if not daemonizeTo:
         daemonizeTo = '/'
-    common.daemonize(stdout=logPath, stderr=logPath, 
-                     directory=daemonizeTo)
+    process.daemonize(stdout=logPath, stderr=logPath, 
+                      directory=daemonizeTo)
 
     log.info('Started daemon')
 
     # from now on I should keep running, whatever happens
     log.debug('writing pid file')
-    common.writePidFile('transcoder-admin')
+    process.writePidFile('transcoder-admin')
 
 def exorcize():
     log.debug('deleting pid file')
-    common.deletePidFile('transcoder-admin')
+    process.deletePidFile('transcoder-admin')
 
 def main(args):
     log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
