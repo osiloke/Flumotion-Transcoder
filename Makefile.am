@@ -12,11 +12,13 @@ SUBDIRS = . common conf misc bin doc data pkgconfig transcoder flumotion tests
 PYCHECKER_WHITELIST = \
 	flumotion/transcoder/*.py \
 	flumotion/transcoder/manager/*.py \
+	flumotion/transcoder/tools/*.py \
 	flumotion/transcoder/admin/*.py \
 	flumotion/transcoder/admin/context/*.py \
 	flumotion/transcoder/admin/datasource/*.py \
 	flumotion/transcoder/admin/datastore/*.py \
 	flumotion/transcoder/admin/proxy/*.py \
+	flumotion/transcoder/admin/property/*.py \
 	flumotion/transcoder/admin/api/*.py \
 	flumotion/transcoder/admin/api/mediums/*.py \
 	flumotion/component/transcoder/*.py
