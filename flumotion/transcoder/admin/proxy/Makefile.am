@@ -1,6 +1,6 @@
 include $(top_srcdir)/common/python.mk
 
-pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/proxies
+pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin/proxy
 
 python_PYTHON = __init__.py base.py managerset.py workerset.py \
                 manager.py worker.py atmosphere.py \

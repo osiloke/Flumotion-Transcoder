@@ -1,5 +1,11 @@
 2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* Makefile.am:
+	* flumotion/transcoder/admin/proxy/Makefile.am:
+	More build fixes.
+
+2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/Makefile.am:
 	* flumotion/transcoder/admin/api/Makefile.am:
 	* flumotion/transcoder/admin/api/mediums/Makefile.am:
