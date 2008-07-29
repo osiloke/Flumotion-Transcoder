@@ -1,5 +1,13 @@
 2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/Makefile.am:
+	* flumotion/transcoder/admin/api/Makefile.am:
+	* flumotion/transcoder/admin/api/mediums/Makefile.am:
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	Fixed the build scripts.
+
+2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
+
 	* env.in:
 	Use absolute path to allow links the the env script.
 	

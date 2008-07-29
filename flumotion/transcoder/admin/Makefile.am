@@ -5,7 +5,7 @@ SUBDIRS = context datasource datastore property proxy api
 pythondir = $(libdir)/flumotion/python/flumotion/transcoder/admin
 
 python_PYTHON = __init__.py main.py admin.py adminconfig.py adminelement.py \
-                interfaces.py errors.py adminconsts.py eventsource.py \
+                interfaces.py admerrs.py adminconsts.py \
                 actionscheduler.py montask.py monbalancer.py \
                 admintask.py monitoring.py \
                 taskmanager.py transtask.py transbalancer.py \
