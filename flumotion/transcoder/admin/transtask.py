@@ -286,9 +286,9 @@ class TranscodingTask(admintask.AdminTask):
     def __ebAcknowledgeFailed(self, failure, transPxy):
         if not self._isElectedComponent(transPxy): return
         if not failure.check(PBConnectionLost):
-	        log.notifyFailure(self, failure, 
-    	                      "Failed to acknowledge task '%s' transcoder '%s'",
-        	                  self.label, transPxy.getName())
+            log.notifyFailure(self, failure, 
+                              "Failed to acknowledge task '%s' transcoder '%s'",
+                              self.label, transPxy.getName())
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transPxy)

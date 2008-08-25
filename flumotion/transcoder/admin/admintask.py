@@ -730,10 +730,10 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __ebComponentLoadFailed(self, failure, componentName, workerName):
         if not failure.check("twisted.spread.pb.PBConnectionLost",
                              "twisted.spread.pb.DeadReferenceError"):
-	        log.notifyFailure(self, failure,
-    	                      "Admin task '%s' fail to load "
-        	                  "component '%s' on worker '%s'",
-            	              self.label, componentName, workerName)
+            log.notifyFailure(self, failure,
+                              "Admin task '%s' fail to load "
+                              "component '%s' on worker '%s'",
+                              self.label, componentName, workerName)
         self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, compPxy, workerName):
@@ -823,15 +823,15 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __checkHeldComponentStatus(self, compPxy):
         if self._holdTimeout is None:
             self.log("Admin task '%s' is not holding component '%s'",
-                     self.getLabel(), compPxy.getName())
+                     self.label, compPxy.getName())
             return False
         if compPxy != self.getActiveComponent():
             self.log("Admin task '%s' held component '%s' is not "
-                     "currently elected", self.getLabel(), compPxy.getName())
+                     "currently elected", self.label, compPxy.getName())
             return False
         if not compPxy.isValid():
             self.warning("Admin task '%s' held component '%s' is not "
-                         "valid anymore", self.getLabel(), compPxy.getName())
+                         "valid anymore", self.label, compPxy.getName())
             return False
         return True
     
@@ -839,7 +839,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         if not self.__checkHeldComponentStatus(compPxy):
             return
         self.log("Admin task '%s' restored held component '%s'",
-                 self.getLabel(), compPxy.getName())
+                 self.label, compPxy.getName())
         self._cancelComponentHold()        
         self._onComponentRestored(compPxy)
     
@@ -848,7 +848,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             return
         log.notifyFailure(self, failure,
                           "Failure during task '%s' restoration of held "
-                          "component '%s'", self.getLabel(),
+                          "component '%s'", self.label,
                           compPxy.getName())
         self._cancelComponentHold()
         self._abort()

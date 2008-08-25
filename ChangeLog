@@ -1,5 +1,12 @@
 2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Fixed merge errors.
+
+2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	Merged patch from platform-4 branch, changeset 12195.
 
 	* flumotion/transcoder/admin/admintask.py:

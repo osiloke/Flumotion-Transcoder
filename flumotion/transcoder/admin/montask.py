@@ -241,10 +241,10 @@ class MonitoringTask(admintask.AdminTask):
                             virtSrcBase, virtDestBase, relFiles):
         if not failure.check("twisted.spread.pb.PBConnectionLost",
                              "twisted.spread.pb.DeadReferenceError"):
-	        log.notifyFailure(self, failure,
-	                          "Monitoring task '%s' monitor "
-	                          "'%s' fail to move files from '%s' to '%s'",
-	                          self.label, monPxy.getName(), virtSrcBase, 
-	                          virtDestBase)
+            log.notifyFailure(self, failure,
+                              "Monitoring task '%s' monitor "
+                              "'%s' fail to move files from '%s' to '%s'",
+                              self.label, monPxy.getName(), virtSrcBase, 
+                              virtDestBase)
         # Continue moving files anyway
         self.__asyncMovePendingFiles()
