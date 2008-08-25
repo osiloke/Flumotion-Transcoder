@@ -87,11 +87,11 @@ class TranscodingTask(admintask.AdminTask):
             # Currently beeing started up
             return
         if self._isElectedComponent(transPxy):
-            if (mood != moods.lost):
-                self._cancelComponentHold()
             if (mood != moods.sad):
                 utils.cancelTimeout(self._sadTimeout)
             if mood == moods.happy:
+                if self._isHoldingLostComponent():
+                    self._restoreLostComponent(transPxy)
                 return
             if mood == moods.sad:
                 if not transPxy.isRunning():
@@ -114,6 +114,8 @@ class TranscodingTask(admintask.AdminTask):
                 self._holdLostComponent(transPxy)
                 return
             self._abort()
+        if mood == moods.waking:
+            # Keep the waking components 
             return
         if mood == moods.sleeping:
             self._deleteComponent(transPxy)

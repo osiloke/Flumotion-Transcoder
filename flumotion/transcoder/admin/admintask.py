@@ -313,6 +313,9 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def _onComponentLost(self, compPxy):
         pass
     
+    def _onComponentRestored(self, compPxy):
+        pass
+
     def _onComponentElected(self, compPxy):
         pass
 
@@ -438,6 +441,13 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def _isHoldingLostComponent(self):
         return self._holdTimeout != None
     
+    def _restoreLostComponent(self, compPxy):
+        d = compPxy.waitUIState(self.UISTATE_TIMEOUT)
+        args = (compPxy,)
+        d.addCallbacks(self.__cbComponentUIStateRestored,
+                       self.__ebComponentRestorationFailed,
+                       callbackArgs=args, errbackArgs=args)
+
     def _waitStopComponent(self, compPxy):
         self.debug("Admin task '%s' is stopping component '%s'", 
                    self.label, compPxy.getName())
@@ -787,11 +797,11 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     def __asyncHoldTimeout(self, compPxy):
         self._holdTimeout = None
         if compPxy != self.getActiveComponent():
-            self.log("Admin task '%s' hold component '%s' is not "
+            self.log("Admin task '%s' held component '%s' is not "
                      "currently elected", self.label, compPxy.getName())
             return
         if not compPxy.isValid():
-            self.warning("Admin task '%s' hold component '%s' is not "
+            self.warning("Admin task '%s' held component '%s' is not "
                          "valid anymore", self.label, compPxy.getName())
             return
         if compPxy.getMood() != moods.lost:
@@ -801,7 +811,43 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self.log("Admin task '%s' component '%s' still lost",
                  self.label, compPxy.getName())
         self._abort()
+        if component.getMood() != moods.lost:
+            self._stopComponent(compPxy)
     
+    def __checkHeldComponentStatus(self, compPxy):
+        if self._holdTimeout is None:
+            self.log("Admin task '%s' is not holding component '%s'",
+                     self.getLabel(), compPxy.getName())
+            return False
+        if compPxy != self.getActiveComponent():
+            self.log("Admin task '%s' held component '%s' is not "
+                     "currently elected", self.getLabel(), compPxy.getName())
+            return False
+        if not compPxy.isValid():
+            self.warning("Admin task '%s' held component '%s' is not "
+                         "valid anymore", self.getLabel(), compPxy.getName())
+            return False
+        return True
+    
+    def __cbComponentUIStateRestored(self, _, compPxy):
+        if not self.__checkHeldComponentStatus(compPxy):
+            return
+        self.log("Admin task '%s' restored held component '%s'",
+                 self.getLabel(), compPxy.getName())
+        self._cancelComponentHold()        
+        self._onComponentRestored(compPxy)
+    
+    def __ebComponentRestorationFailed(self, failure, compPxy):
+        if not self.__checkHeldComponentStatus(compPxy):
+            return
+        log.notifyFailure(self, failure,
+                          "Failure during task '%s' restoration of held "
+                          "component '%s'", self.getLabel(),
+                          compPxy.getName())
+        self._cancelComponentHold()
+        self._abort()
+        self._stopComponent(compPxy)
+
     def __getRetryCount(self):
         return self._retry
         

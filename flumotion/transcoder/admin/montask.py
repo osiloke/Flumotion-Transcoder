@@ -78,9 +78,9 @@ class MonitoringTask(admintask.AdminTask):
             # Currently beeing started up
             return
         if self._isElectedComponent(monPxy):
-            if (mood != moods.lost):
-                self._cancelComponentHold()
             if mood == moods.happy:
+                if self._isHoldingLostComponent():
+                    self._restoreLostComponent(monPxy)
                 return
             self.warning("Monitoring task '%s' selected monitor '%s' "
                          "gone %s", self.label, 
@@ -91,6 +91,8 @@ class MonitoringTask(admintask.AdminTask):
                 self._holdLostComponent(monPxy)                
                 return
             self._abort()
+        if mood == moods.waking:
+            # Keep the waking components 
             return
         if mood == moods.sleeping:
             self._deleteComponent(monPxy)
@@ -155,6 +157,7 @@ class MonitoringTask(admintask.AdminTask):
         compPxy.disconnectListener("file-changed", self)
 
     def _onComponentElected(self, compPxy):
+        self._resetRetryCounter() # The monitor is working
         self.emit("monitoring-activated", compPxy)
         compPxy.refreshListener(self)
 

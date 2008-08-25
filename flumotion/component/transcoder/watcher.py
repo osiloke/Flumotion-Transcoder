@@ -76,7 +76,6 @@ class PeriodicalWatcher(Watcher):
         self._sigid = None
         self._files = {}
         
-
     def start(self, reset=False):
         self._stopChecking()
         if reset:
@@ -110,7 +109,9 @@ class PeriodicalWatcher(Watcher):
         self._scheduleCheck()
     
     def __fileProcessingGenerator(self, currFiles, newFiles):
-        for f in [x for x in currFiles if not (x in newFiles)]:
+        for f in currFiles.keys():
+            if f in newFiles:
+                continue
             yield None
             self.log("File '%s' removed", f)
             self.emit('file-removed', f)

@@ -1,5 +1,18 @@
 2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	Merged patch from platform-4 branch, changeset 12159.
+
+	* flumotion/component/transcoder/watcher.py:
+	Changed to use normal loop insteed of list comprehension.
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/transtask.py:
+	When restored, components UI state was not retrieved again,
+	leading to components without state feedback.
+	Fixes #2121
+
+2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/watcher.py:
 	Merged patch from platform-4 branch, changeset 12049 and 12051.
 	Temporary patch to prevent the monitor connection to the manager 
