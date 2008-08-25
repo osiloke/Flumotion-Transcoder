@@ -47,6 +47,9 @@ class Diagnostician(object):
                       ("is not a known media type",
                        "output file stalled during transcoding",
                        "Source file not found",
+                       "Source media doesn't have audio stream",
+                       "Source media doesn't have video stream",
+                       "flumotion.common.errors.SleepingComponentError",
                        "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video"
                        "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream",
                        "flumotion.transcoder.errors.TranscoderError: Transcoder pipeline stalled at prerolling")}

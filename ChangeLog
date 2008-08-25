@@ -1,5 +1,16 @@
 2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	Merged patch from platform-4 branch, changeset 12195.
+
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/component.py:
+	* flumotion/transcoder/admin/transtask.py:
+	More debug filtering.
+
+2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	Merged patch from platform-4 branch, changeset 12180, 12184, and 12185.
 
 	* bin/Makefile.am:

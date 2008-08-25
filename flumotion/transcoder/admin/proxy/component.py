@@ -12,8 +12,7 @@
 
 import signal
 
-from zope.interface import Interface, implements
-from twisted.spread.pb import PBConnectionLost
+from twisted.spread.pb import PBConnectionLost, DeadReferenceError
 
 from flumotion.common import common
 #To register Jellyable classes
@@ -454,6 +453,10 @@ class BaseComponentProxy(base.BaseProxy):
             resultDef.callback(self)
             return True
         if failure:
+            if failure.check(DeadReferenceError):
+                self.debug("Forced Stop/Delete of component '%s' aborted "
+                           "because the PB reference is dead", self.label)
+                return True
             if failure.check(ferrors.UnknownComponentError):
                 self.debug("Forced Stop/Delete of component '%s' aborted "
                            "because the component is unknown (already deleted ?)",

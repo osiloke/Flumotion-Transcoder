@@ -587,7 +587,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             if succeed:
                 if result != None:
                     newResult.append(result)
-            else:
+            elif not result.check("twisted.internet.error.ConnectionDone"):
                 log.notifyFailure(self, result,
                                   "Failure waiting admin task '%s' "
                                   "components UI State", self.label)
@@ -728,10 +728,12 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self.__cancelComponentStartup(result)
         
     def __ebComponentLoadFailed(self, failure, componentName, workerName):
-        log.notifyFailure(self, failure,
-                          "Admin task '%s' fail to load "
-                          "component '%s' on worker '%s'",
-                          self.label, componentName, workerName)
+        if not failure.check("twisted.spread.pb.PBConnectionLost",
+                             "twisted.spread.pb.DeadReferenceError"):
+	        log.notifyFailure(self, failure,
+    	                      "Admin task '%s' fail to load "
+        	                  "component '%s' on worker '%s'",
+            	              self.label, componentName, workerName)
         self.__abortComponentStartup()
         
     def __cbComponentGoesHappy(self, mood, compPxy, workerName):
