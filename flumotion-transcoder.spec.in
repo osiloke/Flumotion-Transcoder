@@ -93,6 +93,7 @@ fi
 %{_datadir}/flumotion-transcoder-@VERSION@
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-upgrade
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin
+%attr(755,root,flumotion) %{_bindir}/flumotion-progressive-move
 %attr(750,root,flumotion) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/managers/transcoder/planet.xml
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini

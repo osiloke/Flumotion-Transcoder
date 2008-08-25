@@ -1,5 +1,14 @@
 2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
 
+	Merged patch from platform-4 branch, changeset 12180, 12184, and 12185.
+
+	* bin/Makefile.am:
+	* bin/flumotion-progressive-move:
+	* flumotion-transcoder.spec.in:
+	Added the progressive move script to the distribution. 
+
+2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
+
 	Merged patch from platform-4 branch, changeset 12179.
 
 	* flumotion/transcoder/admin/admintask.py:
