@@ -157,6 +157,10 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
                  compPxy.getName(), self.label)
         self._compPxys[compPxy] = None
         self._onComponentAdded(compPxy)
+        # If there already is an elected component, stop it
+        if self._hasElectedComponent():
+            if not self._isElectedComponent(compPxy):
+                self._stopComponent(compPxy)
         
     def removeComponent(self, compPxy):
         assert isinstance(compPxy, component.ComponentProxy)
@@ -452,7 +456,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self.debug("Admin task '%s' is stopping component '%s'", 
                    self.label, compPxy.getName())
         # Don't stop sad component
-        if compPxy.getMood() != moods.sad:
+        if compPxy.getMood() not in (moods.sad, moods.sleeping):
             d = compPxy.forceStop()
             d.addErrback(self.__ebComponentStopFailed, compPxy.getName())
             return d
