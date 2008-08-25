@@ -1,3 +1,11 @@
+2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/watcher.py:
+	Merged patch from platform-4 branch, changeset 12049 and 12051.
+	Temporary patch to prevent the monitor connection to the manager 
+ 	to time out when dealing with MANY files.
+ 	In python 2.4 yield must have a parameter. 
+
 2008-07-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/main.py:

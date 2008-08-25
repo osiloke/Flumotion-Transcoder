@@ -15,9 +15,13 @@
 import gobject
 import os
 
+from twisted.internet import threads, defer, reactor
+
 from flumotion.inhouse import log
 
 from flumotion.component.transcoder import compconsts
+
+FILE_PROCESSING_BLOCK = 20
 
 
 class Watcher(gobject.GObject, log.LoggerProxy):
@@ -74,48 +78,78 @@ class PeriodicalWatcher(Watcher):
         
 
     def start(self, reset=False):
-        if self._sigid:
-            gobject.source_remove(self._sigid)
+        self._stopChecking()
         if reset:
             self._files = {}
-        self._sigid = gobject.timeout_add(self.timeout * 1000, 
-                                          self._checkForChanges)
+        self._scheduleCheck()
 
     def stop(self):
+        self._stopChecking()
+    
+    def _stopChecking(self):
         if self._sigid:
-            gobject.source_remove(self._sigid)
+            self._sigid.cancel()
             self._sigid = None
-        
+    
+    def _scheduleCheck(self):
+        if self._sigid is None:
+            self._sigid = reactor.callLater(self.timeout, self._checkForChanges)
+    
     def _checkForChanges(self):
         self.log("Watching...")
-        newfiles = self._listFiles()
-        oldfiles = self._files
-        self.log("Comparing new files (%d) to old files (%d)",
-                 len(newfiles), len(oldfiles))
-        for f in [x for x in oldfiles if not (x in newfiles)]:
+        d = self._listFiles()
+        if isinstance(d, defer.Deferred):
+            d.addCallbacks(self.__cbGotFiles, self.__ebListFileFailed)
+            return d
+        return self.__cbGotFiles(d)
+        
+    def __ebListFileFailed(self, failure):
+        log.notifyFailure(self, failure, "Failure during file listing")
+        # Continue anyway
+        self._sigid = None
+        self._scheduleCheck()
+    
+    def __fileProcessingGenerator(self, currFiles, newFiles):
+        for f in [x for x in currFiles if not (x in newFiles)]:
+            yield None
             self.log("File '%s' removed", f)
             self.emit('file-removed', f)
-            del self._files[f]
-        for f, s in newfiles.iteritems():
+            del currFiles[f]
+        for f, s in newFiles.iteritems():
+            yield None
             self.log("File '%s' size change from %s to %s", 
-                     f, str(oldfiles.get(f, None)), str(s))
+                     f, str(currFiles.get(f, None)), str(s))
             #new file
-            if not (f in oldfiles):
+            if not (f in currFiles):
                 self.log("File '%s' added", f)
                 self.emit('file-added', f)
-                self._files[f] = s
+                currFiles[f] = s
                 continue
             #Checked file
-            if oldfiles[f] == None:
+            if currFiles[f] == None:
                 continue
             #Completed file
-            if s == oldfiles[f]:
+            if s == currFiles[f]:
                 self.log("File '%s' completed", f)
                 self.emit('file-completed', f)
-                self._files[f] = None
+                currFiles[f] = None
                 continue
-            self._files[f] = s
-        return True
+            currFiles[f] = s
+    
+    def __cbGotFiles(self, newfiles):
+        self.log("Comparing new files (%d) to old files (%d)",
+                 len(newfiles), len(self._files))
+        processor = self.__fileProcessingGenerator(self._files, newfiles)
+        self.__processFiles(processor)
+
+    def __processFiles(self, processor):
+        try:
+            for i in range(FILE_PROCESSING_BLOCK): 
+                processor.next()
+            reactor.callLater(0.01, self.__processFiles, processor)
+        except StopIteration, e:
+            self._sigid = None
+            self._scheduleCheck()
 
     def _listFiles(self):
         """
@@ -135,21 +169,22 @@ class DirectoryWatcher(PeriodicalWatcher):
         self.path = path
 
     def _listFiles(self):
-        def step(results, dirname, content):
-            abs_content = [os.path.join(dirname, f) 
-                           for f in content]
-            file_size = [f for f in abs_content if os.path.isfile(f)]
-            for file in file_size:
-                try:
-                    size = os.path.getsize(file)
-                except OSError:
-                    continue
-                results[file[len(base):]] = size 
         result = {}
-        base = self.path
-        os.path.walk(base, step, result)
-        self.log(str(result))
-        return result
+        d = threads.deferToThread(os.path.walk, self.path, self._step, result)
+        d.addCallback(lambda x: result)
+        return d
+    
+    def _step(self, results, dirname, content):
+        abs_content = [os.path.join(dirname, f) 
+                       for f in content]
+        file_size = [f for f in abs_content if os.path.isfile(f)]
+        for file in file_size:
+            try:
+                size = os.path.getsize(file)
+            except OSError:
+                continue
+            results[file[len(self.path):]] = size 
+
         
 class FilesWatcher(PeriodicalWatcher):
     """
