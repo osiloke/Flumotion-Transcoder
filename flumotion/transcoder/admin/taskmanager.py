@@ -334,14 +334,16 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
         return compPxy
 
     def __ebComponentStopFailed(self, failure, name):
-        log.notifyFailure(self, failure,
-                          "Task manager '%s' failed to stop "
-                          "component '%s'", self.label, name)
+        if not failure.check("flumotion.transcoder.errors.OperationAbortedError"):
+            log.notifyFailure(self, failure,
+                              "Task manager '%s' failed to stop "
+                              "component '%s'", self.label, name)
 
     def __ebComponentDeleteFailed(self, failure, name):
-        log.notifyFailure(self, failure,
-                          "Task manager '%s' failed to delete "
-                          "component '%s'", self.label, name)
+        if not failure.check("flumotion.transcoder.errors.OperationAbortedError"):
+            log.notifyFailure(self, failure,
+                              "Task manager '%s' failed to delete "
+                              "component '%s'", self.label, name)
 
     def __stateChangedError(self, waiters, actionDesc):
         error = errors.TranscoderError("State changed to %s during %s of '%s'"

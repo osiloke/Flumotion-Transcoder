@@ -285,7 +285,8 @@ class TranscodingTask(admintask.AdminTask):
     
     def __ebAcknowledgeFailed(self, failure, transPxy):
         if not self._isElectedComponent(transPxy): return
-        if not failure.check(PBConnectionLost):
+        if not failure.check("twisted.spread.pb.PBConnectionLost",
+                             "flumotion.common.errors.SleepingComponentError"):
             log.notifyFailure(self, failure, 
                               "Failed to acknowledge task '%s' transcoder '%s'",
                               self.label, transPxy.getName())

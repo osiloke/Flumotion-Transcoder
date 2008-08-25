@@ -454,8 +454,11 @@ class BaseComponentProxy(base.BaseProxy):
             return True
         if failure:
             if failure.check(DeadReferenceError):
-                self.debug("Forced Stop/Delete of component '%s' aborted "
-                           "because the PB reference is dead", self.label)
+                msg = ("Forced Stop/Delete of component '%s' aborted "
+                       "because the PB reference is dead" % self.getLabel())
+                self.warning("%s", msg)
+                error = errors.OperationAbortedError(msg, cause=failure)
+                resultDef.errback(error)
                 return True
             if failure.check(ferrors.UnknownComponentError):
                 self.debug("Forced Stop/Delete of component '%s' aborted "
