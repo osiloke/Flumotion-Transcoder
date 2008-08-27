@@ -1,3 +1,8 @@
+2008-08-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/watcher.py:
+	Fixed a bug that made the transcoding timeout to not work.
+
 2008-08-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/proxy/component.py:

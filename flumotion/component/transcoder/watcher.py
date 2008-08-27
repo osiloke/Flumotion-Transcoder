@@ -96,6 +96,7 @@ class PeriodicalWatcher(Watcher):
     
     def _checkForChanges(self):
         self.log("Watching...")
+        self._sigid = None
         d = self._listFiles()
         if isinstance(d, defer.Deferred):
             d.addCallbacks(self.__cbGotFiles, self.__ebListFileFailed)
@@ -105,7 +106,6 @@ class PeriodicalWatcher(Watcher):
     def __ebListFileFailed(self, failure):
         log.notifyFailure(self, failure, "Failure during file listing")
         # Continue anyway
-        self._sigid = None
         self._scheduleCheck()
     
     def __fileProcessingGenerator(self, currFiles, newFiles):
