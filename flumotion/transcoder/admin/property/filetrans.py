@@ -193,7 +193,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         local = workerContext.getLocal()
         props.extend(local.asComponentProperties())
         props.append(("config", str(self._configPath)))
-        if self._niceLevel:
+        if self._niceLevel is not None:
             props.append(("nice-level", self._niceLevel))
         if self._pathAttr:
             props.extend(self._pathAttr.asComponentProperties())

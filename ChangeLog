@@ -1,3 +1,8 @@
+2008-08-29  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/property/filetrans.py:
+	Fixed a stupid bug.
+
 2008-08-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/watcher.py:
