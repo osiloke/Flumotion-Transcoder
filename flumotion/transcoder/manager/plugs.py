@@ -12,13 +12,13 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.component.plugs import lifecycle
+from flumotion.component.plugs import base
 
 # Add VirtualPath jellyer and unjellyer to the manager
 from flumotion.transcoder import virtualpath
 
 
-class TranscoderEnvironment(lifecycle.ManagerLifecycle):
+class TranscoderEnvironmentPlug(base.ManagerPlug):
     """
     This plug is only used to import transcoder 
     related modules in the manager.

@@ -9,8 +9,8 @@
             <property name="data"><![CDATA[user:PSfNpHTkpTx1M]]></property>
         </component>
         <plugs>
-            <plug socket="flumotion.component.plugs.lifecycle.ManagerLifecycle"
-                type="transcoder-environment">
+            <plug socket="flumotion.component.plugs.base.ManagerPlug"
+                type="manager-transcoderenvironment">
             </plug>
         </plugs>
     </manager>

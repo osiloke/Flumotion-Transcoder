@@ -1,3 +1,10 @@
+2008-09-04  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/managers/transcoder/planet.xml:
+	* flumotion/transcoder/manager/plugs.py:
+	* flumotion/transcoder/manager/plugs.xml:
+	Updated to match the plug naming convention.
+
 2008-08-29  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/property/filetrans.py:
