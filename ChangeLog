@@ -1,5 +1,10 @@
 2008-09-08  Sebastien Merle  <sebastien@fluendo.com>
 
+   * flumotion/component/transcoder/filetranscoder_admin_gtk.py:
+   Made the transcoding component tab the first one.
+
+2008-09-08  Sebastien Merle  <sebastien@fluendo.com>
+
     * flumotion/component/transcoder/filemonitor_admin_gtk.py:
     Made the monitoring tab the first one.
 

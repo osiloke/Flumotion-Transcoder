@@ -37,13 +37,13 @@ def _warning(text):
 
 def _normal(text):
     return _fmt % ("blue", text)
-    
+
 
 class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
 
-    gladeFile = os.path.join('flumotion', 'component', 
+    gladeFile = os.path.join('flumotion', 'component',
                              'transcoder', 'filetranscoder.glade')
-    
+
     gettext_domain = "flumotion-transcoder"
 
     def __init__(self, *args, **kwargs):
@@ -67,19 +67,19 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
     def error_dialog(self, message):
         # FIXME: dialogize
         print 'ERROR:', message
-        
+
     def addField(self, type, key, comp):
         self._fields[(type, key)] = comp
-        
+
     def getField(self, type, key):
         return self._fields.get((type, key), None)
-        
+
     def addValFormat(self, key, format, default=DEFAULT_VALUE):
         self._valFormats[key] = (format, default)
-        
+
     def addLblFormat(self, key, format, default=DEFAULT_VALUE):
         self._lblFormats[key] = (format, default)
-        
+
     def _format(self, value, format, default):
         if value == None:
             return default
@@ -89,49 +89,49 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
             return format(value)
         else:
             return str(value)
-        
+
     def formatValue(self, key, value):
         format, default = self._valFormats.get(key, (None, DEFAULT_VALUE))
         return self._format(value, format, default)
-        
+
     def addLabel(self, key, priority, label):
         self._labels[key] = (priority, _(label))
-        
+
     def formatLabel(self, key):
         priority, label = self._labels.get(key, (0, key))
         format, default = self._lblFormats.get(key, (None, DEFAULT_VALUE))
         return (key, priority, self._format(_(label), format, default))
-    
+
     def keepLabel(self, key, priority=0):
         return (key, priority, key)
-        
+
     def haveWidgetTree(self):
-        self.widget = self.getWidget('transcoding-widget')      
+        self.widget = self.getWidget('transcoding-widget')
         self._progress = self.getWidget("progress-bar")
         self._errorText = self.getWidget("error-text")
         self.setView(self.getWidget("info-tree"))
-        
+
         self._errorText.hide()
-        
-        self.addField("job-data", "customer-name", 
+
+        self.addField("job-data", "customer-name",
                       self.getWidget("customer-name"))
-        self.addField("job-data", "profile-label", 
+        self.addField("job-data", "profile-label",
                       self.getWidget("profile-label"))
-        self.addField("job-data", "job-state", 
+        self.addField("job-data", "job-state",
                       self.getWidget("transcoding-status"))
-        self.addField("source-data", "input-file", 
+        self.addField("source-data", "input-file",
                       self.getWidget("source-input-file"))
-        self.addField("job-data", "transcoding-report", 
+        self.addField("job-data", "transcoding-report",
                       self.getWidget("transcoding-report"))
-        
+
         self.addLblFormat("source", "<big>%s</big>")
         self.addLblFormat("targets", "<big>%s</big>")
         self.addLblFormat("job-error", _error)
         self.addLblFormat("job-warning", _warning)
         self.addLblFormat("target-error", _error)
         self.addLblFormat("target-warning", _warning)
-        
-        
+
+
         self.addValFormat("job-error", _error)
         self.addValFormat("job-warning", _warning)
         self.addValFormat("target-error", _error)
@@ -143,15 +143,15 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self.addValFormat("audio-rate", "%d Hz")
         self.addValFormat("job-state", self.formatJobState)
         self.addValFormat("target-state", lambda v: v.nick)
-        self.addValFormat("file-size", 
+        self.addValFormat("file-size",
                           lambda v: "%.2f MB" % (int(v) / 1024.0**2))
-        self.addValFormat("file-count", "%d") 
+        self.addValFormat("file-count", "%d")
         self.addValFormat("type", lambda v: {'audio': "Audio",
                                              'video': "Video",
                                              'audiovideo': "Audio/Video",
                                              'thumbnails': "Thumbnails"
                                              }.get(v, v))
-        
+
         self.addLabel("source", 100, "Source")
         self.addLabel("targets", 90, "Targets")
         self.addLabel("job-error", 2000, "Error:")
@@ -169,8 +169,8 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self.addLabel("audio-rate", 40, "Audio Rate:")
         self.addLabel("audio-encoder", 30, "Audio Encoder:")
         self.addLabel("mime-type", 20, "Mime Type:")
-        
-        
+
+
         if not self._uiInitialized:
             self.refreshUIState()
 
@@ -224,7 +224,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         for key, value in self.uiState.get("targets-data").iteritems():
             if key[1] == "target-state":
                 self.stateSetitem(self.state, "targets-data", key, value)
-        
+
 
     def setTreeValue(self, value, *path):
         """
@@ -260,7 +260,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
                     self._view.expand_row(iterPath, False)
             self._iterIndex[iterKey] = iter
         self._model.set(iter, 0, path[-1][-1], 1, value)
-    
+
     def delTreeValue(self, *path):
         raise NotImplementedError()
 
@@ -271,7 +271,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self._status = value
         self.updateStates()
         return False
-    
+
     def _jobProgressEvent(self, value):
         if value != None:
             self._progress.set_fraction(value / 100.0)
@@ -285,20 +285,20 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self.updateJobErrors()
         self.updateStates()
         return False
-    
+
     def _jobWarningEvent(self, value):
         self._jobWarnings.append(_(value))
         self.updateJobErrors()
         self.updateStates()
         return False
-    
+
     def _targetStateEvent(self, targetName, value):
         root = self.formatLabel("targets")
         target = self.keepLabel(targetName)
         text = self.getTargetStateText(targetName, value)
         self.setTreeValue(text, root, target)
         return False
-    
+
     def _targetErrorEvent(self, targetName, value):
         root = self.formatLabel("targets")
         target = self.keepLabel(targetName)
@@ -309,7 +309,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self.setTreeValue(text, root, target, error)
         self.updateStates()
         return False
-    
+
     def _targetWarningEvent(self, targetName, value):
         root = self.formatLabel("targets")
         target = self.keepLabel(targetName)
@@ -323,7 +323,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         self.setTreeValue(text, root, target, warning)
         self.updateStates()
         return
-    
+
     _jobEventHandlers = {"status": _jobStatusEvent,
                          "progress": _jobProgressEvent,
                          "job-error": _jobErrorEvent,
@@ -344,7 +344,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
             field.set_markup(text)
         elif key == "source-data":
             root = self.formatLabel("source")
-            label = self.formatLabel(subkey)            
+            label = self.formatLabel(subkey)
             text = self.formatValue(subkey, value)
             self.setTreeValue(text, root, label)
         elif key == "targets-data":
@@ -357,7 +357,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
             text = self.formatValue(subkey, value)
             label = self.formatLabel(subkey)
             self.setTreeValue(text, root, target, label)
-    
+
     def stateDelitem(self, state, key, subkey, value):
         field = self._fields.get((key, subkey))
         if field:
@@ -378,7 +378,7 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
             return _error(_("Transcoding Failed"))
         if len(self._jobWarnings) > 0:
             return _warning(_("%s (Warnings)" % text))
-        return _normal(text)    
+        return _normal(text)
 
     def getTargetStateText(self, target, state):
         text = self.formatValue("target-state", state)
@@ -389,17 +389,16 @@ class FileTranscoderAdminGtkNode(BaseAdminGtkNode):
         if len(warnings) > 0:
             return _warning(_("%s (Warnings)" % text))
         return _normal(text)
-    
+
 
 class FileTranscoderAdminGtk(BaseAdminGtk):
     gettext_domain = 'flumotion-transcoder'
 
     def setup(self):
-        d = BaseAdminGtk.setup(self)
         transcoding = FileTranscoderAdminGtkNode(self.state, self.admin,
                                                  title=_('Transcoding'))
         self.nodes['Transcoding'] = transcoding
-        return d
+        return BaseAdminGtk.setup(self)
 
 
 GUIClass = FileTranscoderAdminGtk
