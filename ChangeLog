@@ -1,5 +1,11 @@
 2008-09-18  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/scheduler.py:
+	The scheduler do not have the remove the transcoding task,
+	it's already done by the task manager.
+
+2008-09-18  Sebastien Merle  <sebastien@fluendo.com>
+
     * flumotion/component/transcoder/analyst.py:
     Fixed a bug when the caps object is empty but not None.
 

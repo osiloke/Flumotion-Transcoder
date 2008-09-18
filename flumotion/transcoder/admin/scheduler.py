@@ -32,10 +32,10 @@ class IScheduler(Interface):
 
 class Scheduler(log.Loggable, events.EventSourceMixin):
     implements(IScheduler)
-    
+
     logCategory = adminconsts.SCHEDULER_LOG_CATEGORY
-    
-    def __init__(self, schedulerContext, storeContext, 
+
+    def __init__(self, schedulerContext, storeContext,
                  notifier, transcoding, diagnostician):
         self._schedulerCtx = schedulerContext
         self._storeCtx = storeContext
@@ -53,10 +53,10 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._register("transcoding-started")
         self._register("transcoding-failed")
         self._register("transcoding-done")
-        
-        
+
+
     ## Public Methods ##
-        
+
     def initialize(self):
         self.debug("Retrieve transcoding activities")
         self._transcoding.connectListener("task-added", self,
@@ -72,30 +72,30 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         d.addCallback(self.__cbRestoreTasks)
         d.addErrback(self.__ebInitializationFailed)
         return d
-    
+
     def isStarted(self):
         return self._started and not self._paused
-    
+
     def start(self, timeout=None):
         if not self._started:
             self._started = True
             self._paused = False
             self.__startup()
         return defer.succeed(self)
-    
+
     def pause(self, timeout=None):
         if not self._paused:
             self._paused = True
             self.__clearQueue()
             self.__cancelTasksStartup()
         return defer.succeed(self)
-    
+
     def resume(self, timeout=None):
         if self._started and self._paused:
             self._paused = False
             self.__startup()
         return defer.succeed(self)
-        
+
     def addProfile(self, profCtx):
         assert isinstance(profCtx, profile.ProfileContext)
         if self.isProfileQueued(profCtx):
@@ -107,7 +107,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.__queueProfile(profCtx)
             self.__startupTasks()
             self.emit("profile-queued", profCtx)
-    
+
     def removeProfile(self, profCtx):
         assert isinstance(profCtx, profile.ProfileContext)
         if self.isProfileQueued(profCtx):
@@ -117,22 +117,22 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         if trantask and not trantask.isAcknowledging():
             self.debug("Cancel transcoding of profile '%s'", profCtx.inputPath)
             self._transcoding.removeTask(profCtx.uid)
-    
+
     def isProfileQueued(self, profCtx):
         assert isinstance(profCtx, profile.ProfileContext)
         return profCtx.uid in self._queue
-    
+
     def isProfileActive(self, profCtx):
         assert isinstance(profCtx, profile.ProfileContext)
         trantask = self._transcoding.getTask(profCtx.uid, None)
         return trantask != None
-    
+
     def waitIdle(self, timeout=None):
         return defer.succeed(self)
-    
-    
+
+
     ## ITranscoding Event Listers ##
-    
+
     def __onTranscodingTaskAdded(self, takset, task):
         self.debug("Transcoding task '%s' added", task.label)
         task.connectListener("failed", self,
@@ -142,7 +142,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         task.connectListener("terminated", self,
                              self.__onTranscodingTerminated)
         task.refreshListener(self)
-    
+
     def __onTranscodingTaskRemoved(self, tasker, task):
         self.debug("Transcoding task '%s' removed", task.label)
         task.disconnectListener("failed", self)
@@ -155,7 +155,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
 
 
     ## transtask.TranscodingTask Event Listeners ##
-    
+
     def __onTranscodingFailed(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.store
@@ -167,7 +167,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             d.addCallback(self.__transcodingFailed, task, transPxy)
         else:
             self.__transcodingFailed(None, task, transPxy)
-            
+
     def __onTranscodingDone(self, task, transPxy):
         activCtx = self._activities[task]
         activStore = activCtx.store
@@ -181,42 +181,40 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.__transcodingDone(None, task, transPxy)
 
     def __onTranscodingTerminated(self, task, succeed):
-        self.info("Transcoding task '%s' %s", task.label, 
+        self.info("Transcoding task '%s' %s", task.label,
                   (succeed and "succeed") or "failed")
-        profCtx = task.getProfileContext()
-        self._transcoding.removeTask(profCtx.uid)
         self._activities.pop(task)
 
-        
+
     ## EventSource Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         for profCtx in self._queue.itervalues():
             self.emitTo("profile-queued", listener, profCtx)
         for task in self._transcoding.iterTasks():
             self.emitTo("transcoding-started", listener, task)
 
-        
+
     ## Private Methods ##
-    
+
     def __transcodingDone(self, report, task, transPxy):
         docs = transPxy and transPxy.getDocuments()
         trigger = NotificationTriggerEnum.done
         profCtx = task.getProfileContext()
         self.__notify(task.label, trigger, profCtx, report, docs)
-    
-    def __transcodingFailed(self, report, task, transPxy):    
+
+    def __transcodingFailed(self, report, task, transPxy):
         d = self._diagnostician.diagnoseTranscodingFailure(task, transPxy)
         args = (report, task, transPxy)
         d.addCallbacks(self.__notifyTranscodingfailure,
                        self.__ebFailureDiagnosticFailed,
                        callbackArgs=args, errbackArgs=args)
-    
+
     def __ebFailureDiagnosticFailed(self, failure, report, task, transPxy):
         log.notifyFailure(self, failure, "Failure during transcoding failure diagnostic")
         # But we continue like if nothing has append
         self.__notifyTranscodingfailure(None, report, task, transPxy)
-    
+
     def __notifyTranscodingfailure(self, diagnostic, report, task, transPxy):
         docs = transPxy and transPxy.getDocuments()
         # It possible create an alternative error message for
@@ -235,7 +233,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         profCtx = task.getProfileContext()
         self.__notify(task.label, trigger, profCtx, report,
                       docs, altErrorMessage=altErrorMessage)
-    
+
     def __notify(self, label, trigger, profCtx, report,
                  docs, altErrorMessage=None):
         sourceVars = notifysubs.SourceNotificationVariables(profCtx, trigger, report)
@@ -271,7 +269,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
                 d = self._notifier.notify(label, trigger, n, targVars, docs)
                 # Ignore Failures to prevent defer to notify them
                 d.addErrback(defer.resolveFailure)
-    
+
     def __cbRestoreTasks(self, activCtxs):
         self.debug("Restoring transcoding tasks")
         for activCtx in activCtxs:
@@ -284,36 +282,36 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             if self.isProfileQueued(profCtx):
                 self.__unqueuProfile(profCtx)
             self.__startTranscodingTask(profCtx, activCtx)
-    
+
     def __ebInitializationFailed(self, failure):
         return failure
-    
+
     def __startup(self):
         available = self._transcoding.getAvailableSlots()
         self.debug("Starting/Resuming transcoding scheduler (%d slots)", available)
         self.__startupTasks()
-    
+
     def __startupTasks(self):
         if self.isStarted() and not self._startDelay:
             self._startDelay = utils.callNext(self.__asyncStartTask)
-    
+
     def __cancelTasksStartup(self):
         if self._startDelay:
             self._startDelay.cancel()
             self._startDelay = None
-    
+
     def __asyncStartTask(self):
         available = self._transcoding.getAvailableSlots()
         if available <= 0:
             self._startDelay = None
             return
         profCtx = self.__popNextProfile()
-        if not profCtx: 
+        if not profCtx:
             self._startDelay = None
             return
         self.__startTranscodingTask(profCtx)
         self._startDelay = utils.callNext(self.__asyncStartTask)
-        
+
     def __startTranscodingTask(self, profCtx, activCtx=None):
         task = transtask.TranscodingTask(self._transcoding, profCtx)
         self.info("Starting transcoding task '%s'",  task.label)
@@ -342,7 +340,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._queue[puid] =  profCtx
         self._order.append(puid)
         self._order.sort(key=self.__getKeyPriority)
-    
+
     def __unqueuProfile(self, profCtx):
         puid = profCtx.uid
         assert puid in self._queue
@@ -355,7 +353,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         puid = self._order.pop()
         profCtx = self._queue.pop(puid)
         return profCtx
-    
+
     def __clearQueue(self):
         self._queue.clear()
         del self._order[:]
