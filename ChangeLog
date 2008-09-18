@@ -1,3 +1,8 @@
+2008-09-18  Sebastien Merle  <sebastien@fluendo.com>
+
+    * flumotion/component/transcoder/analyst.py:
+    Fixed a bug when the caps object is empty but not None.
+
 2008-09-08  Sebastien Merle  <sebastien@fluendo.com>
 
    * flumotion/component/transcoder/filetranscoder_admin_gtk.py:

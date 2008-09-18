@@ -30,17 +30,18 @@ from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder import analyst
 from flumotion.component.transcoder.watcher import FilesWatcher
 
+
 class ITranscoderProducer(Interface):
-    
+
     def getLabel(self):
         pass
-    
+
     def raiseError(self, msg, *args):
         """
         Raise an exception.
         Permit the producers to raise specific type of exceptions.
         """
-    
+
     def getMonitoredFiles(self):
         """
         Retrieve the list of files that should be monitored
@@ -59,7 +60,7 @@ class ITranscoderProducer(Interface):
         The tees argument is a dict with references to tee elements for
         the different source's streams named 'videosink' and 'audiosink'.
         """
-    
+
     def prepare(self, timeout=None):
         """
         Prepare the producer before playing the pipeline.
@@ -71,7 +72,7 @@ class ITranscoderProducer(Interface):
         Finalize the producer transcoding.
         Can return a Deferred.
         """
-    
+
     def abort(self, timeout=None):
         """
         Abort the producer transcoding task.
@@ -82,7 +83,7 @@ class ITranscoderProducer(Interface):
         """
         Called when the transcoding process failed.
         """
-    
+
     def onTranscodingDone(self):
         """
         Called when the transcoding process succeed.
@@ -93,7 +94,7 @@ class MediaTranscoder(log.LoggerProxy):
     """
     Transcode a source file to a list of producer.
     The producers should be child class of TranscodingProducers.
-    """    
+    """
     def __init__(self, logger, analyzedCB=None,
                  preparedCB=None, playingCB=None, progressCB=None):
         log.LoggerProxy.__init__(self, logger)
@@ -137,9 +138,9 @@ class MediaTranscoder(log.LoggerProxy):
         if self._aborted: return
         self.__checkIfStarted()
         self._started = True
-        
+
         self.log("Starting media transcoder")
-        
+
         if not os.path.exists(sourcePath):
             error = TranscoderError("Source file '%s' does not exists"
                                     % sourcePath)
@@ -157,11 +158,11 @@ class MediaTranscoder(log.LoggerProxy):
         else:
             assert sourceAnalysis.filePath == sourcePath
             d = defer.succeed(sourceAnalysis)
-        
+
         d.addCallbacks(self.__cbCheckSourceAnalysis,
                        self.__ebSourceAnalysisError)
         d.addErrback(self.__failed)
-        
+
         return self._deferred
 
     def abort(self):
@@ -177,7 +178,7 @@ class MediaTranscoder(log.LoggerProxy):
             d.addBoth(defer.dropResult, self._analyst.abort)
         return d
 
-    
+
     ## Protected GObject Callback Methods ##
 
     def _bus_message_callback(self, bus, message):
@@ -253,7 +254,7 @@ class MediaTranscoder(log.LoggerProxy):
                 if not ('videosink' in tees):
                     self.warning("Found a video pad not previously "
                                  "discovered. Try a bigger max-interleave.")
-                    gobject.idle_add(self.__failed, 
+                    gobject.idle_add(self.__failed,
                                      "Found a video pad for '%s' "
                                      "not previously discovered. "
                                      "Try a bigger max-interleave."
@@ -281,12 +282,12 @@ class MediaTranscoder(log.LoggerProxy):
             if msg:
                 error = error + ", " + msg
             raise TranscoderError(error)
-        
+
     def __errorNotReceived(self):
         self.__failed("Could not play pipeline for file '%s'" % self._sourcePath)
-        
+
     def __postErrorMessage(self, msg, debug=None):
-        error = gst.GError(gst.STREAM_ERROR, 
+        error = gst.GError(gst.STREAM_ERROR,
                            gst.STREAM_ERROR_FAILED, msg)
         message = gst.message_new_error(self._pipeline, error, debug)
         self._pipeline.post_message(message)
@@ -378,7 +379,7 @@ class MediaTranscoder(log.LoggerProxy):
         if self._aborted: return
         self.log('Checking source analysis')
         self.__fireAnalyzedCallback(sourceAnalysis)
-        
+
         if sourceAnalysis.hasAudio:
             self.debug("Source audio caps: '%s'" % sourceAnalysis.getAudioCapsAsString())
         if sourceAnalysis.hasVideo:
@@ -388,13 +389,13 @@ class MediaTranscoder(log.LoggerProxy):
             # If there is no producer, the transcoding succeed for sure.
             self.__done()
             return
-            
+
         for producer in self._producers:
             producer.checkSourceMedia(self._sourcePath, sourceAnalysis)
-        
+
         self.debug("Source media file is good for all producers")
         self._sourceAnalysis = sourceAnalysis
-        
+
         d = defer.succeed(None)
         for producer in self._producers:
             d.addCallback(defer.dropResult, producer.prepare,
@@ -405,7 +406,7 @@ class MediaTranscoder(log.LoggerProxy):
 
     def __ebProducersSetupFailed(self, failure):
         if self._aborted: return
-        self.debug("Producers setup failed: %s", 
+        self.debug("Producers setup failed: %s",
                    log.getFailureMessage(failure))
         self.__failed("Could not setup producers for file '%s': %s"
                      % (self._sourcePath, str(failure.value)), cause=failure)
@@ -422,7 +423,7 @@ class MediaTranscoder(log.LoggerProxy):
         dbin = gst.element_factory_make("decodebin2")
         pipeline.add(src, dbin)
         src.link(dbin)
-        
+
         tees = {}
         if self._sourceAnalysis.hasAudio:
             tees["audiosink"] = gst.element_factory_make('tee')
@@ -443,16 +444,16 @@ class MediaTranscoder(log.LoggerProxy):
         d.addCallbacks(self.__cbStartupPipeline,
                        self.__ebPipelineSetupFailed)
         d.addErrback(self.__failed)
-        
+
     def __ebPipelineSetupFailed(self, failure):
         if self._aborted: return
-        self.debug("Pipeline setup failed: %s", 
+        self.debug("Pipeline setup failed: %s",
                    log.getFailureMessage(failure))
         self.__failed("Could not setup pipeline for file '%s': %s"
                       % (self._sourcePath, str(failure.value)), cause=failure)
         # The error has been deal with, resolve the errback
         return None
-    
+
     def __cbStartupPipeline(self, pipeline):
         if self._aborted: return
         self.log('Starting up transcoding pipeline')
@@ -460,28 +461,28 @@ class MediaTranscoder(log.LoggerProxy):
         self._bus = self._pipeline.get_bus()
         self._bus.add_signal_watch()
         self._bus.connect("message", self._bus_message_callback)
-        
+
         self.__firePreparedCallback()
-        
+
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
             timeout = compconsts.TRANSCODER_PLAY_ERROR_TIMEOUT
             to = utils.createTimeout(timeout, self.__errorNotReceived)
             self._playErrorTimeout = to
             return
-        
+
         timeout = compconsts.TRANSCODER_PLAYING_TIMEOUT
         to = utils.createTimeout(timeout, self.__playPipelineTimeout)
         self._playStateTimeout = to
-    
+
         # Start a FilesWatcher for producers' monitored files
         for producer in self._producers:
             files = producer.getMonitoredFiles()
             for path in files:
                 assert not (path in self._monitoredFiles)
                 self._monitoredFiles[path] = producer
-        
-        self._watcher = FilesWatcher(self, self._monitoredFiles.keys(), 
+
+        self._watcher = FilesWatcher(self, self._monitoredFiles.keys(),
                                      timeout=self._stallTimeout)
         self._watcher.connect('file-completed', self._watcher_callback)
         self._watcher.connect('file-not-present', self._watcher_callback)
@@ -537,7 +538,7 @@ class MediaTranscoder(log.LoggerProxy):
                         positions.append(position)
                 except gst.QueryError, e:
                     self.warning("Failed to retrieve pipline position, "
-                                 "disabling progression notification: %s", 
+                                 "disabling progression notification: %s",
                                  log.getExceptionMessage(e))
             if not positions:
                 # Disabling progression notification

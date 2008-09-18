@@ -63,14 +63,18 @@ class MediaAnalysis(object):
         self.otherStreams = list(discoverer.otherstreams)
 
     def getAudioCapsAsString(self):
-        return self.audioCaps and self.audioCaps.to_string()
-    
+        if self.audioCaps
+            return self.audioCaps.to_string()
+        return None
+
     def getAudioDuration(self):
-        return self.audioLength and float(self.audioLength / gst.SECOND)
-    
+        return self.audioLength float(self.audioLength / gst.SECOND)
+
     def getVideoCapsAsString(self):
-        return self.videoCaps and self.videoCaps.to_string()
-    
+        if self.videoCaps:
+            return self.videoCaps.to_string()
+        return None
+
     def getVideoDuration(self):
         return self.videoLength and float(self.videoLength / gst.SECOND)
 
@@ -128,10 +132,10 @@ class MediaAnalysis(object):
                 print "%20s :\t" % tag, self.videoTags[tag]
             for tag in self.otherTags.keys():
                 print "%20s :\t" % tag, self.otherTags[tag]
-       
-       
+
+
     ## Private Methods ##
-       
+
     def __time2Str(self, value):
         ms = value / gst.MSECOND
         sec = ms / 1000
@@ -145,13 +149,13 @@ class MediaAnalyst(object):
 
     def __init__(self):
         self._pending = {}
-        
+
     def hasPendingAnalysis(self):
         return len(self._pending) > 0
-        
+
     def abort(self):
         return defer.succeed(self)
-        
+
     def analyse(self, filePath, timeout=None):
         deferred = defer.Deferred()
         discoverer = Discoverer(filePath,
@@ -164,7 +168,7 @@ class MediaAnalyst(object):
 
 
     ## Protected Methods ##
-    
+
     def _discoverer_callback(self, discoverer, is_media):
         if not (discoverer in self._pending):
             # Analyse timed out before completion
@@ -180,7 +184,7 @@ class MediaAnalyst(object):
 
 
     ## Private Methods ##
-    
+
     def __analyseTimeout(self, discoverer):
         filePath, deferred = self._pending.pop(discoverer)[:2]
         msg = "Media analyse timeout"
