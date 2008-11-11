@@ -63,12 +63,12 @@ class MediaAnalysis(object):
         self.otherStreams = list(discoverer.otherstreams)
 
     def getAudioCapsAsString(self):
-        if self.audioCaps
+        if self.audioCaps:
             return self.audioCaps.to_string()
         return None
 
     def getAudioDuration(self):
-        return self.audioLength float(self.audioLength / gst.SECOND)
+        return self.audioLength and float(self.audioLength / gst.SECOND)
 
     def getVideoCapsAsString(self):
         if self.videoCaps:

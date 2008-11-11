@@ -1,3 +1,8 @@
+2008-11-11  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/analyst.py:
+	Fix two typos.
+
 2008-09-18  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/scheduler.py:
