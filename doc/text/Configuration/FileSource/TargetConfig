@@ -1,0 +1,314 @@
+= Transcoding Profiles =
+
+
+== Index ==
+
+
+== Place Holders ==
+
+SAMPLERATE:
+
+ Audio sample rate in Hertz.
+
+CHANNELS:
+
+ The number of channels of the output file, 1 for mono and 2 for stereo.
+
+AUDIO_BITRATE:
+
+ Bitrate in bits per seconds.
+
+AUDIO_KBITRATE:
+
+ Bitrate in kilo bits per seconds.
+
+VIDEO_BITRATE:
+
+ Bitrate in bits per seconds.
+
+VIDEO_KBITRATE:
+
+ Bitrate in kilo bits per seconds.
+
+FRAMERATE:
+
+ Video frame per seconds, can be a fraction like 25/2.
+
+VIDEOHEIGHT:
+
+ Height of the outgoing video.
+
+VIDEOWIDTH:
+
+ Width of the outgoing video.
+
+
+== Audio Profiles ==
+
+
+=== QCP ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = fluqcpenc
+audio-rate = $SAMPLERATE
+audio-channels = 1
+muxer = identity
+}}}
+
+==== Tested Configurations ====
+
+||SAMPLERATE||
+||8000      ||
+
+==== Used By ====
+
+Zed
+
+
+=== AMR-NB ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = amrnbenc
+audio-rate = 8000
+audio-channels = 1
+muxer = ffmux_amr
+}}}
+
+==== Used By ====
+
+Zed
+
+
+=== AMR-WB ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = amrwbenc
+audio-rate = 16000
+audio-channels = 1
+muxer = ffmux_amr
+}}}
+
+==== Used By ====
+
+Zed
+
+
+=== ADPCM/MMF ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = ffenc_adpcm_yamaha
+audio-rate = $SAMPLERATE
+audio-channels = $CHANNELS
+muxer = ffmux_mmf
+}}}
+
+==== Post-Processing ====
+
+To add the CRC, the following command should be executed as a post-processing:
+
+{{{/usr/bin/mmf-crc %(outputWorkPath)s}}}
+
+==== Tested Configurations ====
+
+||SAMPLERATE||CHANNELS||
+||8000      ||1       ||
+
+==== Used By ====
+
+Zed
+
+
+=== MP3 ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = lame bitrate=$AUDIO_KBITRATE ! audio/mpeg,rate=$SAMPLERATE ! mp3parse
+audio-rate = $SAMPLERATE
+audio-channels = $CHANNELS
+muxer = identity
+}}}
+
+==== Tested Configurations ====
+
+||SAMPLERATE||CHANNELS||AUDIO_KBITRATE||
+||44100     ||2       ||128           ||
+||44100     ||2       ||112           ||
+||44100     ||1       ||112           ||
+||44100     ||1       ||64            ||
+||44100     ||1       ||48            ||
+||22050     ||2       ||64            ||
+||22050     ||1       ||56            ||
+||22050     ||1       ||24            ||
+
+==== Used By ====
+
+Zed, YesFM
+
+
+== Video Profiles ==
+
+
+=== AMR-NB+H263/3GP ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = amrnbenc
+audio-rate = 8000
+audio-channels = 1
+video-encoder = ffenc_h263 bitrate=$VIDEO_BITRATE me-method=epzs
+video-framerate = $FRAMERATE
+video-width = $VIDEOWIDTH
+video-height = $VIDEOHEIGHT
+muxer = ffmux_3gp
+tolerance = Allow without audio
+}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_BITRATE||
+||176        ||144         ||25/2     ||128000       ||
+
+==== Used By ====
+
+Zed
+
+
+=== Sorenson+MP3/FLV ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = lame bitrate=$AUDIO_KBITRATE ! audio/mpeg,rate=$SAMPLERATE ! mp3parse
+audio-channels = $CHANNELS
+audio-rate = $SAMPLERATE
+video-encoder = ffenc_flv bitrate=$VIDEO_BITRATE
+video-framerate = $FRAMERATE
+video-width = $VIDEOWIDTH
+video-height = $VIDEOHEIGHT
+muxer = fluflvmux
+tolerance = Allow without audio
+}}}
+
+==== Post-Processing ====
+
+To add the seeking capabilities, the output file must be indexed using
+the following command should be executed as a post-processing:
+
+{{{flvtool2 -U %(outputWorkPath)s}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_BITRATE||CHANNELS||SAMPLERATE||AUDIO_KBITRATE||
+||360        ||*           ||25/2     ||128000       ||1       ||22050     ||32            ||
+
+
+=== MP4+AMR-NB/MOV ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = amrnbenc
+audio-rate = 8000
+audio-channels = 1
+video-encoder = ffenc_mpeg4 bitrate=$VIDEO_BITRATE me-method=epzs
+video-framerate = $FRAMERATE
+video-width = $VIDEO_WIDTH
+video-height = $VIDEO_HEIGHT
+muxer = ffmux_mov
+tolerance = Allow without audio
+}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_BITRATE||
+||176        ||144         ||25/2     ||128000       ||
+
+
+=== VP6+MP3/FLV ===
+
+==== Configuration ====
+
+{{{
+audio-encoder = lame bitrate=$AUDIO_KBITRATE ! audio/mpeg,rate=$SAMPLERATE ! mp3parse
+audio-rate = $SAMPLERATE
+audio-channels = $CHANNELS
+video-framerate = $FRAMERATE
+video-encoder = videoflip method=5 ! fluvp6enc bitrate=$VIDEO_KBITRATE
+video-width = $VIDEO_WIDTH
+video-height = $VIDEO_HEIGHT
+muxer = fluflvmux
+tolerance = Allow without audio
+}}}
+
+==== Post-Processing ====
+
+To add the seeking capabilities, the output file must be indexed using
+the following command should be executed as a post-processing:
+
+{{{flvtool2 -U %(outputWorkPath)s}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_KBITRATE||CHANNELS||SAMPLERATE||AUDIO_KBITRATE||
+||752        ||560         ||25/1     ||700           ||2       ||44100     ||64            ||
+||480        ||368         ||25/1     ||380           ||2       ||44100     ||48            ||
+||384        ||288         ||25/1     ||300           ||2       ||22050     ||48            ||
+
+
+=== WMV+WMA/ASF (pitfdll)===
+
+!! Warning !! Deprected !!
+
+Pitfdll encoder must only be used for one target at a time.
+
+Use the next WMV+WMA/ASF profile.
+
+==== Configuration ====
+
+{{{
+audio-encoder = audiorate ! fluwmaenc bitrate=$AUDIO_BITRATE
+audio-rate = $SAMPLERATE
+audio-channels = $CHANNELS
+video-framerate = $FRAMERATE
+video-width = $VIDEO_WIDTH
+video-height = $VIDEO_HEIGHT
+video-encoder = dmoenc_wmvdmoe2v3 bitrate=$VIDEO_BITRATE
+muxer = fluasfmux
+tolerance = Allow without audio
+}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_BITRATE||CHANNELS||SAMPLERATE||AUDIO_BITRATE||
+||384        ||288         ||25/1     ||3000000      ||2       ||22050     ||48000        ||
+
+
+=== WMV+WMA/ASF===
+
+==== Configuration ====
+
+{{{
+audio-encoder = audiorate ! fluwmaenc bitrate=$AUDIO_BITRATE
+audio-rate = $SAMPLERATE
+audio-channels = $CHANNELS
+video-framerate = $FRAMERATE
+video-width = $VIDEO_WIDTH
+video-height = $VIDEO_HEIGHT
+video-encoder = fluwmvenc bitrate=$VIDEO_BITRATE
+muxer = fluasfmux
+tolerance = Allow without audio
+}}}
+
+==== Tested Configurations ====
+
+||VIDEO_WIDTH||VIDEO_HEIGHT||FRAMERATE||VIDEO_BITRATE||CHANNELS||SAMPLERATE||AUDIO_BITRATE||
