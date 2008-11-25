@@ -143,12 +143,12 @@ MP3
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
-Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
+================= ================================================================
+Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE*
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
 Muxer             identity
-================= =======================================================================
+================= ================================================================
 
 Tested
 ~~~~~~
@@ -181,7 +181,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= ==================================================
+================= ===================================================
 Audio Encoder     amrnbenc
 Audio Samplerate  8000
 Audio Channels    1
@@ -190,7 +190,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             ffmux_3gp
-================= ==================================================
+================= ===================================================
 
 Tested
 ~~~~~~
@@ -213,7 +213,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
+================= ===========================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
@@ -222,7 +222,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
-================= =======================================================================
+================= ===========================================================================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -253,7 +253,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
+================= ====================================================
 Audio Encoder     amrnbenc
 Audio Samplerate  8000
 Audio Channels    1
@@ -262,7 +262,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             ffmux_mov
-================= =======================================================================
+================= ====================================================
 
 Tested
 ~~~~~~
@@ -286,7 +286,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
+================= ===========================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
@@ -295,7 +295,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
-================= =======================================================================
+================= ===========================================================================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -335,7 +335,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
+================= ===========================================
 Audio Encoder     fluwmaenc bitrate=\ *AUDIO_BITRATE*
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
@@ -344,7 +344,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             fluasfmux
-================= =======================================================================
+================= ===========================================
 
 Tested
 ~~~~~~
@@ -369,7 +369,7 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= =======================================================================
+================= ===================================
 Audio Encoder     fluwmaenc bitrate=\ *AUDIO_BITRATE*
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
@@ -378,7 +378,7 @@ Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             fluasfmux
-================= =======================================================================
+================= ===================================
 
 Tested
 ~~~~~~
