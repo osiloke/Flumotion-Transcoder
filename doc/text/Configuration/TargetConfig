@@ -62,11 +62,11 @@ Muxer            identity
 Tested
 ~~~~~~
 
-+==========+
-|SAMPLERATE|
-+==========+
-|8000      |
-+==========+
+========== =
+SAMPLERATE
+========== =
+8000 
+========== =
 
 
 AMR-NB
@@ -123,9 +123,9 @@ Muxer             ffmux_mmf
 Post-Processing
 ~~~~~~~~~~~~~~~
 
-To add the CRC, the following command should be executed as a post-processing:
+To add the CRC, the following command should be executed as a post-processing::
 
-{{{/usr/bin/mmf-crc %(outputWorkPath)s}}}
+    /usr/bin/mmf-crc %(outputWorkPath)s
 
 Tested
 ~~~~~~
@@ -185,7 +185,7 @@ Configuration
 Audio Encoder     amrnbenc
 Audio Samplerate  8000
 Audio Channels    1
-Video Encoder     ffenc_h263 bitrate=*VIDEO_BITRATE* me-method=epzs
+Video Encoder     ffenc_h263 bitrate\=*VIDEO_BITRATE* me-method=epzs
 Video Framerate   *FRAMERATE*
 Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
@@ -228,9 +228,9 @@ Post-Processing
 ~~~~~~~~~~~~~~~
 
 To add the seeking capabilities, the output file must be indexed using
-the following command should be executed as a post-processing:
+the following command should be executed as a post-processing::
 
-{{{flvtool2 -U %(outputWorkPath)s}}}
+    flvtool2 -U %(outputWorkPath)s
 
 Tested
 ~~~~~~
@@ -238,7 +238,7 @@ Tested
 =========== ============ ========= ============= ======== ========== ==============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
 =========== ============ ========= ============= ======== ========== ==============
-360         *            25/2      128000        1        22050      32
+360         \*           25/2      128000        1        22050      32
 =========== ============ ========= ============= ======== ========== ==============
 
 
@@ -301,9 +301,9 @@ Post-Processing
 ~~~~~~~~~~~~~~~
 
 To add the seeking capabilities, the output file must be indexed using
-the following command should be executed as a post-processing:
+the following command should be executed as a post-processing::
 
-{{{flvtool2 -U %(outputWorkPath)s}}}
+    flvtool2 -U %(outputWorkPath)s
 
 Tested
 ~~~~~~
