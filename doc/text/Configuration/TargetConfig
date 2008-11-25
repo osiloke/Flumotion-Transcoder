@@ -62,11 +62,11 @@ Muxer            identity
 Tested
 ~~~~~~
 
-==========
-SAMPLERATE
-==========
-8000
-==========
++==========+
+|SAMPLERATE|
++==========+
+|8000      |
++==========+
 
 
 AMR-NB
@@ -80,10 +80,12 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     amrnbenc
-:Audio Samplerate:  8000
-:Audio Channels:    1
-:Muxer:             ffmux_amr
+================= ============
+Audio Encoder     amrnbenc
+Audio Samplerate  8000
+Audio Channels    1
+Muxer             ffmux_amr
+================= ============
 
 
 AMR-WB
@@ -92,10 +94,12 @@ AMR-WB
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     amrwbenc
-:Audio Samplerate:  16000
-:Audio Channels:    1
-:Muxer:             ffmux_amr
+================= ============
+Audio Encoder     amrwbenc
+Audio Samplerate  16000
+Audio Channels    1
+Muxer             ffmux_amr
+================= ============
 
 
 ADPCM/MMF
@@ -109,10 +113,12 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     ffenc_adpcm_yamaha
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Muxer:             ffmux_mmf
+================= ==================
+Audio Encoder     ffenc_adpcm_yamaha
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Muxer             ffmux_mmf
+================= ==================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -137,10 +143,12 @@ MP3
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Muxer:             identity
+================= =======================================================================
+Audio Encoder     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Muxer             identity
+================= =======================================================================
 
 Tested
 ~~~~~~
@@ -173,14 +181,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     amrnbenc
-:Audio Samplerate:  8000
-:Audio Channels:    1
-:Video Encoder:     ffenc_h263 bitrate=*VIDEO_BITRATE* me-method=epzs
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             ffmux_3gp
+================= =======================================================================
+Audio Encoder     amrnbenc
+Audio Samplerate  8000
+Audio Channels    1
+Video Encoder     ffenc_h263 bitrate=*VIDEO_BITRATE* me-method=epzs
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             ffmux_3gp
+================= =======================================================================
 
 Tested
 ~~~~~~
@@ -203,14 +213,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Video Encoder:     ffenc_flv bitrate=*VIDEO_BITRATE*
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             fluflvmux
+================= =======================================================================
+Audio Encoder     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     ffenc_flv bitrate=*VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= =======================================================================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -241,14 +253,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     amrnbenc
-:Audio Samplerate:  8000
-:Audio Channels:    1
-:Video Encoder:     ffenc_mpeg4 bitrate=*VIDEO_BITRATE* me-method=epzs
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             ffmux_mov
+================= =======================================================================
+Audio Encoder     amrnbenc
+Audio Samplerate  8000
+Audio Channels    1
+Video Encoder     ffenc_mpeg4 bitrate=*VIDEO_BITRATE* me-method=epzs
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             ffmux_mov
+================= =======================================================================
 
 Tested
 ~~~~~~
@@ -272,14 +286,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Video Encoder:     videoflip method=5 ! fluvp6enc bitrate=*VIDEO_KBITRATE*
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             fluflvmux
+================= =======================================================================
+Audio Encoder     lame bitrate=*AUDIO_KBITRATE* ! audio/mpeg,rate=*SAMPLERATE* ! mp3parse
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     videoflip method=5 ! fluvp6enc bitrate=*VIDEO_KBITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= =======================================================================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -319,15 +335,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     fluwmaenc bitrate=*AUDIO_BITRATE*
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Video Encoder:     dmoenc_wmvdmoe2v3 bitrate=*VIDEO_BITRATE*
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             fluasfmux
-
+================= =======================================================================
+Audio Encoder     fluwmaenc bitrate=*AUDIO_BITRATE*
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     dmoenc_wmvdmoe2v3 bitrate=*VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluasfmux
+================= =======================================================================
 
 Tested
 ~~~~~~
@@ -352,15 +369,16 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder:     fluwmaenc bitrate=*AUDIO_BITRATE*
-:Audio Samplerate:  *SAMPLERATE*
-:Audio Channels:    *CHANNELS*
-:Video Encoder:     fluwmvenc bitrate=*VIDEO_BITRATE*
-:Video Framerate:   *FRAMERATE*
-:Video Width:       *VIDEO_WIDTH*
-:Video Height:      *VIDEO_HEIGHT*
-:Muxer:             fluasfmux
-
+================= =======================================================================
+Audio Encoder     fluwmaenc bitrate=*AUDIO_BITRATE*
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     fluwmvenc bitrate=*VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluasfmux
+================= =======================================================================
 
 Tested
 ~~~~~~
