@@ -2,12 +2,11 @@
 Flumotion Transcoding Platform
 ==============================
 
------------------
 Features Overview
------------------
+=================
 
 Features for Customers
-======================
+----------------------
 
  * `Distributed Transcoding`_
  * `Prioritized Transcoding`_
@@ -24,7 +23,8 @@ Features for Customers
  * `Target Post-Processing`_
  * `Identity Target`_
 
-=== Features for Administrators ===
+Features for Administrators
+---------------------------
 
  * `Flumotion Integration`_
  * `Restart And Crash Safety`_
@@ -34,11 +34,14 @@ Features for Customers
  * `Virtualized File System Roots`_
  * `Worker Configuration Customization`_
 
-=== Future Features ===
+Future Features
+---------------
 
 Partly implemented features not yet ready for production.
 
  * `Source File Pre-Processing`_
+
+
 
 
 .. _Distributed Transcoding: customer-features.rst
