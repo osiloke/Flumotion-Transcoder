@@ -52,10 +52,12 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-:Audio Encoder: fluqcpenc
-:Audio Samplerate: *SAMPLERATE*
-:Audio Channels: 1
-:Muxer: identity
+================ ============
+Audio Encoder    fluqcpenc
+Audio Samplerate *SAMPLERATE*
+Audio Channels   1
+Muxer            identity
+================ ============
 
 Tested
 ~~~~~~
