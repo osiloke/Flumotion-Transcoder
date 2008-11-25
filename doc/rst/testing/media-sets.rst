@@ -10,11 +10,11 @@ There is two error sets, one for audio and one for audio/video.
 
 They can be found on the dev cluster::
      
-     /home/file/testing/transcoder/error/audio
-     /home/file/testing/transcoder/error/video
+     /home/file/testing/transcoder/media/error/audio
+     /home/file/testing/transcoder/media/error/video
 
-Content
--------
+Set Content
+-----------
 
 These set contains files of three defined types.
 
@@ -59,8 +59,8 @@ of codecs, size, duration.
 
 The sets can be found on the dev cluster::
 
-    /home/testing/transcoder/samples/audio
-    /home/testing/transcoder/samples/video
+    /home/testing/transcoder/media/samples/audio
+    /home/testing/transcoder/media/samples/video
 
 
 Customer Sets
@@ -73,13 +73,13 @@ of at least 10 representative files should exists.
 
 They can be found on the dev cluster::
 
-     /home/testing/transcoder/customers
+     /home/testing/transcoder/media/customers
 
 And each files will be in the incoming directory of the respective
 regression profile and start with the prefix *cust_* followed
 by a name to identify the customer, for example::
 
-     /home/testing/transcoder/customers/a3webtv/files/incoming/video/cust_a3webtv_filename.flv
+     /home/testing/transcoder/media/customers/a3webtv/files/incoming/video/cust_a3webtv_filename.flv
 
 
 Regression Set
@@ -90,12 +90,12 @@ already separated in different directories to facilitate testing.
 
 They can be found on the dev cluster::
 
-     /home/testing/transcoder/regressions
+     /home/testing/transcoder/media/regressions
 
 And each files will be in the incoming directory of the respective
 regression profile and start with the prefix *regression_*, for example::
 
-     /home/testing/transcoder/regressions/regression_name/files/incoming/regression_file.mpg
+     /home/testing/transcoder/media/regressions/regression_name/files/incoming/regression_file.mpg
 
 
 Basic Profile Testing Set
@@ -106,9 +106,9 @@ already separated in different directories to facilitate testing.
 
 They can be found on the dev cluster::
 
-     /home/testing/transcoder/functional
+     /home/testing/transcoder/media/functional
 
 And each files will be in the incoming directory of the respective
 regression profile and start with the prefix *functional_*, for example::
 
-     /home/testing/transcoder/funcional/profile_name/files/incoming/test_name/functional_filename.mpg
+     /home/testing/transcoder/media/funcional/profile_name/files/incoming/test_name/functional_filename.mpg
