@@ -112,3 +112,20 @@ And each files will be in the incoming directory of the respective
 regression profile and start with the prefix *functional_*, for example::
 
      /home/testing/transcoder/media/funcional/profile_name/files/incoming/test_name/functional_filename.mpg
+
+Indexing Testing Set
+====================
+
+This is a special set of FLV files of different types
+used to test indexing. These files must have been
+created by other application than GStreamer.
+
+The set contains:
+
+ * MP3 in FLV
+ * Sorenson with MP3 in FLV
+ * Sorenson with AAC in FLV (if it's possible ?)
+ * VP6 with MP3 in FLV
+ * VP6 with AAC in FLV
+ * H264 with MP3 in FLV
+ * H264 with AAC in FLV
