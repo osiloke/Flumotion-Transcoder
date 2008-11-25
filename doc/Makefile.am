@@ -6,6 +6,7 @@ EXTRA_DIST = requirments-specifications.txt \
              examples/customers/bigclient.ini \
              examples/workers/transcoder.xml \
              rst/index.rst \
+             rst/overview/features.rst \
              rst/overview/admin-features.rst \
              rst/overview/future-features.rst \
              rst/overview/customer-features.rst \
