@@ -41,29 +41,29 @@ Partly implemented features not yet ready for production.
  * `Source File Pre-Processing`_
 
 
-.. `Distributed Transcoding`: customer-features.rst
-.. `Prioritized Transcoding`: customer-features.rst
-.. `Integrated Thumbnailing`: customer-features.rst
-.. `Video Dimensions Control`: customer-features.rst
-.. `Thumbnail Dimensions Control`: customer-features.rst
-.. `Frame Sampling`: customer-features.rst
-.. `Stateless Monitoring`: customer-features.rst
-.. `Flexible Output Structure`: customer-features.rst
-.. `Subdirectory Replication`: customer-features.rst
-.. `Multiple Notification`: customer-features.rst
-.. `Notification Queue`: customer-features.rst
-.. `Notification Customization`: customer-features.rst
-.. `Target Post-Processing`: customer-features.rst
-.. `Identity Target`: customer-features.rst
+.. _Distributed Transcoding: customer-features.rst
+.. _Prioritized Transcoding: customer-features.rst
+.. _Integrated Thumbnailing: customer-features.rst
+.. _Video Dimensions Control: customer-features.rst
+.. _Thumbnail Dimensions Control: customer-features.rst
+.. _Frame Sampling: customer-features.rst
+.. _Stateless Monitoring: customer-features.rst
+.. _Flexible Output Structure: customer-features.rst
+.. _Subdirectory Replication: customer-features.rst
+.. _Multiple Notification: customer-features.rst
+.. _Notification Queue: customer-features.rst
+.. _Notification Customization: customer-features.rst
+.. _Target Post-Processing: customer-features.rst
+.. _Identity Target: customer-features.rst
 
-.. `Flumotion Integration`: admin-features.rst
-.. `Restart And Crash Safety`: admin-features.rst
-.. `Flexible Profile Definition`: admin-features.rst
-.. `Mail Notification`: admin-features.rst
-.. `Diagnostic Report`: admin-features.rst
-.. `Virtualized File System Roots`: admin-features.rst
-.. `Worker Configuration Customization`: admin-features.rst
+.. _Flumotion Integration: admin-features.rst
+.. _Restart And Crash Safety: admin-features.rst
+.. _Flexible Profile Definition: admin-features.rst
+.. _Mail Notification: admin-features.rst
+.. _Diagnostic Report: admin-features.rst
+.. _Virtualized File System Roots: admin-features.rst
+.. _Worker Configuration Customization: admin-features.rst
 
-.. `Source File Pre-Processing`: future-features.rst
+.. _Source File Pre-Processing: future-features.rst
 
 
