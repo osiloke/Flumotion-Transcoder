@@ -10,8 +10,8 @@ There is two error sets, one for audio and one for audio/video.
 
 They can be found on the dev cluster::
      
-     /home/file/testing/transcoder/media/error/audio
-     /home/file/testing/transcoder/media/error/video
+     /home/file/testing/transcoder/media/errors/audio
+     /home/file/testing/transcoder/media/errors/video
 
 Set Content
 -----------
@@ -76,10 +76,9 @@ They can be found on the dev cluster::
      /home/testing/transcoder/media/customers
 
 And each files will be in the incoming directory of the respective
-regression profile and start with the prefix *cust_* followed
-by a name to identify the customer, for example::
+customer profile, for example::
 
-     /home/testing/transcoder/media/customers/a3webtv/files/incoming/video/cust_a3webtv_filename.flv
+     /home/testing/transcoder/media/customers/a3webtv/files/incoming/video/filename.flv
 
 
 Regression Set
@@ -93,9 +92,9 @@ They can be found on the dev cluster::
      /home/testing/transcoder/media/regressions
 
 And each files will be in the incoming directory of the respective
-regression profile and start with the prefix *regression_*, for example::
+regression profile, for example::
 
-     /home/testing/transcoder/media/regressions/regression_name/files/incoming/regression_file.mpg
+     /home/testing/transcoder/media/regressions/regression_name/files/incoming/file.mpg
 
 
 Basic Profile Testing Set
@@ -107,7 +106,7 @@ already separated in different directories to facilitate testing.
 They can be found on the dev cluster::
 
      /home/testing/transcoder/media/functional
-
+ 
 And each files will be in the incoming directory of the respective
 regression profile and start with the prefix *functional_*, for example::
 
@@ -120,12 +119,21 @@ This is a special set of FLV files of different types
 used to test indexing. These files must have been
 created by other application than GStreamer.
 
-The set contains:
+The video set contains:
 
- * MP3 in FLV
  * Sorenson with MP3 in FLV
  * Sorenson with AAC in FLV (if it's possible ?)
  * VP6 with MP3 in FLV
  * VP6 with AAC in FLV
  * H264 with MP3 in FLV
  * H264 with AAC in FLV
+
+The audio set contains:
+
+ * MP3 in FLV
+ * AAC in FLV
+
+he sets can be found on the dev cluster::
+
+    /home/testing/transcoder/media/indexing/audio
+    /home/testing/transcoder/media/indexing/video
