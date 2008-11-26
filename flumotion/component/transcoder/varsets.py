@@ -19,10 +19,10 @@ CORTADO_DEFAULT_HEIGHT = 40
 def getPreProcessVars(context):
     reporter = context.reporter
     config = context.config
-    sourceCtx = context.getSourceContext()        
+    sourceCtx = context.getSourceContext()
     sourceAnalysis = reporter.report.source.analysis
     vars = dict()
-    
+
     vars['outputBase'] = context.getOutputDir()
     vars['inputBase'] = context.getInputDir()
     vars['linkBase'] = context.getLinkDir()
@@ -31,11 +31,12 @@ def getPreProcessVars(context):
     vars['doneBase'] = context.getDoneDir()
     vars['failedBase'] = context.getFailedDir()
 
-    vars['inputRelPath'] = sourceCtx.getInputFile()
-    vars['inputFile'] = os.path.basename(vars['inputRelPath'])
-    vars['inputPath'] = sourceCtx.getInputPath()
-    vars['inputDir'] = os.path.basename(os.path.join(vars['inputBase'],
-                                                     vars['inputRelPath']))
+    inputFile = sourceCtx.getInputFile()
+    inputPath = sourceCtx.getInputPath()
+    vars['inputRelPath'] = inputFile
+    vars['inputFile'] = os.path.basename(inputFile)
+    vars['inputPath'] = inputPath
+    vars['inputDir'] = os.path.dirname(inputPath)
     vars['customerName'] = config.customer.name
     vars['profileName'] = config.profile.label
     vars['sourceMime'] = sourceAnalysis.mimeType
@@ -62,7 +63,7 @@ def getPreProcessVars(context):
     m = s / 60
     s -= m * 60
     h = m / 60
-    m -= h * 60        
+    m -= h * 60
     vars['sourceHours'] = h
     vars['sourceMinutes'] = m
     vars['sourceSeconds'] = s
@@ -72,36 +73,42 @@ def getPostProcessVars(targetCtx):
     targetConfig = targetCtx.config
     targetReporter = targetCtx.reporter
     targetAnalysis = targetCtx.reporter.report.analysis
-    
+
     vars = getPreProcessVars(targetCtx.context)
 
-    vars['outputRelPath'] = targetCtx.getOutputFile()
-    vars['outputFile'] = os.path.basename(vars['outputRelPath'])
-    vars['outputPath'] = targetCtx.getOutputPath()
-    vars['outputDir'] = os.path.basename(os.path.join(vars['outputBase'],
-                                                      vars['outputRelPath']))
-    
-    vars['outputWorkRelPath'] = targetCtx.getOutputWorkFile()
-    vars['outputWorkFile'] = os.path.basename(vars['outputWorkRelPath'])
-    vars['outputWorkPath'] = targetCtx.getOutputWorkPath()
-    vars['outputWorkDir'] = os.path.basename(os.path.join(vars['outputWorkBase'],
-                                                          vars['outputWorkRelPath']))
-    
-    vars['linkRelPath'] = targetCtx.getLinkFile()
-    vars['linkFile'] = os.path.basename(vars['linkRelPath'])
-    vars['linkPath'] = targetCtx.getLinkPath()
-    vars['linkDir'] = os.path.basename(os.path.join(vars['linkBase'],
-                                                      vars['linkRelPath']))
-    
-    vars['linkWorkRelPath'] = targetCtx.getLinkWorkFile()
-    vars['linkWorkFile'] = os.path.basename(vars['linkWorkRelPath'])
-    vars['linkWorkPath'] = targetCtx.getLinkWorkPath()
-    vars['linkWorkDir'] = os.path.basename(os.path.join(vars['linkWorkBase'],
-                                                          vars['linkWorkRelPath']))
-    
-    vars['targetName'] = targetConfig.label
-    vars['targetType'] = targetConfig.type.name
-    vars['targetMime'] = targetAnalysis.mimeType
+    outputFile = targetCtx.getOutputFile()
+    outputPath = targetCtx.getOutputPath()
+    vars['outputRelPath'] = outputFile
+    vars['outputFile'] = os.path.basename(outputFile)
+    vars['outputPath'] = outputPath
+    vars['outputDir'] = os.path.dirname(outputPath)
+
+    outputWorkFile = targetCtx.getOutputWorkFile()
+    outputWorkPath = targetCtx.getOutputWorkPath()
+    vars['outputWorkRelPath'] = outputWorkFile
+    vars['outputWorkFile'] = os.path.basename(outputWorkFile)
+    vars['outputWorkPath'] = outputWorkPath
+    vars['outputWorkDir'] = os.path.dirname(outputWorkPath)
+
+    linkFile = targetCtx.getLinkFile()
+    if linkFile:
+        linkPath = targetCtx.getLinkPath()
+        vars['linkRelPath'] = linkFile
+        vars['linkFile'] = os.path.basename(linkFile)
+        vars['linkPath'] = linkPath
+        vars['linkDir'] = os.path.dirname(linkPath)
+
+        linkWorkFile = targetCtx.getLinkWorkFile()
+        linkWorkPath = targetCtx.getLinkWorkPath()
+        vars['linkWorkRelPath'] = linkWorkFile
+        vars['linkWorkFile'] = os.path.basename(linkWorkFile)
+        vars['linkWorkPath'] = linkWorkPath
+        vars['linkWorkDir'] = os.path.dirname(linkWorkPath)
+
+        vars['targetName'] = targetConfig.label
+        vars['targetType'] = targetConfig.type.name
+        vars['targetMime'] = targetAnalysis.mimeType
+
     if targetAnalysis.hasVideo:
         vars['targetHasVideo'] = 1
         vars['targetVideoWidth'] = targetAnalysis.videoWidth
@@ -125,11 +132,11 @@ def getPostProcessVars(targetCtx):
     m = s / 60
     s -= m * 60
     h = m / 60
-    m -= h * 60        
+    m -= h * 60
     vars['targetHours'] = h
     vars['targetMinutes'] = m
     vars['targetSeconds'] = s
-    
+
     if duration > 0:
         vars['mediaDuration'] = vars["targetDuration"]
         vars['mediaLength'] = vars["targetLength"]
@@ -142,12 +149,12 @@ def getPostProcessVars(targetCtx):
         vars['mediaHours'] = vars["sourceHours"]
         vars['mediaMinutes'] = vars["sourceMinutes"]
         vars['mediaSeconds'] = vars["sourceSeconds"]
-    
+
     return vars
 
 def getLinkTemplateVars(targetCtx):
     return getPostProcessVars(targetCtx)
-    
+
 def getCortadoArgs(targetCtx):
     targetAnalysis = targetCtx.reporter.report.analysis
     args = dict()

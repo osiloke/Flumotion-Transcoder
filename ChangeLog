@@ -1,3 +1,10 @@
+2008-11-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/varsets.py:
+	Fixed a bug that appear when no link base directory was specified.
+	Fixed bugs where the directory variables were retrieved with
+	os.path.basename insteed of os.path.basedir.
+
 2008-11-11  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion/component/transcoder/analyst.py:
