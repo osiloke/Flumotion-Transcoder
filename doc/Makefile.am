@@ -13,13 +13,12 @@ EXTRA_DIST = requirments-specifications.txt \
              rst/installation/uninstalled.rst \
              rst/installation/build.rst \
              rst/installation/installed.rst \
-             rst/configuration/file-source \
              rst/configuration/file-source/customer-config.rst \
              rst/configuration/file-source/transcoder-config.rst \
              rst/configuration/admin-config.rst \
              rst/configuration/encoder-config.rst \
-             rst/testing/encoders-testing.rst \
+             rst/testing/encoder-testing.rst \
              rst/testing/media-sets.rst \
-             rst/testing/dependencies-testing.rst \
+             rst/testing/dependency-testing.rst \
              rst/testing/release-testing.rst \
              rst/testing/integration-testing.rst
