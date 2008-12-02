@@ -86,7 +86,7 @@ fi
 %defattr(-,root,root,-)
 %doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
 %doc doc/examples
-%doc doc/text
+%doc doc/rst
 %{_libdir}/flumotion
 %{_libdir}/pkgconfig/flumotion-transcoder.pc
 %{_libdir}/python?.?/site-packages/transcoder
