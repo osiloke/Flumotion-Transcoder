@@ -184,6 +184,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.info("Transcoding task '%s' %s", task.label,
                   (succeed and "succeed") or "failed")
         self._activities.pop(task)
+        self.__startupTasks()
 
 
     ## EventSource Overriden Methods ##
