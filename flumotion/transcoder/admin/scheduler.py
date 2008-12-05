@@ -184,7 +184,12 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self.info("Transcoding task '%s' %s", task.label,
                   (succeed and "succeed") or "failed")
         self._activities.pop(task)
-        self.__startupTasks()
+        #FIXME: The task may have been already removed in response
+        #       to the vile being removed from incoming.
+        #       Canceling a task already acknowledged should be prevented.
+        #       See #2921
+        profCtx = task.getProfileContext()
+        self._transcoding.removeTask(profCtx.uid)
 
 
     ## EventSource Overriden Methods ##
