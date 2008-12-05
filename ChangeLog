@@ -1,5 +1,10 @@
 2008-12-05  Sebastien Merle  <sebastien@fluendo.com>
 
+	* bin/flumotion-progressive-move:
+	Updated the script for changes in flumotion.
+
+2008-12-05  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/scheduler.py:
 	* flumotion/transcoder/admin/taskmanager.py:
 	Quick fix for #2921.

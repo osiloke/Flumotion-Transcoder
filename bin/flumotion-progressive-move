@@ -11,7 +11,7 @@ FLU_DIR = "/usr/lib/flumotion/python"
 if not FLU_DIR in sys.path:
         sys.path.insert(0, FLU_DIR)
 
-from flumotion.common import common, log
+from flumotion.common import process, log
 from flumotion.configure import configure
 
 VERSION = 0.1
@@ -74,7 +74,7 @@ def parse_options(args):
                       action="store", dest="rundir",
                       help="flumotion run directory (default: %s)" %
                       configure.rundir)
-    
+
     options, args = parser.parse_args(args)
 
     # Force options down configure's throat
@@ -86,20 +86,20 @@ def parse_options(args):
     if options.version:
         print VERSION
         sys.exit(0)
-    
+
     try:
         if options.daemonizeTo and not options.daemonize:
             raise OptError('--daemonize-to can only be used with -D/--daemonize.')
-    
+
         if len(args) != 3:
             sys.exit(usage)
-    
+
         sourcePath, targetPath = args[1:]
         if not (os.path.exists(sourcePath) and os.path.isdir(sourcePath)):
             raise OptError("Source directory '%s' not found" % sourcePath)
         if not (os.path.exists(targetPath) and os.path.isdir(targetPath)):
             raise OptError("Target directory '%s' not found" % targetPath)
-    
+
         return options, sourcePath, targetPath
     except OptError, e:
             print "Invalid Parameter: ", str(e)
@@ -131,7 +131,7 @@ def start(sourcePath, targetPath, period, threshold, count, postfix):
             move_files(sourcePath, targetPath, count, postfix)
     except Exception, e:
         warning("Unexpected Exception: %s", log.getExceptionMessage(e))
-    reactor.callLater(period, start, sourcePath, targetPath,    
+    reactor.callLater(period, start, sourcePath, targetPath,
                       period, threshold, count, postfix)
 
 def count_files(path):
@@ -210,33 +210,33 @@ def possess(daemonizeTo=None):
     if not daemonizeTo:
         daemonizeTo = '/'
 
-    pid = common.getPid('progressive-move')
+    pid = process.getPid('progressive-move')
     if pid:
-        if common.checkPidRunning(pid):
+        if process.checkPidRunning(pid):
             raise Exception('A progressive-move is already running '
                             + 'as pid %d' % pid)
         else:
             warning("progressive-move should have been "
                     "running with pid %s.  Restarting", str(pid))
-            common.deletePidFile('progressive-move')
+            process.deletePidFile('progressive-move')
 
     logPath = os.path.join(configure.logdir, 'progressive-move.log')
 
     # here we daemonize; so we also change our pid
     if not daemonizeTo:
         daemonizeTo = '/'
-    common.daemonize(stdout=logPath, stderr=logPath, 
-                     directory=daemonizeTo)
+    process.daemonize(stdout=logPath, stderr=logPath,
+                      directory=daemonizeTo)
 
     info('Started daemon')
 
     # from now on I should keep running, whatever happens
     debug('writing pid file')
-    common.writePidFile('progressive-move')
+    process.writePidFile('progressive-move')
 
 def exorcize():
     debug('deleting pid file')
-    common.deletePidFile('progressive-move')
+    process.deletePidFile('progressive-move')
 
 if __name__ == "__main__":
     try:
