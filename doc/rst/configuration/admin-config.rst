@@ -25,23 +25,23 @@ Copy and modify the file ``/etc/flumotion/transcoder/transcoder-admin.ini``:
 Specifications
 ~~~~~~~~~~~~~~
 
-Section **HEADER**
-------------------
+Section *HEADER*
+----------------
 
 This section contains config file's specific information.
 
-Property **version**
-....................
+Property *version*
+..................
 
 This contains the version of the configuration format.
 
-Section **global**
-------------------
+Section *global*
+----------------
 
 This section contains generic parameters for the transcoder.
 
-Property **debug**
-..................
+Property *debug*
+................
 
 Overrides the debug level of the transcoder administration.
 It uses the same format as the **-d** command line option.
@@ -53,8 +53,8 @@ Usage example::
 
   debug = 4,sceduler:5
 
-Property **transcoder-label-template**
-......................................
+Property *transcoder-label-template*
+....................................
 
 specifies the template used in generating the transcoding components labels.
 
@@ -68,8 +68,8 @@ Usage example::
 
   transcoder-label-template = File %(sourceFile)s for %(customerName)s
 
-Property **monitor-label-template**
-......................................
+Property *monitor-label-template*
+.................................
 
 Specifies the template used in generating the monitoring components labels.
 
@@ -83,8 +83,8 @@ Usage example::
 
   monitor-label-template = %(customerName)s's Monitor
 
-Property **activity-label-template**
-......................................
+Property *activity-label-template*
+..................................
 
 Specifies the template used in generating the scheduler activities labels.
 
@@ -98,13 +98,13 @@ Usage example::
 
   activity-label-template = %(customername)s's Activity for %(sourceFile)s
 
-Section **admin**
------------------
+Section *admin*
+---------------
 
 This section contains the configuration specific to the transcoder administration.
 
-Properties **roots**
-....................
+Properties *roots*
+..................
 
 The *roots* properties are use to specify the virtual mount points for
 the transcoder admin. The principal root is *default* that specify
@@ -116,8 +116,8 @@ Usage example::
 
   roots#default = /home/file/
 
-Sub-Section **admin:data-source**
----------------------------------
+Sub-Section *admin:data-source*
+-------------------------------
 
 This sub-section of the transcoder administration configuration
 is used to configure the datasource form where the configuration
@@ -125,8 +125,8 @@ is retrieved.
 
 For now, only the file datasource is suported.
 
-Property **data-file**
-......................
+Property *data-file*
+....................
 
 Specifies where the file containing the transcoder data is located.
 
@@ -137,14 +137,14 @@ Usage example::
   data-file = /etc/flumotion/transcoder/transcoder-data.ini
 
 
-Sub-Section **admin:notifier**
-..............................
+Sub-Section *admin:notifier*
+............................
 
 This sub-section of the transcoder administration configuration
 is used to set notification related properties.
 
-Property **smtp-server**
-........................
+Property *smtp-server*
+......................
 
 Specifies the address of the SMTP server used to send emails.
 
@@ -154,8 +154,8 @@ Usage example::
 
     smtp-server = mail.fluendo.com
 
-Property **smtp-port**
-......................
+Property *smtp-port*
+....................
 
 Specifies the IP port number to use with the SMTP server.
 
@@ -167,8 +167,8 @@ Usage example::
 
   smtp-port = 42
 
-Property **smtp-require-tls**
-.............................
+Property *smtp-require-tls*
+...........................
 
 Specifies if an encrypted channel should be used
 to communicate with the SMTP server.
@@ -181,8 +181,8 @@ Usage example::
 
   smtp-require-tls = False
 
-Property **smtp-username**
-..........................
+Property *smtp-username*
+........................
 
 If the SMTP server require authentication,
 this property is used to specify the username.
@@ -193,8 +193,8 @@ Usage example::
 
   smtp-username = user
 
-Property **smtp-password**
-..........................
+Property *smtp-password*
+........................
 
 If the SMTP server require authentication,
 this property is used to specify the password.
@@ -203,8 +203,8 @@ Usage example::
 
   smtp-password = test
 
-Property **mail-notify-sender**
-...............................
+Property *mail-notify-sender*
+.............................
 
 Specifies the email address to use for the sender of the notification emails.
 
@@ -217,8 +217,8 @@ Usage example::
 
   mail-notify-sender = Transcoder Notifications <notifications@flumotion.com>
 
-Property **mail-emergency-sender**
-...............................
+Property *mail-emergency-sender*
+................................
 
 Specifies the email address to use for the sender of the emergency emails.
 
@@ -231,8 +231,8 @@ Usage example::
 
   mail-emergency-sender = Transcoder Emergencies <emergencies@flumotion.com>
 
-Property **mail-emergency-recipients**
-......................................
+Property *mail-emergency-recipients*
+....................................
 
 Specifies the email addresses the emergency emails have to be send to.
 
@@ -246,8 +246,8 @@ Usage example::
 
   mail-emergency-recipients = Test <test@flumotion.com>, admin@flumotion.com
 
-Property **mail-debug-sender**
-...............................
+Property *mail-debug-sender*
+............................
 
 Specifies the email address to use for the sender of the debug emails.
 
@@ -260,8 +260,8 @@ Usage example::
 
   mail-debug-sender = Transcoder Debug <debug@flumotion.com>
 
-Property **mail-debug-recipients**
-......................................
+Property *mail-debug-recipients*
+................................
 
 Specifies the email addresses the debug emails have to be send to.
 
@@ -275,13 +275,13 @@ Usage example::
 
   mail-debug-recipients = debug <debug@flumotion.com>, admin@flumotion.com
 
-Sub-Section **admin:api**
--------------------------
+Sub-Section *admin:api*
+-----------------------
 
 This section constains the properties to configurate the administration API.
 
-Property **host**
-.................
+Property *host*
+...............
 
 Specifies the address to listen for API connections.
 
@@ -293,8 +293,8 @@ Usage example::
 
   host = admin1.bcn.flumotion.net
 
-Property **port**
-.................
+Property *port*
+...............
 
 Specifies the IP port number the API is listening for connections.
 
@@ -306,8 +306,8 @@ Usage example::
 
   port = 7676
 
-Property **use-ssl**
-....................
+Property *use-ssl*
+..................
 
 Specifies if SSL should be use to encrypte connections to the API.
 
@@ -319,8 +319,8 @@ Usage example::
 
   use-ssl = False
 
-Property **certificate**
-........................
+Property *certificate*
+......................
 
 Specifies the SSL certificate to use. The certificate
 must contains a private key.
@@ -336,14 +336,14 @@ Usage example::
   certificate = transcoder.pem
 
 
-Sub-Section **admin:api:bouncer**
----------------------------------
+Sub-Section *admin:api:bouncer*
+-------------------------------
 
 This sub-section of admin api configuration, is used
 to configurate the bouncer used to authenticate the API connections.
 
-Property **type**
-.................
+Property *type*
+...............
 
 Specifies the bouncer type. The supported types are:
 
@@ -362,8 +362,8 @@ Usage example::
 
   type = salted-sha256
 
-Properties **users**
-....................
+Properties *users*
+..................
 
 For each user, a users property should be added with the username
 as property sub-name, and a bouncer-dependent value.
@@ -386,13 +386,13 @@ Usage example::
   users#beans = spam:1f16e7daa5261b78f64e01d4904e7eb5aa78aa09c4e9a8efb33a93913757d96b
   users#test = salt:1bc1a361f17092bc7af4b2f82bf9194ea9ee2ca49eb2e53e39f555bc1eeaed74
 
-Section **manager**
--------------------
+Section *manager*
+-----------------
 
 This section groups the mananger related properties.
 
-Property **host**
-.................
+Property *host*
+...............
 
 Specifies the hostname of the flumotion mananger the admin must connect to.
 
@@ -402,8 +402,8 @@ Usage example::
 
   host = manager.bcn.fluendo.net
 
-Property **port**
-.................
+Property *port*
+...............
 
 Specifies the IP port number the manager is listening to.
 
@@ -413,8 +413,8 @@ Usage example::
 
   port = 7632
 
-Property **username**
-.....................
+Property *username*
+...................
 
 Specifies the username to use for manager authentication.
 
@@ -424,8 +424,8 @@ Usage example::
 
   username = user
 
-Property **password**
-.....................
+Property *password*
+...................
 
 Specifies the password to use for manager authentication.
 
@@ -435,8 +435,8 @@ Usage example::
 
   password = test
 
-Property **use-ssl**
-....................
+Property *use-ssl*
+..................
 
 Specifies if SSL should be used to encrypte the communication
 between the transcoder admin and the flumotion mananger.
@@ -449,8 +449,8 @@ Usage example::
 
   use-ssl = True
 
-Sections **worker-defaults** and **workers** sections
----------------------------------------------------------
+Sections *worker-defaults* and *workers* sections
+-------------------------------------------------
 
 The *worker-defaults* section is used to specify default values
 for all workers, and these values can be ovverriden for each
@@ -466,8 +466,8 @@ will only start at most 1 transcoding component.
 The properties are the same for the section *worker-defaults*
 and the worker-specific sections.
 
-Properties **roots**
-....................
+Properties *roots*
+..................
 
 Specifies the virtual directory mount point for a worker.
 thes mount points will be used when converting between virtual
@@ -478,8 +478,8 @@ Usage example::
   roots#default = /home/file/
   roots#temp = /var/tmp/flumotion/transcoder/
 
-Property **max-task**
-.....................
+Property *max-task*
+...................
 
 Specifies the maximum amount of simultaneous transcoding component to be
 executed on a worker.
@@ -496,8 +496,8 @@ Usage example::
 
  max-task = 3
 
-Property **max-keep-failed**
-............................
+Property *max-keep-failed*
+..........................
 
 Specifies the maximum amount of sad transcoder components to keep on a worker.
 
@@ -515,8 +515,8 @@ Usage example::
 
  max-keep-failed = 3
 
-Property **gst-debug**
-......................
+Property *gst-debug*
+....................
 
 Not yet implemented.
 
