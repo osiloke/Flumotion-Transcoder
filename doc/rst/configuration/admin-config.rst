@@ -6,15 +6,12 @@ Flumotion Transcoder Installation
 Configure the Transcoder Administration
 ---------------------------------------
 
-How to configure the transcoder admin.
-
 .. sectnum::
 
 .. contents::
 
-
-System Configuration
-====================
+Adminitration Configuration
+===========================
 
 What to do
 ~~~~~~~~~~
@@ -616,8 +613,8 @@ Example of *transcoder-admin.ini* file::
   max-task = 1
   roots#default = /mnt/transcoder/file
 
-Transcoding Configuration Data
-==============================
+Customer/Profiles Configuration
+===============================
 
 The transcoding configuration data can come from different sources:
 
