@@ -1,5 +1,5 @@
 ================================
-Flumotion Transcoder Instalation
+Flumotion Transcoder Installation
 ================================
 
 ---------------------------------------
@@ -14,12 +14,12 @@ What to do
 
 Copy and modify the file ``/etc/flumotion/transcoder/transcoder-admin.ini``:
 
- - Set the filesystem roots for the admin.
+ - Set the file system roots for the admin.
  - Set the notification email addresses and recipients.
  - Set the manager host and port.
  - Set the manager credentials.
  - Set the default worker file system roots, 
-   max concurent task count and max failed job.
+   max concurrent task count and max failed job.
  - Set specific worker overrides.
 
 Specifications
@@ -34,6 +34,8 @@ Property *version*
 ..................
 
 This contains the version of the configuration format.
+
+Must not be modified by hand.
 
 Section *global*
 ----------------
@@ -51,7 +53,7 @@ or service configuration.
 
 Usage example::
 
-  debug = 4,sceduler:5
+  debug = 4,scheduler:5
 
 Property *transcoder-label-template*
 ....................................
@@ -90,7 +92,7 @@ Specifies the template used in generating the scheduler activities labels.
 
 It's a string that can contains placeholders, see `Name Template Placeholders`_.
 
-If not spcified, the default value is::
+If not specified, the default value is::
 
   %(customerName)s/%(profileName)s:%(sourcePath)s
 
@@ -120,10 +122,10 @@ Sub-Section *admin:data-source*
 -------------------------------
 
 This sub-section of the transcoder administration configuration
-is used to configure the datasource form where the configuration
+is used to configure the datasource from where the configuration
 is retrieved.
 
-For now, only the file datasource is suported.
+For now, only the file datasource is supported.
 
 Property *data-file*
 ....................
@@ -185,7 +187,7 @@ Property *smtp-username*
 ........................
 
 If the SMTP server require authentication,
-this property is used to specify the username.
+this property is used to specify the user name.
 
 If not specified, no authentication will be done when using the SMTP server.
 
@@ -278,14 +280,14 @@ Usage example::
 Sub-Section *admin:api*
 -----------------------
 
-This section constains the properties to configurate the administration API.
+This section contains the properties to configure the administration API.
 
 Property *host*
 ...............
 
 Specifies the address to listen for API connections.
 
-If not specified, the daefault value is::
+If not specified, the default value is::
 
   localhost
 
@@ -309,7 +311,7 @@ Usage example::
 Property *use-ssl*
 ..................
 
-Specifies if SSL should be use to encrypte connections to the API.
+Specifies if SSL should be use to encrypt connections to the API.
 
 If not specified, the default value is::
 
@@ -340,7 +342,7 @@ Sub-Section *admin:api:bouncer*
 -------------------------------
 
 This sub-section of admin api configuration, is used
-to configurate the bouncer used to authenticate the API connections.
+to configure the bouncer used to authenticate the API connections.
 
 Property *type*
 ...............
@@ -365,7 +367,7 @@ Usage example::
 Properties *users*
 ..................
 
-For each user, a users property should be added with the username
+For each user, a users property should be added with the user name
 as property sub-name, and a bouncer-dependent value.
 
 Value format by bouncer types:
@@ -389,12 +391,12 @@ Usage example::
 Section *manager*
 -----------------
 
-This section groups the mananger related properties.
+This section groups the manager related properties.
 
 Property *host*
 ...............
 
-Specifies the hostname of the flumotion mananger the admin must connect to.
+Specifies the host name of the flumotion manager the admin must connect to.
 
 This property doesn't have default value and is required.
 
@@ -416,7 +418,7 @@ Usage example::
 Property *username*
 ...................
 
-Specifies the username to use for manager authentication.
+Specifies the user name to use for manager authentication.
 
 This property doesn't have default value and is required.
 
@@ -438,8 +440,8 @@ Usage example::
 Property *use-ssl*
 ..................
 
-Specifies if SSL should be used to encrypte the communication
-between the transcoder admin and the flumotion mananger.
+Specifies if SSL should be used to encrypt the communication
+between the transcoder admin and the flumotion manager.
 
 If not specified, the default value is::
 
@@ -453,7 +455,7 @@ Sections *worker-defaults* and *workers* sections
 -------------------------------------------------
 
 The *worker-defaults* section is used to specify default values
-for all workers, and these values can be ovverriden for each
+for all workers, and these values can be overridden for each
 workers by adding a sub section of section *workers* with the
 name of the worker.
 
@@ -470,7 +472,7 @@ Properties *roots*
 ..................
 
 Specifies the virtual directory mount point for a worker.
-thes mount points will be used when converting between virtual
+these mount points will be used when converting between virtual
 path and local path, and at least *default* and *temp* roots must be specified.
 
 Usage example::
@@ -501,11 +503,11 @@ Property *max-keep-failed*
 
 Specifies the maximum amount of sad transcoder components to keep on a worker.
 
-This is used to prevent a lots of failure to take too much worker ressources
+This is used to prevent a lots of failure to take too much worker resources
 by staying in memory.
 
 When a transcoder goes sad and there already is the maximum amount
-of sad component, the oldest one to goes sad is stoped and deleted.
+of sad component, the oldest one to goes sad is stopped and deleted.
 
 If not specified, the default value is::
 
@@ -607,16 +609,16 @@ Example of *transcoder-admin.ini* file::
   max-task = 1
   roots#default = /mnt/transcoder/file
 
-Transcoding Configuration
-=========================
+Transcoding Configuration Data
+==============================
 
-The transcoding configuration can come from different sources:
+The transcoding configuration data can come from different sources:
 
 File Data Source
 ~~~~~~~~~~~~~~~~
 
   The file datasource have a main configuration file *transcoder-data.ini*,
-  and a list of customer configuration files usualy in a sub-directory named *customers*.
+  and a list of customer configuration files usually in a sub-directory named *customers*.
 
   `Global configuration file`_.
 
