@@ -6,6 +6,13 @@ Flumotion Transcoder Installation
 Configure the Transcoder Administration
 ---------------------------------------
 
+How to configure the transcoder admin.
+
+.. sectnum::
+
+.. contents::
+
+
 System Configuration
 ====================
 
