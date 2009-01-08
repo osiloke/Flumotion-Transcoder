@@ -3,7 +3,7 @@ Flumotion Transcoder Instalation
 ================================
 
 Running an Uninstalled Transcoder
-=============================
+=================================
 
 Uninstalled Environment
 -----------------------

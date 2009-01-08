@@ -60,7 +60,7 @@ Transcoding Workers
 
 On each machines where a transcoding worker should run, copy the configuration
 file example ``/usr/share/doc/flumotion-transcoder-X.X.X.X/examples/workers/transcoder.xml``
-to ``/etc/flumotion/workers''.
+to ``/etc/flumotion/workers``.
 
 Edit the copied file:
 
