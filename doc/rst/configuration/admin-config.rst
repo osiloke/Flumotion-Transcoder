@@ -1,22 +1,26 @@
-=================================
-Flumotion Transcoder Installation
-=================================
-
----------------------------------------
+=======================================
 Configure the Transcoder Administration
----------------------------------------
+=======================================
 
 .. sectnum::
 
 .. contents::
 
-Adminitration Configuration
-===========================
+------------------------------
+Transcoder Admin Configuration
+------------------------------
 
-What to do
-~~~~~~~~~~
+Quick Start
+~~~~~~~~~~~
 
-Copy and modify the file ``/etc/flumotion/transcoder/transcoder-admin.ini``:
+Copy and modify one of the files:
+
+ - */etc/flumotion/transcoder/transcoder-admin.ini*
+ - */usr/share/flumotion-transcoder-XXX/examples/transcoder-admin.ini*
+ - Sub-directory *doc/examples/transcoder-admin.ini*
+   of the uninstalled transcoder.
+
+Then:
 
  - Set the file system roots for the admin.
  - Set the notification email addresses and recipients.
@@ -64,7 +68,7 @@ Property *transcoder-label-template*
 
 specifies the template used in generating the transcoding components labels.
 
-It's a string that can contains placeholders, see `Name Template Placeholders`_.
+It's a string that can contains placeholders, see `Components and Activities Name Template`_.
 
 If not specified, the default value is::
 
@@ -79,7 +83,7 @@ Property *monitor-label-template*
 
 Specifies the template used in generating the monitoring components labels.
 
-It's a string that can contains placeholders, see `Name Template Placeholders`_.
+It's a string that can contains placeholders, see `Components and Activities Name Template`_.
 
 If not specified, the default value is::
 
@@ -94,7 +98,7 @@ Property *activity-label-template*
 
 Specifies the template used in generating the scheduler activities labels.
 
-It's a string that can contains placeholders, see `Name Template Placeholders`_.
+It's a string that can contains placeholders, see `Components and Activities Name Template`_.
 
 If not specified, the default value is::
 
@@ -455,8 +459,8 @@ Usage example::
 
   use-ssl = True
 
-Sections *worker-defaults* and *workers* sections
--------------------------------------------------
+Section *worker-defaults* and *workers* sections
+------------------------------------------------
 
 The *worker-defaults* section is used to specify default values
 for all workers, and these values can be overridden for each
@@ -527,35 +531,6 @@ Property *gst-debug*
 Not yet implemented.
 
 
-Name Template Placeholders
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-+--------------------+---------+------------+-----------+--------------------+
-|Placeholder         |Monitors |Transcoders |Activities |Example             |
-+====================+=========+============+===========+====================+
-|%(customerName)s    |    X    |     X      |     X     |Fluendo             |
-+--------------------+---------+------------+-----------+--------------------+
-|%(profileName)s     |         |     X      |     X     |Test                |
-+--------------------+---------+------------+-----------+--------------------+
-|%(sourcePath)s      |         |     X      |     X     |sub/video.ogv       |
-+--------------------+---------+------------+-----------+--------------------+
-|%(sourceFile)s      |         |     X      |     X     |video.ogv           |
-+--------------------+---------+------------+-----------+--------------------+
-|%(sourceBasename)s  |         |     X      |     X     |video               |
-+--------------------+---------+------------+-----------+--------------------+
-|%(sourceExtension)s |         |     X      |     X     |.ogv                |
-+--------------------+---------+------------+-----------+--------------------+
-|%(sourceDir)s       |         |     X      |     X     |sub/                |
-+--------------------+---------+------------+-----------+--------------------+
-|%(profileSubdir)s   |         |     X      |     X     |basic/hq/           |
-+--------------------+---------+------------+-----------+--------------------+
-		       
-
-The default value is::
-
-  %(customerName)s/%(profileName)s:%(sourcePath)s
-
-
 Configuration Example
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -613,8 +588,9 @@ Example of *transcoder-admin.ini* file::
   max-task = 1
   roots#default = /mnt/transcoder/file
 
-Customer/Profiles Configuration
-===============================
+---------------------
+Transcoder Admin Data
+---------------------
 
 The transcoding configuration data can come from different sources:
 
@@ -633,5 +609,6 @@ Database Data Source
 
   Not implemented yet.
 
-.. _`Global configuration file`: TransFileConfig
-.. _`Customer configuration files`: CustomerFileConfig
+.. _`Global configuration file`: file-source/transcoder-config.rst
+.. _`Customer configuration files`: file-source/customer-config.rst
+.. _`Components and Activities Name Template`: placeholders.rst#components-and-activities-name-template
