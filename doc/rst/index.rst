@@ -21,14 +21,14 @@ Configuration
 Generic
 -------
 
- * `Transcoder System Configuration`_
+ * `Transcoder Admin Configuration`_
 
 File Data Source
 ----------------
 
- * `Transcoding Configuration`_
- * `Customers Configuration`_
- * `Target Configuration`_
+ * `Transcoding Data Configuration`_
+ * `Customers Data Configuration`_
+ * `Target Data Configuration`_
 
 Encoders
 --------
@@ -59,10 +59,10 @@ testing Procedures
 .. _Uninstalled Transcoder: installation/uninstalled.rst
 .. _Installed Transcoder: installation/installed.rst
 
-.. _Transcoder System Configuration: configuration/admin-config.rst
-.. _Transcoding Configuration: configuration/file-source/transcoder-config.rst
-.. _Customers Configuration: configuration/file-source/customer-config.rst
-.. _Target Configuration: configuration/file-source/target-config.rst
+.. _Transcoder Admin Configuration: configuration/admin-config.rst
+.. _Transcoding Data Configuration: configuration/file-source/transcoder-config.rst
+.. _Customers Data Configuration: configuration/file-source/customer-config.rst
+.. _Target Data Configuration: configuration/file-source/target-config.rst
 .. _Encoder Parameters: configuration/encoder-config.rst
 
 .. _Testing Media Sets: testing/media-sets.rst
