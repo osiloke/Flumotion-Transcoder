@@ -47,7 +47,7 @@ Section *global*
 This section contains glabal and default values.
 
 Property *customers-dir*
-.......................
+........................
 
 Specifies where the customer definition files are located.
 
@@ -56,7 +56,7 @@ directory containing the transcoder data file (this one).
 
 This property doesn't have default value and is required.
 
-Usage example:
+Usage example::
 
   customers-dir = /home/file/customers/
 
@@ -67,7 +67,7 @@ Specifies the directory where the activity files are stored.
 
 This property doesn't have default value and is required.
 
-Usage example:
+Usage example::
 
   activities-dir = /var/cache/flumotion/transcoder/activities
 
@@ -293,5 +293,5 @@ Usage example::
   mail-subject-temaplte = Transcodification %(trigger)s
 
 
-.. _`File Path Template`: placeholders.rst#file-path-template
-.. _`Command and Notification Template`: placeholders.rst#command-and-notification-template
+.. _`File Path Template`: ../placeholders.rst#file-path-template
+.. _`Command and Notification Template`: ../placeholders.rst#command-and-notification-template
