@@ -22,6 +22,7 @@ Generic
 -------
 
  * `Transcoder Admin Configuration`_
+ * `Configuration Placeholders`_
 
 File Data Source
 ----------------
@@ -60,6 +61,7 @@ testing Procedures
 .. _Installed Transcoder: installation/installed.rst
 
 .. _Transcoder Admin Configuration: configuration/admin-config.rst
+.. _Configuration Placeholders: configuration/placeholders.rst
 .. _Transcoding Data Configuration: configuration/file-source/transcoder-config.rst
 .. _Customers Data Configuration: configuration/file-source/customer-config.rst
 .. _Target Data Configuration: configuration/file-source/target-config.rst
