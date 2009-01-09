@@ -68,7 +68,8 @@ Property *transcoder-label-template*
 
 specifies the template used in generating the transcoding components labels.
 
-It's a string that can contains placeholders, see `Components and Activities Name Template`_.
+It's a string that can contains placeholders,
+see `Component and Activity Name Template`_.
 
 If not specified, the default value is::
 
@@ -83,7 +84,8 @@ Property *monitor-label-template*
 
 Specifies the template used in generating the monitoring components labels.
 
-It's a string that can contains placeholders, see `Components and Activities Name Template`_.
+It's a string that can contains placeholders,
+see `Component and Activity Name Template`_.
 
 If not specified, the default value is::
 
@@ -98,7 +100,8 @@ Property *activity-label-template*
 
 Specifies the template used in generating the scheduler activities labels.
 
-It's a string that can contains placeholders, see `Components and Activities Name Template`_.
+It's a string that can contains placeholders,
+see `Component and Activity Name Template`_.
 
 If not specified, the default value is::
 
@@ -111,7 +114,8 @@ Usage example::
 Section *admin*
 ---------------
 
-This section contains the configuration specific to the transcoder administration.
+This section contains the configuration specific to the transcoder
+administration.
 
 Properties *roots*
 ..................
@@ -611,4 +615,4 @@ Database Data Source
 
 .. _`Global configuration file`: file-source/transcoder-config.rst
 .. _`Customer configuration files`: file-source/customer-config.rst
-.. _`Components and Activities Name Template`: placeholders.rst#components-and-activities-name-template
+.. _`Component and Activity Name Template`: placeholders.rst#component-and-activity-name-template
