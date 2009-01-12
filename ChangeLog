@@ -1,3 +1,9 @@
+2009-01-12  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* doc/examples/customers/fluendo.ini:
+	Fix the example customer profile to make it work in a default
+	installation.
+
 2008-12-05  Sebastien Merle  <sebastien@fluendo.com>
 
 	* bin/flumotion-progressive-move:
