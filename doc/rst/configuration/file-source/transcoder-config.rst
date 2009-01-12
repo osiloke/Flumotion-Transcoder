@@ -303,7 +303,7 @@ See `Command and Notification Template`_ for a list of the allowed placeholders.
 If the value is not overridden by a customer configuration,
 the specified value will be used and if not specified
 the default value is::
-
+    
   Transcoding Report
   ==================
 
@@ -389,7 +389,7 @@ Usage example::
 
 
 Property *http-request-retry-max*
-.........................
+.................................
 
 Specifies how many times by default the http request must be done
 before considering it a failure.
@@ -405,7 +405,7 @@ Usage example::
   http-request-retry-max = 8
 
 Property *http-request-retry-sleep*
-...........................
+...................................
 
 Specifies the default time in second between http request retries.
 
@@ -420,7 +420,7 @@ Usage example::
   http-request-retry-sleep = 120
 
 Property *sql-timeout*
-...............................
+......................
 
 Specifies the default maximum time in second to wait for
 the SQL statment notifications to succeed. 
@@ -437,7 +437,7 @@ Usage example::
 
 
 Property *sql-retry-max*
-.........................
+........................
 
 Specifies how many times by default the sql statment notifications
 must be tried before considering it a failure.
@@ -453,7 +453,7 @@ Usage example::
   sql-retry-max = 8
 
 Property *sql-retry-sleep*
-...........................
+..........................
 
 Specifies the default time in second between SQL statments execution retries.
 
@@ -513,7 +513,7 @@ Usage example::
   access-force-dir-mode = 0777
 
 Property *access-force-file-mode*
-................................
+.................................
 
 Specifies the default file mode bits in octal form for
 the files created by the transcoder.
