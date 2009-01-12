@@ -292,6 +292,262 @@ Usage example::
 
   mail-subject-temaplte = Transcodification %(trigger)s
 
+Property *mail-body-template*
+.............................
+
+Specifies the default body for notification mails.
+
+The template can contains placeholders that will be substituted.
+See `Command and Notification Template`_ for a list of the allowed placeholders.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  Transcoding Report
+  ==================
+
+  Customer Name: %(customerName)s
+  Profile Name:  %(profileName)s
+  --------------
+
+    File: '%(inputRelPath)s'
+  
+    Message: %(errorMessage)s
+  
+Usage example::
+
+  mail-body-template = 'Report\nFile: %(inputRelPath)s\nMessage: %(errorMessage)s'
+
+Property *mail-timeout*
+.......................
+
+Specifies the default maximum time in second to wait for the mail notifications
+to succeed. This include the SMTP server name resolving, connection,
+and waiting acknoledgment.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  30
+
+Usage example::
+
+  mail-timeout = 60
+
+
+Property *mail-retry-max*
+.........................
+
+Specifies how many times by default the mail-sending process must be
+retried before considering it as a failure.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  3
+
+Usage example::
+
+  mail-retry-max = 8
+
+Property *mail-retry-sleep*
+...........................
+
+Specifies the default time in second between mail-sending retries.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  60
+
+Usage example::
+
+  mail-retry-sleep = 120
+
+
+Property *http-request-timeout*
+...............................
+
+Specifies the default maximum time in second to wait for
+the http request notifications to succeed. This include
+the HTTP server name resolution, the connection,
+and waiting for the response
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  30
+
+Usage example::
+
+  http-request-timeout = 60
+
+
+Property *http-request-retry-max*
+.........................
+
+Specifies how many times by default the http request must be done
+before considering it a failure.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  3
+
+Usage example::
+
+  http-request-retry-max = 8
+
+Property *http-request-retry-sleep*
+...........................
+
+Specifies the default time in second between http request retries.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  60
+
+Usage example::
+
+  http-request-retry-sleep = 120
+
+Property *sql-timeout*
+...............................
+
+Specifies the default maximum time in second to wait for
+the SQL statment notifications to succeed. 
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  30
+
+Usage example::
+
+  sql-timeout = 60
+
+
+Property *sql-retry-max*
+.........................
+
+Specifies how many times by default the sql statment notifications
+must be tried before considering it a failure.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  3
+
+Usage example::
+
+  sql-retry-max = 8
+
+Property *sql-retry-sleep*
+...........................
+
+Specifies the default time in second between SQL statments execution retries.
+
+If the value is not overridden by a customer configuration,
+the specified value will be used and if not specified
+the default value is::
+
+  60
+
+Usage example::
+
+  sql-retry-sleep = 120
+
+Property *access-force-group*
+.............................
+
+Specifies the default group name the files and directories
+created by the transcoder must belong to.
+
+If the value is not overridden in customer configuration, 
+the specified value will be used, and if not specified,
+files and directories' group will not be changed, it will
+be left as the system set it by default.
+
+Usage example::
+
+  access-force-group = file
+
+Property *access-force-user*
+............................
+
+Specifies the default user name the files and directories
+created by the transcoder must belong to.
+
+If the value is not overridden in customer configuration, 
+the specified value will be used, and if not specified,
+files and directories' user will not be changed, it will
+be left as the system set it by default.
+
+Usage example::
+
+  access-force-user = flumotion
+
+Property *access-force-dir-mode*
+................................
+
+Specifies the default file mode bits in octal form for
+the directories created by the transcoder.
+
+If the value is not overridden in customer configuration,
+the specified value will be used, and if not specified,
+directories' file mode bits will not be changed, it will
+be left as the system set it by default.
+
+Usage example::
+
+  access-force-dir-mode = 0777
+
+Property *access-force-file-mode*
+................................
+
+Specifies the default file mode bits in octal form for
+the files created by the transcoder.
+
+If the value is not overridden in customer configuration,
+the specified value will be used, and if not specified,
+files' file mode bits will not be changed, it will
+be left as the system set it by default.
+
+Usage example::
+
+  access-force-file-mode = 0666
+
+Property *discoverer-max-interleave*
+....................................
+
+Not used.
+
+
+Configuration Example
+~~~~~~~~~~~~~~~~~~~~~
+
+Example of *transcoder-data.ini* file::
+
+  [HEADER]
+  version = 1.0
+
+  [global]
+  access-force-group = file
+  access-force-dir-mode = 0777
+  access-force-file-mode = 0666
+  activities-dir = /var/cache/flumotion/transcoder/activities
+  customers-dir = customers
+
 
 .. _`File Path Template`: ../placeholders.rst#file-path-template
 .. _`Command and Notification Template`: ../placeholders.rst#command-and-notification-template
