@@ -44,7 +44,7 @@ Must not be modified by hand.
 Section *global*
 ----------------
 
-This section contains glabal and default values.
+This section contains global and default values.
 
 Property *customers-dir*
 ........................
@@ -74,11 +74,11 @@ Usage example::
 Property *monitoring-period*
 ............................
 
-Specifies de default monitoring period in second for all customers.
+Specifies the default monitoring period in second for all customers.
 
 The monitoring period is the time in second between file system scans.
 If a file size do not change between two scans, the file is considered
-completly uploaded, and is scheduled to be transcoded.
+completely uploaded, and is scheduled to be transcoded.
 
 This mean that the maximum time between a file uploading is finished
 and the file is scheduled could be near to two times
@@ -117,7 +117,7 @@ Specifies the default maximum time in seconds to wait before failing
 when the transcoding targets files are not changed and the transcoding
 task is not terminated.
 
-This timout is used to detect when the transcoding sub-system is blocked.
+This timeout is used to detect when the transcoding sub-system is blocked.
 
 If the value is not overridden by a customer configuration,
 the specified value will be used and if not specified
@@ -207,7 +207,7 @@ the default value is::
 
 Usage example::
 
-  output-thumb-temaplte = %(targetDir)s%(sourceBasename)s.%(time)s%(targetExtension)s
+  output-thumb-template = %(targetDir)s%(sourceBasename)s.%(time)s%(targetExtension)s
 
 
 Property *link-file-template*
@@ -290,7 +290,7 @@ the default value is::
 
 Usage example::
 
-  mail-subject-temaplte = Transcodification %(trigger)s
+  mail-subject-template = Transcodification %(trigger)s
 
 Property *mail-body-template*
 .............................
@@ -324,7 +324,7 @@ Property *mail-timeout*
 
 Specifies the default maximum time in second to wait for the mail notifications
 to succeed. This include the SMTP server name resolving, connection,
-and waiting acknoledgment.
+and waiting acknowledgment.
 
 If the value is not overridden by a customer configuration,
 the specified value will be used and if not specified
@@ -423,7 +423,7 @@ Property *sql-timeout*
 ......................
 
 Specifies the default maximum time in second to wait for
-the SQL statment notifications to succeed. 
+the SQL statement notifications to succeed. 
 
 If the value is not overridden by a customer configuration,
 the specified value will be used and if not specified
@@ -439,7 +439,7 @@ Usage example::
 Property *sql-retry-max*
 ........................
 
-Specifies how many times by default the sql statment notifications
+Specifies how many times by default the sql statement notifications
 must be tried before considering it a failure.
 
 If the value is not overridden by a customer configuration,
@@ -455,7 +455,7 @@ Usage example::
 Property *sql-retry-sleep*
 ..........................
 
-Specifies the default time in second between SQL statments execution retries.
+Specifies the default time in second between SQL statements execution retries.
 
 If the value is not overridden by a customer configuration,
 the specified value will be used and if not specified

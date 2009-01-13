@@ -45,7 +45,7 @@ Testing Resources
 
  * `Testing Media Sets`_
 
-testing Procedures
+Testing Procedures
 ------------------
 
  * `Transcoder Release Testing`_
