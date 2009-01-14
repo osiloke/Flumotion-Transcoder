@@ -27,7 +27,7 @@ and */var/log/flumotion*. The file */etc/fstab* should contains::
   h01.dev.fluendo.lan:/mnt/backup/repeater.dev/home/file/shared/$HOSTNAME/temp /var/tmp/flumotion nfs defaults,tcp,hard,intr,rw,user,port=2049 0 0
   h01.dev.fluendo.lan:/mnt/backup/repeater.dev/home/file/shared/$HOSTNAME/logs /var/log/flumotion nfs defaults,tcp,hard,intr,rw,user,port=2049 0 0
 
-Where *$HOSTNAME* is the short hostname for the machine:
+Where *$HOSTNAME* is the short host name for the machine:
 
  - *admin1.p4.fsp*
  - *manager1.p4.fsp*
@@ -55,7 +55,7 @@ The transcoding profiles used during functional testing can be found at::
 Admin Configuration
 -------------------
 
-On *admin.p4.fsp.fluendo.lan* the configration for functional
+On *admin.p4.fsp.fluendo.lan* the configuration for functional
 testing must be setup.
 
 The easiest way to configure the transcoder to use these files are
@@ -88,9 +88,9 @@ can be used:
 
   It will stops every services related to the transcoder,
   admin, workers and manager on the corresponding machines.
-  It can be executed from any machin including your local
+  It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  sould be used:: 
+  should be used:: 
 
     /home/file/testing/transcoder/bin/stop-all -u root
  
@@ -100,11 +100,11 @@ can be used:
   **WARNING**: this command will delete the **flumotion log files**,
   the **core files** in */var/cache/flumotion*, the
   **flumotion temporary files** and the transcoder admin
-  **activities**. If some of these files must be keeped, they must
+  **activities**. If some of these files must be kept, they must
   by copied to a safe place before running this command.
-  It can be executed from any machin including your local
+  It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  sould be used:: 
+  should be used:: 
 
     /home/file/testing/transcoder/bin/cleanup-all -u root
 
@@ -112,16 +112,16 @@ can be used:
 
   It will starts every transcoder related services, manager,
   workers and admin on the corresponding machines
-  It can be executed from any machin including your local
+  It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  sould be used:: 
+  should be used:: 
 
     /home/file/testing/transcoder/bin/start-all -u root
 
 Flumotion Admin
 ===============
 
-To start the flumotion admin UI and connect to the mananger
+To start the flumotion admin UI and connect to the manager
 use the following command on your local machine::
 
   flumotion-admin -m user:test@manager1.p4.fsp:7632
@@ -129,16 +129,31 @@ use the following command on your local machine::
 Testing Profiles
 ================
 
-Basic Profile
--------------
+Basic Profiles
+--------------
 
-This profile configration can be found at::
+The profiles configuration can be found at::
 
   /home/file/testing/transcoder/profiles/functional/basic.ini
 
 The incoming directory is::
 
-  /home/file/testing/transcoder/roots/functional/files/incoming/audio
+  /home/file/testing/transcoder/roots/functional/basic/files/incoming/audio
+
+Other Profiles
+--------------
+
+These profiles are only used to have more than one *file-monitor*
+component to test component load balancing.
+They are copies of the *basic* profiles.
+
+The profiles configuration can be found at::
+
+  /home/file/testing/transcoder/profiles/functional/other.ini
+
+The incoming directory is::
+
+  /home/file/testing/transcoder/roots/functional/other/files/incoming/audio
 
 Test Cases
 ==========
@@ -146,26 +161,27 @@ Test Cases
 Simple Transcoding
 ------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------------------------------------------+------------------------------+
 |Action                                                            |Expectation                   |
 +==================================================================+==============================+
 |                                                                  |A *file-monitor* component for|
-|                                                                  |the profile *basic* is running|
-|                                                                  |and happy, and it doesn't have|
-|                                                                  |any files pending or queued.  |
+|                                                                  |the profiles *basic* is       |
+|                                                                  |running and happy, and it     |
+|                                                                  |doesn't have any files pending|
+|                                                                  |or queued.                    |
 +------------------------------------------------------------------+------------------------------+
-|Copy an audio file to the audio incoming of the profile *basic*.  |The file should be detected in|
-|                                                                  |at most 10 seconds.           |
+|Copy an audio file to the incoming of the audio profile from      |The file should be detected in|
+|*basic.ini*.                                                      |at most 10 seconds.           |
 +------------------------------------------------------------------+------------------------------+
-|                                                                  |A *file-transcoder* copmonent |
+|                                                                  |A *file-transcoder* component |
 |                                                                  |should be started after a     |
 |                                                                  |maximum of 20 seconds.        |
 +------------------------------------------------------------------+------------------------------+
 |Wait                                                              |The transcoding task should   |
 |                                                                  |succeed, the *file-transcoder*|
-|                                                                  |component should desapear and |
+|                                                                  |component should disappear and|
 |                                                                  |the *file-monitor* component  |
 |                                                                  |list of files should be empty.|
 +------------------------------------------------------------------+------------------------------+
@@ -173,15 +189,16 @@ Profile to use: *basic.ini*
 Killing a *file-monitor*
 ------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +----------------------------------------------------------------------------+------------------------------+
 |Action                                                                      |Expectation                   |
 +============================================================================+==============================+
 |                                                                            |A *file-monitor* component for|
-|                                                                            |the profile *basic* is running|
-|                                                                            |and happy, and it doesn't have|
-|                                                                            |any files pending or queued.  |
+|                                                                            |the profiles from *basic.ini* |
+|                                                                            |is running and happy, and it  |
+|                                                                            |doesn't have any files pending|
+|                                                                            |or queued.                    |
 +----------------------------------------------------------------------------+------------------------------+
 |Look at the host and PID of the *file-monitor* component, and kill the      |The component should goes     |
 |process with *kill -KILL $PID*                                              |*sad*, and a new one should be|
@@ -190,21 +207,22 @@ Profile to use: *basic.ini*
 |Kill newly started components tree times.                                   |Each times the component      |
 |                                                                            |should goes *sad* and a new   |
 |                                                                            |one should be started         |
-|                                                                            |automaticaly.                 |
+|                                                                            |automatically.                |
 +----------------------------------------------------------------------------+------------------------------+
 
 Blocking a *file-monitor*
 -------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +----------------------------------------------------------------------------+------------------------------+
 |Action                                                                      |Expectation                   |
 +============================================================================+==============================+
 |                                                                            |A *file-monitor* component for|
-|                                                                            |the profile *basic* is running|
-|                                                                            |and happy, and it doesn't have|
-|                                                                            |any files pending or queued.  |
+|                                                                            |the profiles from *basic.ini* |
+|                                                                            |is running and happy, and it  |
+|                                                                            |doesn't have any files pending|
+|                                                                            |or queued.                    |
 +----------------------------------------------------------------------------+------------------------------+
 |Transcode an audio file (See `Simple Transcoding`_)                         |Transcoding should succeed.   |
 +----------------------------------------------------------------------------+------------------------------+
@@ -225,14 +243,14 @@ Profile to use: *basic.ini*
 |                                                                            |*lost*.                       |
 +----------------------------------------------------------------------------+------------------------------+
 |Wait ~ 60 seconds more.                                                     |A new monitor component should|
-|                                                                            |be started automicaly.        |
+|                                                                            |be started atomically.        |
 +----------------------------------------------------------------------------+------------------------------+
 |Transcode an audio file (See `Simple Transcoding`_)                         |Transcoding should succeed.   |
 +----------------------------------------------------------------------------+------------------------------+
 |Resume the stopped component with *kill -CONT $PID*.                        |The lost component should goes|
 |                                                                            |happy again, and then is      |
-|                                                                            |should be automaticaly stoped |
-|                                                                            |and deleted.                  |
+|                                                                            |should be automatically       |
+|                                                                            |stopped and deleted.          |
 +----------------------------------------------------------------------------+------------------------------+
 |Transcode an audio file (See 'Simple Transcoding`_)                         |Transcoding should succeed.   |
 +----------------------------------------------------------------------------+------------------------------+
@@ -240,80 +258,84 @@ Profile to use: *basic.ini*
 File Removed Before Transcoding
 -------------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy a file to the incoming of|The file should be detected in|
-|the profile *basic*           |less than 10 seconds.         |
+|the audio profile from        |less than 10 seconds.         |
+|*basic.ini*                   |                              |
 +------------------------------+------------------------------+
-|Remove the file from incoming |The file should desapear from |
+|Remove the file from incoming |The file should disappear from|
 |before the *file-transcoder*  |the monitor list, and no      |
 |component got started (at most|transcoding component should  |
-|10 seconds after detection)   |be started (wait a litle to be|
-|                              |sure)                         |
+|10 seconds after detection)   |be started (wait a Little to  |
+|                              |be sure)                      |
 +------------------------------+------------------------------+
 
 File Removed After Transcoding Starts
 -------------------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy an audio file to the     |The file should be detected in|
-|audio incoming of the profile |less than 10 seconds.         |
-|*basic*                       |                              |
+|incoming of the audio profile |less than 10 seconds.         |
+|from *basic.ini*              |                              |
 +------------------------------+------------------------------+
 |Wait for the *file-transcoder*|                              |
 |component to be started.      |                              |
 +------------------------------+------------------------------+
-|Remove the file from incoming |The file should desapear from |
+|Remove the file from incoming |The file should disappear from|
 |before the *file-transcoder*  |the monitor list, and the     |
 |component finish transcoding. |transcoding component should  |
-|                              |be stoped and deleted.        |
+|                              |be stopped and deleted.       |
 +------------------------------+------------------------------+
 
 Killing *file-transcoder* Components
 ------------------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy an audio file to the     |The file should be detected in|
-|audio incoming of the profile |less than 10 seconds.         |
-|*basic*                       |                              |
+|incoming of the audio profile |less than 10 seconds.         |
+|from *basic.ini*              |                              |
 +------------------------------+------------------------------+
 |Wait for the *file-transcoder*|                              |
 |component to be started.      |                              |
 +------------------------------+------------------------------+
 |Kill the *file-transcoder*    |The component should goes     |
-|copmonent with the command    |*sad*, and a new one should be|
+|component with the command    |*sad*, and a new one should be|
 |*kill -KILL $PID*.            |started.                      |
 +------------------------------+------------------------------+
 |Kill the newly started        |The component should goes     |
 |*file-transcoder* component.  |*sad* and after a little time |
 |                              |a new component should be     |
-|                              |started automaticaly.         |
+|                              |started automatically.        |
 +------------------------------+------------------------------+
 |Kill again the newly started  |The component should goes     |
 |component.                    |*sad* and after a some time, a|
@@ -329,25 +351,26 @@ Profile to use: *basic.ini*
 Blocking a *file-transcoder* Component
 --------------------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy an audio file to the     |The file should be detected in|
-|audio incoming of the profile |less than 10 seconds.         |
-|*basic*                       |                              |
+|incoming of the audio profile |less than 10 seconds.         |
+|from *basic.ini*              |                              |
 +------------------------------+------------------------------+
 |Wait for the *file-transcoder*|                              |
 |component to be started.      |                              |
 +------------------------------+------------------------------+
 |Block the *file-transcoder*   |Nothing should append         |
-|copmonent with the command    |rightaway.                    |
+|component with the command    |right away.                   |
 |*kill -STOP $PID*.            |                              |
 +------------------------------+------------------------------+
 |Wait 30 seconds.              |The component should goes     |
@@ -364,11 +387,11 @@ Profile to use: *basic.ini*
 |Copy another audio file to    |The file should be detected by|
 |incoming.                     |the monitor.                  |
 +------------------------------+------------------------------+
-|Wait for the transocding      |                              |
+|Wait for the transcoding      |                              |
 |component to be started.      |                              |
 +------------------------------+------------------------------+
 |Block the *file-transcoder*   |Nothing should append         |
-|copmonent with the command    |rightaway.                    |
+|component with the command    |right away.                   |
 |*kill -STOP $PID*.            |                              |
 +------------------------------+------------------------------+
 |Wait 30 seconds.              |The component should goes     |
@@ -386,22 +409,23 @@ Profile to use: *basic.ini*
 |finish.                       |successfully.                 |
 +------------------------------+------------------------------+
 
-Admin Resuming Transcoding Components
--------------------------------------
+Restarting Transcoder Admin
+---------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy a group of audio file (> |A group of transcoding        |
-|8) to the audio incoming of   |component should be started.  |
-|the profile *basic*           |                              |
+|8) to the incoming of the     |component should be started.  |
+|audio profile from *basic.ini*|                              |
 |                              |                              |
 +------------------------------+------------------------------+
 |Before any transcoding finish,|No transcoding task should be |
@@ -412,32 +436,44 @@ Profile to use: *basic.ini*
 +------------------------------+------------------------------+
 |Before the transcoding        |All transcoding components    |
 |component finish and goes to  |should continue to transcode, |
-|the state *Waiting for        |no new copmonent should be    |
+|the state *Waiting for        |no new component should be    |
 |acknowledgment*, restart the  |started before one of the old |
 |transcoder admin with *service|ones finish successfully.  No |
-|flumotion-transcoder-admin    |transcoding copmonent should  |
+|flumotion-transcoder-admin    |transcoding component should  |
 |start*                        |be deleted before finishing.  |
 +------------------------------+------------------------------+
 |Wait for all files to be      |All files should be           |
 |transcoded.                   |successfully transcoder.      |
 +------------------------------+------------------------------+
 
-Admin Resuming Components Waiting For Acknowledgment
-----------------------------------------------------
+Killing Transcoder Admin
+------------------------
 
-Profile to use: *basic.ini*
+Profiles to use: *basic.ini*
+
+Same as `Restarting Transcoder Admin`_ but killing
+the transcoder admin with the command *kill -KILL $PID* instead
+of stopping the service. Note that the PID file must be deleted
+by hand before restarting the transcoder admin.
+
+
+Acknowledgment Resuming
+-----------------------
+
+Profiles to use: *basic.ini*
 
 +------------------------------+------------------------------+
 |Actions                       |Expectations                  |
 +==============================+==============================+
 |                              |A *file-monitor* component for|
-|                              |the profile *basic* is running|
-|                              |and happy, and it doesn't have|
-|                              |any files pending or queued.  |
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
 +------------------------------+------------------------------+
 |Copy a group of audio file (> |A group of transcoding        |
-|8) to the audio incoming of   |component should be started.  |
-|the profile *basic*           |                              |
+|8) to the incoming of the     |component should be started.  |
+|audio profile from *basic.ini*|                              |
 |                              |                              |
 +------------------------------+------------------------------+
 |Before any transcoding finish,|No transcoding task should be |
@@ -456,10 +492,133 @@ Profile to use: *basic.ini*
 |start*                        |be started **for new files**. |
 |                              |No transcoding component      |
 |                              |shoudlbe deleted without      |
-|                              |beeing acknowledged.          |
+|                              |being acknowledged.           |
 +------------------------------+------------------------------+
 |Wait for all files to be      |All files should be           |
 |transcoded.                   |successfully transcoder.      |
 +------------------------------+------------------------------+
+
+Acknowledgment Resuming After Killing
+-------------------------------------
+
+Profiles to use: *basic.ini*
+
+Same as `Acknowledgment Resuming`_
+but killing the transcoder admin with the command *kill -KILL $PID*
+instead of stopping the service. Note that the PID file must be deleted
+by hand before restarting the transcoder admin.
+
+Restarting Manager During Transcoding
+-------------------------------------
+
+Profiles to use: *basic.ini*
+
++------------------------------+------------------------------+
+|Actions                       |Expectations                  |
++==============================+==============================+
+|                              |A *file-monitor* component for|
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
++------------------------------+------------------------------+
+|Copy a group of audio file (> |A group of transcoding        |
+|8) to the incoming of the     |component should be started.  |
+|audio profile from *basic.ini*|                              |
+|                              |                              |
++------------------------------+------------------------------+
+|Before any transcoding finish,|All transcoding components    |
+|restart the manager with      |should continue to transcode, |
+|*service flumotion restart    |no new components should be   |
+|manager transcoder*           |started before one of the old |
+|                              |ones finish successfully.  No |
+|                              |transcoding component should  |
+|                              |be deleted before finishing.  |
++------------------------------+------------------------------+
+|Wait for all files to be      |All files should be           |
+|transcoded.                   |successfully transcoder.      |
++------------------------------+------------------------------+
+
+Restarting Manager After Transcoding Terminate
+-----------------------------------------------
+
+Profiles to use: *basic.ini*
+
++------------------------------+------------------------------+
+|Actions                       |Expectations                  |
++==============================+==============================+
+|                              |A *file-monitor* component for|
+|                              |the profiles from *basic.ini* |
+|                              |is running and happy, and it  |
+|                              |doesn't have any files pending|
+|                              |or queued.                    |
++------------------------------+------------------------------+
+|Copy a group of audio file (> |A group of transcoding        |
+|8) to the incoming of the     |component should be started.  |
+|audio profile from *basic.ini*|                              |
+|                              |                              |
++------------------------------+------------------------------+
+|Just before any transcoding   |                              |
+|finish, stop the manager with |                              |
+|*service flumotion stop       |                              |
+|manager transcoder*           |                              |
+|                              |                              |
+|                              |                              |
+|                              |                              |
++------------------------------+------------------------------+
+|Wait approximately for all    |                              |
+|files to be transcoded.       |                              |
++------------------------------+------------------------------+
+|Start the manager with the    |All transcoding components    |
+|command *service flumotion    |should be acknowledged and    |
+|start manager transcoder*.    |resumed. Only transcoding     |
+|                              |component for **new files**   |
+|                              |must be started.              |
++------------------------------+------------------------------+
+|Wait for all files to be      |All files should be           |
+|transcoded.                   |successfully transcoder.      |
++------------------------------+------------------------------+
+
+Monitor's Worker Stopped
+------------------------
+
+Profiles to use: *basic.ini* and *other.ini*
+
++------------------------------+------------------------------+
+|Actions                       |Expectations                  |
++==============================+==============================+
+|                              |A *file-monitor* components   |
+|                              |for the profiles from         |
+|                              |*basic.ini* and *other* are   |
+|                              |running and happy, and they   |
+|                              |don't have any files pending  |
+|                              |or queued.                    |
++------------------------------+------------------------------+
+|Stop the worker where the     |A group of transcoding        |
+|*file-monitor* component for  |component should be started.  |
+|the                           |                              |
+|                              |                              |
++------------------------------+------------------------------+
+|Just before any transcoding   |                              |
+|finish, stop the manager with |                              |
+|*service flumotion stop       |                              |
+|manager transcoder*           |                              |
+|                              |                              |
+|                              |                              |
+|                              |                              |
++------------------------------+------------------------------+
+|Wait for all files to be      |                              |
+|transcoded.                   |                              |
++------------------------------+------------------------------+
+|Start the manager with the    |All transcoding components    |
+|command *service flumotion    |should be acknowledged and    |
+|start manager transcoder*.    |resumed. Only transcoding     |
+|                              |component for **new files**   |
+|                              |must be started.              |
++------------------------------+------------------------------+
+|Wait for all files to be      |All files should be           |
+|transcoded.                   |successfully transcoder.      |
++------------------------------+------------------------------+
+
 
 .. _Testing Media Sets: media-sets.rst
