@@ -594,31 +594,45 @@ Profiles to use: *basic.ini* and *other.ini*
 |                              |don't have any files pending  |
 |                              |or queued.                    |
 +------------------------------+------------------------------+
-|Stop the worker where the     |A group of transcoding        |
-|*file-monitor* component for  |component should be started.  |
-|the                           |                              |
-|                              |                              |
+|Stop the worker where the     |The monitor component should  |
+|*file-monitor* component for  |goes *sleeping*, and a new    |
+|the profiles from *basic.ini* |monitor component should be   |
+|is running with the command   |started on another worker.    |
+|*service flumotion stop worker|                              |
+|transcoder*                   |                              |
 +------------------------------+------------------------------+
-|Just before any transcoding   |                              |
-|finish, stop the manager with |                              |
-|*service flumotion stop       |                              |
-|manager transcoder*           |                              |
-|                              |                              |
-|                              |                              |
-|                              |                              |
-+------------------------------+------------------------------+
-|Wait for all files to be      |                              |
-|transcoded.                   |                              |
-+------------------------------+------------------------------+
-|Start the manager with the    |All transcoding components    |
-|command *service flumotion    |should be acknowledged and    |
-|start manager transcoder*.    |resumed. Only transcoding     |
-|                              |component for **new files**   |
-|                              |must be started.              |
-+------------------------------+------------------------------+
-|Wait for all files to be      |All files should be           |
-|transcoded.                   |successfully transcoder.      |
+|Transcode an audio file (See  |Transcoding should succeed.   |
+|`Simple Transcoding`_)        |                              |
 +------------------------------+------------------------------+
 
+Monitor's Worker Killed
+------------------------
+
+Profiles to use: *basic.ini* and *other.ini*
+
++------------------------------+------------------------------+
+|Actions                       |Expectations                  |
++==============================+==============================+
+|                              |A *file-monitor* components   |
+|                              |for the profiles from         |
+|                              |*basic.ini* and *other* are   |
+|                              |running and happy, and they   |
+|                              |don't have any files pending  |
+|                              |or queued.                    |
++------------------------------+------------------------------+
+|Kill the worker where the     |The monitor component should  |
+|*file-monitor* component for  |goes *lost*                   |
+|the profiles from *basic.ini* |                              |
+|is running with the command   |                              |
+|*kill -KILL $PID*             |                              |
++------------------------------+------------------------------+
+|Wait 60 seconds.              |A new monitor component should|
+|                              |be started on anoter worker.  |
++------------------------------+------------------------------+
+|Transcode an audio file (See  |Transcoding should succeed.   |
+|`Simple Transcoding`_)        |                              |
++------------------------------+------------------------------+
+				                              
+				                              
 
 .. _Testing Media Sets: media-sets.rst
