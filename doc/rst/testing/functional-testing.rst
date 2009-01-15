@@ -204,7 +204,7 @@ Profiles to use: *basic.ini*
 |process with *kill -KILL $PID*                                              |*sad*, and a new one should be|
 |                                                                            |started.                      |
 +----------------------------------------------------------------------------+------------------------------+
-|Kill newly started components tree times.                                   |Each times the component      |
+|Kill newly started components three times.                                  |Each times the component      |
 |                                                                            |should goes *sad* and a new   |
 |                                                                            |one should be started         |
 |                                                                            |automatically.                |
@@ -252,7 +252,7 @@ Profiles to use: *basic.ini*
 |                                                                            |should be automatically       |
 |                                                                            |stopped and deleted.          |
 +----------------------------------------------------------------------------+------------------------------+
-|Transcode an audio file (See 'Simple Transcoding`_)                         |Transcoding should succeed.   |
+|Transcode an audio file (See `Simple Transcoding`_)                         |Transcoding should succeed.   |
 +----------------------------------------------------------------------------+------------------------------+
 
 File Removed Before Transcoding
