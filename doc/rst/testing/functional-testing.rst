@@ -243,7 +243,7 @@ Profiles to use: *basic.ini*
 |                                                                            |*lost*.                       |
 +----------------------------------------------------------------------------+------------------------------+
 |Wait ~ 60 seconds more.                                                     |A new monitor component should|
-|                                                                            |be started atomically.        |
+|                                                                            |be started automatically.     |
 +----------------------------------------------------------------------------+------------------------------+
 |Transcode an audio file (See `Simple Transcoding`_)                         |Transcoding should succeed.   |
 +----------------------------------------------------------------------------+------------------------------+
@@ -336,10 +336,6 @@ Profiles to use: *basic.ini*
 |*file-transcoder* component.  |*sad* and after a little time |
 |                              |a new component should be     |
 |                              |started automatically.        |
-+------------------------------+------------------------------+
-|Kill again the newly started  |The component should goes     |
-|component.                    |*sad* and after a some time, a|
-|                              |new one should be started.    |
 +------------------------------+------------------------------+
 |Kill the last started         |The component should goes     |
 |component.                    |*sad*, but no new             |
