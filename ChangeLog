@@ -1,5 +1,10 @@
 2009-01-19  Julien Le Goff  <jlegoff@flumotion.com>
 
+	* bin/Makefile.am:
+	Fixed 'make distcheck' error.
+
+2009-01-19  Julien Le Goff  <jlegoff@flumotion.com>
+
 	* flumotion-transcoder.spec.in:
 	Fixed diagnosis config error
 
