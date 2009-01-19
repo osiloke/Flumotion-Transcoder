@@ -1,3 +1,3 @@
-CREATE DATABASE IF NOT EXISTS transcoder;
+create database if not exists transcoder default character set utf8;
 
-USE transcoder;
+use transcoder;

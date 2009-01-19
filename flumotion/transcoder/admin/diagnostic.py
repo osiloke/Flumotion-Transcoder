@@ -17,8 +17,8 @@ from flumotion.common import i18n
 
 from flumotion.inhouse import log, defer, utils, decorators
 
-from flumotion.transcoder.enums import TargetTypeEnum
-from flumotion.transcoder.admin import diagutils, document
+from flumotion.transcoder.enums import TargetTypeEnum, TranscodingFailureEnum
+from flumotion.transcoder.admin import diagutils, document, adminconsts
 from flumotion.transcoder.admin.enums import DocumentTypeEnum
 from flumotion.transcoder.admin.proxy import monitor, transcoder
 
@@ -399,3 +399,135 @@ class Diagnostician(object):
         text = "DIAGNOSTIC\n==========\n\n" + '\n\n'.join(diagnostic) + '\n'
         label = "Transcoding Failure Diagnostic"
         return [document.StringDocument(DocumentTypeEnum.diagnostic, label, text)]
+
+"""
+Tries to determine whether or not a file should fail, e.g. by checking its mime
+type or its size. Its configuration is a single editable file containing
+a list of values such as regular expressions. The location of this file is
+specified in transcoder-admin.ini, in the field 'prognosis-file'.
+"""
+class Prognostician(log.Loggable):
+
+    logCategory = adminconsts.ADMIN_LOG_CATEGORY
+
+    mime_key = '[mime-type]'
+    type_key = '[file-type]'
+    min_video_size_key = '[min-video-size]'
+    min_audio_size_key = '[min-audio-size]'
+    file_size_key = '[file-size]'
+    has_video_key = '[has-video]'
+    
+    def __init__(self, config):
+        if config:
+            self.parse(config)
+
+    """
+    Returns a list of reasons (strings) why this file should fail.
+    file_data is a dictionary containing information about the file that
+    matters to the Prognostician, e.g. file_size, mime_type, file_type,
+    has_video.
+    """
+    def prognose(self, file_data):
+        if self.check_mime_type(file_data):
+            return TranscodingFailureEnum.wrong_mime_type
+        if self.check_file_type(file_data):
+            return TranscodingFailureEnum.wrong_file_type
+        # this happens when the file is not a known media type. In this case,
+        # the size check is skipped
+        if file_data[self.has_video_key] is None:
+            return None
+        if file_data[self.has_video_key]:
+            if self.check_video_size(file_data):
+                return TranscodingFailureEnum.video_too_small
+        else:
+            if self.check_audio_size(file_data):
+                return TranscodingFailureEnum.audio_too_small
+        return None
+
+    def check_mime_type(self, data):
+        file_mime = data[self.mime_key]
+        if not file_mime:
+            #FIXME: not sure at all about this
+            return False
+        for mime in self.mime_types:
+            pattern=re.compile(mime)
+            if(pattern.match(file_mime)):
+                return True
+        return False
+
+    def check_file_type(self, data):
+        file_type = data[self.type_key]
+        if not file_type:
+            return False
+        for t in self.file_types:
+            pattern=re.compile(t)
+            if(pattern.match(file_type)):
+                return True
+        return False
+
+    def check_video_size(self, data):
+        video_size = data[self.file_size_key]
+        if not video_size:
+            return False
+        if video_size < int(self.min_video_size):
+            return True
+        return False
+
+    def check_audio_size(self, data):
+        audio_size = data[self.file_size_key]
+        if not audio_size:
+            return False
+        if audio_size < int(self.min_audio_size):
+            return True
+        return False
+
+    def parse(self, path):
+        headers = {self.mime_key: [],
+                   self.type_key: [],
+                   self.min_audio_size_key: 0,
+                   self.min_video_size_key: 0}
+        f = open(path, 'r')
+        current_type = None
+        for l in f.readlines():
+            l=l.rstrip('\n \t')
+            if len(l) == 0 or l.startswith('#'):
+                continue
+            header = self.extract_header(l, headers)
+            if header is not None:
+                current_type = header
+                continue
+            #it's not a header line and there is no current category
+            if current_type is None:
+                self.debug("Prognosis: Ignoring line %s", l)
+            #it's a config line and and we are inside a category
+            else:
+                self.set_config_element(current_type, l, headers)
+        f.close()
+
+        self.mime_types = headers[self.mime_key]
+        self.file_types = headers[self.type_key]
+        self.min_audio_size = headers[self.min_audio_size_key]
+        self.min_video_size = headers[self.min_video_size_key]
+
+        self.debug("Mime Types: %s", self.mime_types)
+        self.debug("File Types: %s", self.file_types)
+        self.debug("Min Audio Size: %s", self.min_audio_size)
+        self.debug("Min Video Size: %s", self.min_video_size)
+
+    def extract_header(self, s, headers):
+        if s in headers:
+            value = headers[s]
+            return s
+        return None
+
+    def set_config_element(self, t, element, headers):
+        current_value = headers[t]
+        header_type = type(current_value)
+        if header_type == type([]):
+            headers[t].append(element)
+        else:
+            headers[t] = element
+
+    def append(self, result, list):
+        if result:
+            list.append(result)

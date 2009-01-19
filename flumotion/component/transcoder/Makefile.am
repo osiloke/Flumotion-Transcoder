@@ -4,8 +4,8 @@ component_PYTHON = __init__.py binmaker.py gstutils.py videosize.py \
                    filemonitor.py filemonitor_admin_gtk.py watcher.py \
                    job.py transcoder.py basetargets.py reporter.py context.py \
                    thumbsink.py filetranscoder.py filetranscoder_admin_gtk.py \
-                   compconsts.py analyst.py varsets.py transtargets.py \
-                   thumbtargets.py thumbsamplers.py thumbsrc.py 
+                   compconsts.py analyst.py disco2.py varsets.py \
+                   transtargets.py thumbtargets.py thumbsamplers.py thumbsrc.py
                    
 
 componentdir = $(libdir)/flumotion/python/flumotion/component/transcoder

@@ -14,6 +14,8 @@
 
 import os
 import shutil
+import commands
+from md5 import md5
 
 from twisted.internet import reactor, error, threads
 from twisted.python.failure import Failure
@@ -23,7 +25,7 @@ from flumotion.common.i18n import gettexter, N_
 from flumotion.component import component
 from flumotion.component.component import moods
 
-from flumotion.inhouse import log, defer, fileutils
+from flumotion.inhouse import log, defer, utils, fileutils
 from flumotion.inhouse.errors import FlumotionError
 
 from flumotion.transcoder import constants
@@ -168,25 +170,52 @@ class FileMonitor(component.BaseComponent):
 
     ## Public Methods ##
                 
-    def setFileState(self, virtBase, relFile, status):        
+    def setFileState(self, virtBase, relFile, status):
         key = (virtBase, relFile)
-        self.__updateUIItem('pending-files', key, status)
+        state = self.uiState.get('pending-files')
+        substate = state.get(key)
+        # substate can be None, probably because it has already been
+        # added to the internal dictionaries, but has not been updated
+        # in the UIState
+        if substate is not None:
+            state, fileinfo, detection_time, mime_type, checksum = substate
+            substate = (status, fileinfo, detection_time, mime_type, checksum)
+        self.__updateUIItem('pending-files', key, substate)
 
 
     ## Signal Handler Methods ##
 
-    def _file_added(self, watcher, file, virtBase):
+    def _file_added(self, watcher, file, fileinfo, detection_time, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File added : '%s'", localFile)
+
+        # Throw away the timezone, we're storing all time information
+        # as time in UTC without tzinfo. We have less to transfer over
+        # the wire and don't have to worry about jellifiers for tzinfo.
+        detection_time = detection_time.replace(tzinfo=None)
         self.__setUIItem('pending-files', (virtBase, file), 
-                         MonitorFileStateEnum.downloading)
+                         (MonitorFileStateEnum.downloading, fileinfo,
+                          detection_time, None, None))
     
-    def _file_completed(self, watcher, file, virtBase):
+    def _file_completed(self, watcher, file, fileinfo, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File completed '%s'", localFile)
-        self.__setUIItem('pending-files', (virtBase, file), 
-                         MonitorFileStateEnum.pending)
-    
+        key = (virtBase, file)
+        state = self.uiState.get('pending-files')
+        substate = state.get(key)
+        state, old_fileinfo, detection_time, old_mime, checksum = substate
+        try:
+            arg = utils.mkCmdArg(watcher.path + file)
+            mime_type = commands.getoutput("file -biL" + arg)
+        except Exception, e:
+            mime_type = "ERROR: %s" % str(e)
+        d = threads.deferToThread(self.__checksum, file, watcher.path)
+        d.addCallbacks(self.__updateChecksumState, self.__failedChecksum,
+                       callbackArgs = (key, fileinfo, detection_time,
+                                       mime_type),
+                       errbackArgs = (key, fileinfo, detection_time,
+                                      mime_type))
+
     def _file_removed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File removed '%s'", localFile)
@@ -281,4 +310,36 @@ class FileMonitor(component.BaseComponent):
         self.addMessage(m)
         return failure
 
-    
+
+    def __checksum(self, filename, path):
+        if path is None:
+            self.debug("Path is empty for file %s. No checksum computed.",
+                       filename)
+            return None
+        #read the file in chunks for performance reasons
+        block_size = 0x10000
+        def upd(m, data):
+            m.update(data)
+            return m
+        fd = open(path+filename, "rb")
+        try:
+            contents = iter(lambda: fd.read(block_size), "")
+            m = reduce(upd, contents, md5())
+        finally:
+            fd.close()
+
+        return m.hexdigest()
+
+    def __updateChecksumState(self, checksum, key, fileinfo, detection_time,
+                              mime_type):
+        substate = (MonitorFileStateEnum.pending, fileinfo, detection_time,
+                    mime_type, checksum)
+        self.__setUIItem('pending-files', key, substate)
+
+    def __failedChecksum(self, failure, key, fileinfo, detection_time,
+                         mime_type):
+        log.notifyFailure(self, failure, "Failure during checksum")
+        #continue anyway
+        substate = (MonitorFileStateEnum.pending, fileinfo, detection_time,
+                    mime_type, None)
+        self.__setUIItem('pending-files', key, substate)

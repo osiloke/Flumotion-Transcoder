@@ -114,7 +114,7 @@ class AdminStore(base.NotifyStore):
 
         
     ## Public Methods ##
-    
+ 
     def getAdminStore(self):
         return self
     

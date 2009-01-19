@@ -83,9 +83,11 @@ class MonitorProxy(component.ComponentProxy):
     def _doBroadcastUIState(self, uiState):
         pending = uiState.get("pending-files", None)
         if pending:
-            for file, statenum in pending.iteritems():
+            for file, value in pending.iteritems():
                 virtBase, relFile = file
-                self.emit("file-added", virtBase, relFile, statenum)
+                state, fileinfo, detection_time, mime_type, checksum = value
+                self.emit("file-added", virtBase, relFile, state, fileinfo,
+                          detection_time, mime_type, checksum)
     
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
@@ -117,15 +119,20 @@ class MonitorProxy(component.ComponentProxy):
     
     ## UI State Handlers Methods ##
     
-    def _onMonitorSetFile(self, virtBase, relFile, state):
+    def _onMonitorSetFile(self, virtBase, relFile, filedata):
+        state, fileinfo, detection_time, mime_type, checksum = filedata
         ident = (virtBase, relFile)
+        
         if ident in self._alreadyAdded:
-            self.emit("file-changed", virtBase, relFile, state)
+            self.emit("file-changed", virtBase, relFile, state, fileinfo,
+                      mime_type, checksum)
         else:
             self._alreadyAdded[ident] = None
-            self.emit("file-added", virtBase, relFile, state)
+            self.emit("file-added", virtBase, relFile, state, fileinfo,
+                      detection_time, mime_type, checksum)
             
-    def _onMonitorDelFile(self, virtBase, relFile, state):
+    def _onMonitorDelFile(self, virtBase, relFile, filedata):
+        state, _fileinfo, _detection_time, _mime_type, _checksum = filedata
         ident = (virtBase, relFile)
         if ident in self._alreadyAdded:
             del self._alreadyAdded[ident]

@@ -11,7 +11,9 @@
 # Headers in this file shall remain intact.
 
 from flumotion.transcoder import local
+from flumotion.transcoder.admin.diagnostic import Prognostician
 from flumotion.transcoder.admin.datasource import filesource
+from flumotion.transcoder.admin.datasource import sqlsource
 from flumotion.transcoder.admin.context import base, worker, notifier, store, api, manager
 
 
@@ -24,6 +26,10 @@ class AdminContext(base.BaseContext):
     def getDataSource(self):
         datasourceConfig = self.config.admin.datasource
         return filesource.FileDataSource(datasourceConfig)
+
+    def getReportsDataSource(self):
+        sqlSourceConfig = self.config.admin.reportsdatasource
+        return sqlsource.SQLDataSource(sqlSourceConfig)
     
     def getNotifierContext(self):
         notifierConfig = self.config.admin.notifier
@@ -50,3 +56,7 @@ class AdminContext(base.BaseContext):
     
     def getStoreContextFor(self, admiStore):
         return store.StoreContext(self, admiStore)
+
+    def getPrognostician(self):
+        config = self.config.admin.prognosis.prognosisFile
+        return Prognostician(config)

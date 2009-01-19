@@ -116,7 +116,8 @@ class MonitoringTask(admintask.AdminTask):
             return
         self.emit("file-removed", profCtx, state)
     
-    def __onMonitorFileAdded(self, monPxy, virtDir, file, state):
+    def __onMonitorFileAdded(self, monPxy, virtDir, file, state, fileinfo,
+                             detection_time, mime_type, checksum):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -124,9 +125,11 @@ class MonitoringTask(admintask.AdminTask):
                          "found for customer '%s'", virtDir + file,
                          self._custCtx.name)
             return
-        self.emit("file-added", profCtx, state)
+        self.emit("file-added", profCtx, state, fileinfo, detection_time,
+                  mime_type, checksum)
 
-    def __onMonitorFileChanged(self, monPxy, virtDir, file, state):
+    def __onMonitorFileChanged(self, monPxy, virtDir, file, state, fileinfo,
+                               mime_type, checksum):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -134,7 +137,8 @@ class MonitoringTask(admintask.AdminTask):
                          "profile found for customer '%s'", virtDir + file,
                          self._custCtx.name)
             return
-        self.emit("file-state-changed", profCtx, state)
+        self.emit("file-state-changed", profCtx, state, fileinfo,
+                  mime_type, checksum)
 
 
     ## Virtual Methods Implementation ##

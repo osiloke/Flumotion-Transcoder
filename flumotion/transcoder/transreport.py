@@ -73,6 +73,8 @@ class AnalysisReport(properties.PropertyBag):
     videoTags = properties.Dict(properties.String("video-tags"))
     otherTags = properties.Dict(properties.String("other-tags"))
 
+    prognosis = properties.String('prognosis')
+
 
 class SourceReport(properties.PropertyBag):
 
@@ -85,6 +87,7 @@ class SourceReport(properties.PropertyBag):
     fileType = properties.String("file-type")
     fileHeader = properties.List(properties.String("file-header"))
     fileSize = properties.Integer('file-size')
+    machineName = properties.String("machine-name")
 
 
 class TargetReport(TaskReport):
@@ -136,7 +139,8 @@ class TranscodingReport(properties.RootPropertyBag, TaskReport):
     targets = properties.ChildDict('targets', TargetReport)
     cpuUsageTotal = UsageProperty('cpu-usage-total')
     cpuUsagePreprocess = UsageProperty('cpu-usage-preprocess')
-    cpuUsageTranscoding = UsageProperty('cpu-usage-transcoding')    
+    cpuUsageTranscoding = UsageProperty('cpu-usage-transcoding')
+    reportPath = virtualpath.VirtualPathProperty('report-path', None, True)
     
     def init(self, config):
         # PyChecker doesn't like dynamic attributes

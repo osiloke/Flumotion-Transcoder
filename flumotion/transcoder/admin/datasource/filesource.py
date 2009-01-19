@@ -340,7 +340,7 @@ class FileDataSource(log.Loggable):
     
     logCategory = adminconsts.DATASOURCE_LOG_CATEGORY
     
-    implements(datasource.IDataSource)
+    implements(datasource.IInformationSource)
     
     def __init__(self, config):
         self._adminPath = os.path.abspath(config.dataFile)

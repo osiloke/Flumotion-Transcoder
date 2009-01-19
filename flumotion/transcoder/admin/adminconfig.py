@@ -55,6 +55,12 @@
     
     # Path to the file data-source global configuration
     data-file = /etc/flumotion/transcoder/transcoder-data.ini
+
+    # Admin's Reports Data-source Properties
+    [admin:reports-data-source]
+
+    # MySQL connection info for storing transcoding reports
+    connection-info = mysql://user:password@hostname:port/transcoder
     
     # Admin's Notifier Properties
     [admin:notifier]
@@ -100,7 +106,11 @@
     # salted-sha256 user declaration
     users#user = salt:1bc1a361f17092bc7af4b2f82bf9194ea9ee2ca49eb2e53e39f555bc1eeaed74
     users#toto = spam:f4b155f44fe27b2ba037ac2e13477b9624350d4b0584f31a0bb4ef19986c7601
-    
+
+    # Prognosis properties
+    [admin:diagnosis]
+    diagnosis-file = /etc/flumotion/transcoder/prognosis.conf
+
     # Manager Properties
     [manager]
     
@@ -168,6 +178,10 @@ class DataSourceConfig(properties.PropertyBag):
     dataFile = properties.String('data-file', None, True)
 
 
+class ReportsDataSourceConfig(properties.PropertyBag):
+    connectionInfo = properties.String('connection-info', None, True)
+
+
 class NotifierConfig(properties.PropertyBag):
     smtpServer = properties.String('smtp-server', None, True)
     smtpPort = properties.Integer('smtp-port', 25, False, True)
@@ -180,21 +194,28 @@ class NotifierConfig(properties.PropertyBag):
     mailDebugSender = properties.String('mail-debug-sender', None, True)
     mailDebugRecipients = properties.String('mail-debug-recipients', None, True)
 
+class PrognosisConfig(properties.PropertyBag):
+    prognosisFile = properties.String('diagnosis-file', None, True)
 
 class AdminConfig(properties.PropertyBag):
     """
+        Changes from version 1.1 to 1.2:
+            Added reports-data-source section with connection-info.
+
         Changes from version 1.0 to 1.1:
-            Added api child section. 
+            Added api child section.
     """
     datasource = properties.Child("data-source", DataSourceConfig)
+    reportsdatasource = properties.Child("reports-data-source", ReportsDataSourceConfig)
     notifier = properties.Child("notifier", NotifierConfig)
     api = properties.Child("api", config.APIConfig)
     roots = properties.Dict(properties.String('roots'))
+    prognosis = properties.Child("diagnosis", PrognosisConfig)
 
 
 class ClusterConfig(properties.RootPropertyBag):
     
-    VERSION = (1, 1)
+    VERSION = (1, 2)
     COMMENTS = __doc__.split('\n')
     
     debug = properties.String("debug")

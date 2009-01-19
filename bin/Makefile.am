@@ -1,4 +1,4 @@
-bin_SCRIPTS = flumotion-transcoder-admin flumotion-transcoder-upgrade \
+bin_SCRIPTS = flumotion-transcoder-admin flumotion-transcoder-upgrade\
               flumotion-progressive-move
 
 EXTRA_DIST =  flumotion-progressive-move 

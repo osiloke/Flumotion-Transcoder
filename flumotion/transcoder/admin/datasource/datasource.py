@@ -78,6 +78,55 @@ class IDataSource(Interface):
         Initialize the data source.
         """
 
+    def store(self, *data):
+        """
+        Returns a deferred.
+        Store all the specified container objectes.
+        The objects must have been created by the store.
+        All the objecte are stored atomically if the
+        store support it.
+        """
+    
+    def reset(self, *data):
+        """
+        Returns a deferred.
+        Reset the values of the specified container objects
+        to there original value from the data source.
+        If a specified container was never stored,
+        its values are not changed.
+        """
+    
+    def delete(self, *data):
+        """
+        Return a deferred.
+        Delete all the specified container objectes.
+        The objects must have been created by the store.
+        All the objecte are deleted atomically if the
+        store support it.
+        Deletion is not an operation that could be
+        reversed by calling reset.
+        """
+
+
+class IReportsSource(IDataSource):
+    """
+    The reports source holds the results of transcoding activities.
+    """
+
+    def newTranscodeReport(self):
+        """
+        Createas a new transcoding report container object.
+        """
+
+
+class IInformationSource(IDataSource):
+    """
+    The information source holds all the information that are not held
+    by the reports source. This includes customers, profiles,
+    notifications, etc.
+    """
+
+
     def waitReady(self, timeout=None):
         """
         Returns a deferred that is called when the source
@@ -419,33 +468,4 @@ class IDataSource(Interface):
     def newNotificationReport(self, repData, notifData):
         """
         Creates a new notification report container object.
-        """
-        
-    def store(self, *data):
-        """
-        Returns a deferred.
-        Store all the specified container objectes.
-        The objects must have been created by the store.
-        All the objecte are stored atomically if the
-        store support it.
-        """
-    
-    def reset(self, *data):
-        """
-        Returns a deferred.
-        Reset the values of the specified container objects
-        to there original value from the data source.
-        If a specified container was never stored,
-        its values are not changed.
-        """
-    
-    def delete(self, *data):
-        """
-        Return a deferred.
-        Delete all the specified container objectes.
-        The objects must have been created by the store.
-        All the objecte are deleted atomically if the
-        store support it.
-        Deletion is not an operation that could be
-        reversed by calling reset.
         """

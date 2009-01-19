@@ -1,6 +1,6 @@
 AC_INIT(README)
 
-AS_VERSION(flumotion-transcoder, FLUTRANS, 0, 5, 3, 1)
+AS_VERSION(flumotion-transcoder, FLUTRANS, 0, 5, 3, 2)
 AC_SUBST(RELEASE, $FLUTRANS_RELEASE)
 
 AC_SUBST_FILE(AUTHORS)
@@ -51,6 +51,9 @@ PKG_CHECK_MODULES(INHOUSE, flumotion-inhouse >= $INHOUSE_REQ)
 INHOUSE_DIR="`$PKG_CONFIG --variable=flumotioninhousedir flumotion-inhouse`"
 AC_MSG_NOTICE([Flumotion in-house library directory is $INHOUSE_DIR])
 AC_SUBST(INHOUSE_DIR)
+
+dnl check for MySQL-python
+AS_PYTHON_IMPORT(MySQLdb,,AC_MSG_ERROR([MySQL-python not found]),,)
 
 dnl output stuff
 PREAMBLE=`cat $srcdir/misc/preamble.py`

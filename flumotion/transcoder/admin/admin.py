@@ -10,9 +10,13 @@
 
 # Headers in this file shall remain intact.
 
+import stat
+from datetime import datetime
+
 from zope.interface import implements
 from twisted.internet import reactor
 
+from flumotion.common import eventcalendar
 from flumotion.common import i18n
 from flumotion.common.enum import EnumClass
 
@@ -20,12 +24,14 @@ from flumotion.inhouse import log, defer, utils, errors as iherrors
 
 from flumotion.transcoder import errors
 from flumotion.transcoder.enums import MonitorFileStateEnum
+from flumotion.transcoder.enums import TranscodingOutcomeEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.diagnostic import Diagnostician
 from flumotion.transcoder.admin.janitor import Janitor
 from flumotion.transcoder.admin.enums import TaskStateEnum
 from flumotion.transcoder.admin.context.admin import AdminContext
 from flumotion.transcoder.admin.datastore.store import AdminStore
+from flumotion.transcoder.admin.datastore.reportsstore import ReportsStore
 from flumotion.transcoder.admin.proxy.managerset import ManagerSet
 from flumotion.transcoder.admin.proxy.componentset import ComponentSet
 from flumotion.transcoder.admin.proxy.workerset import WorkerSet
@@ -46,7 +52,10 @@ class TranscoderAdmin(log.Loggable):
     def __init__(self, config):
         self._adminCtx = AdminContext(config)
         self._datasource = self._adminCtx.getDataSource()
+        self._reportsDataSource = self._adminCtx.getReportsDataSource()
         self._adminStore = AdminStore(self._datasource)
+        self._reportsStore = ReportsStore(self._reportsDataSource)
+        self._transcodeReports = {}
         self._storeCtx = self._adminCtx.getStoreContextFor(self._adminStore)
         notifierCtx = self._adminCtx.getNotifierContext()
         self._notifier = Notifier(notifierCtx, self._storeCtx) 
@@ -55,6 +64,7 @@ class TranscoderAdmin(log.Loggable):
         self._workerPxySet = WorkerSet(self._managerPxySet)
         self._diagnostician = Diagnostician(self._adminCtx, self._managerPxySet,
                                             self._workerPxySet, self._compPxySet)
+        self._prognostician = self._adminCtx.getPrognostician()
         self._janitor = Janitor(self._adminCtx, self._compPxySet)
         self._transPxySet = TranscoderSet(self._managerPxySet)
         self._monPxySet = MonitorSet(self._managerPxySet)
@@ -76,6 +86,7 @@ class TranscoderAdmin(log.Loggable):
         d = defer.Deferred()
         d.addCallback(defer.dropResult, self._datasource.initialize)
         d.addCallback(defer.dropResult, self._adminStore.initialize)
+        d.addCallback(defer.dropResult, self._reportsDataSource.initialize)
         d.addCallback(defer.dropResult, self._notifier.initialize)
         d.addCallback(defer.dropResult, self._managerPxySet.initialize)
         d.addCallback(defer.dropResult, self._compPxySet.initialize)
@@ -252,15 +263,50 @@ class TranscoderAdmin(log.Loggable):
 
     ## MonitoringTask Event Listeners ##
     
-    def __onMonitoredFileAdded(self, montask, profCtx, state):
+    def __onMonitoredFileAdded(self, montask, profCtx, state, fileinfo,
+                               detection_time, mime_type, checksum):
         self.log("Monitoring task '%s' added profile '%s'",
                  montask.label, profCtx.inputPath)
+
+        key = profCtx.inputBase, profCtx.inputRelPath
+        if key not in self._transcodeReports:
+            transcodeReportStore = self._reportsStore.newTranscodeReportStore()
+
+            custCtx = profCtx.getCustomerContext()
+            # TODO: maybe find something that uniquely identifies this transcod job and use it as a primary key?
+            transcodeReportStore.customerId = custCtx.identifier
+            transcodeReportStore.profileId = profCtx.identifier
+            transcodeReportStore.relativePath = profCtx.inputRelPath
+            transcodeReportStore.creationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_CTIME])
+            transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
+            transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
+            transcodeReportStore.detectionTime = detection_time
+            transcodeReportStore.mimeType = mime_type
+            #FIXME: check if checksum is None?
+            transcodeReportStore.fileChecksum = checksum
+            # FIXME: what happens if the transcoding is stopped and
+            # then restarted? Or the admin never gets notified about a
+            # job ending? Can we leak memory here?  Won't the
+            # self._transcodeReports dictionary grow enormously? We
+            # may need to add a remote method to query the dictionary size...
+            self._transcodeReports[key] = transcodeReportStore
+
         self.__fileStateChanged(montask, profCtx, state)
         
-    def __onMonitoredFileStateChanged(self, montask, profCtx, state):
+    def __onMonitoredFileStateChanged(self, montask, profCtx, state,
+                                      fileinfo, mime_type, checksum):
         self.log("Monitoring task '%s' profile '%s' state "
-                 "changed to %s", montask.label, 
-                 profCtx.inputPath, state.name)
+                 "changed to %s with fileinfo %r", montask.label, 
+                 profCtx.inputPath, state, fileinfo)
+
+        key = profCtx.inputBase, profCtx.inputRelPath
+        transcodeReportStore = self._transcodeReports.get(key, None)
+        if transcodeReportStore:
+            transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
+            transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
+            transcodeReportStore.mimeType = mime_type
+            transcodeReportStore.fileChecksum = checksum
+
         self.__fileStateChanged(montask, profCtx, state)
     
     def __onMonitoredFileRemoved(self, montask, profCtx, state):
@@ -277,14 +323,48 @@ class TranscoderAdmin(log.Loggable):
     ## Scheduler Event Listeners ##
     
     def __onProfileQueued(self, scheduler, profCtx):
+        key = profCtx.inputBase, profCtx.inputRelPath
+        transcodeReportStore = self._transcodeReports.get(key, None)
+        if transcodeReportStore:
+            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            transcodeReportStore.queueingTime = now
+            
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
         
     def __onTranscodingStarted(self, scheduler, task):
-        self.__setInputFileState(task.getProfileContext(),
+        profCtx = task.getProfileContext()
+        key = profCtx.inputBase, profCtx.inputRelPath
+        transcodeReportStore = self._transcodeReports.get(key, None)
+        if transcodeReportStore:
+            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            transcodeReportStore.transcodingStartTime = now
+    
+        self.__setInputFileState(profCtx,
                                  MonitorFileStateEnum.transcoding)
     
-    def __onTranscodingFailed(self, sheduler, task):
-        self.__setInputFileState(task.getProfileContext(),
+    def __onTranscodingFailed(self, scheduler, task, report):
+        # mind that report might be None, if the scheduler failed to retrieve it!
+        profCtx = task.getProfileContext()
+        key = profCtx.inputBase, profCtx.inputRelPath
+        transcodeReportStore = self._transcodeReports.get(key, None)
+        if transcodeReportStore:
+            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            transcodeReportStore.transcodingFinishTime = now
+            transcodeReportStore.outcome = False
+            transcodeReportStore.successful = False
+            transcodeReportStore.reportPath = ""+report.reportPath.__str__()
+            # get info from the report and inserts it into the d
+            self.__passReportInfo(report, task, transcodeReportStore)
+
+            # decides, based on the information we have, if the file should
+            # have failed to transcode
+            self.__prognose(report, transcodeReportStore)
+
+            transcodeReportStore.store()
+            
+            del self._transcodeReports[key]
+
+        self.__setInputFileState(profCtx,
                                  MonitorFileStateEnum.failed)
         if not task.isAcknowledged():
             # If a transcoding fail without acknowledgment,
@@ -296,13 +376,70 @@ class TranscoderAdmin(log.Loggable):
                        "or has been kill", profCtx.inputPath)
             self.__moveFailedInputFiles(profCtx)
     
-    def __onTranscodingDone(self, sheduler, task):
+    def __onTranscodingDone(self, scheduler, task, report):
+        # mind that report might be None, if the scheduler failed to retrieve it!
+        profCtx = task.getProfileContext()
+        key = profCtx.inputBase, profCtx.inputRelPath
+        transcodeReportStore = self._transcodeReports.get(key, None)
+        if transcodeReportStore:
+            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            transcodeReportStore.transcodingFinishTime = now
+            transcodeReportStore.outcome = True
+            transcodeReportStore.successful = True
+            # FIXME get the real path, not a template string with things like %(id)s
+            # transcodeReportStore.reportPath = profCtx.doneRepRelPath
+            transcodeReportStore.reportPath = report.reportPath.__str__()
+            # get info from the report and inserts it into the d
+            self.__passReportInfo(report, task, transcodeReportStore)
+
+            # decides, based on the information we have, if the file should
+            # have failed. to transcode.
+            # It is probably not necessary to do it when the transcoding was
+            # successful, but I'll leave it for now.
+            self.__prognose(report, transcodeReportStore)
+
+            transcodeReportStore.store()
+            del self._transcodeReports[key]
+
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.done)
 
     
     ## Private Methods ##
-    
+
+    """Gets information from the report and inserts it into the DB"""
+    def  __passReportInfo(self, report, task, store):
+        if not report or not store:
+            return
+
+        usage = report.cpuUsageTotal
+        if usage:
+            cpuTime, realTime, percent = usage
+            store.totalCpuTime = cpuTime
+            store.totalRealTime = realTime
+        
+        if report.source:
+            store.fileType = report.source.fileType
+            store.machineName = report.source.machineName
+            analysis = report.source.analysis
+            if report.source.analysis:
+                store.audioCodec = analysis.otherTags.get("audio-codec", None)
+                store.videoCodec = analysis.otherTags.get("video-codec", None)
+
+        if report.local:
+            store.workerName = report.local.name
+        store.attemptCount = task.getAttemptCount()
+
+    def __prognose(self, report, store):
+        prog = self._prognostician
+        data = {prog.type_key: report.source.fileType,
+                prog.mime_key: store.mimeType,
+                prog.file_size_key: report.source.fileSize,
+                prog.has_video_key: report.source.analysis.hasVideo
+                }
+        prognosis = self._prognostician.prognose(data)
+        store.failure = prognosis
+
     def __cbMessageDiagnosticSucceed(self, diagnostic, msg, text, debug):
         notifyDebug(msg, info=text, debug=debug, documents=diagnostic)
 
@@ -310,8 +447,9 @@ class TranscoderAdmin(log.Loggable):
         notifyDebug(msg, info=text, debug=debug)
         log.notifyFailure(self, failure, "Failure during component message diagnostic")
     
+        print "File Types: %s" % self.file_types
     def __fileStateChanged(self, montask, profCtx, state):
-        
+
         def changeState(newState):
             inputBase = profCtx.inputBase
             relPath = profCtx.inputRelPath        

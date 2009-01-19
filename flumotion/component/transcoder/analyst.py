@@ -190,3 +190,41 @@ class MediaAnalyst(object):
         msg = "Media analyse timeout"
         error = MediaAnalysisTimeoutError(msg, filePath)
         deferred.errback(error)
+
+
+class NewMediaAnalyst(MediaAnalyst):
+
+    def analyse(self, filePath, timeout=None):
+        from disco2 import Analyzer, AnalysisTimeoutError
+        from disco2 import PatchedDiscovererAdapter as DiscovererAdapter
+        deferred = defer.Deferred()
+        fileURI = 'file://%s' % filePath
+        an = Analyzer(fileURI, timeout=timeout)
+        self._pending[an] = (filePath, deferred, None)
+
+        def an_cb(minfo, analyzer):
+            filePath, deferred, to = self._pending.pop(analyzer)
+            if minfo.audio or minfo.video:
+                deferred.callback(MediaAnalysis(filePath,
+                                                DiscovererAdapter(minfo)))
+            else:
+                msg = "Analyzed file is not a known media type"
+                error = MediaAnalysisUnknownTypeError(msg, filePath)
+                deferred.errback(error)
+
+        def an_eb(failure, analyzer):
+            filePath, deferred, to = self._pending.pop(analyzer)
+            if failure.check(AnalysisTimeoutError):
+                msg = "Media analyse timeout"
+                error = MediaAnalysisTimeoutError(msg, filePath)
+            else:
+                msg = "Analyzed file is not a known media type"
+                error = MediaAnalysisUnknownTypeError(msg, filePath)
+            deferred.errback(error)
+
+        d = an.analyze()
+        d.addCallbacks(an_cb, an_eb, callbackArgs=(an,), errbackArgs=(an,))
+        return deferred
+
+
+MediaAnalyst = NewMediaAnalyst

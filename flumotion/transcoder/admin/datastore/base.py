@@ -100,7 +100,7 @@ class NotifyStore(StoreElement):
     implements(INotificationProvider)
     
     def __init__(self, logger, parentStore, dataSource, data, identifier=None, label=None):
-        assert datasource.IDataSource.providedBy(dataSource)
+        assert datasource.IInformationSource.providedBy(dataSource)
         StoreElement.__init__(self, logger, parentStore, data, identifier, label)
         self._dataSource = dataSource
         self._notifications = {} # {NotificationTriggerEnum: {identifier: NotificationStore}}

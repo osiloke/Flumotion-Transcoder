@@ -46,6 +46,9 @@ class IAdminTask(interfaces.IAdminInterface):
     
     def getActiveComponent(self):
         pass
+
+    def getRetryCount(self):
+        pass
     
     def getWorkerProxy(self):
         pass
@@ -146,6 +149,9 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
     
     def getComponentProxies(self):
         return self._compPxys.keys()
+
+    def getRetryCount(self):
+        return self._retry
     
     def iterComponentProxies(self):
         return self._compPxys.iterkeys()
@@ -817,7 +823,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
         self.log("Admin task '%s' component '%s' still lost",
                  self.label, compPxy.getName())
         self._abort()
-        if component.getMood() != moods.lost:
+        if compPxy.getMood() != moods.lost:
             self._stopComponent(compPxy)
     
     def __checkHeldComponentStatus(self, compPxy):

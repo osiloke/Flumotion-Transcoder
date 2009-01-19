@@ -1,8 +1,238 @@
+2009-01-19  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/job.py:
+	Symlinks are now followed when determining file types.
+
+2009-01-15  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* bin/Makefile.am:
+	* misc/Makefile.am:
+	* flumotion/test/Makefile.am:
+	Fixed 'make distcheck' error.
+
+	* conf/Makefile.am:
+	* conf/transcoder/diagnosis.conf (added):
+	* conf/transcoder/diagnosis.conf:
+	* conf/transcoder/transcoder-admin.ini:
+	* flumotion-transcoder.spec.in:
+	Added diagnosis config file to package.
+
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/transtask.py:
+	Fixed attempt count bug.
+
+2009-01-15  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/admin.py:
+	Read the file size from UIState on transcoder admin restarts.
+
+2009-01-15  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* data/database/mysql/schema.sql:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminconfig.py:
+	* flumotion/transcoder/admin/context/admin.py:
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	* flumotion/transcoder/admin/datastore/reportsstore.py:
+	* flumotion/transcoder/admin/diagnostic.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	Fixed wrong function signature in _doBroadcastUIState
+	* flumotion/transcoder/enums.py:
+	* flumotion/transcoder/transreport.py:
+	Added diagnostic procedure.
+
+2009-01-14  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion-transcoder.spec.in:
+	Add MySQL-python to BuildRequires, because configure looks for it.
+
+2009-01-14  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/datastore/Makefile.am:
+	Dist the reportsstore module.
+
 2009-01-12  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* doc/examples/customers/fluendo.ini:
 	Fix the example customer profile to make it work in a default
 	installation.
+
+2009-01-09  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/job.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/transreport.py:
+	Added machine name, worker name and number of attempts in DB.
+
+2009-01-08  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* data/database/mysql/schema.sql:
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	* flumotion/transcoder/admin/datastore/reportsstore.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	* flumotion/transcoder/transreport.py:
+	Added audio codec, video codec, mime type, cpu/real time in DB +
+	fixed report path.
+
+2009-01-08  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/scheduler.py:
+	Handle failures in retrieving the transcoding report.
+
+	* flumotion/transcoder/admin/admin.py:
+	Add comments.
+
+2009-01-08  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/adminconfig.py:
+	* conf/transcoder/transcoder-admin.ini:
+	Rename state-data-source to reports-data-source and fix typo in default
+	transcoder username.
+
+	* flumotion/component/transcoder/filemonitor.py:
+	Throw away the tzinfo precisely now.
+
+	* flumotion/component/transcoder/watcher.py:
+	Don't throw away tzinfo just yet.
+
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/context/admin.py:
+	Rename SQLdatasource to reportsDataSource.
+
+	* flumotion/transcoder/admin/datastore/activity.py:
+	Allow proxies without a _touche() method.
+
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/base.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	Rename IDataSource to IInformationSource, define IReportsSource and
+	make IDataSource the common superclass of those two interfaces.
+
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	Make SQLDataSource implement IReportsSource.
+
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/datastore/reportsstore.py (added):
+	Factor out the ReportsStore to a separate module.
+
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	Prefix unused variables with _.
+
+2009-01-08  Julien Le Goff <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/watcher.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	* flumotion/transcoder/admin/datastore/store.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	Checksum is now collected and inserted into the database.
+
+2009-01-08  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/disco2.py:
+	Audio can have no depth if it's float.
+
+2009-01-07  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/admintask.py:
+	We don't have the component, only a proxy.
+
+2009-01-07  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/transcoder.py:
+	The file-completed signal's signature changed to include the stat
+	tuple, adapt a forgotten callback.
+
+2009-01-05  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/Makefile.am:
+	Make make notice the new discoverer.
+
+2009-01-05  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/analyst.py:
+	* flumotion/component/transcoder/disco2.py (added):
+	Add the new, experimental discoverer.
+
+2009-01-05  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* configure.ac:
+	Bump micro version to be able to distinguish from trunk and test from
+	packages.
+
+2008-12-31  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/watcher.py:
+	Send stat and file detection time information when emitting file-added
+	and file-completed signals.
+
+	* flumotion/component/transcoder/filemonitor.py:
+	Propagate information from file-added and file-completed signals to the
+	UIState.
+
+	* flumotion/component/transcoder/filemonitor_admin_gtk.py:
+	Adapt to the changes in the pending-file UIState key, which now stores
+	more information than just the file state.
+
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	Propagate information about the monitored file in the file-added and
+	file-state-changed signals.
+
+	* flumotion/transcoder/admin/scheduler.py:
+	Emit transcoding-done and transcoding-failed signals when having
+	the transcoding report available and pass that report along with the
+	signal.
+
+	* flumotion/transcoder/admin/admin.py:
+	Gather information about transcodifications in progress. Store that
+	information in the reports store after the transcodification has
+	finished.
+
+	* flumotion/transcoder/enums.py:
+	Add an enum for possible transcodification outcomes.
+
+	* flumotion/transcoder/admin/datastore/store.py:
+	Add transcoder reports store and a store proxy.
+
+	* flumotion/transcoder/admin/context/admin.py:
+	Add method to get a SQL data source from the admin context.
+
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	Implement a SQL data source capable of issuing and storing transcoder
+	reports.
+
+	* data/database/mysql/preamble.sql:
+	* data/database/mysql/schema.sql:
+	* data/database/mysql/user_setup.sql:
+	Add MySQL database schema for storing transcoder reports.
+
+	* data/database/mysql/initial_data.sql (deleted):
+	Moved initial data to schema.sql, where it makes more sense.
+
+	* data/database/mysql/Makefile.am:
+	Dist the new SQL scripts.
+
+	* conf/transcoder/transcoder-admin.ini:
+	Add database connection info to the configuration file.
+	* flumotion/transcoder/admin/adminconfig.py:
+	Add state-data-source section with connection-info.
+
+	* configure.ac:
+	Check for MySQL-python.
+	* flumotion-transcoder.spec.in:
+	Add dependency on MySQL-python.
+
+	* flumotion/transcoder/admin/enums.py:
+	Add trailing newline.
 
 2008-12-05  Sebastien Merle  <sebastien@fluendo.com>
 
@@ -18,7 +248,7 @@
 2008-12-04  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/scheduler.py:
-	Awake the task starting loop when a tasks terminate. 
+	Awake the task starting loop when a tasks terminate.
 
 2008-11-26  Sebastien Merle  <sebastien@fluendo.com>
 

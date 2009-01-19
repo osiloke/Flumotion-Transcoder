@@ -161,9 +161,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         activStore = activCtx.store
         activStore.state = ActivityStateEnum.failed
         activStore.store()
-        self.emit("transcoding-failed", task)
         if transPxy is not None:
             d = transPxy.retrieveReport()
+            d.addErrback(self.__ebReportRetrievalFailed, False)
             d.addCallback(self.__transcodingFailed, task, transPxy)
         else:
             self.__transcodingFailed(None, task, transPxy)
@@ -173,9 +173,9 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         activStore = activCtx.store
         activStore.state = ActivityStateEnum.done
         activStore.store()
-        self.emit("transcoding-done", task)
         if transPxy is not None:
             d = transPxy.retrieveReport()
+            d.addErrback(self.__ebReportRetrievalFailed, True)
             d.addCallback(self.__transcodingDone, task, transPxy)
         else:
             self.__transcodingDone(None, task, transPxy)
@@ -191,6 +191,15 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         profCtx = task.getProfileContext()
         self._transcoding.removeTask(profCtx.uid)
 
+    def __ebReportRetrievalFailed(self, failure, transcod_successful):
+        if transcod_successful:
+            msg = "successful"
+        else:
+            msg = "failed"
+        log.notifyFailure(self, failure, "Failure during retrieving a %s transcoding report" % msg)
+        # Not being able to retrieve the report doesn't mean that the
+        # transcoding itself failed. Continue with the callback chain.
+        return None
 
     ## EventSource Overriden Methods ##
 
@@ -204,12 +213,14 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     ## Private Methods ##
 
     def __transcodingDone(self, report, task, transPxy):
+        self.emit("transcoding-done", task, report)
         docs = transPxy and transPxy.getDocuments()
         trigger = NotificationTriggerEnum.done
         profCtx = task.getProfileContext()
         self.__notify(task.label, trigger, profCtx, report, docs)
 
     def __transcodingFailed(self, report, task, transPxy):
+        self.emit("transcoding-failed", task, report)
         d = self._diagnostician.diagnoseTranscodingFailure(task, transPxy)
         args = (report, task, transPxy)
         d.addCallbacks(self.__notifyTranscodingfailure,

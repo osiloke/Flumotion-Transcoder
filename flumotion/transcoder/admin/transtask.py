@@ -48,6 +48,7 @@ class TranscodingTask(admintask.AdminTask):
         self._register("failed")
         self._register("done")
         self._register("terminated")
+        self._attempts = 0
         
     ## Public Methods ##
     
@@ -61,6 +62,10 @@ class TranscodingTask(admintask.AdminTask):
         transPxy= self.getActiveComponent()
         return (transPxy != None) and transPxy.isAcknowledged()
 
+    # Number of times a transcoding task actually gets exectuted. Different
+    # from getRetryCount which returns the number of time a task is aborted.
+    def getAttemptCount(self):
+        return self._attempts
 
     ## Component Event Listeners ##
     
@@ -242,6 +247,7 @@ class TranscodingTask(admintask.AdminTask):
     
     def _doLoadComponent(self, workerPxy, compName, compLabel,
                          compProperties, loadTimeout):
+        self._attempts += 1
         return transcoder.TranscoderProxy.loadTo(workerPxy, compName, compLabel,
                                                  compProperties, loadTimeout)
         

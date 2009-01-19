@@ -88,7 +88,10 @@ class ReadWriteProxy(base.ReadOnlyProxy):
     def __set__(self, obj, value):
         assert not obj._deleted
         setattr(obj._data, self._fieldName, utils.deepCopy(value))
-        obj._touche()
+        try:
+            obj._touche()
+        except AttributeError:
+            pass
 
 
 class ReadWriteDataProxy(object):
@@ -101,7 +104,10 @@ class ReadWriteDataProxy(object):
     def __set__(self, obj, value):
         assert not obj._deleted
         obj._data.data[self._fieldName] = utils.deepCopy(value)
-        obj._touche()
+        try:
+            obj._touche()
+        except AttributeError:
+            pass
     def __delete__(self, obj):
         raise AttributeError("Attribute cannot be deleted")
 

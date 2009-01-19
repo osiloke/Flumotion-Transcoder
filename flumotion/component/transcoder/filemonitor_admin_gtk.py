@@ -66,8 +66,8 @@ class FileMonitorAdminGtkNode(BaseAdminGtkNode):
         self.model.clear()
         for d in self.uiState.get("monitored-directories"):
             self._addDirectory(d)
-        for i, s in self.uiState.get("pending-files").iteritems():
-            self._addFile(i, s)
+        for i, fileinfo in self.uiState.get("pending-files").iteritems():
+            self._addFile(i, fileinfo[0])
 
     def _addDirectory(self, dir):
         if self.directories.has_key(dir):
@@ -116,11 +116,13 @@ class FileMonitorAdminGtkNode(BaseAdminGtkNode):
         if key == "monitored-directories":
             self._removeDirectory(value)
 
-    def stateSetitem(self, state, key, subkey, value):
+    def stateSetitem(self, state, key, subkey, fileinfo):
+        # FIXME This function seems unused...
         if key == "pending-files":
-            self._addFile(subkey, value)
+            self._addFile(subkey, fileinfo[0])
 
     def stateDelitem(self, state, key, subkey, value):
+        # FIXME This function seems unused...
         if key == "pending-files":
             self._removeFile(subkey)
 

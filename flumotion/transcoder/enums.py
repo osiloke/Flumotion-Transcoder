@@ -128,3 +128,24 @@ AudioVideoToleranceEnum = EnumClass('AudioVideoToleranceEnum',
                                     ('Strict', 
                                      'Allow without audio', 
                                      'Allow without video'))
+
+# REMEMBER to keep in sync with the transcoder_outcomes database table
+TranscodingOutcomeEnum = EnumClass("TranscodingOutcomeEnum",
+                                   ("expected_failure",
+                                    "unexpected_failure",
+                                    "success"),
+                                   ("Expected failure",
+                                    "Unexpected failure",
+                                    "Success"),
+                                   outcome_id=(1, 2, 3))
+
+TranscodingFailureEnum = EnumClass("TranscodingFailureEnum",
+                                   ("wrong_mime_type",
+                                    "wrong_file_type",
+                                    "video_too_small",
+                                    "audio_too_small"),
+                                   ("Wrong mime type",
+                                    "Wrong file type",
+                                    "Video too small",
+                                    "Audio too small"),
+                                   failure_id=(1,2,3,4))

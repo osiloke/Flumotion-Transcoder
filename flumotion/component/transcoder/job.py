@@ -158,10 +158,17 @@ class TranscodingJob(log.LoggerProxy):
             # The input file type (with the file command)
             try:
                 arg = utils.mkCmdArg(inputPath)
-                fileType = commands.getoutput("file -b" + arg)
+                fileType = commands.getoutput("file -bL" + arg)
             except Exception, e:
                 fileType = "ERROR: %s" % str(e)
             sourceCtx.reporter.report.fileType = fileType
+
+            try:
+                machineName = commands.getoutput("hostname")
+            except Exception, e:
+                machineName = "ERROR: %s" % str(e)
+            sourceCtx.reporter.report.machineName = machineName
+
             # The input file header
             try:
                 inputFile = file(inputPath)

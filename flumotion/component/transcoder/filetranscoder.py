@@ -377,6 +377,8 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
         return failure
     
     def __syncReport(self, report):
+        report.reportPath = self._getReportPath()
+        self.debug("Report path is: %s", report.reportPath)
         self.__writeReport(report)
         self._fireTranscodingReport(self._reportDefaultPath)
     

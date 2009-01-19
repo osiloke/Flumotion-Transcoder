@@ -204,7 +204,7 @@ class MediaTranscoder(log.LoggerProxy):
         except:
             self.__failed()
 
-    def _watcher_callback(self, watcher, file):
+    def _watcher_callback(self, watcher, file, stat):
         """
         Called when a file has not been created after self._stallTimeout seconds
         or gone unchanged in size for the past self._stallTimeout seconds.

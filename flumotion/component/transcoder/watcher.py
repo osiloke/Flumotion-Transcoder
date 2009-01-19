@@ -14,11 +14,14 @@
 
 import gobject
 import os
+import stat
+from datetime import datetime
 
 from twisted.internet import threads, defer, reactor
 
 from flumotion.inhouse import log
 
+from flumotion.common import eventcalendar
 from flumotion.component.transcoder import compconsts
 
 FILE_PROCESSING_BLOCK = 20
@@ -29,9 +32,9 @@ class Watcher(gobject.GObject, log.LoggerProxy):
     Watches for changes in a directory
 
     Signals:
-    _ file-completed : The given filename is new and hasn't 
+    _ file-completed : The given filename is new and hasn't
                         changed size between
-    _ file-added : A new file has appeared
+    _file-added : A new file has appeared
     _ file-removed : A file has been deleted
     _ file-not-present : The given filename does not exist
                             iterations
@@ -39,10 +42,13 @@ class Watcher(gobject.GObject, log.LoggerProxy):
     __gsignals__ = {
         "file-completed" : (gobject.SIGNAL_RUN_LAST,
                             gobject.TYPE_NONE,
-                            (gobject.TYPE_STRING, )),
+                            (gobject.TYPE_STRING,
+                             gobject.TYPE_PYOBJECT)),
         "file-added" : (gobject.SIGNAL_RUN_LAST,
                         gobject.TYPE_NONE,
-                        (gobject.TYPE_STRING, )),
+                        (gobject.TYPE_STRING,
+                         gobject.TYPE_PYOBJECT,
+                         gobject.TYPE_PYOBJECT)),
         "file-removed" : (gobject.SIGNAL_RUN_LAST,
                           gobject.TYPE_NONE,
                           (gobject.TYPE_STRING, )),
@@ -118,25 +124,29 @@ class PeriodicalWatcher(Watcher):
             del currFiles[f]
         for f, s in newFiles.iteritems():
             yield None
+            oldfilesize = None
+            if f in currFiles and currFiles[f]:
+                oldfilesize = currFiles[f][stat.ST_SIZE]
             self.log("File '%s' size change from %s to %s", 
-                     f, str(currFiles.get(f, None)), str(s))
+                     f, str(oldfilesize), str(s[stat.ST_SIZE]))
             #new file
             if not (f in currFiles):
                 self.log("File '%s' added", f)
-                self.emit('file-added', f)
+                now = datetime.now(eventcalendar.UTC)
+                self.emit('file-added', f, s, now)
                 currFiles[f] = s
                 continue
             #Checked file
             if currFiles[f] == None:
                 continue
             #Completed file
-            if s == currFiles[f]:
+            if s[stat.ST_SIZE] == currFiles[f][stat.ST_SIZE]:
                 self.log("File '%s' completed", f)
-                self.emit('file-completed', f)
+                self.emit('file-completed', f, s)
                 currFiles[f] = None
                 continue
             currFiles[f] = s
-    
+
     def __cbGotFiles(self, newfiles):
         self.log("Comparing new files (%d) to old files (%d)",
                  len(newfiles), len(self._files))
@@ -154,7 +164,7 @@ class PeriodicalWatcher(Watcher):
 
     def _listFiles(self):
         """
-        Returns a dict of filename->size mapping.
+        Returns a dict of filename->(stat tuple) mapping.
         """
         raise NotImplementedError        
 
@@ -178,13 +188,13 @@ class DirectoryWatcher(PeriodicalWatcher):
     def _step(self, results, dirname, content):
         abs_content = [os.path.join(dirname, f) 
                        for f in content]
-        file_size = [f for f in abs_content if os.path.isfile(f)]
-        for file in file_size:
+        file_stat = [f for f in abs_content if os.path.isfile(f)]
+        for file in file_stat:
             try:
-                size = os.path.getsize(file)
+                stat = tuple(os.stat(file))
             except OSError:
                 continue
-            results[file[len(self.path):]] = size 
+            results[file[len(self.path):]] = stat
 
         
 class FilesWatcher(PeriodicalWatcher):
@@ -204,5 +214,5 @@ class FilesWatcher(PeriodicalWatcher):
             if not os.path.exists(filename):
                 self.emit('file-not-present', filename)
                 continue
-            results[filename] = os.path.getsize(filename)
+            results[filename] = tuple(os.stat(filename))
         return results

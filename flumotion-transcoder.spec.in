@@ -14,11 +14,13 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires:       %{gstreamer}
 Requires:       flumotion
 Requires:       flumotion-inhouse
+Requires:       MySQL-python
 
 # sigh, libtool
 BuildRequires:  gcc-c++
 BuildRequires:	flumotion >= @FLUMOTION_REQ@
 BuildRequires:  flumotion-inhouse >= @INHOUSE_REQ@
+BuildRequires:  MySQL-python
 
 %description
 Flumotion Transcoder.
@@ -98,6 +100,7 @@ fi
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/managers/transcoder/planet.xml
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-data.ini
+%attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/diagnosis.conf
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-admin
 
 %dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder
@@ -106,6 +109,12 @@ fi
 %dir %attr(770,root,flumotion) %{_localstatedir}/cache/flumotion/transcoder
 
 %changelog
+* Thu Jan 15 2009 Julien Le Goff <jlegoff@flumotion.com>
+- Add copy of diagnosis configuration file.
+
+* Wed Dec 31 2008 Jan Urbanski <jurbanski@flumotion.com>
+- Add dependency on MySQL-python
+
 * Wed May 14 2008 Sebastien Merle <sebastien@fluendo.com>
 - Added data directory.
 
