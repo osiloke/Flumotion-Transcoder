@@ -53,7 +53,7 @@ install -m 644 \
         conf/transcoder/transcoder-data.ini \
         $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/transcoder-data.ini
 install -m 644 \
-        conf/transcoder/transcoder-data.ini \
+        conf/transcoder/diagnosis.conf \
         $RPM_BUILD_ROOT%{_sysconfdir}/flumotion/transcoder/diagnosis.conf
 
 # install service files
