@@ -1,3 +1,9 @@
+2009-01-20  Sebastien Merle  <sebastien@fluendo.com>
+
+	* conf/transcoder/transcoder-admin.ini:
+	* conf/transcoder/transcoder-data.ini:
+	Updated the configuration comments, and access properties.
+
 2009-01-20  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* bin/Makefile.am:
