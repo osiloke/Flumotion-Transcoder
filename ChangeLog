@@ -1,5 +1,10 @@
 2009-01-20  Jan Urbanski  <jurbanski@flumotion.com>
 
+	* bin/Makefile.am:
+	Fix RPM buildability.
+
+2009-01-20  Jan Urbanski  <jurbanski@flumotion.com>
+
 	* flumotion/transcoder/admin/admerrs.py:
 	Call the correct superclass' method.
 
