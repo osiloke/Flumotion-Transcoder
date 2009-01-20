@@ -37,7 +37,7 @@ class OperationTimedOutError(iherrors.TimeoutError):
     An asynchronous operation timed out.
     """
     def __init__(self, *args, **kwargs):
-        errors.TranscoderError.__init__(self, *args, **kwargs)
+        iherrors.TimeoutError.__init__(self, *args, **kwargs)
 
 
 class OperationAbortedError(errors.TranscoderError):

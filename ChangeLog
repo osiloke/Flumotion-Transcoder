@@ -1,3 +1,8 @@
+2009-01-20  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/admerrs.py:
+	Call the correct superclass' method.
+
 2009-01-20  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/component/transcoder/filemonitor.py:
