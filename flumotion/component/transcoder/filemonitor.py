@@ -176,10 +176,14 @@ class FileMonitor(component.BaseComponent):
         substate = state.get(key)
         # substate can be None, probably because it has already been
         # added to the internal dictionaries, but has not been updated
-        # in the UIState
-        if substate is not None:
-            state, fileinfo, detection_time, mime_type, checksum = substate
-            substate = (status, fileinfo, detection_time, mime_type, checksum)
+        # in the UIState. In that case don't bother with updating the
+        # UIState - we don't want to overwrite the file state in the
+        # smooth update structure.
+        if substate is None:
+            return
+
+        state, fileinfo, detection_time, mime_type, checksum = substate
+        substate = (status, fileinfo, detection_time, mime_type, checksum)
         self.__updateUIItem('pending-files', key, substate)
 
 
@@ -203,7 +207,16 @@ class FileMonitor(component.BaseComponent):
         key = (virtBase, file)
         state = self.uiState.get('pending-files')
         substate = state.get(key)
-        state, old_fileinfo, detection_time, old_mime, checksum = substate
+
+        # See a similar comment for _file_added. Here the only
+        # information that we might lose is the detection_time, that
+        # has been stored when _file_added has been called. Live with
+        # that for now...
+        if substate is None:
+            detection_time = None
+        else:
+            _state, _fileinfo, detection_time, _mime, _checksum = substate
+
         try:
             arg = utils.mkCmdArg(watcher.path + file)
             mime_type = commands.getoutput("file -biL" + arg)

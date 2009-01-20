@@ -1,3 +1,8 @@
+2009-01-20  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	Fixed "unpack non-sequence" traceback in File Monitor.
+
 2009-01-19  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* bin/Makefile.am:
