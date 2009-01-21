@@ -199,6 +199,9 @@ class PrognosisConfig(properties.PropertyBag):
 
 class AdminConfig(properties.PropertyBag):
     """
+        Changes from version 1.2 to 1.3:
+            Added admin:diagnosis section in transcoder-admin.ini.
+
         Changes from version 1.1 to 1.2:
             Added reports-data-source section with connection-info.
 
@@ -215,7 +218,7 @@ class AdminConfig(properties.PropertyBag):
 
 class ClusterConfig(properties.RootPropertyBag):
     
-    VERSION = (1, 2)
+    VERSION = (1, 3)
     COMMENTS = __doc__.split('\n')
     
     debug = properties.String("debug")

@@ -1,3 +1,12 @@
+2009-01-21  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	Check that the file hasn't been removed while computing the
+	checksum.
+
+	* flumotion/transcoder/admin/adminconfig.py:
+	Updates version number for admin config.
+
 2009-01-21  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion/transcoder/admin/admin.py:

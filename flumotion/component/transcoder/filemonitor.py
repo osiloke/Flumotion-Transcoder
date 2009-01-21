@@ -15,6 +15,7 @@
 import os
 import shutil
 import commands
+import time
 from md5 import md5
 
 from twisted.internet import reactor, error, threads
@@ -203,31 +204,11 @@ class FileMonitor(component.BaseComponent):
     
     def _file_completed(self, watcher, file, fileinfo, virtBase):
         localFile = virtBase.append(file).localize(self._local)
-        self.debug("File completed '%s'", localFile)
-        key = (virtBase, file)
-        state = self.uiState.get('pending-files')
-        substate = state.get(key)
-
-        # See a similar comment for _file_added. Here the only
-        # information that we might lose is the detection_time, that
-        # has been stored when _file_added has been called. Live with
-        # that for now...
-        if substate is None:
-            detection_time = None
-        else:
-            _state, _fileinfo, detection_time, _mime, _checksum = substate
-
-        try:
-            arg = utils.mkCmdArg(watcher.path + file)
-            mime_type = commands.getoutput("file -biL" + arg)
-        except Exception, e:
-            mime_type = "ERROR: %s" % str(e)
-        d = threads.deferToThread(self.__checksum, file, watcher.path)
+        d = threads.deferToThread(self.__getFileInfo, file, watcher.path,
+                                  virtBase)
         d.addCallbacks(self.__updateChecksumState, self.__failedChecksum,
-                       callbackArgs = (key, fileinfo, detection_time,
-                                       mime_type),
-                       errbackArgs = (key, fileinfo, detection_time,
-                                      mime_type))
+                       callbackArgs = (fileinfo, localFile),
+                       errbackArgs = (fileinfo, file, virtBase, localFile))
 
     def _file_removed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
@@ -323,6 +304,30 @@ class FileMonitor(component.BaseComponent):
         self.addMessage(m)
         return failure
 
+    def __getFileInfo(self, filename, path, virtBase):
+        mime = self.__getMimeType(filename, path)
+        checksum = self.__checksum(filename, path)
+
+        (key, detection_time) = self.__getOldInfo(filename, virtBase)
+
+        return (key, mime, checksum, detection_time)
+
+    def __getOldInfo(self, file, virtBase):
+        localFile = virtBase.append(file).localize(self._local)
+        self.debug("File completed '%s'", localFile)
+        key = (virtBase, file)
+        state = self.uiState.get('pending-files')
+        substate = state.get(key)
+
+        # See a similar comment for _file_added. Here the only
+        # information that we might lose is the detection_time, that
+        # has been stored when _file_added has been called. Live with
+        # that for now...
+        if substate is None:
+            detection_time = None
+        else:
+            _state, _fileinfo, detection_time, _mime, _checksum = substate
+        return (key, detection_time)
 
     def __checksum(self, filename, path):
         if path is None:
@@ -337,22 +342,43 @@ class FileMonitor(component.BaseComponent):
         fd = open(path+filename, "rb")
         try:
             contents = iter(lambda: fd.read(block_size), "")
+            time.sleep(60)
             m = reduce(upd, contents, md5())
         finally:
             fd.close()
-
+        self.debug("Checksum Done! %s", m.hexdigest())
         return m.hexdigest()
 
-    def __updateChecksumState(self, checksum, key, fileinfo, detection_time,
-                              mime_type):
-        substate = (MonitorFileStateEnum.pending, fileinfo, detection_time,
+    def __getMimeType(self, filename, path):
+        try:
+            arg = utils.mkCmdArg(path + filename)
+            mime_type = commands.getoutput("file -biL" + arg)
+        except Exception, e:
+            mime_type = "ERROR: %s" % str(e)
+
+    def __updateChecksumState(self, new_info, file_info, local_file):
+        # it is possible that the file has been removed while computing the
+        # checksum. In this case, do not update the UI state
+        if not os.path.exists(local_file):
+            self.debug("File: %s has been removed while computing the checksum.",
+                       local_file)
+            return
+        key, mime_type, checksum, detection_time = new_info
+        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
                     mime_type, checksum)
         self.__setUIItem('pending-files', key, substate)
 
-    def __failedChecksum(self, failure, key, fileinfo, detection_time,
-                         mime_type):
-        log.notifyFailure(self, failure, "Failure during checksum")
+    def __failedChecksum(self, failure, file_info, filename, virtBase,
+                         local_file):
+        # it is possible that the file has been removed while computing the
+        # checksum. In this case, do not update the UI state
+        if not os.path.exists(local_file):
+            self.debug("File: %s has been removed while computing the checksum.",
+                       local_file)
+            return
+        log.notifyFailure(self, failure, "Failure during checksum / mime type")
         #continue anyway
-        substate = (MonitorFileStateEnum.pending, fileinfo, detection_time,
-                    mime_type, None)
+        (key, detection_time) = self.__getOldInfo(filename, virtBase)
+        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
+                    None, None)
         self.__setUIItem('pending-files', key, substate)
