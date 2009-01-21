@@ -156,7 +156,7 @@ select
 	avg(timestampdiff(SECOND, detection_time, queueing_time)) as waiting_for_queuing,
 	avg(timestampdiff(SECOND, queueing_time, transcoding_start_time)) as in_queue,
 	avg(timestampdiff(SECOND, transcoding_start_time, transcoding_finish_time)) as transcoding,
-	avg(timestampdiff(SECOND, transcoding_start_time, transcoding_finish_time)) as total
+	avg(timestampdiff(SECOND, detection_time, transcoding_finish_time)) as total
 from transcoder_reports;
 
 -- time spent in various phases per customer

@@ -1,3 +1,13 @@
+2009-01-21  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* data/database/mysql/schema.sql:
+	Compute total transcoding time correctly.
+
+	* flumotion/component/transcoder/disco2.py:
+	Get the negotiated caps and fall back to just caps if they don't
+	exist. Should fix problems with getting unfixed caps from the
+	discoverer.
+
 2009-01-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* conf/transcoder/transcoder-admin.ini:

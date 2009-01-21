@@ -384,7 +384,10 @@ class Analyzer(object):
         self.info.mimetype = caps.to_string()
 
     def _cb_notify_caps_fixed(self, pad, smth):
-        # TODO: check if the caps are really fixed?
+        # Try to get negotiated caps - the fakesink should have got
+        # them. If they're not there, just get the caps.
+        caps = pad.get_negotiated_caps() or pad.get_caps()
+
         gst.debug('notified caps: %r, %r, %r' % (pad, smth,
                                                    pad.get_caps().to_string()))
         self.pending.remove(pad)
