@@ -1,5 +1,10 @@
 2009-01-21  Jan Urbanski  <jurbanski@flumotion.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	Only run prognosis when there's a report.
+
+2009-01-21  Jan Urbanski  <jurbanski@flumotion.com>
+
 	* data/database/mysql/schema.sql:
 	Compute total transcoding time correctly.
 

@@ -352,13 +352,15 @@ class TranscoderAdmin(log.Loggable):
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = False
             transcodeReportStore.successful = False
-            transcodeReportStore.reportPath = ""+report.reportPath.__str__()
-            # get info from the report and inserts it into the d
-            self.__passReportInfo(report, task, transcodeReportStore)
 
-            # decides, based on the information we have, if the file should
-            # have failed to transcode
-            self.__prognose(report, transcodeReportStore)
+            if report:
+                transcodeReportStore.reportPath = ""+report.reportPath.__str__()
+                # get info from the report and inserts it into the d
+                self.__passReportInfo(report, task, transcodeReportStore)
+
+                # decides, based on the information we have, if the file should
+                # have failed to transcode
+                self.__prognose(report, transcodeReportStore)
 
             transcodeReportStore.store()
             
@@ -386,17 +388,19 @@ class TranscoderAdmin(log.Loggable):
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = True
             transcodeReportStore.successful = True
-            # FIXME get the real path, not a template string with things like %(id)s
-            # transcodeReportStore.reportPath = profCtx.doneRepRelPath
-            transcodeReportStore.reportPath = report.reportPath.__str__()
-            # get info from the report and inserts it into the d
-            self.__passReportInfo(report, task, transcodeReportStore)
 
-            # decides, based on the information we have, if the file should
-            # have failed. to transcode.
-            # It is probably not necessary to do it when the transcoding was
-            # successful, but I'll leave it for now.
-            self.__prognose(report, transcodeReportStore)
+            if report:
+                # FIXME get the real path, not a template string with things like %(id)s
+                # transcodeReportStore.reportPath = profCtx.doneRepRelPath
+                transcodeReportStore.reportPath = report.reportPath.__str__()
+                # get info from the report and inserts it into the d
+                self.__passReportInfo(report, task, transcodeReportStore)
+
+                # decides, based on the information we have, if the file should
+                # have failed. to transcode.
+                # It is probably not necessary to do it when the transcoding was
+                # successful, but I'll leave it for now.
+                self.__prognose(report, transcodeReportStore)
 
             transcodeReportStore.store()
             del self._transcodeReports[key]
