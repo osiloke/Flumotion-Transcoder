@@ -393,7 +393,7 @@ class Analyzer(object):
         caps = pad.get_negotiated_caps() or pad.get_caps()
 
         gst.debug('notified caps: %r, %r, %r' % (pad, smth,
-                                                   pad.get_caps().to_string()))
+                                                 caps.to_string()))
         # We might have been notified twice about the same caps.
         try:
             self.pending.remove(pad)
