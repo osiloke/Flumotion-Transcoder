@@ -20,10 +20,10 @@ from flumotion.transcoder.admin.datasource import datasource
 
 
 class IBaseStore(interfaces.IAdminInterface):
-    
+
     identifier = Attribute("Unique identifier of the store element")
     label      = Attribute("Label of the store element")
-    
+
     def getAdminStore(self):
         pass
 
@@ -33,10 +33,10 @@ class IStoreElement(interfaces.IAdminInterface):
 
 
 class INotificationProvider(interfaces.IAdminInterface):
-    
+
     def getNotificationStores(self, trigger):
         pass
-    
+
     def iterNotificationStores(self, trigger):
         pass
 
@@ -59,10 +59,10 @@ class ReadOnlyProxy(object):
 
 class SimpleStore(object):
     implements(IBaseStore)
-    
+
     identifier = None
     label = None
-    
+
     def __init__(self, parentStore, identifier=None, label=None):
         object.__setattr__(self, "parent", parentStore)
         if identifier is not None:
@@ -73,7 +73,7 @@ class SimpleStore(object):
     def __setattr__(self, attr, value):
         """
         Prevent adding new attributes.
-        Allow early detection of attributes spelling mistakes. 
+        Allow early detection of attributes spelling mistakes.
         """
         if attr.startswith("_") or hasattr(self, attr):
             return object.__setattr__(self, attr, value)
@@ -81,7 +81,7 @@ class SimpleStore(object):
 
 
 class DataStore(SimpleStore):
-    
+
     def __init__(self, parentStore, data, identifier=None, label=None):
         SimpleStore.__init__(self, parentStore, identifier or data.identifier, label)
         self._data = data
@@ -89,7 +89,7 @@ class DataStore(SimpleStore):
 
 class StoreElement(adminelement.AdminElement):
     implements(IBaseStore, IStoreElement)
-    
+
     def __init__(self, logger, parentStore, data, identifier=None, label=None):
         adminelement.AdminElement.__init__(self, logger, parentStore,
                                            identifier or data.identifier, label)
@@ -98,7 +98,7 @@ class StoreElement(adminelement.AdminElement):
 
 class NotifyStore(StoreElement):
     implements(INotificationProvider)
-    
+
     def __init__(self, logger, parentStore, dataSource, data, identifier=None, label=None):
         assert datasource.IInformationSource.providedBy(dataSource)
         StoreElement.__init__(self, logger, parentStore, data, identifier, label)
@@ -107,21 +107,21 @@ class NotifyStore(StoreElement):
 
 
     ## Public Methods ##
-    
+
     def getNotificationStores(self, trigger):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].values()
-    
+
     def iterNotificationStores(self, trigger):
         assert isinstance(trigger, NotificationTriggerEnum)
         return self._notifications[trigger].itervalues()
 
 
     ## Protected Virtual Methods ##
-    
+
     def _doRetrieveNotifications(self):
         return defer.succeed([])
-    
+
     def _doWrapNotification(self, notifData):
         raise NotImplementedError()
 
@@ -141,7 +141,7 @@ class NotifyStore(StoreElement):
 
 
     ## Overriden Methods ##
-    
+
     def _doPrepareInit(self, chain):
         def waitDatasource(result):
             to = adminconsts.WAIT_DATASOURCE_TIMEOUT
@@ -152,7 +152,7 @@ class NotifyStore(StoreElement):
         chain.addCallback(waitDatasource)
         chain.addErrback(self.__ebDataSourceError)
         # Retrieve and initialize the notifications
-        chain.addCallback(self.__cbRetrieveNotifications)        
+        chain.addCallback(self.__cbRetrieveNotifications)
 
     def _doPrepareActivation(self, chain):
         pass
@@ -163,14 +163,14 @@ class NotifyStore(StoreElement):
     def __cbRetrieveNotifications(self, result):
         d = self._doRetrieveNotifications()
         d.addCallback(self.__cbWrapNotifications)
-        d.addCallbacks(self.__cbNotificationsReceived, 
+        d.addCallbacks(self.__cbNotificationsReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-        
+
     def __cbWrapNotifications(self, notifDataList):
         return [self._doWrapNotification(n) for n in notifDataList]
-        
+
     def __cbNotificationsReceived(self, notifStores, oldResult):
         self.log("Store %s '%s' received %d notifications",
                  self.__class__.__name__, self.label, len(notifStores))
@@ -187,4 +187,4 @@ class NotifyStore(StoreElement):
                           "Store %s '%s' data source error",
                           self.__class__.__name__, self.label)
         return failure
-        
+

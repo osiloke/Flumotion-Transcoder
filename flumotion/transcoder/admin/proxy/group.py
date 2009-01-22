@@ -19,9 +19,9 @@ from flumotion.transcoder.admin.proxy import component
 
 
 class ComponentGroupProxy(base.BaseProxy):
-    
+
     _componentDomain = None
-    
+
     def __init__(self, logger, parentPxy, identifier, managerPxy, context, state):
         base.BaseProxy.__init__(self, logger, parentPxy, identifier, managerPxy)
         self._context = context
@@ -32,10 +32,10 @@ class ComponentGroupProxy(base.BaseProxy):
         # Registering Events
         self._register("component-added")
         self._register("component-removed")
-        
-        
+
+
     ## Public Methods ##
-    
+
     def getComponentProxies(self):
         return self._compPxys.values()
 
@@ -44,41 +44,41 @@ class ComponentGroupProxy(base.BaseProxy):
 
 
     ## Virtual Methods ##
-    
+
     def _onStateAppend(self, key, value):
         pass
-    
+
     def _onStateRemove(self, key, value):
         pass
 
     def _onComponentsLoaded(self):
         pass
 
-    
+
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         assert self._state, "Element has been removed"
         self._refreshProxiesListener("_compPxys", listener, "component-added")
 
     def _doGetChildElements(self):
         return self.getComponentProxies()
-    
+
     def _onActivated(self):
         state = self._state
         state.addListener(self, None,
-                          self._stateAppend, 
+                          self._stateAppend,
                           self._stateRemove)
         for componentState in state.get('components'):
             self.__componentStateAdded(componentState)
-            
+
     def _onRemoved(self):
         assert self._state, "Element has already been removed"
         if self.isActive():
             state = self._state
             state.removeListener(self)
         self._removeProxies("_compPxys", "component-removed")
-    
+
     def _doDiscard(self):
         assert self._state, "Element has already been discarded"
         self._discardProxies("_compPxys")
@@ -89,15 +89,15 @@ class ComponentGroupProxy(base.BaseProxy):
         d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.callback(element)
-        
+
     def _onElementAborted(self, element, failure):
         identifier = element.identifier
         d = self._waitCompLoaded.pop(identifier, None)
         if d:
             d.errback(failure)
-            
+
     ## State Listeners ##
-               
+
     def _stateAppend(self, state, key, value):
         if key == 'components':
             assert value != None
@@ -105,7 +105,7 @@ class ComponentGroupProxy(base.BaseProxy):
             if self.isActive():
                 self.__componentStateAdded(value)
         self._onStateAppend(key, value)
-    
+
     def _stateRemove(self, state, key, value):
         if key == 'components':
             assert value != None
@@ -113,10 +113,10 @@ class ComponentGroupProxy(base.BaseProxy):
             if self.isActive():
                 self.__componentStateRemoved(value)
         self._onStateRemove(key, value)
-    
-    
+
+
     ## Protected/Friend Methods
-    
+
     def _loadComponent(self, componentType, componentName, componentLabel,
                        workerPxy, properties, timeout=None):
         compId = common.componentId(self._state.get('name'), componentName)
@@ -127,62 +127,62 @@ class ComponentGroupProxy(base.BaseProxy):
         resDef = defer.Deferred()
         initDef = defer.Deferred()
         self._waitCompLoaded[identifier] = initDef
-        
+
         callDef = self._managerPxy._callRemote('loadComponent', componentType,
-                                            compId, componentLabel, 
+                                            compId, componentLabel,
                                             props, workerPxy.getName())
         to = utils.createTimeout(timeout or adminconsts.LOAD_COMPONENT_TIMEOUT,
                                  self.__asyncComponentLoadedTimeout,
                                  callDef, componentLabel)
         args = (identifier, initDef, resDef, to)
-        callDef.addCallbacks(self.__cbComponentLoaded, 
+        callDef.addCallbacks(self.__cbComponentLoaded,
                              self.__ebComponentLoadingFailed,
                              callbackArgs=args, errbackArgs=args)
         return resDef
 
 
     ## Private Methods ##
-    
+
     def __updateIdleTarget(self):
         count = len(self._state.get("components", []))
         self._setIdleTarget(count)
-    
+
     def __getComponentUniqueId(self, managerPxy, compCtx, compState, domain):
         if compState == None:
             return None
         return self.__getComponentUniqueIdByName(compState.get('name'))
-    
+
     def __getComponentUniqueIdByName(self, name):
         return "%s.%s" % (self.identifier, name)
-    
+
     def __componentStateAdded(self, compState):
         name = compState.get('name')
         compCtx = self._context.getComponentContextByName(name)
         self._addProxyState(component, "_compPxys",
-                            self.__getComponentUniqueId, 
+                            self.__getComponentUniqueId,
                             "component-added", self._managerPxy,
                             compCtx, compState, self._componentDomain)
         self.__updateIdleTarget()
-    
+
     def __componentStateRemoved(self, compState):
         name = compState.get('name')
         compCtx = self._context.getComponentContextByName(name)
         self._removeProxyState("_compPxys", self.__getComponentUniqueId,
                                "component-removed", self._managerPxy,
-                               compCtx, compState, 
+                               compCtx, compState,
                                self._componentDomain)
         self.__updateIdleTarget()
 
     def __cbComponentLoaded(self, compState, identifier, initDef, resultDef, to):
         utils.cancelTimeout(to)
         initDef.chainDeferred(resultDef)
-    
+
     def __asyncComponentLoadedTimeout(self, d, label):
         msg = "Timeout loading component '%s'" % label
         self.warning("%s", msg)
         err = admerrs.OperationTimedOutError(msg)
         d.errback(err)
-    
+
     def __ebComponentLoadingFailed(self, failure, identifier, initDef, resultDef, to):
         utils.cancelTimeout(to)
         self._waitCompLoaded.pop(identifier, None)

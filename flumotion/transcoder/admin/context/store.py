@@ -55,10 +55,10 @@ class IStoreContext(base.IBaseStoreContext):
 
     def getCustomerContext(self, identifier):
         pass
-    
+
     def getCustomerContextByName(self, custName):
         pass
-    
+
     def iterCustomerContexts(self):
         pass
 
@@ -67,9 +67,9 @@ class IStoreContext(base.IBaseStoreContext):
 
 
 class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
-    
+
     implements(IStoreContext)
-    
+
     outputMediaTemplate   = base.StoreProxy("outputMediaTemplate",
                                             adminconsts.DEFAULT_OUTPUT_MEDIA_TEMPLATE)
     outputThumbTemplate   = base.StoreProxy("outputThumbTemplate",
@@ -133,22 +133,22 @@ class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
 
     def getCustomerContexts(self):
         return [customer.CustomerContext(self, s)
-                for s in self.store.getCustomerStores()] 
-    
+                for s in self.store.getCustomerStores()]
+
     def getCustomerContext(self, identifier):
         custStore = self.store.getCustomerStore(identifier)
         if custStore is None: return None
         return customer.CustomerContext(self, custStore)
-    
+
     def getCustomerContextFor(self, custStore):
         assert custStore.parent == self.store
         return customer.CustomerContext(self, custStore)
-    
+
     def getCustomerContextByName(self, custName):
         custStore = self.store.getCustomerStoreByName(custName)
         if custStore is None: return None
         return customer.CustomerContext(self, custStore)
-    
+
     def iterCustomerContexts(self):
         iter = self.store.iterCustomerStores()
         return base.LazyContextIterator(self, customer.CustomerContext, iter)
@@ -156,4 +156,4 @@ class StoreContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def getStateContext(self):
         stateStore = self.store.getStateStore()
         return state.StateContext(self, stateStore)
-        
+

@@ -25,17 +25,17 @@ class IWorkerSet(interfaces.IAdminInterface):
 
     def iterWorkerProxies(self):
         pass
-        
+
     def getWorkerProxy(self, identifier):
         pass
-    
+
     def getWorkerProxyByName(self, name):
         pass
 
 
 class WorkerSet(base.RootProxy):
     implements(IWorkerSet)
-    
+
     def __init__(self, managerPxySet):
         assert isinstance(managerPxySet, managerset.ManagerSet)
         base.RootProxy.__init__(self, managerPxySet)
@@ -48,8 +48,8 @@ class WorkerSet(base.RootProxy):
         # Registering Events
         self._register("worker-added")
         self._register("worker-removed")
-        
-        
+
+
     ## Public Methods ##
 
     def getWorkerProxies(self):
@@ -57,19 +57,19 @@ class WorkerSet(base.RootProxy):
 
     def iterWorkerProxies(self):
         return self._workerPxys.itervalues()
-        
+
     def getWorkerProxy(self, identifier):
         return self._workerPxys[identifier]
-    
+
     def getWorkerProxyByName(self, name):
         for workerPxy in self._workerPxys.itervalues():
             if workerPxy.getName() == name:
                 return workerPxy
         return None
-    
+
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         self._refreshProxiesListener("_workerPxys", listener, "worker-added")
 
@@ -82,20 +82,20 @@ class WorkerSet(base.RootProxy):
         managerPxy.connectListener("worker-removed", self,
                                    self.__onWorkerRemoved)
         managerPxy.refreshListener(self)
-        
+
     def __onManagerRemovedFromSet(self, mgrPxySet, managerPxy):
         managerPxy.disconnectListener("worker-added", self)
         managerPxy.disconnectListener("worker-removed", self)
 
 
     ### managerproxy.IManagerListener Implementation ###
-    
+
     def __onWorkerAdded(self, managerPxy, workerPxy):
         identifier = workerPxy.identifier
         assert not (identifier in self._workerPxys)
         self._workerPxys[identifier] = workerPxy
         self.emit("worker-added", workerPxy)
-    
+
     def __onWorkerRemoved(self, managerPxy, workerPxy):
         identifier = workerPxy.identifier
         assert identifier in self._workerPxys
@@ -103,6 +103,6 @@ class WorkerSet(base.RootProxy):
         del self._workerPxys[identifier]
         self.emit("worker-removed", workerPxy)
 
-    
+
     ## Private Methods ##
 

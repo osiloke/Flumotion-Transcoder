@@ -19,12 +19,12 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class WorkerMedium(api.IdentifiedMedium):
-    
+
     implements(interfaces.IWorkerMedium)
-    
+
     api.register_medium(interfaces.IWorkerMedium,
                         worker.IWorkerProxy)
-    
+
     api.readonly_getter("getName")
     api.readonly_getter("getHost")
 

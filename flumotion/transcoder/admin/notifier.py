@@ -32,7 +32,7 @@ from flumotion.transcoder.admin.enums import MailAddressTypeEnum
 from flumotion.transcoder.admin.context import activity
 
 ## Global info for emergency and debug notification ##
-# Should have working default values in case 
+# Should have working default values in case
 # an emergency mail should be send before
 # the configuration is loaded and setup
 
@@ -86,7 +86,7 @@ def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
             data = MIMEBase(mainType, subType)
             data.set_payload(doc.asString())
             email.Encoders.encode_base64(data)
-            data.add_header('Content-Disposition', 'attachment', 
+            data.add_header('Content-Disposition', 'attachment',
                             filename=doc.label)
             msg.attach(data)
     return str(msg)
@@ -126,7 +126,7 @@ def notifyEmergency(msg, info=None, debug=None, failure=None,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
                           failure, exception, documents)
-        d = _postNotification(_smtpServer, _smtpPort, _smtpRequireTLS, 
+        d = _postNotification(_smtpServer, _smtpPort, _smtpRequireTLS,
                               sender, recipients, body)
         args = ("Emergency",)
         d.addCallbacks(_cbNotificationDone, _ebNotificationFailed,
@@ -140,7 +140,7 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
                 exception=None, documents=None):
     """
     This function can be used from anywere to notify
-    debug information (like traceback) when no 
+    debug information (like traceback) when no
     Notifier reference is available.
     Do not raise any exception.
     """
@@ -149,7 +149,7 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
     try:
         sender = _debugSender
         recipients = _debugRecipients
-        log.info("Try sending a debug notification to %s from %s", 
+        log.info("Try sending a debug notification to %s from %s",
                  recipients, sender,
                  category=adminconsts.NOTIFIER_LOG_CATEGORY)
         body = _buildBody(sender, recipients, msg, msg, info, debug,
@@ -166,11 +166,11 @@ def notifyDebug(msg, info=None, debug=None, failure=None,
 
 
 class Notifier(log.Loggable, events.EventSourceMixin):
-    
+
     logCategory = adminconsts.NOTIFIER_LOG_CATEGORY
-    
+
     def __init__(self, notifierContext, storeContext):
-        self._notifierCtx = notifierContext 
+        self._notifierCtx = notifierContext
         self._storeCtx = storeContext
         self._paused = True
         self._activities = [] # (NotificationActivityContext)
@@ -188,7 +188,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         _debugRecipients = notifierContext.config.mailDebugRecipients
 
     ## Public Methods ##
-    
+
     def initialize(self):
         self.debug("Retrieve notification activities")
         states = [ActivityStateEnum.started]
@@ -197,7 +197,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         d.addCallback(self.__cbRestoreNotifications)
         d.addErrback(self.__ebInitializationFailed)
         return d
-    
+
     def start(self, timeout=None):
         for activCtx in self._activities:
             left = activCtx.getTimeLeftBeforeRetry()
@@ -205,21 +205,21 @@ class Notifier(log.Loggable, events.EventSourceMixin):
             d.addErrback(defer.resolveFailure)
         del self._activities[:]
         return defer.succeed(self)
-        
+
     def notify(self, label, trigger, notifCtx, variables, documents):
-        self.info("%s notification '%s' for trigger '%s' initiated", 
+        self.info("%s notification '%s' for trigger '%s' initiated",
                   notifCtx.type.nick, label, trigger.nick)
-        activCtx = self.__prepareNotification(label, trigger, notifCtx, 
+        activCtx = self.__prepareNotification(label, trigger, notifCtx,
                                               variables, documents)
         activCtx.store.store()
         return self.__startupNotification(activCtx)
-    
-    
+
+
     ## Protected Static Methods ##
 
     @staticmethod
-    def _postMail(smtpServer, smtpPort, smtpUsername, smtpPassword, 
-                  senderAddr, recipientsAddr, bodyFile, 
+    def _postMail(smtpServer, smtpPort, smtpUsername, smtpPassword,
+                  senderAddr, recipientsAddr, bodyFile,
                   requireTLS=True, timeout=None, retries=0):
         d = defer.Deferred()
         authenticate = (smtpUsername != None) and (smtpUsername != "")
@@ -227,9 +227,9 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                                      password=smtpPassword,
                                      requireAuthentication=authenticate,
                                      requireTransportSecurity=requireTLS,
-                                     fromEmail=senderAddr, 
+                                     fromEmail=senderAddr,
                                      toEmail=recipientsAddr,
-                                     file=bodyFile, 
+                                     file=bodyFile,
                                      deferred=d,
                                      retries=retries,
                                      timeout=timeout)
@@ -240,25 +240,25 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def _performGetRequest(url, timeout=None):
         return client.getPage(url, timeout=timeout,
                               agent=adminconsts.GET_REQUEST_AGENT)
-    
+
     @staticmethod
     def _performSQLExecution(uri, sql, params=None):
         #FIXME: cache the database connections
         db = database.Connection()
         db.open(uri, params)
         return db.execute(sql)
-    
-    
+
+
     ## Private Methods ##
-    
+
     def __cbRestoreNotifications(self, activCtxs):
         self.debug("Restoring %d notification activities", len(activCtxs))
         for activCtx in activCtxs:
             self._activities.append(activCtx)
-    
+
     def __ebInitializationFailed(self, failure):
-        return failure    
-    
+        return failure
+
     def __doPrepareGetRequest(self, label, trigger, notifCtx, vars, docs):
         stateCtx = self._storeCtx.getStateContext()
         activCtx = stateCtx.newNotificationContext(NotificationTypeEnum.http_request,
@@ -282,14 +282,14 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         activStore.recipientsAddr = allRecipientsAddr
         subject = vars.substitute(notifCtx.subjectTemplate)
         activStore.subject = subject
-        
+
         toRecipientsFields = recipients.get(MailAddressTypeEnum.to, [])
         toRecipients = utils.joinMailRecipients(toRecipientsFields)
         ccRecipientsFields = recipients.get(MailAddressTypeEnum.cc, [])
         ccRecipients = utils.joinMailRecipients(ccRecipientsFields)
-        
+
         body = vars.substitute(notifCtx.bodyTemplate)
-        
+
         msg = MIMEMultipart()
         msg['Subject'] = subject
         msg['From'] = sender
@@ -297,7 +297,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         msg['cc'] = ccRecipients
         txt = MIMEText(body)
         msg.attach(txt)
-        
+
         attachments = notifCtx.attachments
         if docs:
             for doc in docs:
@@ -307,11 +307,11 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                     data = MIMEBase(mainType, subType)
                     data.set_payload(doc.asString())
                     email.Encoders.encode_base64(data)
-                    data.add_header('Content-Disposition', 'attachment', 
+                    data.add_header('Content-Disposition', 'attachment',
                                     filename=doc.label)
                     msg.attach(data)
         activStore.body = str(msg)
-        
+
         return activCtx
 
     def __doPrepareSQLExec(self, label, trigger, notifCtx, vars, docs):
@@ -335,18 +335,18 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         else:
             self.__performNotification(activCtx)
         return d
-    
-    
-    
+
+
+
     def __getRetriesLeftDesc(self, activCtx):
         left = activCtx.retryMax - activCtx.retryCount
         if left > 1: return "%d retries left" % left
         if left == 1: return "1 retry left"
         return "no retry left"
-    
+
     def __doPerformGetRequest(self, activCtx):
         assert isinstance(activCtx, activity.HTTPActivityContext)
-        self.debug("GET request '%s' initiated with URL %s" 
+        self.debug("GET request '%s' initiated with URL %s"
                    % (activCtx.label, activCtx.url))
         d = self._performGetRequest(activCtx.url, timeout=activCtx.timeout)
         args = (activCtx,)
@@ -369,7 +369,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
 
     def __doPerformMailPost(self, activCtx):
         assert isinstance(activCtx, activity.MailActivityContext)
-        self.debug("Mail posting '%s' initiated for %s" 
+        self.debug("Mail posting '%s' initiated for %s"
                    % (activCtx.label, activCtx.recipientsAddr))
         senderAddr = activCtx.senderAddr
         recipientsAddr = activCtx.recipientsAddr
@@ -391,10 +391,10 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __cbPostMailSucceed(self, results, activCtx):
         self.debug("Mail post '%s' succeed", activCtx.label)
         self.log("Mail post '%s' responses; %s",
-                 activCtx.label, ", ".join(["'%s': '%s'" % (m, r) 
+                 activCtx.label, ", ".join(["'%s': '%s'" % (m, r)
                                                     for m, c, r in results[1]]))
         self.__notificationSucceed(activCtx)
-    
+
     def __ebPostMailFailed(self, failure, activCtx):
         retryLeftDesc = self.__getRetriesLeftDesc(activCtx)
         self.debug("Mail post '%s' failed (%s): %s",
@@ -404,12 +404,12 @@ class Notifier(log.Loggable, events.EventSourceMixin):
 
     def __doPerformSQLExec(self, activCtx):
         assert isinstance(activCtx, activity.SQLActivityContext)
-        self.debug("SQL execution '%s' initiated with SQL \"%s\"" 
+        self.debug("SQL execution '%s' initiated with SQL \"%s\""
                    % (activCtx.label, activCtx.sqlStatement))
         uri = activCtx.databaseURI
         timeout = activCtx.timeout
         params = {}
-        if timeout is not None: params['connect-timeout'] = timeout 
+        if timeout is not None: params['connect-timeout'] = timeout
         d = self._performSQLExecution(uri, activCtx.sqlStatement, params)
         args = (activCtx,)
         d.addCallbacks(self.__cbSQLExecSucceed, self.__ebSQLExecFailed,
@@ -419,7 +419,7 @@ class Notifier(log.Loggable, events.EventSourceMixin):
     def __cbSQLExecSucceed(self, result, activity):
         self.debug("SQL execution '%s' succeed", activity.label)
         self.__notificationSucceed(activity)
-    
+
     def __ebSQLExecFailed(self, failure, activity):
         retryLeftDesc = self.__getRetriesLeftDesc(activity)
         self.debug("SQL execution '%s' failed (%s): %s",
@@ -439,22 +439,22 @@ class Notifier(log.Loggable, events.EventSourceMixin):
                                self.__performNotification,
                                activCtx)
         self._retries[activCtx] = dc
-        
+
     def __notificationSucceed(self, activCtx):
-        self.info("%s notification '%s' for trigger '%s' succeed", 
-                  activCtx.subtype.nick, activCtx.label, 
+        self.info("%s notification '%s' for trigger '%s' succeed",
+                  activCtx.subtype.nick, activCtx.label,
                   activCtx.trigger.nick)
         activStore = activCtx.store
         activStore.state = ActivityStateEnum.done
         activStore.store()
         self._results[activCtx].callback(activCtx)
         self.__notificationTerminated(activCtx)
-        
-    
+
+
     def __notificationFailed(self, activCtx, desc=None):
         message = ("%s notification '%s' for trigger '%s' failed: %s"
                    % (activCtx.subtype.nick,
-                      activCtx.label, 
+                      activCtx.label,
                       activCtx.trigger.nick, desc))
         self.info("%s", message)
         activStore = activCtx.store
@@ -462,40 +462,40 @@ class Notifier(log.Loggable, events.EventSourceMixin):
         activStore.store()
         self._results[activCtx].errback(Failure(admerrs.NotificationError(message)))
         self.__notificationTerminated(activCtx)
-        
+
     def __notificationTerminated(self, activCtx):
         self._retries.pop(activCtx)
         self._results.pop(activCtx)
-        
+
     _prepareLookup = {NotificationTypeEnum.http_request: __doPrepareGetRequest,
                       NotificationTypeEnum.email:        __doPrepareMailPost,
                       NotificationTypeEnum.sql:          __doPrepareSQLExec}
-    
+
     _performLookup = {NotificationTypeEnum.http_request: __doPerformGetRequest,
                       NotificationTypeEnum.email:        __doPerformMailPost,
                       NotificationTypeEnum.sql:          __doPerformSQLExec}
-    
+
     def __cannotPrepare(self, label, trigger, notif, vars, docs):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot prepare"
                    % (notif.type.name, label))
         self.warning("%s", message)
         raise admerrs.NotificationError(message)
-    
+
     def __cannotPerform(self, activCtx):
         message = ("Unsuported type '%s' for "
                    "notification '%s'; cannot perform"
                    % (activCtx.subtype.name, activCtx.label))
         self.warning("%s", message)
         raise admerrs.NotificationError(message)
-    
+
     def __prepareNotification(self, label, trigger, notifCtx, vars, docs):
         prepare = self._prepareLookup.get(notifCtx.type, self.__cannotPrepare)
         return prepare(self, label, trigger, notifCtx, vars, docs)
-        
+
     def __performNotification(self, activCtx):
         if _shutingDown: return
         self._retries[activCtx] = None
         perform = self._performLookup.get(activCtx.subtype, self.__cannotPerform)
         perform(self, activCtx)
-        
+

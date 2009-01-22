@@ -15,16 +15,16 @@ from flumotion.transcoder.admin.context import base
 
 
 class WorkerContext(base.BaseContext):
-    
+
     def __init__(self, adminCtx, label, workerConfig, workerDefault):
         base.BaseContext.__init__(self, adminCtx)
         self.config = workerConfig
         self.label = label
         self._default = workerDefault
-    
+
     def getAdminContext(self):
         return self.parent
-    
+
     def getLocal(self):
         roots = dict(self._default.roots)
         if self.config:
@@ -35,7 +35,7 @@ class WorkerContext(base.BaseContext):
         if self.config and (self.config.maxTask != None):
             return self.config.maxTask
         return self._default.maxTask
-    
+
     def getMaxKeepFailed(self):
         if self.config and (self.config.maxKeepFailed != None):
             return self.config.maxKeepFailed

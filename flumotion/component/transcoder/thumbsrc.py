@@ -21,7 +21,7 @@ from flumotion.inhouse import log, utils, fileutils
 
 
 class ThumbSrc(gst.BaseSrc):
-    
+
     __gsttemplates__ = (
         gst.PadTemplate("src",
                         gst.PAD_SRC,

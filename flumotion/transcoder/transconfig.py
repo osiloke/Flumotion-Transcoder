@@ -50,14 +50,14 @@ class SourceConfig(properties.PropertyBag):
     inputFile = properties.String('input-file', None, True)
     reportTemplate = properties.String('report-template', None, True)
     preProcess = properties.String('pre-process', None)
-    
-    
+
+
 class AudioConfig(properties.PropertyBag):
     audioEncoder = properties.String('audio-encoder', None, True)
     audioRate = properties.Integer('audio-rate', None, False, True)
     audioChannels = properties.Integer('audio-channels', None, False, True)
     muxer = properties.String('muxer', None, True)
-    
+
 
 class VideoConfig(properties.PropertyBag):
     videoEncoder = properties.String('video-encoder', None, True)
@@ -69,14 +69,14 @@ class VideoConfig(properties.PropertyBag):
     videoMaxHeight = properties.Integer('video-maxheight', None, False, True)
     videoWidthMultiple = properties.Integer('video-width-multiple', None, False, True)
     videoHeightMultiple = properties.Integer('video-height-multiple', None, False, True)
-    videoScaleMethod = properties.Enum('video-scale-method', 
+    videoScaleMethod = properties.Enum('video-scale-method',
                                        VideoScaleMethodEnum,
                                        VideoScaleMethodEnum.height)
     muxer = properties.String('muxer', None, True)
-    
-    
+
+
 class AudioVideoConfig(AudioConfig, VideoConfig):
-    tolerance = properties.Enum('tolerance', 
+    tolerance = properties.Enum('tolerance',
                                 AudioVideoToleranceEnum,
                                 AudioVideoToleranceEnum.strict)
 
@@ -84,15 +84,15 @@ class ThumbnailsConfig(properties.PropertyBag):
     periodValue = properties.Integer('period-value', None, True, True)
     thumbsWidth = properties.Integer('thumbs-width', None, False, True)
     thumbsHeight = properties.Integer('thumbs-height', None, False, True)
-    periodUnit = properties.Enum('period-unit', 
-                                   PeriodUnitEnum, 
+    periodUnit = properties.Enum('period-unit',
+                                   PeriodUnitEnum,
                                    PeriodUnitEnum.seconds)
     maxCount = properties.Integer('max-count', 1, False, True)
     outputFormat = properties.Enum('output-format',
                                    ThumbOutputTypeEnum,
                                    ThumbOutputTypeEnum.jpg)
     ensureOne = properties.Boolean('ensure-one', True)
-                   
+
 
 class TargetConfig(properties.PropertyBag):
     label = properties.String('label', None, True)
@@ -104,18 +104,18 @@ class TargetConfig(properties.PropertyBag):
     linkFile = properties.String('link-file', None, False)
     postProcess = properties.String('post-process', None)
     linkUrlPrefix = properties.String('link-url-prefix', None)
-    config = properties.DynEnumChild('config', 'type', 
+    config = properties.DynEnumChild('config', 'type',
                                      {TargetTypeEnum.audio: AudioConfig,
                                       TargetTypeEnum.video: VideoConfig,
                                       TargetTypeEnum.audiovideo: AudioVideoConfig,
                                       TargetTypeEnum.thumbnails: ThumbnailsConfig,
                                       TargetTypeEnum.identity: None})
-    
+
 
 class TranscodingConfig(properties.RootPropertyBag):
-    
+
     VERSION = (1,1)
-    
+
     creationTime = properties.DateTime('creation-time')
     transcodingTimeout = properties.Integer('transcoding-timeout', 4)
     postProcessTimeout = properties.Integer('post-process-timeout', 60)
@@ -127,4 +127,4 @@ class TranscodingConfig(properties.RootPropertyBag):
 
     def touch(self):
         self.creationTime = datetime.datetime.now()
-        
+

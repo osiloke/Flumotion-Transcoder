@@ -20,7 +20,7 @@ from flumotion.transcoder.admin.proxy import base, managerset
 
 
 class ComponentSetSkeleton(base.RootProxy):
-    
+
     def __init__(self, managerPxySet):
         assert isinstance(managerPxySet, managerset.ManagerSet)
         base.RootProxy.__init__(self, managerPxySet)
@@ -31,13 +31,13 @@ class ComponentSetSkeleton(base.RootProxy):
                                             self.__onManagerAddedToSet)
         self._managerPxySet.connectListener("manager-removed", self,
                                             self.__onManagerRemovedFromSet)
-        
-        
+
+
     ## Public Methods ##
-    
+
     def getManagerProxySet(self):
         return self._managerPxySet
-    
+
     def getComponentProxies(self):
         return []
 
@@ -50,7 +50,7 @@ class ComponentSetSkeleton(base.RootProxy):
         and still exists.
         """
         return compPxy.identifier in self._rejecteds
-    
+
     def isIdentifierRejected(self, identifier):
         """
         Return True if a component with specified identifier
@@ -70,15 +70,15 @@ class ComponentSetSkeleton(base.RootProxy):
         elif self.isIdentifierRejected(identifier):
             result.errback(admerrs.ComponentRejectedError("Component rejected"))
         else:
-            to = utils.createTimeout(timeout, 
-                                     self.__waitComponentTimeout, 
+            to = utils.createTimeout(timeout,
+                                     self.__waitComponentTimeout,
                                      identifier, result)
             self._compWaiters.setdefault(identifier, {})[result] = to
         return result
 
 
     ## Abstract Public Methodes ##
-    
+
     def hasComponentProxy(self, compPxy):
         """
         Return True if the component has been accepted,
@@ -106,7 +106,7 @@ class ComponentSetSkeleton(base.RootProxy):
         managerPxy.connectListener("flow-removed", self,
                                    self.__onFlowRemoved)
         managerPxy.refreshListener(self)
-        
+
     def __onManagerRemovedFromSet(self, managerPxySet, managerPxy):
         managerPxy.disconnectListener("atmosphere-set", self)
         managerPxy.disconnectListener("atmosphere-unset", self)
@@ -115,25 +115,25 @@ class ComponentSetSkeleton(base.RootProxy):
 
 
     ## Manager Event Listeners ##
-    
+
     def __onAtmosphereSet(self, managerPxy, atmoPxy):
         atmoPxy.connectListener("component-added", self,
                                 self.__onAtmosphereComponentAdded)
         atmoPxy.connectListener("component-removed", self,
                                 self.__onAtmosphereComponentRemoved)
         atmoPxy.refreshListener(self)
-    
+
     def __onAtmosphereUnset(self, managerPxy, atmoPxy):
         atmoPxy.disconnectListener("component-added", self)
         atmoPxy.disconnectListener("component-removed", self)
-    
+
     def __onFlowAdded(self, managerPxy, flowPxy):
         flowPxy.connectListener("component-added", self,
                                 self.__onFlowComponentAdded)
         flowPxy.connectListener("component-removed", self,
                                 self.__onFlowComponentRemoved)
         flowPxy.refreshListener(self)
-    
+
     def __onFlowRemoved(self, managerPxy, flowPxy):
         flowPxy.disconnectListener("component-added", self)
         flowPxy.disconnectListener("component-removed", self)
@@ -143,26 +143,26 @@ class ComponentSetSkeleton(base.RootProxy):
 
     def __onFlowComponentAdded(self, flowPxy, compPxy):
         self.__addComponent(compPxy)
-    
+
     def __onFlowComponentRemoved(self, flowPxy, compPxy):
         self.__removeComponent(compPxy)
-    
-    
+
+
     ### Atmosphere Event Listeners ###
-    
+
     def __onAtmosphereComponentAdded(self, atmoPxy, compPxy):
         self.__addComponent(compPxy)
-    
+
     def __onAtmosphereComponentRemoved(self, atmoPxy, compPxy):
         self.__removeComponent(compPxy)
 
 
     ## Protected Virtual Methods ##
-    
+
     def _doAcceptState(self, state):
         #FIXME: The semantic of this method is not well defined
         return True
-    
+
     def _doAcceptComponent(self, compPxy):
         """
         Called to check if a component should be added to the set.
@@ -170,41 +170,41 @@ class ComponentSetSkeleton(base.RootProxy):
         Can return a Deferred.
         """
         return True
-    
+
     def _doAddComponent(self, compPxy):
         """
         Add the component to the set.
         The component has been accepted.
         """
-    
+
     def _doRejectComponent(self, compPxy):
         """
         The component has been rejected.
         """
-    
+
     def _doRemoveComponent(self, compPxy):
         """
         Remove a component.
         Only called for the accepted components.
         """
 
-    
+
     ## Overriden Protected Methods ##
-    
+
     def _doGetChildElements(self):
         return self.getComponentProxies()
 
-    
+
     ## Private Methods ##
-    
+
     def __addComponent(self, compPxy):
         d = defer.Deferred()
         d.addCallback(self._doAcceptComponent)
         d.addCallback(self.__cbPostAcceptAddition, compPxy)
-        d.addErrback(self.__ebAcceptFailure, compPxy, 
+        d.addErrback(self.__ebAcceptFailure, compPxy,
                      "Failure during component addition")
         d.callback(compPxy)
-        
+
     def __cbPostAcceptAddition(self, accepted, compPxy):
         identifier = compPxy.identifier
         assert not (identifier in self._rejecteds)
@@ -226,24 +226,24 @@ class ComponentSetSkeleton(base.RootProxy):
 
     def __ebAcceptFailure(self, failure, compPxy, message):
         log.notifyFailure(self, failure, "%s", message)
-        
+
     def __removeComponent(self, compPxy):
         identifier = compPxy.identifier
         if identifier in self._rejecteds:
             del self._rejecteds[identifier]
         if self.hasComponentProxy(compPxy):
             self._doRemoveComponent(compPxy)
-            
+
     def __waitComponentTimeout(self, identifier, d):
         self._compWaiters[identifier].pop(d)
-        err = admerrs.OperationTimedOutError("Timeout waiting for component '%s'" 
+        err = admerrs.OperationTimedOutError("Timeout waiting for component '%s'"
                                              % identifier)
         d.errback(err)
-            
-    
-    
+
+
+
 class BaseComponentSet(ComponentSetSkeleton):
-    
+
     def __init__(self, managerPxySet):
         ComponentSetSkeleton.__init__(self, managerPxySet)
         self._compPxys = {} # {Identifier: ComponentProxy}
@@ -252,26 +252,26 @@ class BaseComponentSet(ComponentSetSkeleton):
 
     def getComponentProxies(self):
         return self._compPxys.values()
-    
+
     def hasComponentProxy(self, compPxy):
         return compPxy.identifier in self._compPxys
-    
+
     def hasIdentifier(self, identifier):
         return identifier in self._compPxys
-    
+
     def __getitem__(self, identifier):
         return self._compPxys.get(identifier, None)
 
     def __iter__(self):
         return self._compPxys.itervalues()
 
-    
+
     ## Overriden Protected Methods ##
-    
+
     def _doAddComponent(self, compPxy):
         identifier = compPxy.identifier
         assert not (identifier in self._compPxys)
-        self._compPxys[identifier] = compPxy        
+        self._compPxys[identifier] = compPxy
 
     def _doRejectComponent(self, compPxy):
         identifier = compPxy.identifier
@@ -283,25 +283,25 @@ class BaseComponentSet(ComponentSetSkeleton):
         assert self._compPxys[identifier] == compPxy
         del self._compPxys[identifier]
 
-    
+
 class ComponentSet(BaseComponentSet):
-    
+
     def __init__(self, managerPxySet):
         BaseComponentSet.__init__(self, managerPxySet)
         # Registering Events
         self._register("component-added")
         self._register("component-removed")
-        
+
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         self._refreshProxiesListener("_compPxys", listener, "component-added")
 
     def _doAddComponent(self, compPxy):
         BaseComponentSet._doAddComponent(self, compPxy)
         self.emit("component-added", compPxy)
-    
+
     def _doRemoveComponent(self, compPxy):
-        
+
         BaseComponentSet._doRemoveComponent(self, compPxy)
         self.emit("component-removed", compPxy)

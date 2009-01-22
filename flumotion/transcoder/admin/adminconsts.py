@@ -41,14 +41,14 @@ ACTIVITY_LABEL_TEMPLATE = "%(customerName)s/%(profileName)s:%(sourcePath)s"
 TRANSCODER_LABEL_TEMPLATE = "%(customerName)s/%(profileName)s:%(sourcePath)s"
 MONITOR_LABEL_TEMPLATE = "Monitor for %(customerName)s"
 
-# Maximum time to wait for the admin to load 
+# Maximum time to wait for the admin to load
 # and initialize all components stats
 WAIT_IDLE_TIMEOUT = 30
 
 # Maximum time to wait for an elemnt to be active
 WAIT_ACTIVE_TIMEOUT = 30
 
-# Maximum time to wait for a worker instance 
+# Maximum time to wait for a worker instance
 # when the worker name is set to a component state
 WAIT_WORKER_TIMEOUT = 30
 
@@ -62,7 +62,7 @@ TASK_LOAD_TIMEOUT = 30
 TASK_HAPPY_TIMEOUT = 60
 # First delay to wait when retrying to load a component
 TASK_START_DELAY = 3
-# The factor to apply to the delay 
+# The factor to apply to the delay
 TASK_START_DELAY_FACTOR = 4
 # Maximum time to hold a lost component before starting another one
 TASK_HOLD_TIMEOUT = 60
@@ -149,9 +149,9 @@ Profile Name:  %(profileName)s
 --------------
 
   File: '%(inputRelPath)s'
-  
+
   Message: %(errorMessage)s
-  
+
 """
 
 

@@ -30,10 +30,10 @@ class IManagerSet(interfaces.IAdminInterface):
 
     def getManagerProxies(self):
         pass
-    
+
     def iterManagerProxies(self):
         pass
-    
+
     def waitManagerProxies(self, timeout=None):
         pass
 
@@ -43,7 +43,7 @@ class FlumotionProxiesLogger(log.Loggable):
 
 
 class ManagerSet(base.RootProxy):
-    
+
     def __init__(self, adminContext):
         base.RootProxy.__init__(self, FlumotionProxiesLogger())
         self._context = adminContext
@@ -56,28 +56,28 @@ class ManagerSet(base.RootProxy):
         self._register("manager-removed")
         self._register("attached")
         self._register("detached")
-        
-        
+
+
     ## Public Methods ##
-    
+
     def getManagerProxies(self):
         return self._managerPxys.getValue().values()
-    
+
     def iterManagerProxies(self):
         return self._managerPxys.getValue().itervalues()
-    
+
     def waitManagerProxies(self, timeout=None):
         return self._managerPxys.wait(timeout)
 
-    
+
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         self._refreshProxiesListener("_managerPxys", listener, "manager-added")
 
     def _doGetChildElements(self):
         return self.getManagerProxies()
-    
+
     def _doPrepareInit(self, chain):
         managerCtx = self._context.getManagerContext()
         info = ConnectionInfo(managerCtx.getHost(),
@@ -88,7 +88,7 @@ class ManagerSet(base.RootProxy):
 
 
     ## MultiAdmin Event Handlers ##
-    
+
     def model_addPlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s added", planet.get('name'))
@@ -100,7 +100,7 @@ class ManagerSet(base.RootProxy):
             raise NotImplementedError("More than one Manager is not yet supported")
         self._addProxyState(manager, "_managerPxys",  self.__getManagerUniqueId,
                             "manager-added", admin, managerCtx, planet)
-        
+
     def model_removePlanet(self, admin, planet):
         assert planet != None
         self.log("Manager state %s removed", planet.get('name'))
@@ -112,12 +112,12 @@ class ManagerSet(base.RootProxy):
                 self.emit("detached")
         self._removeProxyState("_managerPxys", self.__getManagerUniqueId,
                                "manager-removed",  admin, managerCtx, planet)
-    
-    
+
+
     ## Private Methods ##
-    
+
     _identPtrn = re.compile("([^@]*)@([^:]*):(.*)")
-    
+
     def __getManagerUniqueId(self, admin, managerCtx, planet):
         if admin == None:
             return None
@@ -128,5 +128,5 @@ class ManagerSet(base.RootProxy):
         if not match:
             raise errors.TranscoderError("Unknown manager identifier format '%s', "
                                          "maybe it changed ?" % admin.managerId)
-        identifier = "%s.%s" % (match.group(2), match.group(3)) 
+        identifier = "%s.%s" % (match.group(2), match.group(3))
         return identifier

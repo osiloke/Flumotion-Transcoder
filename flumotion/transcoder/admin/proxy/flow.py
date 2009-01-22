@@ -17,9 +17,9 @@ from flumotion.transcoder.admin.proxy import group
 
 
 class FlowProxy(group.ComponentGroupProxy):
-    
+
     _componentDomain = ComponentDomainEnum.flow
-    
+
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, flowCtx, flowState):
         group.ComponentGroupProxy.__init__(self, logger, parentPxy, identifier,
@@ -28,8 +28,8 @@ class FlowProxy(group.ComponentGroupProxy):
     def getFlowContext(self):
         return self._context
 
-    
-def instantiate(logger, parentPxy, identifier, managerPxy, 
+
+def instantiate(logger, parentPxy, identifier, managerPxy,
                 flowCtx, flowState, *args, **kwargs):
-    return FlowProxy(logger, parentPxy, identifier, managerPxy, 
+    return FlowProxy(logger, parentPxy, identifier, managerPxy,
                      flowCtx, flowState, *args, **kwargs)

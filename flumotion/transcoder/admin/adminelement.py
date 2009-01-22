@@ -19,13 +19,13 @@ from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin import datasource
 
 
-_idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)    
+_idleLogger = log.Logger(adminconsts.IDLE_LOG_CATEGORY)
 
 
 class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     """
     Manage element activation and initialization.
-    Ensure that the activation deferreds are called 
+    Ensure that the activation deferreds are called
     after the element and its parents have been activated.
     The generic waiting defered are separated from childs
     to respect callback orders: The deferreds got by calling waitActive()
@@ -36,13 +36,13 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     or if something when wrong, they are aborted.
     This class trac an activation counter to know if it's in a stable state
     (No pending initialization/activation). The child class are in charge
-    of setting the idle target value and be sure to activate 
+    of setting the idle target value and be sure to activate
     or abort all elements.
     """
-    
+
     identifier = None
     label = None
-    
+
     def __init__(self, logger, parent, identifier=None, label=None):
         assert (parent == None) or isinstance(parent, AdminElement)
         log.LoggerProxy.__init__(self, logger)
@@ -65,7 +65,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
     def __setattr__(self, attr, value):
         """
         Prevent adding new attributes.
-        Allow early detection of attributes spelling mistakes. 
+        Allow early detection of attributes spelling mistakes.
         """
         if attr.startswith("_") or hasattr(self, attr):
             return object.__setattr__(self, attr, value)
@@ -73,10 +73,10 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
 
 
     ## Public Methods ##
-    
+
     def isIdle(self):
         return not self._idleWaiters.isWaiting()
-    
+
     def waitIdle(self, timeout=None):
         """
         Wait for all pending elements to be activated or aborted,
@@ -86,7 +86,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
             d = defer.succeed(self)
         else:
             d = self._idleWaiters.wait(timeout)
-        _idleLogger.log("%s #%s: Wait idle state (%s); Value: %d, Target: %d", 
+        _idleLogger.log("%s #%s: Wait idle state (%s); Value: %d, Target: %d",
                         self.__class__.__name__, id(self), id(d),
                         self._idleWaiters.getValue(),
                         self._idleWaiters.getTarget())
@@ -99,24 +99,24 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
             self._activate()
         chain = defer.Deferred()
         self._doPrepareInit(chain)
-        chain.addCallbacks(self.__cbInitializationSucceed, 
+        chain.addCallbacks(self.__cbInitializationSucceed,
                            self.__ebInitializationFailed)
         chain.callback(self)
         return chain
-    
+
     def setObsolete(self):
         """
-        Set when an element is made obsolete 
+        Set when an element is made obsolete
         before the initialization terminate.
         """
         self._obsolete = True
-        
+
     def isObsolete(self):
         return self._obsolete
-    
+
     def isActive(self):
         return self._active
-    
+
     def waitActive(self, timeout=None):
         """
         Gives a deferred that will be called when the element
@@ -125,7 +125,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         if self._active:
             return defer.succeed(self)
         if self._failure:
-            return defer.fail(self._failure)        
+            return defer.fail(self._failure)
         return self._activeWaiters.wait(timeout)
 
     def emitWhenActive(self, event, element):
@@ -138,7 +138,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         d.addCallbacks(self.emitPayload, self.__ebEventAborted,
                        callbackArgs=(event,), errbackArgs=(event,))
         d.addErrback(self._unexpectedError)
-        
+
     def emitWhenActiveTo(self, event, listener, element):
         """
         Fire an event on elment activation to a specific listener.
@@ -148,120 +148,120 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         d.addCallbacks(self.emitPayloadTo, self.__ebEventAborted,
                        callbackArgs=(event, listener), errbackArgs=(event,))
         d.addErrback(self._unexpectedError)
-        
-            
+
+
     ## Virtual Methods ##
-    
+
     def _doPrepareInit(self, chain):
         """
-        Called during initialization to build the deferred chain 
+        Called during initialization to build the deferred chain
         for element initialization.
         """
         pass
-    
+
     def _onInitDone(self):
         """
         Called when the initialization has been complete successfully.
         """
         pass
-    
+
     def _onInitFailed(self, failure):
         """
         Called when the initialization failed.
         """
         pass
-    
+
     def _doPrepareActivation(self, chain):
         """
         Called during activation chain setup to add callbacks if needed.
         """
         pass
-    
+
     def _doFinishActivation(self):
         """
         Called when all the parents has been activated
         and before firing any deferred.
         """
-    
+
     def _onActivated(self):
         """
         Called when the element has been activated and all the
         deferred return by waitActive() has been fired.
         """
         pass
-    
+
     def _onAborted(self, failure):
         """
         Called when the element activation failed.
         """
         pass
-    
+
     def _onRemoved(self):
         """
         Override to send removed events and propagate
         the action to owned elements.
         """
         pass
-    
+
     def _doDiscard(self):
         """
         Override to cleanup element.
         """
-    
+
     def _doGetChildElements(self):
         """
         Used to retrieve sub elements when waiting for idle state.
         """
         return []
-    
-    
+
+
     ## Protected/Friend Method ##
-    
+
     def _setIdleTarget(self, value):
-        _idleLogger.log("%s #%s: Set idle target; Value: %d, Target: %d", 
-                        self.__class__.__name__, id(self), 
+        _idleLogger.log("%s #%s: Set idle target; Value: %d, Target: %d",
+                        self.__class__.__name__, id(self),
                         self._idleWaiters.getValue(), value)
         self._idleWaiters.setTarget(value)
-    
+
     def _incIdlTarget(self):
-        _idleLogger.log("%s #%s: Inc idle target; Value: %d, Target: %d", 
+        _idleLogger.log("%s #%s: Inc idle target; Value: %d, Target: %d",
                         self.__class__.__name__, id(self),
                         self._idleWaiters.getValue(),
                         self._idleWaiters.getTarget() + 1)
         self._idleWaiters.incTarget()
-        
+
     def _decIdlTarget(self):
-        _idleLogger.log("%s #%s: Dec idle target; Value: %d, Target: %d", 
+        _idleLogger.log("%s #%s: Dec idle target; Value: %d, Target: %d",
                         self.__class__.__name__, id(self),
                         self._idleWaiters.getValue(),
                         self._idleWaiters.getTarget() - 1)
         self._idleWaiters.decTarget()
-    
+
     def _childElementActivated(self):
-        _idleLogger.log("%s #%s: Inc idle value; Value: %d, Target: %d", 
-                        self.__class__.__name__, id(self), 
+        _idleLogger.log("%s #%s: Inc idle value; Value: %d, Target: %d",
+                        self.__class__.__name__, id(self),
                         self._idleWaiters.getValue() + 1,
                         self._idleWaiters.getTarget())
         self._idleWaiters.inc()
-        
+
     def _childElementRemoved(self):
-        _idleLogger.log("%s #%s: Dec idle value; Value: %d, Target: %d", 
-                        self.__class__.__name__, id(self), 
+        _idleLogger.log("%s #%s: Dec idle value; Value: %d, Target: %d",
+                        self.__class__.__name__, id(self),
                         self._idleWaiters.getValue() - 1,
                         self._idleWaiters.getTarget())
         self._idleWaiters.dec()
 
     def _childElementAborted(self):
         self._decIdlTarget()
-    
+
     def _isBeingRemoved(self):
         """
         May be use by removed element to know if its parent
-        is being removed too. It permit to differentiate 
+        is being removed too. It permit to differentiate
         a normal remove from a cascade removal.
         """
         return self._beingRemoved
-    
+
     def _isParentBeingRemoved(self):
         """
         Helper method that handle root element without parent.
@@ -269,7 +269,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         if self.parent:
             return self.parent._isBeingRemoved()
         return False
-    
+
     def _removed(self):
         """
         Called when the parent removed the element.
@@ -278,19 +278,19 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         self._onRemoved()
         if self.parent:
             self.parent._childElementRemoved()
-        
-        
+
+
     def _discard(self):
         """
         Called when the element is removed,
         or discarded without beeing added first.
         """
         self._doDiscard()
-    
+
     def _activate(self):
         """
         Called when the element has been added to the parent.
-        To complete, the element's parent activation 
+        To complete, the element's parent activation
         must terminat successfully.
         """
         assert not self._triggered
@@ -303,7 +303,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         self._doPrepareActivation(chain)
         chain.addCallbacks(self.__cbParentActivated,
                            self.__ebParentAborted)
-                
+
     def _abort(self, failure):
         """
         Called when the element couldn't be added due to error.
@@ -329,9 +329,9 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         if self._active:
             return defer.succeed(self)
         if self._failure:
-            return defer.fail(self._failure)        
+            return defer.fail(self._failure)
         return self._activeChildWaiters.wait(timeout)
-    
+
     def _unexpectedError(self, failure):
         """
         Prevents the lost of failure messages.
@@ -344,27 +344,27 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
 
 
     ## Private Methods ##
-    
+
     def __cbWaitChildIdle(self, element, timeout, tag):
-        _idleLogger.log("%s #%s became idle (%s)", 
+        _idleLogger.log("%s #%s became idle (%s)",
                         self.__class__.__name__, id(self), tag)
         childs = self._doGetChildElements()
         if not childs: return element
         defs = [c.waitIdle(timeout) for c in childs]
-        d = defer.DeferredList(defs, 
+        d = defer.DeferredList(defs,
                                fireOnOneCallback=False,
-                               fireOnOneErrback=False, 
+                               fireOnOneErrback=False,
                                consumeErrors=True)
         d.addCallback(defer.propagateFailure, self)
         return d
-    
+
     def __cbInitializationSucceed(self, result):
-        self.log("%s successfully initialized", 
+        self.log("%s successfully initialized",
                  self.__class__.__name__)
         self._onInitDone()
         #The initialisation chain return the initialized object on success
         return self
-    
+
     def __ebInitializationFailed(self, failure):
         #FIXME: Better Error Handling
         self.log("%s initialization failed: %s",
@@ -373,7 +373,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         self._onInitFailed(failure)
         #Propagate failures
         return failure
-    
+
     def __ebEventAborted(self, failure, event):
         self.log("Event %s aborted", event)
         return
@@ -388,7 +388,7 @@ class AdminElement(events.EventSourceMixin, log.LoggerProxy):
         self._activeChildWaiters.fireCallbacks(self)
         if self.parent:
             self.parent._childElementActivated()
-                
+
     def __ebParentAborted(self, failure):
         self._failure = failure
         self._active = False

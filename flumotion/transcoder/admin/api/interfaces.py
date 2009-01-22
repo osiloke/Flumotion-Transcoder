@@ -10,7 +10,7 @@
 
 # Headers in this file shall remain intact.
 
-from flumotion.inhouse.spread import mediums 
+from flumotion.inhouse.spread import mediums
 
 
 class IMedium(mediums.IServerMedium):
@@ -27,26 +27,26 @@ class IIdentifiedMedium(IMedium):
 
 
 class ITranscoderGateway(IMedium):
-    
+
     def getWorkerSet(self):
         pass
 
     def getStore(self):
         pass
-    
+
     def getScheduler(self):
         pass
 
 
 class ISchedulerMedium(IMedium):
     pass
-    
+
 
 class IWorkerSetMedium(IMedium):
 
     def getWorkers(self):
         pass
-    
+
     def getWorker(self, identifier):
         pass
 
@@ -61,22 +61,22 @@ class IWorkerMedium(IIdentifiedMedium):
 
 
 class IStoreMedium(IMedium):
-    
+
     def getDefaults(self):
         pass
-    
+
     def getCustomers(self):
         pass
-    
+
     def getCustomer(self, identifier):
         pass
-    
+
 
 class ICustomerMedium(IIdentifiedMedium):
-    
+
     def getProfiles(self):
         pass
-    
+
     def getProfile(self, identifier):
         pass
 
@@ -185,12 +185,12 @@ class ICustomerMedium(IIdentifiedMedium):
     def getAccessForceFileMode(self):
         pass
 
-    
+
 class IProfileMedium(IIdentifiedMedium):
-    
+
     def getTargets(self):
         pass
-    
+
     def getTarget(self, identifier):
         pass
 
@@ -286,7 +286,7 @@ class IProfileMedium(IIdentifiedMedium):
 
 
 class ITargetMedium(IIdentifiedMedium):
-    
+
     def getConfig(self):
         pass
 
@@ -331,10 +331,10 @@ class ITargetMedium(IIdentifiedMedium):
 
     def getPostprocessTimeout(self):
         pass
-    
+
 
 class IConfigMedium(IMedium):
-    
+
     def getType(self):
         pass
 

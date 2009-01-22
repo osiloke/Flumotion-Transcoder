@@ -28,14 +28,14 @@ from flumotion.transcoder.admin.proxy import transcoder
 #      lots of component at the same time.
 #      Because when starting lots of components, the transcoders
 #      happy timeout may be triggered. For now, just using a large timeout.
-#TODO: Cancel operations when going sad or lost, do not wait 
+#TODO: Cancel operations when going sad or lost, do not wait
 #      for the timeout to be triggered
 
 
 class TranscodingTask(admintask.AdminTask):
-    
+
     MAX_RETRIES = adminconsts.TRANSCODER_MAX_RETRIES
-    
+
     def __init__(self, logger, profCtx):
         admintask.AdminTask.__init__(self, logger, profCtx.transcoderLabel,
                            filetrans.TranscoderProperties.createFromContext(profCtx))
@@ -49,9 +49,9 @@ class TranscodingTask(admintask.AdminTask):
         self._register("done")
         self._register("terminated")
         self._attempts = 0
-        
+
     ## Public Methods ##
-    
+
     def getProfileContext(self):
         return self._profCtx
 
@@ -68,7 +68,7 @@ class TranscodingTask(admintask.AdminTask):
         return self._attempts
 
     ## Component Event Listeners ##
-    
+
     def __onComponentOrphaned(self, transPxy, workerPxy):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
@@ -84,10 +84,10 @@ class TranscodingTask(admintask.AdminTask):
             self._processInterruptionDetected()
             self._abort()
             return
-    
+
     def __onComponentMoodChanged(self, transPxy, mood):
         if not self.isStarted(): return
-        self.log("Transcoding task '%s' transcoder '%s' goes %s", 
+        self.log("Transcoding task '%s' transcoder '%s' goes %s",
                  self.label, transPxy.getName(), mood.name)
         if self._isPendingComponent(transPxy):
             # Currently beeing started up
@@ -108,7 +108,7 @@ class TranscodingTask(admintask.AdminTask):
                 # The transcoder can be a zombie or waiting for acknowledge.
                 # Timeout to prevent the task to stall.
                 timeout = adminconsts.TRANSCODER_SAD_TIMEOUT
-                to = utils.createTimeout(timeout, self.__asyncSadTimeout, 
+                to = utils.createTimeout(timeout, self.__asyncSadTimeout,
                                          transPxy)
                 self._sadTimeout = to
                 return
@@ -121,7 +121,7 @@ class TranscodingTask(admintask.AdminTask):
                 return
             self._abort()
         if mood == moods.waking:
-            # Keep the waking components 
+            # Keep the waking components
             return
         if mood == moods.sleeping:
             self._deleteComponent(transPxy)
@@ -138,7 +138,7 @@ class TranscodingTask(admintask.AdminTask):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
-                 "status change to %s", self.label, 
+                 "status change to %s", self.label,
                  transPxy.getName(), status.name)
         if status in [TranscoderStatusEnum.unexpected_error,
                       TranscoderStatusEnum.error]:
@@ -148,7 +148,7 @@ class TranscodingTask(admintask.AdminTask):
         if not self.isStarted(): return
         if not self._isElectedComponent(transPxy): return
         self.log("Transcoding task '%s' transcoder '%s' "
-                 "job state change to %s", self.label, 
+                 "job state change to %s", self.label,
                  transPxy.getName(), jobState.name)
         if jobState == JobStateEnum.waiting_ack:
             if not (transPxy.isAcknowledged() or self._acknowledging):
@@ -168,10 +168,10 @@ class TranscodingTask(admintask.AdminTask):
             if not self._acknowledging:
                 status = transPxy.getStatus()
                 self.__cbJobTerminated(status, transPxy)
-    
+
 
     ## Virtual Methods Implementation ##
-    
+
     def _onComponentAdded(self, compPxy):
         compPxy.connectListener("orphaned", self,
                                 self.__onComponentOrphaned)
@@ -200,7 +200,7 @@ class TranscodingTask(admintask.AdminTask):
         self.emit("component-released", compPxy)
 
     def _onComponentStartupCanceled(self, compPxy):
-        # Because the monitor was pending to start, 
+        # Because the monitor was pending to start,
         # this event was ignored
         # So resend the mood changing event
         mood = compPxy.getMood()
@@ -209,21 +209,21 @@ class TranscodingTask(admintask.AdminTask):
     def _onStarted(self):
         for compPxy in self.iterComponentProxies():
             self.__onComponentMoodChanged(compPxy, compPxy.getMood())
-    
+
     def _doAcceptSuggestedWorker(self, workerPxy):
         currWorkerPxy = self.getWorkerProxy()
         transPxy = self.getActiveComponent()
         # Change task's worker for None or if there is no active transcoder
         return (workerPxy != currWorkerPxy) and (not currWorkerPxy or not transPxy)
-    
+
     def _doTerminated(self, result):
         self.emit("terminated", result)
-    
+
     def _doAborted(self):
         # We tried but there nothing to do...
         lastCompPxy = self.getActiveComponent()
         self.__transcodingFailed(lastCompPxy)
-    
+
     def _doSelectPotentialComponent(self, compPxys):
         selected = None
         for transPxy in compPxys:
@@ -238,34 +238,34 @@ class TranscodingTask(admintask.AdminTask):
                 # If it's sad but its status is failed,
                 # it's a failed transcoding
                 if status == TranscoderStatusEnum.failed:
-                    # But only select it if there is no other already 
+                    # But only select it if there is no other already
                     # selected, and it was not already acknowledged
                     if not (selected or acknowledged):
                         selected = transPxy
         return selected
 
-    
+
     def _doLoadComponent(self, workerPxy, compName, compLabel,
                          compProperties, loadTimeout):
         self._attempts += 1
         return transcoder.TranscoderProxy.loadTo(workerPxy, compName, compLabel,
                                                  compProperties, loadTimeout)
-        
+
 
     ## Private Methods ##
-    
+
     def __transcodingFailed(self, transPxy=None):
         transPxy = transPxy or self.getActiveComponent()
         self.info("Transcoding task '%s' failed", self.label)
         self.emit("failed", transPxy)
         self._terminate(False)
-    
+
     def __transcodingSucceed(self, transPxy=None):
         transPxy = transPxy or self.getActiveComponent()
         self.info("Transcoding task '%s' done", self.label)
         self.emit("done", transPxy)
         self._terminate(True)
-    
+
     def __cbJobTerminated(self, status, transPxy):
         if status == TranscoderStatusEnum.done:
             self.__transcodingSucceed(transPxy)
@@ -288,22 +288,22 @@ class TranscodingTask(admintask.AdminTask):
         else:
             self.warning("Unexpected transcoder status/state combination.")
             self._abort()
-    
+
     def __ebAcknowledgeFailed(self, failure, transPxy):
         if not self._isElectedComponent(transPxy): return
         if not failure.check("twisted.spread.pb.PBConnectionLost",
                              "flumotion.common.errors.SleepingComponentError"):
-            log.notifyFailure(self, failure, 
+            log.notifyFailure(self, failure,
                               "Failed to acknowledge task '%s' transcoder '%s'",
                               self.label, transPxy.getName())
         # If the acknowledge fail, the state is unpredictable,
         # so there is no sense to abort and retry.
         self.__transcodingFailed(transPxy)
-        
+
     def __asyncSadTimeout(self, transPxy):
         if not self._isElectedComponent(transPxy): return
         if self._acknowledging: return
         if transPxy.getMood() == moods.sad:
-            self.warning("Transcoding task '%s' transcoder '%s' stall in sad mood", 
+            self.warning("Transcoding task '%s' transcoder '%s' stall in sad mood",
                          self.label, transPxy.getName())
             self._abort()

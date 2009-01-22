@@ -32,7 +32,7 @@ class IProxyElement(Interface):
 
 
 class IBaseProxy(IProxyElement):
-    
+
     def getManagerProxy(self):
         pass
 
@@ -40,53 +40,53 @@ class IBaseProxy(IProxyElement):
 #TODO: Rewrite this... It's a mess
 
 class ProxyElement(adminelement.AdminElement):
-    
+
     implements(IProxyElement)
-    
+
     def __init__(self, logger, parentPxy, identifier, name=None, label=None):
         name = name or identifier
         label = label or name
         adminelement.AdminElement.__init__(self, logger, parentPxy,
                                            identifier, label)
         self._name = name or identifier
-        self._pendingElements = {} # {attr: {identifier: ProxyElement}}        
+        self._pendingElements = {} # {attr: {identifier: ProxyElement}}
 
 
     ## IProxyElement Methods ##
 
     def getName(self):
         return self._name
-    
+
 
     ## Virtual Methods ##
-    
+
     def _onElementInitialized(self, element):
         """
         Called when an element succeed its initialization,
         and has been added to the group.
         """
-    
+
     def _onElementInitFailed(self, element, failure):
         """
         Called when an element fail to initialize.
         The element will not be added to the group.
         """
-    
+
     def _onElementActivated(self, element):
         """
         Called when an element has been activated.
         """
-    
+
     def _onElementAborted(self, element, failure):
         """
         Called when an element has been aborted.
         """
-    
+
     def _onElementRemoved(self, element):
         """
         Called when an element has beed removed from the group.
         """
-    
+
     def _onElementNotFound(self, identifier):
         """
         Called when an elment couldn't be removed from the group
@@ -94,18 +94,18 @@ class ProxyElement(adminelement.AdminElement):
         """
 
     ## Overriden Methods ##
-    
+
     def _doPrepareInit(self, chain):
         pass
-    
+
     def _doPrepareActivation(self, chain):
         pass
 
     ## Protected Methods ##
-    
+
     def _refreshProxiesListener(self, attr, listener, addEvent):
         """
-        Utility method to refresh a listener. 
+        Utility method to refresh a listener.
         """
         value = self.__getAttrValue(attr)
         if not value: return
@@ -118,13 +118,13 @@ class ProxyElement(adminelement.AdminElement):
             assert isinstance(value, ProxyElement)
             if value.isActive():
                 self.emitTo(addEvent, listener, value)
-    
-    def _addProxyState(self, factory, attr, idfunc, addEvent, 
+
+    def _addProxyState(self, factory, attr, idfunc, addEvent,
                        *args, **kwargs):
         """
         Utility method to add a proxy in a dict
         handling asynchronous initialization, activation,
-        event broadcasting and obsolescence.                 
+        event broadcasting and obsolescence.
         """
         identifier = idfunc(*args, **kwargs)
         finalDict = self.__getAttrValue(attr)
@@ -139,10 +139,10 @@ class ProxyElement(adminelement.AdminElement):
                        callbackArgs=(addEvent, attr),
                        errbackArgs=(element, attr))
         return identifier
-        
+
     def _removeProxyState(self, attr, idfunc, removeEvent, *args, **kwargs):
         """
-        Utility method to remove a proxy from a dict 
+        Utility method to remove a proxy from a dict
         handling asynchronous initialization, activation,
         event broadcasting and obsolescence.
         """
@@ -168,7 +168,7 @@ class ProxyElement(adminelement.AdminElement):
                 self._onElementNotFound(identifier)
         return identifier
 
-    def _setProxyState(self, factory, attr, idfunc, 
+    def _setProxyState(self, factory, attr, idfunc,
                        unsetEvent, setEvent, *args, **kwargs):
         """
         Utility method to set proxy handling
@@ -188,7 +188,7 @@ class ProxyElement(adminelement.AdminElement):
             #The element is beeing initialized
             pending.setObsolete()
         if identifier:
-            element = factory.instantiate(self, self, identifier, 
+            element = factory.instantiate(self, self, identifier,
                                           *args, **kwargs)
             assert isinstance(element, ProxyElement)
             self.__addPending(attr, identifier, element)
@@ -196,7 +196,7 @@ class ProxyElement(adminelement.AdminElement):
             d.addCallbacks(self.__cbElementInitialized,
                            self.__ebElementInitFailed,
                            callbackArgs=(setEvent, attr),
-                           errbackArgs=(element, attr))            
+                           errbackArgs=(element, attr))
         return identifier
 
     def _removeProxies(self, attr, removeEvent):
@@ -215,7 +215,7 @@ class ProxyElement(adminelement.AdminElement):
             assert isinstance(value, ProxyElement)
             value._removed()
             self.emit(removeEvent, value)
-    
+
     def _discardProxies(self, *args):
         """
         Utility method to discard proxies.
@@ -231,10 +231,10 @@ class ProxyElement(adminelement.AdminElement):
                 self.__setAttrValue(attr, value)
             else:
                 self.__setAttrValue(attr, None)
-        
+
 
     ## Private Methods ##
-    
+
     def __getAttrValue(self, attr, default=None):
         """
         Handle waiters.IWaiters instances.
@@ -243,7 +243,7 @@ class ProxyElement(adminelement.AdminElement):
         if waiters.IWaiters.providedBy(value):
             return value.getValue()
         return value
-    
+
     def __setAttrValue(self, attr, value):
         """
         Handle waiters.IWaiters instances.
@@ -256,12 +256,12 @@ class ProxyElement(adminelement.AdminElement):
 
     def __addPending(self, attr, identifier, element):
         self._pendingElements.setdefault(attr, {})[identifier] = element
-        
+
     def __removePending(self, attr, identifier, element):
         pe = self._pendingElements.get(attr, None)
         if pe and (identifier in pe) and pe[identifier] == element:
             del pe[identifier]
-            
+
     def __getPending(self, attr, identifier):
         pe = self._pendingElements.get(attr, None)
         if pe and (identifier in pe):
@@ -291,17 +291,17 @@ class ProxyElement(adminelement.AdminElement):
             self._onElementInitialized(element)
             #Send event when the element has been activated
             d = element.waitActive()
-            d.addCallbacks(self.__cbElementActivated, 
+            d.addCallbacks(self.__cbElementActivated,
                            self.__ebElementAborted,
-                           callbackArgs=(addEvent, attr), 
+                           callbackArgs=(addEvent, attr),
                            errbackArgs=(element, addEvent, attr))
             #Activate the new element
             element._activate()
             #Keep the callback chain result
             return element
-    
+
     def __ebDictElementInitFailed(self, failure, element, attr):
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "%s '%s' failed to initialize; dropping it",
                           element.__class__.__name__, element.label)
         # Remove the pending reference if it's for the same element
@@ -311,7 +311,7 @@ class ProxyElement(adminelement.AdminElement):
         element._discard()
         #Don't propagate failures, will be dropped anyway
         return
-    
+
     def __cbElementInitialized(self, element, setEvent, attr):
         name = "%s '%s'" % (element.__class__.__name__, element.label)
         self.debug("%s initialized", name)
@@ -330,15 +330,15 @@ class ProxyElement(adminelement.AdminElement):
             d = element.waitActive()
             d.addCallbacks(self.__cbElementActivated,
                            self.__ebElementAborted,
-                           callbackArgs=(setEvent, attr), 
+                           callbackArgs=(setEvent, attr),
                            errbackArgs=(element, setEvent, attr))
             #Activate the new element
             element._activate()
             #Keep the callback chain result
             return element
-    
+
     def __ebElementInitFailed(self, failure, element, attr):
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "%s '%s' failed to initialize; dropping it",
                           element.__class__.__name__, element.label)
         # Remove the pending reference if it's for the same element
@@ -352,7 +352,7 @@ class ProxyElement(adminelement.AdminElement):
     def __cbElementActivated(self, element, event, attr):
         self.emit(event, element)
         self._onElementActivated(element)
-        
+
     def __ebElementAborted(self, failure, element, event, attr):
         self.log("Event %s aborted", event)
         self._onElementAborted(element, failure)
@@ -360,7 +360,7 @@ class ProxyElement(adminelement.AdminElement):
 
 
 class RootProxy(ProxyElement):
-    
+
     def __init__(self, logger, identifier=None, name=None, label=None):
         identifier = identifier or self.__class__.__name__
         ProxyElement.__init__(self, logger, None,
@@ -368,15 +368,15 @@ class RootProxy(ProxyElement):
 
 
 class BaseProxy(ProxyElement):
-    
+
     implements(IBaseProxy)
-    
+
     def __init__(self, logger, parentPxy, identifier, managerPxy, name=None, label=None):
         ProxyElement.__init__(self, logger, parentPxy, identifier, name, label)
-        assert IProxyElement.providedBy(managerPxy) 
+        assert IProxyElement.providedBy(managerPxy)
         self._managerPxy = managerPxy
-        
+
     def getManagerProxy(self):
         return self._managerPxy
-    
-    
+
+

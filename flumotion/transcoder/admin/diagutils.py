@@ -55,7 +55,7 @@ def extractAudioBrief(analysis):
         if tag in set(["bitrate"]):
             brief += ", %s: %s" % (tag, val)
     return brief
-    
+
 def extractVideoBrief(analysis):
     if not analysis.hasVideo:
         return None
@@ -123,10 +123,10 @@ def extractTransPipeline(config, report, onlyForTargets=None,
         targetInfo['filename'] = __applyFileTemplate(targetFileTemplate,
                                                      targetConfig.outputFile)
         targetsInfo.append(targetInfo)
-        
+
     if not targetsInfo:
         return None
-    
+
     return __buildPipeline(sourceInfo, targetsInfo)
 
 
@@ -141,15 +141,15 @@ def __applyFileTemplate(tmpl, path):
 
 
 def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
-    
+
     def changeLoc(s, f):
         l = utils.mkCmdArg(f, "location=")
         return s.replace("location=$FILE_PATH", l)
-    
+
     sourceDemuxer = sourceInfo.get("demuxer", None)
     sourceVideo = sourceInfo.get("video", None)
     sourceAudio = sourceInfo.get("audio", None)
-    
+
     if len(targetsInfo) > 0:
         # Transcoding Pipeline
         hasAudioTarget = reduce(bool.__or__, [bool(t.get("audio", None))
@@ -164,7 +164,7 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
         hasVideoTarget = True
         isMultiTarget = False
         isTranscodingPipline = False
-    
+
     audioReference = None
     videoReference = None
     muxerReference = "muxer."
@@ -174,7 +174,7 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
     vplay = "ffmpegcolorspace ! videoscale ! autovideosink"
     aplay = "audioconvert ! autoaudiosink"
     pipeline = ""
-        
+
     sourceFile = sourceInfo['filename']
     if sourceDemuxer:
         pipeline += changeLoc(sourceDemuxer, sourceFile)
@@ -243,22 +243,22 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
         elif hasAudioTarget and withAudio and hasVideoTarget and withVideo:
             pipeline += " name=decoder"
             videoReference = "decoder."
-        
+
     if not isTranscodingPipline:
         return pipeline
-        
+
     for targetInfo in targetsInfo:
         muxerName = "muxer"
         tag = targetInfo.get("tag", None)
         if isMultiTarget and tag:
             muxerName = "muxer-%s" % tag
         muxerReference = muxerName + "."
-            
+
         targMuxer = targetInfo.get("muxer", None)
         targVideo = targetInfo.get("video", None)
         targAudio = targetInfo.get("audio", None)
         targFile = targetInfo['filename']
-        
+
         if targAudio and withAudio:
             if audioReference and (lastReference != audioReference):
                 pipeline += space + audioReference
@@ -266,17 +266,17 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
             if targVideo and targMuxer:
                 pipeline += pipe + muxerReference
             lastReference = None
-        
+
         if targVideo and withVideo:
             if videoReference and (lastReference != videoReference):
                 pipeline += space + videoReference
             pipeline += pipe + changeLoc(targVideo, targFile)
             lastReference = None
-        
+
         if targMuxer:
             if targAudio and targVideo:
                 targMuxer = targMuxer.replace(" ! ", " name=%s ! " % muxerName, 1)
             pipeline += pipe + changeLoc(targMuxer, targFile)
             lastReference = None
-        
+
     return pipeline

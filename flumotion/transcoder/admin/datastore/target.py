@@ -36,10 +36,10 @@ class ITargetStore(base.IBaseStore):
 
     def getCustomerStore(self):
         pass
-    
+
     def getProfileStore(self):
         pass
-    
+
     def getConfigStore(self):
         pass
 
@@ -65,7 +65,7 @@ class TargetStore(base.NotifyStore):
     def __init__(self, logger, profStore, dataSource, targData):
         base.NotifyStore.__init__(self, logger, profStore, dataSource, targData)
         self._config = None
-        
+
 
     ## Public Methods ##
 
@@ -74,16 +74,16 @@ class TargetStore(base.NotifyStore):
 
     def getCustomerStore(self):
         return self.parent.getCustomerStore()
-    
+
     def getProfileStore(self):
         return self.parent
-    
+
     def getConfigStore(self):
         return self._config
 
 
     ## Overridden Methods ##
-    
+
     def _doPrepareInit(self, chain):
         base.NotifyStore._doPrepareInit(self, chain)
         # Retrieve target configuration
@@ -92,7 +92,7 @@ class TargetStore(base.NotifyStore):
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
         self.debug("Target '%s' activated", self.label)
-    
+
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
         self.debug("Target '%s' aborted", self.label)
@@ -101,17 +101,17 @@ class TargetStore(base.NotifyStore):
         return self._dataSource.retrieveTargetNotifications(self._data)
 
     def _doWrapNotification(self, notifData):
-        return notification.NotificationFactory(self, notifData, 
+        return notification.NotificationFactory(self, notifData,
                                                 self.getAdminStore(),
-                                                self.getCustomerStore(), 
+                                                self.getCustomerStore(),
                                                 self.getProfileStore(), self)
 
 
     ## Private Methods ##
-        
+
     def __cbRetrieveConfig(self, result):
         d = self._dataSource.retrieveTargetConfig(self._data)
-        d.addCallbacks(self.__cbConfigReceived, 
+        d.addCallbacks(self.__cbConfigReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d

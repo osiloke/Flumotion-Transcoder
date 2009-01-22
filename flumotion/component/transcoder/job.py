@@ -26,9 +26,9 @@ from flumotion.common import common
 from flumotion.common import enum
 
 from flumotion.inhouse import process, log, defer, utils, fileutils
-from flumotion.inhouse.errors import FlumotionError 
+from flumotion.inhouse.errors import FlumotionError
 
-from flumotion.transcoder import enums 
+from flumotion.transcoder import enums
 from flumotion.transcoder.enums import TargetTypeEnum
 from flumotion.transcoder.enums import JobStateEnum
 from flumotion.transcoder.enums import TargetStateEnum
@@ -42,34 +42,34 @@ from flumotion.component.transcoder.transcoder import MediaTranscoder
 #FIXME: get ride of having to set a TaskContext as TranscoderError data
 
 class JobEventSink(object):
-    
+
     def onJobInfo(self, info):
         pass
-    
+
     def onJobError(self, error):
         pass
-    
+
     def onJobWarning(self, warning):
         pass
-    
+
     def onProgress(self, percent):
         pass
-    
+
     def onJobStateChanged(self, state):
         pass
-    
+
     def onSourceInfo(self, info):
         pass
-    
+
     def onTargetStateChanged(self, label, state):
         pass
-    
+
     def onTargetInfo(self, label, info):
         pass
-    
+
     def onTargetError(self, label, error):
         pass
-    
+
     def onTargetWarning(self, label, warning):
         pass
 
@@ -85,13 +85,13 @@ def _stopMeasureCallback(result, reporter, measureName):
     return result
 
 
-RunningState = enum.EnumClass('StopState', ('initializing', 'running', 
+RunningState = enum.EnumClass('StopState', ('initializing', 'running',
                                             'waiting', 'acknowledged',
                                             'terminated', 'stopped'))
 
 
 class TranscodingJob(log.LoggerProxy):
-    
+
     def __init__(self, logger, eventSink=None, pathAttr=None):
         log.LoggerProxy.__init__(self, logger)
         self._context = None
@@ -109,37 +109,37 @@ class TranscodingJob(log.LoggerProxy):
         self._stoppingDefer = None
         self._pathAttr = pathAttr
 
-        
+
     ## Public Methods ##
-    
+
     #FIXME: Should have a better way to expose context info
     def getTempReportPath(self):
         sourceCtx = self._context.getSourceContext()
         return sourceCtx.getTempReportPath()
-    
+
     #FIXME: Should have a better way to expose context info
     def getDoneReportPath(self):
         sourceCtx = self._context.getSourceContext()
         return sourceCtx.getDoneReportPath()
-    
+
     #FIXME: Should have a better way to expose context info
     def getFailedReportPath(self):
         sourceCtx = self._context.getSourceContext()
         return sourceCtx.getFailedReportPath()
-        
-    def setup(self, local, config, report, 
+
+    def setup(self, local, config, report,
               altInputDir=None, moveInputFile=True, niceLevel=None):
         context = Context(self, local, config, report)
         self._context = context
         if altInputDir != None:
-            context.setAltInputDir(altInputDir)        
+            context.setAltInputDir(altInputDir)
         sourceCtx = context.getSourceContext()
         self._moveInputFile = moveInputFile
         self._setLogName(sourceCtx.getInputFile())
         if niceLevel != None:
             self.__setNiceLevel(niceLevel)
         self.__checkConfig()
-        
+
     def start(self):
         context = self._context
         if (context == None):
@@ -147,9 +147,9 @@ class TranscodingJob(log.LoggerProxy):
                                   data=context)
         context.info("Starting transcoding job")
         context.reporter.time("start")
-        
+
         sourceCtx = context.getSourceContext()
-        
+
         # Initialize some report data
         inputPath = sourceCtx.getInputPath()
         if os.path.exists(inputPath):
@@ -180,11 +180,11 @@ class TranscodingJob(log.LoggerProxy):
                     inputFile.close()
             except:
                 pass
-        
+
         self._processes = []
         self._setJobState(JobStateEnum.starting)
         context.reporter.startUsageMeasure("job")
-        
+
         d = defer.Deferred()
         d.addCallback(self.__cbAnalyseSourceFile, context)
         d.addErrback(self.__ebFatalFailure, context, "source analysis")
@@ -203,7 +203,7 @@ class TranscodingJob(log.LoggerProxy):
         #Transcoding Task Terminated
         d.addCallback(self.__cbJobDone, context)
         d.addErrback(self.__ebJobFailed, context)
-        
+
         #Only move the input file after acknowledge
         deferreds = []
         #fired when acknowledge() is called
@@ -223,29 +223,29 @@ class TranscodingJob(log.LoggerProxy):
             else:
                 self._readyForAck.callback(result)
             return result
-        d.addBoth(readyForAck)        
+        d.addBoth(readyForAck)
         self._ackList.addCallback(self.__cbDoAcknowledge, context)
         #Setup output files moving
         self._ackList.addCallback(self.__cbMoveOutputFiles, context)
-        self._ackList.addErrback(self.__ebFatalFailure, 
+        self._ackList.addErrback(self.__ebFatalFailure,
                                  context, "output files moving")
         if self._moveInputFile:
             #Setup input file moving
-            self._ackList.addBoth(self.__bbMoveInputFile, context)        
+            self._ackList.addBoth(self.__bbMoveInputFile, context)
         #Handle termination
         self._ackList.addBoth(self.__bbJobTerminated, context)
-        
+
         self._fireJobInfo(context)
         self._fireSourceInfo(sourceCtx)
         for targetCtx in context.getTargetContexts():
             self._fireTargetInfo(targetCtx)
             self._setTargetState(targetCtx, TargetStateEnum.pending)
-        
+
         #start to work after the starting call chain terminate
         utils.callNext(d.callback, None)
         self._runningState = RunningState.running
         return d
-            
+
     def stop(self):
         self._context.info("Stopping transcoding job")
         self._setJobState(JobStateEnum.stopping)
@@ -277,13 +277,13 @@ class TranscodingJob(log.LoggerProxy):
         #ensure the deferred result value is self
         self._stoppingDefer.addCallback(lambda r, v: v, self)
         return self._stoppingDefer
-    
+
     def acknowledge(self):
         """
         Acknowledge the transcoding task, and wait for the task to terminate.
-        Return a deferred that will be called when the task is fully 
+        Return a deferred that will be called when the task is fully
         completed and the input file has been moved.
-        This method must be call for the input file to be moved, 
+        This method must be call for the input file to be moved,
         this prevent moving a file used by two instances at the same time.
         Must be called after calling start.
         """
@@ -297,10 +297,10 @@ class TranscodingJob(log.LoggerProxy):
         self._context.reporter.time("acknowledge")
         self._ack.callback(None)
         return self._ackList
-        
-        
+
+
     ## Overriden Methods ##
-    
+
     def getLogPrefix(self, kwargs):
         ctx = kwargs.pop('context', None)
         if ctx:
@@ -309,7 +309,7 @@ class TranscodingJob(log.LoggerProxy):
 
 
     ## Protected/Friends Methods ##
-    
+
     def _isStopping(self):
         # The Job should not be stopped during acknoledgment
         if self._runningState == RunningState.acknowledged:
@@ -321,18 +321,18 @@ class TranscodingJob(log.LoggerProxy):
                 #Do some stopping stuff only once ?
             return True
         return False
-    
+
     def _setJobState(self, state):
         #FIXME: Don't reference the global context
         reporter = self._context.reporter
         reporter.report.state = state
         # The state is changed after the current processing chain terminate.
         utils.callNext(self._fireJobStateChanged, state)
-        
+
     def _setTargetState(self, targetCtx, state):
         targetCtx.reporter.report.state = state
         self._fireTargetStateChanged(targetCtx, state)
-        
+
     def _setLogName(self, name):
         if len(name) > 32:
             name = name[0:14] + "..." + name[-14:]
@@ -353,7 +353,7 @@ class TranscodingJob(log.LoggerProxy):
         except Exception, e:
             log.notifyException(context, e, "Exception during "
                                 "transcoder initialization reporting")
-    
+
     def _transcoderPlayingCallback(self, transcoder, pipeline):
         try:
             #FIXME: Don't reference the global context
@@ -361,7 +361,7 @@ class TranscodingJob(log.LoggerProxy):
             targetsBins = {}
             for transTarget in transcoder.getProducers():
                 targetCtx = transTarget.getContext()
-                bins = transTarget.getBins()            
+                bins = transTarget.getBins()
                 if len(bins) > 0:
                     targetsBins[targetCtx.key] = bins
             context.reporter.crawlPipeline(pipeline, targetsBins)
@@ -373,16 +373,16 @@ class TranscodingJob(log.LoggerProxy):
     def _fireProgress(self, percent):
         if self._eventSink:
             self._eventSink.onProgress(percent)
-    
+
     def _fireJobStateChanged(self, state):
         if self._eventSink:
             self._eventSink.onJobStateChanged(state)
-    
+
     def _addAnalysisInfo(self, info, analysisData):
-        if analysisData.mimeType != None:    
+        if analysisData.mimeType != None:
             info["mime-type"] = analysisData.mimeType
         if analysisData.hasVideo:
-            info["video-size"] = (analysisData.videoWidth, 
+            info["video-size"] = (analysisData.videoWidth,
                                   analysisData.videoHeight)
             info["video-rate"] = analysisData.videoRate
             info["video-encoder"] = analysisData.videoTags.get("encoder", None)
@@ -390,11 +390,11 @@ class TranscodingJob(log.LoggerProxy):
             info["audio-rate"] = analysisData.audioRate
             info["audio-encoder"] = analysisData.audioTags.get("encoder", None)
         return info
-    
+
     def _addFileInfo(self, info, file):
         if os.path.exists(file):
             info["file-size"] = os.stat(file).st_size
-    
+
     def _fireJobInfo(self, context):
         if self._eventSink:
             config = context.config
@@ -404,7 +404,7 @@ class TranscodingJob(log.LoggerProxy):
             info["profile-label"] = config.profile.label
             info["targets"] = [t.label for t in config.targets.values()]
             self._eventSink.onJobInfo(info)
-    
+
     def _fireSourceInfo(self, sourceCtx):
         if self._eventSink:
             info = {}
@@ -415,19 +415,19 @@ class TranscodingJob(log.LoggerProxy):
             self._addFileInfo(info, sourceCtx.getInputPath())
             info["input-file"] = sourceCtx.getInputPath()
             self._eventSink.onSourceInfo(info)
-    
+
     def _fireTargetStateChanged(self, targetCtx, state):
         if self._eventSink:
             label = targetCtx.config.label
             self._eventSink.onTargetStateChanged(label, state)
-    
+
     def _fireTargetInfo(self, targetCtx):
         if self._eventSink:
             info = {}
             duration = targetCtx.reporter.getMediaDuration()
             if duration != None:
                 info["duration"] = duration
-            self._addAnalysisInfo(info, targetCtx.reporter.report.analysis)            
+            self._addAnalysisInfo(info, targetCtx.reporter.report.analysis)
             info["output-file"] = targetCtx.getOutputFile()
             info["type"] = targetCtx.config.type.name
             if targetCtx.config.type == TargetTypeEnum.thumbnails:
@@ -442,20 +442,20 @@ class TranscodingJob(log.LoggerProxy):
                 self._eventSink.onTargetError(context.config.label, error)
             else:
                 self._eventSink.onJobError(error)
-            
+
     def _fireWarning(self, context, warning):
         if self._eventSink:
             if isinstance(context, TargetContext):
                 self._eventSink.onTargetWarning(context.config.label, warning)
             else:
                 self._eventSink.onJobWarning(warning)
-    
+
     def _fireSyncReport(self):
         if self._eventSink:
             self._eventSink.onSyncReport(self._context.reporter.report)
-    
+
     ## Private Methods ##
-        
+
     def __setNiceLevel(self, niceLevel):
         context = self._context
         reporter = context.reporter
@@ -468,7 +468,7 @@ class TranscodingJob(log.LoggerProxy):
             context.warning("Failed to change process nice level: %s",
                             log.getExceptionMessage(e))
             reporter.report.niceLevel = os.nice(0)
-            
+
     def __checkConfig(self):
         sourceCtx = self._context.getSourceContext()
         inputPath = sourceCtx.getInputPath()
@@ -476,7 +476,7 @@ class TranscodingJob(log.LoggerProxy):
             raise Exception("Source file not found ('%s')" % inputPath)
         if not os.path.isfile(inputPath):
             raise Exception("Invalid source file ('%s')" % inputPath)
-    
+
     def __lookupContext(self, defaultContext, failure):
         """
         If the error has a context, use it inplace of the default one.
@@ -486,7 +486,7 @@ class TranscodingJob(log.LoggerProxy):
             if data and isinstance(data, TaskContext):
                 return data
         return defaultContext
-        
+
     ### Called by Deferreds ###
     def __ebFatalFailure(self, failure, context, task):
         # If stopping don't do anything
@@ -520,7 +520,7 @@ class TranscodingJob(log.LoggerProxy):
         self._fireWarning(context, warMsg)
         # The error is resolved
         return result
-        
+
     ### Called by Deferreds ###
     def __cbJobDone(self, result, context):
         # If stopping don't do anything
@@ -530,9 +530,9 @@ class TranscodingJob(log.LoggerProxy):
         self._setJobState(JobStateEnum.waiting_ack)
         self._runningState = RunningState.waiting
         return context.reporter.report
-    
+
     ### Called by Deferreds ###
-    def __ebJobFailed(self, failure, context):        
+    def __ebJobFailed(self, failure, context):
         # If stopping don't do anything
         if self._isStopping(): return
         context.warning("Transcoding job failed: %s",
@@ -574,18 +574,18 @@ class TranscodingJob(log.LoggerProxy):
                        self.__ebSourceFileNotAMedia,
                        callbackArgs=args, errbackArgs=args)
         return d
-        
+
     ### Called by Deferreds ###
     def __cbSourceFileAnalyzed(self, analyse, context):
         sourceCtx = context.getSourceContext()
         sourceCtx.reporter.setMediaAnalysis(analyse)
         for desc in analyse.otherStreams:
-            context.info("Source file contains unknown stream type : %s" 
+            context.info("Source file contains unknown stream type : %s"
                          % desc)
         self._fireSourceInfo(context.getSourceContext())
         self._fireSyncReport()
         return analyse
-    
+
     ### Called by Deferreds ###
     def __ebSourceFileNotAMedia(self, failure, context):
         # If stopping don't do anything
@@ -609,13 +609,13 @@ class TranscodingJob(log.LoggerProxy):
         self._setJobState(JobStateEnum.preprocessing)
         context.debug("Performing pre-processing for '%s'",
                       sourceCtx.getInputPath())
-        p = process.Process("pre-process", 
-                            sourceCtx.config.preProcess, 
+        p = process.Process("pre-process",
+                            sourceCtx.config.preProcess,
                             context)
         self._processes.append(p)
         vars = varsets.getPreProcessVars(context)
         context.reporter.startUsageMeasure("preprocess")
-        d = p.execute(vars, timeout=context.config.preProcessTimeout)        
+        d = p.execute(vars, timeout=context.config.preProcessTimeout)
         d.addBoth(_stopMeasureCallback, context.reporter, "preprocess")
         d.addBoth(lambda r, e: self._processes.remove(e) or r, p)
         #Don't return Process result, but pass the received result
@@ -627,14 +627,14 @@ class TranscodingJob(log.LoggerProxy):
                       TargetTypeEnum.audiovideo: transtargets.AudioVideoTarget,
                       TargetTypeEnum.thumbnails: thumbtargets.ThumbnailTarget,
                       TargetTypeEnum.identity:   basetargets.IdentityTarget}
-    
+
     ### Called by Deferreds ###
     def __cbInitiateTargetsProcessing(self, sourceAnalysis, context):
         # If stopping don't do anything
         if self._isStopping(): return
         assert isinstance(sourceAnalysis, analyst.MediaAnalysis)
         sourceCtx = context.getSourceContext()
-        context.debug("Transcoding source file '%s'", 
+        context.debug("Transcoding source file '%s'",
                       sourceCtx.getInputPath())
         self._setJobState(JobStateEnum.transcoding)
         transcoder = MediaTranscoder(self,
@@ -657,11 +657,11 @@ class TranscodingJob(log.LoggerProxy):
                              target.__class__.__name__)
                 continue
             targets.append(target)
-        
+
         d.addCallback(self.__cbStartupTranscoder, context, transcoder, sourceAnalysis)
         d.addCallback(defer.overrideResult, targets)
         return d
-    
+
     ### Called by Deferreds ###
     def __cbStartupTranscoder(self, result, context, transcoder, sourceAnalysis):
         # If stopping don't do anything
@@ -676,7 +676,7 @@ class TranscodingJob(log.LoggerProxy):
         d.addBoth(_stopMeasureCallback, context.reporter, "transcoding")
         d.addCallback(defer.overrideResult, result)
         return d
-    
+
     ### Called by Deferreds ###
     def __cbTargetsProcessed(self, targets, context):
         # If stopping don't do anything
@@ -752,7 +752,7 @@ class TranscodingJob(log.LoggerProxy):
         Can be called as a Callback or an Errback.
         If it's called with a non-failure parameter and its True,
         it will try to move the input file to the done folder.
-        If it's called with a failure parameter or its False, 
+        If it's called with a failure parameter or its False,
         it will try to move the input file to the failed folder.
         If the move operation fail when trying to move to
         the done folder, it try to move to input file to the
@@ -773,7 +773,7 @@ class TranscodingJob(log.LoggerProxy):
             #We are in a Callback
             error = None
             succeed = succeedOrFailure
-            
+
         def moveSource(dest, oldResult):
             src = sourceCtx.getInputPath()
             context.debug("Moving input file to '%s'", dest)
@@ -786,7 +786,7 @@ class TranscodingJob(log.LoggerProxy):
             return oldResult
 
         def moveToDoneFailure(failure, otherDest):
-            context.warning("Failed to move input file: %s", 
+            context.warning("Failed to move input file: %s",
                             log.getFailureMessage(failure))
             context.reporter.addError(failure)
             context.reporter.setFatalError(failure.getErrorMessage())
@@ -796,7 +796,7 @@ class TranscodingJob(log.LoggerProxy):
             return d
 
         def totalFailure(failure, oldFailure):
-            context.warning("Failed to move input file: %s", 
+            context.warning("Failed to move input file: %s",
                             log.getFailureMessage(failure))
             context.reporter.addError(failure)
             self._fireError(context, failure.getErrorMessage())
@@ -807,7 +807,7 @@ class TranscodingJob(log.LoggerProxy):
             d.addCallback(moveSource, succeedOrFailure)
             d.addErrback(moveToDoneFailure, sourceCtx.getFailedInputPath())
             return d
-        d = defer.succeed(sourceCtx.getFailedInputPath()) 
+        d = defer.succeed(sourceCtx.getFailedInputPath())
         d.addCallback(moveSource, succeedOrFailure)
         d.addErrback(totalFailure, error)
         return d
@@ -819,12 +819,12 @@ class TranscodingJob(log.LoggerProxy):
         targetCtx.debug("Analysing target output file '%s'",
                         targetCtx.getOutputWorkPath())
         self._setTargetState(targetCtx, TargetStateEnum.analyzing)
-        
+
         outputPath = targetCtx.getOutputWorkPath()
         if os.path.exists(outputPath):
             targetCtx.reporter.report.fileSize = os.stat(outputPath).st_size
         self._fireSyncReport()
-            
+
         targetCtx.reporter.startUsageMeasure("analysis")
         d = self._analyst.analyse(outputPath)
         d.addBoth(_stopMeasureCallback, targetCtx.reporter, "analysis")
@@ -832,7 +832,7 @@ class TranscodingJob(log.LoggerProxy):
                        callbackArgs=(targetCtx,),
                        errbackArgs=(targetCtx,))
         return d
-    
+
     ### Called by Deferreds ###
     def __cbTargetIsAMedia(self, analysis, targetCtx, result=None):
         # If stopping don't do anything
@@ -843,34 +843,34 @@ class TranscodingJob(log.LoggerProxy):
         expv = targetCtx.shouldHaveVideo()
         gota = analysis.hasAudio
         gotv = analysis.hasVideo
-        
+
         if ((expa and (gota != expa)) or (expv and (gotv != expv))):
             expChunks = []
             gotChunks = []
             if expa != None:
-                if expa: 
+                if expa:
                     expChunks.append("audio")
-                else: 
+                else:
                     expChunks.append("no audio")
-                if gota: 
+                if gota:
                     gotChunks.append("audio stream")
-                else: 
+                else:
                     gotChunks.append("no audio stream")
             if expv != None:
-                if expv: 
+                if expv:
                     expChunks.append("video")
-                else: 
+                else:
                     expChunks.append("no video")
-                if gotv: 
+                if gotv:
                     gotChunks.append("video stream")
-                else: 
+                else:
                     gotChunks.append("no video stream")
-            message = ("Expected %s, and got %s" 
+            message = ("Expected %s, and got %s"
                        % (" and ".join(expChunks) or "nothing",
                           " and ".join(gotChunks) or "nothing"))
             raise TranscoderError(message, data=targetCtx)
         return result
-        
+
     ### Called by Deferreds ###
     def __ebTargetIsNotAMedia(self, failure, targetCtx):
         # If stopping don't do anything
@@ -885,7 +885,7 @@ class TranscodingJob(log.LoggerProxy):
                                   data=targetCtx, cause=failure)
         raise TranscoderError(str(failure.value),
                               data=targetCtx, cause=failure)
-    
+
     ### Called by Deferreds ###
     def __cbTargetPerformPostProcessing(self, result, targetCtx):
         # If stopping don't do anything
@@ -893,8 +893,8 @@ class TranscodingJob(log.LoggerProxy):
         self._setTargetState(targetCtx, TargetStateEnum.postprocessing)
         targetCtx.debug("Performing target's post-processing for '%s'",
                         targetCtx.getOutputWorkPath())
-        p = process.Process("post-process", 
-                            targetCtx.config.postProcess, 
+        p = process.Process("post-process",
+                            targetCtx.config.postProcess,
                             targetCtx)
         self._processes.append(p)
         vars = varsets.getPostProcessVars(targetCtx)
@@ -921,7 +921,7 @@ class TranscodingJob(log.LoggerProxy):
                          "not writing link")
             return result
         cortadoArgs = varsets.getCortadoArgs(targetCtx)
-        cortadoArgString = "&".join("%s=%s" % (urllib.quote(str(k)), 
+        cortadoArgString = "&".join("%s=%s" % (urllib.quote(str(k)),
                                                urllib.quote(str(v)))
                                     for (k, v) in cortadoArgs.items())
         link = targetCtx.getLinkURL(cortadoArgString)
@@ -941,7 +941,7 @@ class TranscodingJob(log.LoggerProxy):
         linkPath = targetCtx.getLinkFromWork(workPath)
         targetCtx.reporter.addFile(workPath, linkPath)
         return result
-    
+
     ### Called by Deferreds ###
     def __ebTargetFailed(self, failure, targetCtx):
         # If stopping don't do anything
@@ -950,7 +950,7 @@ class TranscodingJob(log.LoggerProxy):
         self._fireTargetInfo(targetCtx)
         self._fireSyncReport()
         return failure
-    
+
     ### Called by Deferreds ###
     def __cbTargetDone(self, result, targetCtx):
         # If stopping don't do anything
@@ -960,14 +960,14 @@ class TranscodingJob(log.LoggerProxy):
         self._setTargetState(targetCtx, TargetStateEnum.done)
         self._fireSyncReport()
         return result
-    
+
     ### Called by Deferreds ###
     def __cbAllTargetsSucceed(self, result, context):
         # If stopping don't do anything
         if self._isStopping(): return
         context.debug("All Targets Processed Successfuly")
         return result
-    
+
     ### Called by Deferreds ###
     def __ebSomeTargetsFailed(self, failure, context):
         # If stopping don't do anything

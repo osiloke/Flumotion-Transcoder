@@ -18,19 +18,19 @@ from flumotion.transcoder.admin.proxy import componentset, transcoder
 
 
 class TranscoderSet(componentset.BaseComponentSet):
-    
+
     def __init__(self, managerPxySet):
         componentset.BaseComponentSet.__init__(self, managerPxySet)
         # Registering Events
         self._register("transcoder-added")
         self._register("transcoder-removed")
 
-        
+
     ## Public Method ##
-    
+
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         self._refreshProxiesListener("_compPxys", listener, "transcoder-added")
 
@@ -44,11 +44,11 @@ class TranscoderSet(componentset.BaseComponentSet):
         self.debug("Transcoder component '%s' added to set",
                    compPxy.label)
         self.emit("transcoder-added", compPxy)
-        
+
     def _doRemoveComponent(self, compPxy):
         componentset.BaseComponentSet._doRemoveComponent(self, compPxy)
         self.debug("Transcoder component '%s' removed from set",
                    compPxy.label)
         self.emit("transcoder-removed", compPxy)
 
-    
+

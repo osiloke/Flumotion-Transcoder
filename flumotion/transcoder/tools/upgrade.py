@@ -34,14 +34,14 @@ DEFAULT_NEW_CONFIG_DIR = "/etc/flumotion/transcoder/%(tag)s"
 DEFAULT_ROOT_DIR = "/home/file"
 
 class Loggable(object):
-    
+
     level = 2
     def __init__(self):
         pass
-    
+
     def _postfix(self):
         return ""
-    
+
     def log(self, template, *args):
         if self.level < 5: return
         print ("%s%%s" % template) % (args + (self._postfix(),))
@@ -53,7 +53,7 @@ class Loggable(object):
     def info(self, template, *args):
         if self.level < 3: return
         print ("%s%%s" % template) % (args + (self._postfix(),))
-        
+
     def warning(self, template, *args):
         if self.level < 2: return
         print ("WARNING: %s%%s" % template) % (args + (self._postfix(),))
@@ -64,13 +64,13 @@ class Loggable(object):
 
 
 class UpgradeConfig(Loggable):
-    
+
     @classmethod
     def checkVersions(cls):
         return ((adminconfig.ClusterConfig.VERSION == (1, 0))
                 and (dataprops.AdminData.VERSION == (1, 0))
                 and (dataprops.CustomerData.VERSION == (1, 0)))
-    
+
     def __init__(self, tag, oldConfigFile, newConfigDir, rootDir,
                  disableRequests=None, changeMail=None, keepConfig=None,
                  doBackup=True):
@@ -100,9 +100,9 @@ class UpgradeConfig(Loggable):
         self.upgradeAdminConfig(oldConfig)
         self.upgradeAdminData(oldConfig)
         self.upgradeCustomers(oldConfig)
-        
+
     def _backupFiles(self):
-        
+
         def renameIfExists(f):
             if os.path.exists(f):
                 if not self._doBackup:
@@ -111,7 +111,7 @@ class UpgradeConfig(Loggable):
                     dest = f + '.old'
                     self.info("Renaming current file '%s' to '%s'", f, dest)
                     shutil.move(f, dest)
-        
+
         if not (self._keepConfig and os.path.exists(self._adminConfigPath)):
             renameIfExists(self._adminConfigPath)
         renameIfExists(self._adminDataPath)
@@ -120,16 +120,16 @@ class UpgradeConfig(Loggable):
             for f in files:
                 if f.endswith('.ini'):
                     renameIfExists(self._customerDataDir + f)
-        
+
     def upgradeAdminConfig(self, oldConfig):
         if self._keepConfig and os.path.exists(self._adminConfigPath):
             return
         self.debug("Creating data container for transcoder admin configuration")
         adminConfig = adminconfig.ClusterConfig()
-        
+
         # Datasource configuration
         adminConfig.admin.datasource.dataFile = self._adminDataPath
-        
+
         # Notifier configuration
         adminConfig.admin.notifier.smtpServer = "mail.fluendo.com"
         adminConfig.admin.notifier.smtpUsername = None
@@ -139,10 +139,10 @@ class UpgradeConfig(Loggable):
         adminConfig.admin.notifier.mailEmergencyRecipients = "sebastien@fluendo.com"
         adminConfig.admin.notifier.mailDebugSender = "Transcoder Debug <transcoder-debug@fluendo.com>"
         adminConfig.admin.notifier.mailDebugRecipients = "sebastien@fluendo.com"
-        
+
         # Admin virtual path roots configuration
         adminConfig.admin.roots["default"] = self._rootDir
-        
+
         # Manager configuration
         adminConfig.manager.host = "localhost"
         adminConfig.manager.port = 7632
@@ -155,15 +155,15 @@ class UpgradeConfig(Loggable):
         adminConfig.workerDefaults.roots["temp"] = self._tempDir
         adminConfig.workerDefaults.maxTask = oldConfig.maxJobs
         adminConfig.workerDefaults.gstDebug = oldConfig.gstDebug
-        
+
         self.info("Saving admin configuration to '%s'", self._adminConfigPath)
         saver = inifile.IniFile()
         saver.saveToFile(adminConfig, self._adminConfigPath)
-        
+
     def upgradeAdminData(self, oldConfig):
         self.debug("Creating data container for transcoder global data")
         adminData = dataprops.AdminData()
-        
+
         adminData.accessForceGroup = oldConfig.groupName
         adminData.discovererMaxInterleave = oldConfig.maxInterleave
         adminData.customersDir = self._customerDataRelDir
@@ -173,7 +173,7 @@ class UpgradeConfig(Loggable):
         self.info("Saving transcoder global data to '%s'", self._adminDataPath)
         saver = inifile.IniFile()
         saver.saveToFile(adminData, self._adminDataPath)
-    
+
     def upgradeCustomers(self, oldConfig):
         customers = {} # {name: CustomerData}
         hackLookup = {}
@@ -208,12 +208,12 @@ class UpgradeConfig(Loggable):
             profData.name = profName
             try:
                 self._upgradeProfile(oldCustConf, custData, profData)
-                
+
                 # Now try to detect some hacks made for the old transcoder
                 # The outgoing-as-incoming hack
                 if profData.inputDir and ("outgoing" in profData.inputDir):
                     self._resolveOutgoingAsIncomingHack(oldCustConf, custData, profData)
-                
+
                 # The multi-input hack
                 key = oldCustConf.inputDir
                 if key in hackLookup:
@@ -226,7 +226,7 @@ class UpgradeConfig(Loggable):
                     self._resolveMultiInputHack(custData, lastProf, newProf)
                 else:
                     hackLookup[key] = custData, profData
-                
+
             except Exception, e:
                 self.warning("Fail to upgrade profile '%s' for customer '%s': %s",
                              profName, custName, str(e))
@@ -270,7 +270,7 @@ class UpgradeConfig(Loggable):
                 for targKey, targData in profData.targets.items():
                     if targKey == targData.name:
                         targData.name = None
-        
+
         for custKey, custData in customers.items():
             path = self._customerDataDir + custKey + ".ini"
             self.info("Saving customer '%s' data to '%s'", custKey, path)
@@ -389,12 +389,12 @@ class UpgradeConfig(Loggable):
         if (not profSubdir) and ('/' in custSubdir):
             profSubdir = custSubdir[custSubdir.rindex('/') + 1:]
             custSubdir = custSubdir[:custSubdir.rindex('/')]
-        
+
         # Arbitrary use the first profile to set the customer subdir
         if not custData.subdir:
             custData.subdir = custSubdir or "."
         profData.subdir = profSubdir or "."
-        
+
         # Now check every path if they comply with the subdirs
         for kind, attr in (("incoming", "inputDir"),
                            ("outgoing", "outputDir"),
@@ -406,7 +406,7 @@ class UpgradeConfig(Loggable):
                 dir = path[len(self._rootDir):].strip('/')
                 override = self._guessOverridenDir(dir, custData, profData)
                 setattr(profData, attr, fileutils.ensureRelDirPath(override))
-        
+
         profData.linkURLPrefix = oldCustConf.urlPrefix
         if oldCustConf.urlPrefix and  oldCustConf.linkDir:
             profData.enableLinkFiles = True
@@ -427,7 +427,7 @@ class UpgradeConfig(Loggable):
         if oldCustConf.errMail:
             mail = self._changeMail or oldCustConf.errMail
             profData.notifyFailedMailRecipients = mail
-        
+
         for targName, oldTargConf in oldCustConf.profiles.items():
             if targName in profData.targets:
                 self.warning("Duplicated target '%s'", targName)
@@ -454,9 +454,9 @@ class UpgradeConfig(Loggable):
                 except ValueError:
                     continue
         return (None, None, None)
- 
+
     def _guessOverridenDir(self, dir, custData, profData):
-        for middle, new in [('incoming', 'incoming'), 
+        for middle, new in [('incoming', 'incoming'),
                             ('outgoing', 'outgoing'),
                             ('errors', 'failed'),
                             ('links', 'links'),
@@ -580,7 +580,7 @@ class UpgradeConfig(Loggable):
             else:
                 thumbData.extension = "jpg"
                 thumbData.config.format = ThumbOutputTypeEnum.jpg
-    
+
 def main(argv):
     if not UpgradeConfig.checkVersions():
         print "ERROR: Configuration files definition changed, please update the upgrade script"
@@ -617,13 +617,13 @@ def main(argv):
                       help="Keep the actual configuration file if it exists (flumotion-transcoder.ini)")
     parser.add_option('', '--disable-backup',
                       action="store_false", dest="doBackup", default=True,
-                      help="Do not rename the old files, just delete them.")    
-    
-    
+                      help="Do not rename the old files, just delete them.")
+
+
     options, args = parser.parse_args(argv[1:])
-    
+
     Loggable.level = min(5, options.verbose + 2)
-    
+
     if args == ['bootstrap']:
         oldConfigFile = fileutils.makeAbsolute(options.oldConfigFile)
         rootDir = fileutils.makeAbsolute(options.rootDir)
@@ -631,7 +631,7 @@ def main(argv):
         if not newConfigDir:
             newConfigDir = DEFAULT_NEW_CONFIG_DIR % options.tag
         newConfigDir = fileutils.makeAbsolute(newConfigDir)
-        
+
         if not os.path.exists(oldConfigFile):
             parser.error("Old configuration file '%s' not found" % oldConfigFile)
         if not os.access(oldConfigFile, os.F_OK | os.R_OK):
@@ -652,7 +652,7 @@ def main(argv):
             except Exception, e:
                 parser.error("Default transcoder root directory '%s' cannot be created: %s"
                              % (rootDir, str(e)))
-        
+
         try:
             upgrader = UpgradeConfig(options.tag, oldConfigFile,
                                      newConfigDir, rootDir,
@@ -670,15 +670,15 @@ def main(argv):
             if options.verbose > 4:
                 print log.getExceptionTraceback(e)
             print
-        
+
         return
-    
+
     if args == ['upgrade']:
         print
         print "Not implemented yet"
         print
         sys.exit(0)
-    
+
     print
     if len(args) > 0:
         print "Error: Invalid command specified"

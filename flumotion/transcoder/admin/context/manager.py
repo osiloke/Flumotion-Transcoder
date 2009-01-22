@@ -16,23 +16,23 @@ from flumotion.transcoder.admin.context import base
 
 
 class ManagerContext(base.BaseContext):
-    
+
     def __init__(self, adminCtx, managerConfig):
         base.BaseContext.__init__(self, adminCtx)
         self.config = managerConfig
 
     def getAdminContext(self):
         return self.parent
-    
+
     def getHost(self):
         return str(self.config.host)
-    
+
     def getPort(self):
         return self.config.port
-    
+
     def getUseSSL(self):
         return self.config.useSSL
-    
+
     def getAuthenticator(self):
         return pb.Authenticator(username=self.config.username,
                                 password=self.config.password)
@@ -44,16 +44,15 @@ class ManagerContext(base.BaseContext):
 
     def getFlowContext(self):
         return self.parent
-    
+
     def getAtmosphereContext(self):
         return self.parent
 
     def getFlowContextByName(self, name):
         return self
-    
+
     def getAtmosphereContextByName(self, name):
         return self
-    
+
     def getComponentContextByName(self, name):
         return self
-    

@@ -38,7 +38,7 @@ import pygst
 pygst.require('0.10')
 import gst
 
-import tempfile 
+import tempfile
 
 from twisted.internet import defer
 from twisted.python.failure import Failure
@@ -51,7 +51,7 @@ class GstreamerUnitTestMixin:
 
 
 class MediaGenerator(object):
-    
+
     def __init__(self, path=None, videoCodec=None, audioCodec=None, muxer=None,
                  duration=1, videoWidth=320, videoHeight=240, videoRate=25,
                  videoPAR=(1,1), audioRate=44100, audioChannels=2):
@@ -71,7 +71,7 @@ class MediaGenerator(object):
         self._deferred = None
         self._pipeline = None
         self._bus = None
-        
+
     def generate(self):
         if self._deferred:
             return self._deferred
@@ -82,7 +82,7 @@ class MediaGenerator(object):
                 handle, self.path =  tempfile.mkstemp()
                 os.close(handle)
                 self._deferred.addErrback(self.__ebRemoveTempFile)
-        
+
             if self.videoCodec:
                 if isinstance(self.videoRate, (int, long)):
                     videoRate = (self.videoRate, 1)
@@ -96,7 +96,7 @@ class MediaGenerator(object):
                 aBlockSize = int(round(self.audioRate / 10))
                 buffCount = int(round(10 * self.duration)) + 1
             self._pipeline = gst.Pipeline("GenMediaFile")
-            
+
             filesink = gst.element_factory_make("filesink")
             filesink.props.location = self.path
             self._pipeline.add(filesink)
@@ -106,7 +106,7 @@ class MediaGenerator(object):
                 muxer.link(filesink)
             else:
                 muxer = filesink
-            
+
             if self.videoCodec:
                 vCaps = ("width=(int)%d, height=(int)%d, framerate=(fraction)%d/%d, "
                          "pixel-aspect-ratio=(fraction)%d/%d"
@@ -122,7 +122,7 @@ class MediaGenerator(object):
                 self._pipeline.add(videotestsrc, videocaps, videoencoder, videoqueue)
                 gst.element_link_many(videotestsrc, videocaps, videoencoder,
                                       videoqueue, muxer)
-            
+
             if self.audioCodec:
                 aCaps = ("rate=(int)%d, channels=(int)%d"
                          % (self.audioRate, self.audioChannels))
@@ -139,7 +139,7 @@ class MediaGenerator(object):
                                    audioencoder, audioqueue)
                 gst.element_link_many(audiotestsrc, audioconvert, audiocaps,
                                       audioencoder, audioqueue, muxer)
-                
+
             d = defer.Deferred()
             self._bus = self._pipeline.get_bus()
             self._bus.add_signal_watch()
@@ -150,7 +150,7 @@ class MediaGenerator(object):
             return self._deferred
         except:
             self._deferred.errback(Failure())
-            return self._deferred 
+            return self._deferred
 
 
     ## Private Methods ##
@@ -159,7 +159,7 @@ class MediaGenerator(object):
         if os.path.isfile(self.path):
             os.remove(self.path)
         return failure
-    
+
     def __bbShutdownPipeline(self, result):
         if self._bus:
             self._bus.remove_signal_watch()
@@ -168,7 +168,7 @@ class MediaGenerator(object):
             self._pipeline.set_state(gst.STATE_NULL)
         self._pipeline = None
         return result
-    
+
     def _bus_message_callback(self, bus, message):
         if message.type == gst.MESSAGE_STATE_CHANGED:
             if (message.src == self._pipeline):

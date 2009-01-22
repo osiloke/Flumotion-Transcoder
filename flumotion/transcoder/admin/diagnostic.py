@@ -24,24 +24,24 @@ from flumotion.transcoder.admin.proxy import monitor, transcoder
 
 
 class Diagnostician(object):
-    
+
     def __init__(self, adminCtx, managerPxySet, workerPxySet, compPxySet):
         self._adminCtx = adminCtx
         self._managerPxySet = managerPxySet
         self._workerPxySet = workerPxySet
         self._compPxySet = compPxySet
         self._translator = i18n.Translator()
-        
-    
+
+
     ## Public Methods ##
-    
+
     def initialize(self):
         return defer.succeed(self)
-        
+
     _debugFilter = {None: # Any message level
                       ("twisted.internet.error.ConnectionLost",
                        "twisted.internet.error.ConnectionDone"),
-                    1: # ERROR level 
+                    1: # ERROR level
                       ("Source file not found",),
                     2: # WARNING level
                       ("is not a known media type",
@@ -53,19 +53,19 @@ class Diagnostician(object):
                        "flumotion.transcoder.errors.TranscoderError: Expected video, and got no video"
                        "flumotion.transcoder.errors.TranscoderError: Source media doesn't have video stream",
                        "flumotion.transcoder.errors.TranscoderError: Transcoder pipeline stalled at prerolling")}
-        
+
     def filterComponentMessage(self, message):
         debug = message.debug
-        if not debug: return False        
+        if not debug: return False
         for level in self._debugFilter:
             if (level == None) or (level == message.level):
                 for substr in self._debugFilter[level]:
                     if substr in debug:
-                        return True 
+                        return True
         return False
 
     _crashMessagePattern = re.compile("The core dump is '([^']*)' on the host running '([^']*)'")
-    
+
     @decorators.ensureDeferred
     def diagnoseComponentMessage(self, compPxy, message):
         diagnostic = []
@@ -80,18 +80,18 @@ class Diagnostician(object):
         if isCrashMessage:
             corePath, workerName = isCrashMessage.groups()
             d.addCallback(self.__crashDiagnostic, workerName, corePath)
-            
+
         if isinstance(compPxy, monitor.MonitorProxy):
             d.addCallback(self.__monitorDiagnostic, compPxy, workerName)
-                
+
         if isinstance(compPxy, transcoder.TranscoderProxy):
             d.addCallback(self.__sourceFileDiagnostic, compPxy, workerName)
             d.addCallback(self.__transcoderDiagnostic, compPxy, workerName)
             d.addCallback(self.__pipelineDiagnostic, compPxy, workerName)
-            
+
         d.addCallback(self.__finishComponentMessageDiagnostic)
         return d
-        
+
     @decorators.ensureDeferred
     def diagnoseTranscodingFailure(self, task, transPxy):
         diagnostic = []
@@ -102,42 +102,42 @@ class Diagnostician(object):
         d.addCallback(self.__sourceFileDiagnostic, transPxy)
         d.addCallback(self.__transcoderDiagnostic, transPxy)
         d.addCallback(self.__pipelineDiagnostic, transPxy)
-        
+
         d.addCallback(self.__finishTranscodingFailureDiagnostic)
         return d
 
 
     ## Private Methods ##
-    
+
     def __buildSUCommand(self, command, args):
         cmd = "%s %s" % (command, " ".join(args))
         return "su -s /bin/bash - flumotion -c" + utils.mkCmdArg(cmd)
-    
+
     def __buildSCPCommand(self, host, file, dest='.'):
         remote = utils.mkCmdArg(file, '')
         source = utils.mkCmdArg(remote, host + ':')
         dest = utils.mkCmdArg(dest)
         return "scp " + source + dest
-    
+
     def __lookupProperties(self, compPxy):
         if not compPxy: return None
         return compPxy.getProperties()
-    
+
     def __waitReportPath(self, diagnostic, transPxy):
         if not transPxy: return None
         d = transPxy.retrieveReportPath()
         d.addCallback(defer.overrideResult, diagnostic)
         return d
-    
+
     def __lookupReport(self, transPxy):
         if not transPxy: return None
         return transPxy.getReport()
-    
+
     def __lookupConfig(self, transPxy):
         if not transPxy: return None
         props = self.__lookupProperties(transPxy)
         return props and props.getConfig()
-    
+
     def __lookupWorker(self, compPxy, workerName=None):
         workerPxy = None
         if compPxy:
@@ -150,7 +150,7 @@ class Diagnostician(object):
             workerPxy = self._workerPxySet.getWorkerProxyByName(workerName)
         workerHost = workerPxy and workerPxy.getHost()
         return (workerPxy, workerName, workerHost)
-    
+
     def __lookupInputPath(self, transPxy, workerName=None):
         virtPath, localPath, remotePath = None, None, None
         if not transPxy: return (virtPath, localPath, remotePath)
@@ -175,7 +175,7 @@ class Diagnostician(object):
                     remotePath = vp.localize(workerLocal)
                 break
         return (virtPath, localPath, remotePath)
-    
+
     def __componentDiagnostic(self, diagnostic, compPxy, workerName=None):
         if not compPxy: return diagnostic
         diagnostic.append("COMPONENT INFO\n--------------")
@@ -187,7 +187,7 @@ class Diagnostician(object):
         if workerHost:
             diagnostic.append("Go to Worker:   ssh -At %s" % workerHost)
         return diagnostic
-    
+
     def __monitorDiagnostic(self, diagnostic, monPxy, workerName=None):
         if not monPxy: return diagnostic
         workerPxy, workerName = self.__lookupWorker(monPxy, workerName)[0:2]
@@ -198,7 +198,7 @@ class Diagnostician(object):
         args = props.asLaunchArguments(workerPxy.getWorkerContext())
         origCmd = self.__buildSUCommand("flumotion-launch -d 4 "
                                         "file-monitor", args)
-        
+
         diagnostic.append("  Original Command:")
         diagnostic.append("    " + origCmd)
         return diagnostic
@@ -208,16 +208,16 @@ class Diagnostician(object):
         workerPxy, workerName = self.__lookupWorker(transPxy, workerName)[0:2]
         if not transcoder: return diagnostic
         # Use retrieveReportPath because getReportPath sometime fail
-        # because to the report file has been moved 
+        # because to the report file has been moved
         d = transPxy.retrieveReportPath()
         d.addCallback(self.__cbGotReportForTranscoderDiagnostic, diagnostic,
                       transPxy, workerPxy, workerName)
         return d
-    
+
     def __cbGotReportForTranscoderDiagnostic(self, reportVirtPath, diagnostic,
                                              transPxy, workerPxy, workerName):
         props = self.__lookupProperties(transPxy)
-        if not (props or reportVirtPath): return diagnostic 
+        if not (props or reportVirtPath): return diagnostic
         workerCtx = workerPxy.getWorkerContext()
         workerLocal = workerCtx.getLocal()
         diagnostic.append("MANUAL LAUNCH\n-------------")
@@ -227,7 +227,7 @@ class Diagnostician(object):
                                             "file-transcoder", args)
             diagnostic.append("  Original Command:")
             diagnostic.append("    " + origCmd)
-        
+
         if reportVirtPath:
             reportPath = reportVirtPath.localize(workerLocal)
             args = [utils.mkCmdArg(reportPath, "diagnose=")]
@@ -236,19 +236,19 @@ class Diagnostician(object):
             diagnostic.append("  Diagnose Command:")
             diagnostic.append("    " + diagCmd)
         return diagnostic
-    
+
     def __crashDiagnostic(self, diagnostic, workerName, corePath):
         if not workerName: return diagnostic
         diagnostic.append("CRASH DEBUG\n-----------")
         workerInfo = self.__lookupWorker(None, workerName)
         workerName, workerHost = workerInfo[1:3]
-        
+
         diagnostic.append("Debug Core Inplace")
-        if workerHost:            
+        if workerHost:
             diagnostic.append("    Login: ssh -At " + workerHost)
         arg = utils.mkCmdArg(corePath)
         diagnostic.append("    Debug: gdb python -c" + arg)
-        
+
         diagnostic.append("Debug Core Locally")
         if workerHost:
             scpCmd = self.__buildSCPCommand(workerHost, corePath)
@@ -266,9 +266,9 @@ class Diagnostician(object):
         inputVirtPath, inputLocalPath, inputRemotePath = pathInfo
         workerInfo = self.__lookupWorker(transPxy, workerName)
         workerName, workerHost = workerInfo[1:3]
-        
+
         diagnostic.append("SOURCE FILE INFO\n----------------")
-        
+
         # File Path
         diagnostic.append("Virtual Path:   %s" % (inputVirtPath or "Unknown"))
         if inputLocalPath and ((not inputRemotePath) or (inputRemotePath != inputRemotePath)):
@@ -280,11 +280,11 @@ class Diagnostician(object):
                 diagnostic.append("Copy Command:   " + scpCmd)
 
         # Source Size
-        diagnostic.append("File Size:      " 
+        diagnostic.append("File Size:      "
                           + diagutils.formatFileSize(report.source.fileSize,
                                                      "Unknown"))
-        # Source Type        
-        diagnostic.append("File Type:      " 
+        # Source Type
+        diagnostic.append("File Type:      "
                           + (report.source.fileType or "Unknown"))
         # Mime Type
         diagnostic.append("Mime Type:      "
@@ -302,7 +302,7 @@ class Diagnostician(object):
             diagnostic.append(header)
         else:
             diagnostic.append("Unknown File Header")
-        
+
         return diagnostic
 
     def __pipelineDiagnostic(self, diagnostic, transPxy, workerName=None):
@@ -315,7 +315,7 @@ class Diagnostician(object):
         targetFileTemplate = "diag_%(filename)s"
         gstlaunch = "GST_DEBUG=2 gst-launch -v "
         inputPath = os.path.basename(virtInputPath.getPath())
-        
+
         pipeDiag = []
         analysis = report.source.analysis
         # If the discover fail, assume the source has audio and video
@@ -337,7 +337,7 @@ class Diagnostician(object):
             if pipeAudit:
                 pipeDiag.append("  Pipeline Audit:")
                 pipeDiag.append("    " + gstlaunch + pipeAudit)
-        
+
         allTargets = []
         for name, targReport in report.targets.iteritems():
             type = config.targets[name].type
@@ -416,7 +416,7 @@ class Prognostician(log.Loggable):
     min_audio_size_key = '[min-audio-size]'
     file_size_key = '[file-size]'
     has_video_key = '[has-video]'
-    
+
     def __init__(self, config):
         if config:
             self.parse(config)

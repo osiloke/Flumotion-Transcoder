@@ -30,11 +30,11 @@ def _reduce(f):
 def getVideoDAR(w, h, par):
     return _reduce((w * par[0], h * par[1]))
 
-def getVideoSize(iw, ih, ipar, 
-                 ow=None, oh=None, opar=None, 
+def getVideoSize(iw, ih, ipar,
+                 ow=None, oh=None, opar=None,
                  mw=None, mh=None, method=VideoScaleMethodEnum.height):
     """
-    Return the (Width, Height, PAR) of the output video.    
+    Return the (Width, Height, PAR) of the output video.
     iw, ih and ipar should not be None, all other parameteres could be None.
         iw:    Input video width. Must be > 0.
         ih:    Input video height. Must be > 0.
@@ -49,7 +49,7 @@ def getVideoSize(iw, ih, ipar,
             VideoScaleMethodEnum.height:    Preserve the original height
             VideoScaleMethodEnum.downscale: Downscale one of the original axe
             VideoScaleMethodEnum.upscale:   Upscale one of the original axe
-            
+
     The output PAR may be different from the preferred one if the
     size multiples are specified and do not respect the PAR (if wm/hm != opar).
     In this casse the output PAR is updated to match the changes.
@@ -59,15 +59,15 @@ def getVideoSize(iw, ih, ipar,
     fih = float(ih)
     fow = ow and float(ow)
     foh = oh and float(oh)
-    
-    # Reduce the PAR fraction to be able to use 
+
+    # Reduce the PAR fraction to be able to use
     # the numerators and the denominators individually
     ipar = _reduce(ipar)
     if opar:
         par = _reduce(opar)
     else:
         par = ipar
-        
+
     # Pixel ratio factor: InputPAR / OutputPAR
     parf = ipar[0] * par[1], ipar[1] * par[0]
 
@@ -97,7 +97,7 @@ def getVideoSize(iw, ih, ipar,
     fw, fh = None, None
     # Deduce output height from input size and preferred width
     if fow:
-        fh = (fih * fow * parf[1]) / (fiw * parf[0])        
+        fh = (fih * fow * parf[1]) / (fiw * parf[0])
     # Deduce output width from input size and preferred height
     if foh:
         fw = (fiw * foh * parf[0]) / (fih * parf[1])
@@ -107,7 +107,7 @@ def getVideoSize(iw, ih, ipar,
         fh = foh
     if not fw:
         fw = fow
-    
+
     # If output preferred width and height were both specified,
     # force the one that make the output size smaller
     # or equal to the preferred output size
@@ -127,5 +127,5 @@ def getVideoSize(iw, ih, ipar,
 
     rw = int(round(fw))
     rh = int(round(fh))
-    
+
     return rw, rh, par

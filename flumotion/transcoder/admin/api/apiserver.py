@@ -23,21 +23,21 @@ from flumotion.transcoder.admin.enums import APIBouncerEnum
 
 
 class Server(log.Loggable):
-    
+
     logCategory = "api-server"
-    
+
     def __init__(self, context, admin):
         self._context = context
         self._admin = admin
         self._server = None
-        
+
     def initialize(self):
         self.debug("Initializing API Server")
         d = self._createBouncer(self._context.config.bouncer)
         d.addCallback(self.__cbCreateServer)
         d.addCallback(self.__cbRegisterGatewayService)
         d.addCallback(self.__cbInitializeServer)
-        d.addCallback(defer.overrideResult, self) 
+        d.addCallback(defer.overrideResult, self)
         return d
 
 
@@ -47,12 +47,12 @@ class Server(log.Loggable):
         conf = self._context.config
         self._server = pbserver.Server(conf.host, conf.port, conf.useSSL,
                                        conf.certificate, bouncer)
-        return self._server 
+        return self._server
 
     def __cbRegisterGatewayService(self, server):
         server.registerService(_ServiceFactory(self._admin))
         return server
-        
+
     def __cbInitializeServer(self, server):
         return server.initialize()
 
@@ -63,7 +63,7 @@ class Server(log.Loggable):
         factory = _bouncerFactories.get(config.type, None)
         if factory is None:
             raise admerrs.APIError("Unknown bouncer type '%s'" % config.type)
-        return factory(config) 
+        return factory(config)
 
 
 
@@ -78,30 +78,30 @@ _bouncerFactories = {APIBouncerEnum.saltedsha256: _saltedSha256BouncerFactory}
 
 
 class _Service(pbserver.Service):
-    
+
     avatarFactory = gateway.Avatar
-    
+
     def __init__(self, server, admin, identifier=None):
         pbserver.Service.__init__(self, server, identifier=identifier)
         self._admin = admin
-        
+
     def getAdmin(self):
         return self._admin
-    
+
 
 class _ServiceFactory(object):
-    
+
     implements(pbserver.IServiceFactory)
-    
+
     def __init__(self, admin):
         self._admin = admin
-        
-    
+
+
     ## IServiceFactory Methodes ##
-    
+
     def createService(self, server, identifier=None):
         ident = identifier or "api-server"
         return _Service(server, self._admin, identifier=ident)
- 
+
     def getServiceInterfaces(self):
         return gateway.Avatar.getMediumInterfaces()

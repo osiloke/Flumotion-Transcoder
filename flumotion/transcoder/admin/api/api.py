@@ -49,7 +49,7 @@ def readonly_property(propertyName):
     def getter(self):
         return getattr(self.reference, propertyName)
     methodName = "get" + propertyName[0].upper() + propertyName[1:]
-    getter.__name__ = methodName 
+    getter.__name__ = methodName
     annotate.injectAttribute("readonly_reference_property", methodName, getter)
     annotate.injectClassCallback("readonly_reference_property", "_makeRemote", methodName)
 
@@ -57,7 +57,7 @@ def readonly_store_property(propertyName):
     def getter(self):
         return getattr(self.reference.store, propertyName)
     methodName = "get" + propertyName[0].upper() + propertyName[1:]
-    getter.__name__ = methodName 
+    getter.__name__ = methodName
     annotate.injectAttribute("readonly_store_property", methodName, getter)
     annotate.injectClassCallback("readonly_store_property", "_makeRemote", methodName)
 
@@ -65,7 +65,7 @@ def readonly_getter(getterName):
     def getter(self):
         return getattr(self.reference, getterName)()
     methodName = getterName
-    getter.__name__ = methodName 
+    getter.__name__ = methodName
     annotate.injectAttribute("readonly_proxy_getter", methodName, getter)
     annotate.injectClassCallback("readonly_proxy_getter", "_makeRemote", methodName)
 
@@ -88,14 +88,14 @@ def make_remote(prefix=None):
 class Medium(mediums.ServerMedium, annotate.Annotable):
 
     implements(interfaces.IMedium)
-    
+
     @classmethod
     def _makeRemote(cls, methodName, prefix=None):
         method = getattr(cls, methodName)
         def remote(self, *args, **kwargs):
             return adapt(method(self, *args, **kwargs))
         remoteMethodName = (prefix or _DEFAULT_PREFIX) + methodName
-        remote.__name__ = remoteMethodName 
+        remote.__name__ = remoteMethodName
         setattr(cls, remoteMethodName, remote)
 
     @classmethod
@@ -103,19 +103,19 @@ class Medium(mediums.ServerMedium, annotate.Annotable):
         components.registerAdapter(cls, objIface, mediumIface)
 
     def __init__(self, reference):
-        self.reference = reference 
+        self.reference = reference
 
 
 class IdentifiedMedium(Medium):
-    
+
     implements(interfaces.IIdentifiedMedium)
-    
+
     readonly_property("identifier")
     readonly_property("label")
-    
+
     def __init__(self, reference):
         Medium.__init__(self, reference)
-     
+
 
 ## Private ##
 

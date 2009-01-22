@@ -18,18 +18,18 @@ from flumotion.transcoder.admin.proxy import componentset, monitor
 
 
 class MonitorSet(componentset.BaseComponentSet):
-    
+
     def __init__(self, managerPxySet):
         componentset.BaseComponentSet.__init__(self, managerPxySet)
         # Registering Events
         self._register("monitor-added")
         self._register("monitor-removed")
-        
+
     ## Public Method ##
-    
+
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         self._refreshProxiesListener("_compPxys", listener, "monitor-added")
 
@@ -43,7 +43,7 @@ class MonitorSet(componentset.BaseComponentSet):
         self.debug("Monitor component '%s' added to set",
                    compPxy.label)
         self.emit("monitor-added", compPxy)
-        
+
     def _doRemoveComponent(self, compPxy):
         componentset.BaseComponentSet._doRemoveComponent(self, compPxy)
         self.debug("Monitor component '%s' removed from set",

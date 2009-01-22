@@ -17,10 +17,10 @@ from twisted.python.reflect import qual
 
 
 class Identity(flavors.Copyable, flavors.RemoteCopy):
-    
+
     def __init__(self, identifier):
         self._identifier = identifier
-    
+
     def getStateToCopyFor(self, perspective):
         return {"identifier": self._identifier}
 

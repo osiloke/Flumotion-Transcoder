@@ -14,7 +14,7 @@ from flumotion.transcoder.admin.context import base
 
 
 class SchedulerContext(base.BaseContext):
-    
+
     def __init__(self, adminContext, config):
         base.BaseContext.__init__(self, adminContext)
         self.config = config

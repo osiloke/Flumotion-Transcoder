@@ -25,17 +25,17 @@ from flumotion.transcoder.admin.datastore import base, activity
 
 
 class IStateStore(base.IBaseStore):
-    
+
     def retrieveTranscodingStores(self, states):
         pass
 
     def retrieveNotificationStores(self, states):
         pass
-    
-    def newTranscodingStore(self, label, state, profStore, 
+
+    def newTranscodingStore(self, label, state, profStore,
                             inputRelPath, startTime=None):
         pass
-    
+
     def newNotificationStore(self, subtype, label, state, notifStore,
                              trigger, startTime=None):
         pass
@@ -43,7 +43,7 @@ class IStateStore(base.IBaseStore):
 
 class StateStore(base.SimpleStore, log.LoggerProxy):
     implements(IStateStore)
-    
+
     def __init__(self, logger, adminStore, dataSource):
         identifier = "store.state"
         label = "State Store"
@@ -51,10 +51,10 @@ class StateStore(base.SimpleStore, log.LoggerProxy):
         base.SimpleStore.__init__(self, adminStore,
                                   identifier=identifier, label=label)
         self._dataSource = dataSource
-    
+
     def getAdminStore(self):
         return self.parent
-    
+
     def retrieveTranscodingStores(self, states):
         t = ActivityTypeEnum.transcoding
         return self.__getActivities(t, states)
@@ -62,15 +62,15 @@ class StateStore(base.SimpleStore, log.LoggerProxy):
     def retrieveNotificationStores(self, states):
         t = ActivityTypeEnum.notification
         return self.__getActivities(t, states)
-    
-    def newTranscodingStore(self, label, state, profStore, 
+
+    def newTranscodingStore(self, label, state, profStore,
                             inputRelPath, startTime=None):
         t = ActivityTypeEnum.transcoding
         a = self.__newActivity(t, TranscodingTypeEnum.normal,
                                label, state, startTime)
         a._setup(profStore, inputRelPath)
         return a
-    
+
     def newNotificationStore(self, subtype, label, state, notifStore,
                              trigger, startTime=None):
         assert isinstance(subtype, NotificationTypeEnum)
@@ -79,13 +79,13 @@ class StateStore(base.SimpleStore, log.LoggerProxy):
         a._setup(notifStore, trigger)
         return a
 
-    
+
     ## Protected Methods ##
-    
+
     def _storeActivity(self, activStore, new):
         data = activStore._getData()
         return self._dataSource.store(data)
-    
+
     def _resetActivity(self, activStore):
         data = activStore._getData()
         return self._dataSource.reset(data)
@@ -94,14 +94,14 @@ class StateStore(base.SimpleStore, log.LoggerProxy):
         data = activStore._getData()
         return self._dataSource.delete(data)
 
-    
+
     ## Private Methods ##
 
     def __getActivities(self, type, states):
         d = self._dataSource.retrieveActivities(type, states)
         d.addCallback(self.__cbWrapActivities)
         return d
-    
+
     def __newActivity(self, type, subtype, label, state, startTime=None):
         assert isinstance(type, ActivityTypeEnum)
         assert isinstance(state, ActivityStateEnum)

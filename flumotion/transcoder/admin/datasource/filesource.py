@@ -33,11 +33,11 @@ from flumotion.transcoder.admin.datasource import datasource
 
 
 class ImmutableWrapper(object):
-    
+
     def __init__(self, identifier, fields):
         self.__dict__['_identifier'] = identifier
         self.__dict__['_fields'] = fields
-        
+
     def __getattr__(self, attr):
         if attr == 'identifier':
             return self.__dict__['_identifier']
@@ -45,19 +45,19 @@ class ImmutableWrapper(object):
         if not (attr in fields):
             raise AttributeError, attr
         return fields[attr]
-    
+
     def __setattr__(self, attr, value):
         raise AttributeError, attr
 
 
 class ImmutableDataWrapper(object):
-    
+
     def __init__(self, data, identifier, hidden=[], readonly=[]):
         self.__dict__['_identifier'] = identifier
         self.__dict__['_data'] = data
         self.__dict__['_hidden'] = set(hidden)
-        self.__dict__['_readonly'] = set(readonly)        
-        
+        self.__dict__['_readonly'] = set(readonly)
+
     def __getattr__(self, attr):
         if attr == 'identifier':
             return self.__dict__['_identifier']
@@ -72,10 +72,10 @@ class ImmutableDataWrapper(object):
             if not name:
                 return self.__dict__['_identifier']
         return getattr(data, attr)
-    
+
     def __setattr__(self, attr, value):
         raise AttributeError, attr
-        
+
     def _getData(self):
         return self.__dict__['_data']
 
@@ -84,7 +84,7 @@ class MutableDataWrapper(object):
     """
     Right now this class make the assumption it's used for activities.
     """
-    
+
     def __init__(self, source, template, path=None, identifier=None,
                  data=None, fields=None, **overrides):
         self._source = source
@@ -100,7 +100,7 @@ class MutableDataWrapper(object):
             self._fields = utils.deepCopy(template["defaults"])
         for k, v in overrides.items():
             self._fields[k] = v
-        
+
     def _reset(self):
         if not self._data: return
         data = self._data
@@ -115,7 +115,7 @@ class MutableDataWrapper(object):
         # PyChecker doesn't like dynamic attributes
         __pychecker__ = "no-classattr"
         identifier = self._identifier or self.__newIdentifier()
-        data = self._data or self._template['class']()        
+        data = self._data or self._template['class']()
         newPath = self.__getPath(identifier, self.state)
         newTmpPath = newPath + ".tmp"
         for attr, value in self._fields.items():
@@ -154,7 +154,7 @@ class MutableDataWrapper(object):
         self._data = data
         self._path = newPath
         self._source._mutableDataStored(identifier, self._data, self._path)
-    
+
     def _delete(self):
         if self._path:
             self.__deleteFile(self._path)
@@ -177,7 +177,7 @@ class MutableDataWrapper(object):
         if not attr in fields:
             raise AttributeError, attr
         return fields[attr]
-    
+
     def __setattr__(self, attr, value):
         if attr.startswith('_'):
             self.__dict__[attr] = value
@@ -188,18 +188,18 @@ class MutableDataWrapper(object):
             raise AttributeError, attr
         fields = self._fields
         fields[attr] = value
-        
+
     def __newIdentifier(self):
         ident = utils.genUniqueIdentifier()
         return self._template['file-template'] % ident
-        
+
     def __getPath(self, identifier, state):
         if state == ActivityStateEnum.done:
             return self._source._doneActivitiesDir + identifier
         if state == ActivityStateEnum.failed:
             return self._source._failedActivitiesDir + identifier
         return self._source._activeActivitiesDir + identifier
-    
+
     def __deleteFile(self, file):
         try:
             os.remove(file)
@@ -207,7 +207,7 @@ class MutableDataWrapper(object):
             log.notifyException(self._source, e,
                                 "Fail to delete file '%s'", file)
             raise e
-        
+
     def __moveFile(self, sourceFile, destFile):
         try:
             shutil.move(sourceFile, destFile)
@@ -219,7 +219,7 @@ class MutableDataWrapper(object):
 
 
 class DummyIdentityConfig(object):
-    
+
     def __init__(self):
         self.type = TargetTypeEnum.identity
 
@@ -337,11 +337,11 @@ def _createSQLNotif(wrapper, succeed, params, sqlTmpl):
 
 
 class FileDataSource(log.Loggable):
-    
+
     logCategory = adminconsts.DATASOURCE_LOG_CATEGORY
-    
+
     implements(datasource.IInformationSource)
-    
+
     def __init__(self, config):
         self._adminPath = os.path.abspath(config.dataFile)
         self._adminData = None
@@ -352,7 +352,7 @@ class FileDataSource(log.Loggable):
         self._failedActivitiesDir = None
         self._invalidActivitiesDir = None
         self._activitiesData = {} # {filename: (filePath, MutableDataWrapper)}
-    
+
     def initialize(self):
         self.debug("Initializing File Data Source")
         d = defer.Deferred()
@@ -377,7 +377,7 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-        
+
     def retrieveCustomers(self):
         try:
             result = [ImmutableDataWrapper(c, k, hidden=['profiles'])
@@ -389,11 +389,11 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-        
+
     def retrieveCustomerInfo(self, custData):
         try:
             assert isinstance(custData, ImmutableDataWrapper)
-            result = ImmutableWrapper((custData.identifier, "info"), 
+            result = ImmutableWrapper((custData.identifier, "info"),
                                       CUST_INFO_TMPL)
             return defer.succeed(result)
         except Exception, e:
@@ -401,11 +401,11 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-        
+
     def retrieveProfiles(self, custData):
         try:
             assert isinstance(custData, ImmutableDataWrapper)
-            result = [ImmutableDataWrapper(p, k, hidden=['targets']) 
+            result = [ImmutableDataWrapper(p, k, hidden=['targets'])
                       for k, p in custData._getData().profiles.items()
                       if p != None]
             return defer.succeed(result)
@@ -414,13 +414,13 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-        
+
     def retrieveGlobalNotifications(self):
         return defer.succeed([])
-        
+
     def retrieveCustomerNotifications(self, custData):
         return defer.succeed([])
-        
+
     def retrieveProfileNotifications(self, profData):
         try:
             assert isinstance(profData, ImmutableDataWrapper)
@@ -451,7 +451,7 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-        
+
     def retrieveTargetNotifications(self, targData):
         try:
             assert isinstance(targData, ImmutableDataWrapper)
@@ -484,7 +484,7 @@ class FileDataSource(log.Loggable):
             ex = datasource.RetrievalError(msg, cause=e)
             f = failure.Failure(ex)
             return defer.fail(f)
-       
+
     def retrieveTargetConfig(self, targData):
         try:
             assert isinstance(targData, ImmutableDataWrapper)
@@ -529,25 +529,25 @@ class FileDataSource(log.Loggable):
 
     def newProfile(self, custData):
         raise NotImplementedError()
-    
+
     def newNotification(self, type, data):
         raise NotImplementedError()
-    
+
     def newTarget(self, profData):
         raise NotImplementedError()
 
     def newTargetConfig(self, targData):
         raise NotImplementedError()
-        
+
     def newReport(self, profData):
         raise NotImplementedError()
-        
+
     def newTargetReport(self, repData):
         raise NotImplementedError()
-        
+
     def newNotificationReport(self, repData, notifData):
         raise NotImplementedError()
-        
+
     def store(self, *data):
         try:
             for mutable in data:
@@ -558,7 +558,7 @@ class FileDataSource(log.Loggable):
         except Exception, e:
             error = datasource.StoringError(cause=e)
             return defer.fail(error)
-        
+
     def reset(self, *data):
         try:
             for mutable in data:
@@ -569,13 +569,13 @@ class FileDataSource(log.Loggable):
         except Exception, e:
             error = datasource.ResetError(cause=e)
             return defer.fail(error)
-        
+
     def delete(self, *data):
         try:
             for mutable in data:
                 if not isinstance(mutable, MutableDataWrapper):
                     raise NotImplementedError()
-                mutable._delete() 
+                mutable._delete()
             return defer.succeed(self)
         except Exception, e:
             error = datasource.DeletionError(cause=e)
@@ -583,22 +583,22 @@ class FileDataSource(log.Loggable):
 
 
     ## Protected Methods ##
-    
+
     _excludedStates = set([ActivityStateEnum.failed,
                            ActivityStateEnum.done])
-    
+
     def _mutableDataStored(self, identifier, data, path):
         if data.state in self._excludedStates:
             self._activitiesData.pop(identifier, None)
             return
         self._activitiesData[identifier] = (path, data)
-    
+
     def _mutableDataDeleted(self, identifier, data):
         self._activitiesData.pop(identifier, None)
 
 
     ## Private Methods ##
-    
+
     def __safeMove(self, sourceDir, destDir, file):
         try:
             shutil.move(sourceDir + file, destDir + file)
@@ -606,7 +606,7 @@ class FileDataSource(log.Loggable):
             log.notifyException(self, e,
                                 "Fail to move file '%s' from '%s' to '%s'",
                                 file, sourceDir, destDir)
-    
+
     def __loadAdminData(self):
         self.debug("Loading admin data from '%s'", self._adminPath)
         loader = inifile.IniFile()
@@ -637,7 +637,7 @@ class FileDataSource(log.Loggable):
                 continue
             identifier = f.rsplit(os.path.extsep, 1)[0]
             self._customersData[identifier] = data
-        
+
     def __loadActivityData(self):
         basePath = os.path.dirname(self._adminPath)
         relDir = self._adminData.activitiesDir
@@ -685,9 +685,9 @@ class FileDataSource(log.Loggable):
                 self.__safeMove(absDir, self._failedActivitiesDir, f)
             else:
                 self._activitiesData[f] = (absDir + f, data)
-        
+
     def __ebInitializationFailed(self, failure):
         if failure.check(datasource.InitializationError):
             return failure
         msg = "Failed to initialize file data-source"
-        raise datasource.InitializationError(msg, cause=failure)        
+        raise datasource.InitializationError(msg, cause=failure)

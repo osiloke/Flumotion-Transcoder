@@ -29,7 +29,7 @@ class AudioTarget(TranscodingTarget):
 
     def __init__(self, targetContext):
         """
-        targetContext's transcoding config should 
+        targetContext's transcoding config should
         have the following attributes:
             audioEncoder
             audioRate
@@ -42,7 +42,7 @@ class AudioTarget(TranscodingTarget):
         self._checkConfAttr("audioRate")
         self._checkConfAttr("audioChannels")
 
-    
+
     ## ITranscoderProducer Overriden Methods ##
 
     def getMonitoredFiles(self):
@@ -67,13 +67,13 @@ class AudioTarget(TranscodingTarget):
         pipeline.add(encBin)
         tees['audiosink'].get_pad('src%d').link(encBin.get_pad('audiosink'))
         self._bins["audio-encoder"] = audioEncBin
-        
-        
+
+
 class VideoTarget(TranscodingTarget):
- 
+
     def __init__(self, targetContext):
         """
-        targetContext's transcoding config should 
+        targetContext's transcoding config should
         have the following attributes:
             videoEncoder
             videoFramerate
@@ -125,13 +125,13 @@ class VideoTarget(TranscodingTarget):
         pipeline.add(encBin)
         tees['videosink'].get_pad('src%d').link(encBin.get_pad('videosink'))
         self._bins["video-encoder"] = videoEncBin
-        
+
 
 class AudioVideoTarget(TranscodingTarget):
- 
+
     def __init__(self, targetContext):
         """
-        targetContext's transcoding config should 
+        targetContext's transcoding config should
         have the following attributes:
             audioEncoder
             audioRate
@@ -146,7 +146,7 @@ class AudioVideoTarget(TranscodingTarget):
             videoMaxHeight
             videoWidthMultiple
             videoHeightMultiple
-            videoScaleMethod            
+            videoScaleMethod
         """
         TranscodingTarget.__init__(self, targetContext)
         self._checkConfAttr("audioEncoder", True)
@@ -161,7 +161,7 @@ class AudioVideoTarget(TranscodingTarget):
         self._checkConfAttr("videoMaxWidth")
         self._checkConfAttr("videoMaxHeight")
         self._checkConfAttr("videoWidthMultiple")
-        self._checkConfAttr("videoHeightMultiple")        
+        self._checkConfAttr("videoHeightMultiple")
         self._checkConfAttr("videoScaleMethod")
 
 
@@ -191,7 +191,7 @@ class AudioVideoTarget(TranscodingTarget):
         config = self._getTranscodingConfig()
         outputPath = self._getOutputPath()
         if analysis.hasAudio:
-            audioEncBin = makeAudioEncodeBin(config, analysis, tag, 
+            audioEncBin = makeAudioEncodeBin(config, analysis, tag,
                                              pipelineInfo=self._pipelineInfo,
                                              logger=self)
         else:

@@ -19,9 +19,9 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class ProfileMedium(api.IdentifiedMedium):
-    
+
     implements(interfaces.IProfileMedium)
-    
+
     api.register_medium(interfaces.IProfileMedium,
                         profile.IProfileStore)
 
@@ -55,11 +55,11 @@ class ProfileMedium(api.IdentifiedMedium):
     api.readonly_property("postprocessTimeout")
     api.readonly_property("transcodingTimeout")
     api.readonly_property("monitoringPeriod")
-    
+
     def __init__(self, profStore):
         api.IdentifiedMedium.__init__(self, profStore)
-    
-    
+
+
     ## IProfilesMedium Methodes ##
 
     @api.make_remote()

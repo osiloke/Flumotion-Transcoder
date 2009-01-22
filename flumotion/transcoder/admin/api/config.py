@@ -27,4 +27,4 @@ class APIConfig(properties.PropertyBag):
     host = properties.String('host', "localhost", False)
     port = properties.Integer('port', 7600, False)
     useSSL = properties.Boolean('use-ssl', True)
-    certificate = properties.String('certificate', "default.pem")    
+    certificate = properties.String('certificate', "default.pem")

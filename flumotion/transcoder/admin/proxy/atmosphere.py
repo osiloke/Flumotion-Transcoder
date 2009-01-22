@@ -17,12 +17,12 @@ from flumotion.transcoder.admin.proxy import group
 
 
 class AtmosphereProxy(group.ComponentGroupProxy):
-    
+
     _componentDomain = ComponentDomainEnum.atmosphere
-    
+
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, atmoCtx, atmoState):
-        group.ComponentGroupProxy.__init__(self, logger, parentPxy, 
+        group.ComponentGroupProxy.__init__(self, logger, parentPxy,
                                            identifier, managerPxy,
                                            atmoCtx, atmoState)
 
@@ -30,7 +30,7 @@ class AtmosphereProxy(group.ComponentGroupProxy):
         return self._context
 
 
-def instantiate(logger, parentPxy, identifier, managerPxy, 
+def instantiate(logger, parentPxy, identifier, managerPxy,
                 atmoCtx, atmoState, *args, **kwargs):
-    return AtmosphereProxy(logger, parentPxy, identifier,  managerPxy, 
+    return AtmosphereProxy(logger, parentPxy, identifier,  managerPxy,
                            atmoCtx, atmoState, *args, **kwargs)

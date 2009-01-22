@@ -22,9 +22,9 @@ from flumotion.transcoder.admin import adminconsts, taskmanager, transbalancer
 
 
 class Transcoding(taskmanager.TaskManager):
-    
+
     logCategory = adminconsts.TRANSCODING_LOG_CATEGORY
-    
+
     def __init__(self, workerPxySet, transPxySet):
         taskmanager.TaskManager.__init__(self)
         self._workerPxySet = workerPxySet
@@ -36,7 +36,7 @@ class Transcoding(taskmanager.TaskManager):
         self._register("slot-available")
 
     ## Public Method ##
-    
+
     def getAvailableSlots(self):
         return self._balancer.getAvailableSlots()
 
@@ -62,18 +62,18 @@ class Transcoding(taskmanager.TaskManager):
         d = self._transPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeTranscoding)
         return d
-    
+
     def _doResume(self):
         self.log("Ready to resume transcoding, waiting transcoder to become idle")
         d = self._transPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeTranscoding)
         return d
-    
+
     def _doPause(self):
         self.log("Pausing transcoding manager")
         for task in self.iterTasks():
             self._balancer.removeTask(task)
-    
+
     def _doAbort(self):
         self.log("Aborting transcoding")
         self._balancer.clearTasks()
@@ -83,21 +83,21 @@ class Transcoding(taskmanager.TaskManager):
             self._balancer.addTask(task)
             self._balancer.balance()
         self.emit("task-added", task)
-    
+
     def _onTaskRemoved(self, task):
         if self.isStarted():
             self._balancer.removeTask(task)
             self._balancer.balance()
         self.emit("task-removed", task)
 
-            
+
     ## WorkerSet Event Listeners ##
-    
+
     def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' added to transcoding", workerPxy.label)
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
-    
+
     def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' removed from transcoding", workerPxy.label)
         self._balancer.removeWorker(workerPxy)
@@ -105,12 +105,12 @@ class Transcoding(taskmanager.TaskManager):
 
 
     ## TranscoderSet Event Listeners ##
-    
+
     def __onTranscoderAddedToSet(self, transPxySet, transPxy):
         self.log("Transcoder '%s' added to transcoding", transPxy.label)
         d = self.addComponent(transPxy)
         d.addErrback(self.__ebAddComponentFailed, transPxy.getName())
-    
+
     def __onTranscoderRemovedFromSet(self, transPxySet, transPxy):
         self.log("Transcoder '%s' removed from transcoding", transPxy.label)
         d = self.removeComponent(transPxy)
@@ -118,13 +118,13 @@ class Transcoding(taskmanager.TaskManager):
 
 
     ## TranscodingBalancer Callback ##
-    
+
     def onSlotsAvailable(self, balancer, count):
         self.emit("slot-available", count)
 
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         for t in self.iterTasks():
             self.emitTo("task-added", listener, t)
@@ -134,9 +134,9 @@ class Transcoding(taskmanager.TaskManager):
 
 
     ## Private Methods ##
-    
+
     def __cbStartResumeTranscoding(self, result):
-        if (isinstance(result, Failure) 
+        if (isinstance(result, Failure)
             and not result.check(iherrors.TimeoutError)):
             log.notifyFailure(self, result,
                               "Failure waiting transcoder set "
@@ -158,14 +158,14 @@ class Transcoding(taskmanager.TaskManager):
         return d
 
     def __ebStartupResumingFailure(self, failure):
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "Failure during transcoder startup/resuming")
 
     def __ebAddComponentFailed(self, failure, name):
         log.notifyFailure(self, failure,
                           "Failed to add transcoder '%s' "
                           "to transcoding manager", name)
-    
+
     def __ebRemoveComponentFailed(self, failure, name):
         log.notifyFailure(self, failure,
                           "Failed to remove transcoder '%s' "

@@ -53,7 +53,7 @@ class IProfileStore(base.IBaseStore):
 
     def getCustomerStore(self):
         pass
-        
+
     def getTargetStores(self):
         pass
 
@@ -62,14 +62,14 @@ class IProfileStore(base.IBaseStore):
 
     def getTargetStoreByName(self, targName, default=None):
         pass
-    
+
     def iterTargetStores(self):
         pass
 
 
 class ProfileStore(base.NotifyStore):
     implements(IProfileStore)
-    
+
     name                 = base.ReadOnlyProxy("name")
     subdir               = base.ReadOnlyProxy("subdir")
     inputDir             = base.ReadOnlyProxy("inputDir")
@@ -101,23 +101,23 @@ class ProfileStore(base.NotifyStore):
     transcodingTimeout   = base.ReadOnlyProxy("transcodingTimeout")
     monitoringPeriod     = base.ReadOnlyProxy("monitoringPeriod")
 
-    
+
     def __init__(self, logger, custStore, dataSource, profData):
         base.NotifyStore.__init__(self, logger, custStore, dataSource, profData)
-        self._targets = {} # {TARGET_IDENTIFIER: TagetStore} 
+        self._targets = {} # {TARGET_IDENTIFIER: TagetStore}
         # Registering Events
         self._register("target-added")
         self._register("target-removed")
-    
-    
+
+
     ## Public Methods ##
-    
+
     def getAdminStore(self):
         return self.parent.getAdminStore()
 
     def getCustomerStore(self):
         return self.parent
-        
+
     def getTargetStores(self):
         return self._targets.values()
 
@@ -129,22 +129,22 @@ class ProfileStore(base.NotifyStore):
             if targName == targStore.name:
                 return targStore
         return default
-    
+
     def iterTargetStores(self):
         return self._targets.itervalues()
 
 
     ## Overridden Methods ##
-    
+
     def refreshListener(self, listener):
         base.NotifyStore.refreshListener(self, listener)
         for targStore in self._targets.itervalues():
             if targStore.isActive():
                 self.emitTo("target-added", listener, targStore)
-            
+
     def _doGetChildElements(self):
-        return self.getTargetStores()    
-    
+        return self.getTargetStores()
+
     def _doPrepareInit(self, chain):
         base.NotifyStore._doPrepareInit(self, chain)
         # Retrieve and initialize the targets
@@ -153,37 +153,37 @@ class ProfileStore(base.NotifyStore):
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
         self.debug("Profile '%s' activated", self.label)
-    
+
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
         self.debug("Profile '%s' aborted", self.label)
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveProfileNotifications(self._data)
-        
+
     def _doWrapNotification(self, notifData):
         return notification.NotificationFactory(self, notifData,
                                                 self.getAdminStore(),
                                                 self.getCustomerStore(),
                                                 self, None)
-        
-        
+
+
     ## Private Methods ##
-        
+
     def __cbRetrieveTargets(self, result):
         d = self._dataSource.retrieveTargets(self._data)
-        d.addCallbacks(self.__cbTargetsReceived, 
+        d.addCallbacks(self.__cbTargetsReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-    
+
     def __cbTargetsReceived(self, targDataList, oldResult):
         deferreds = []
         self._setIdleTarget(len(targDataList))
         for targData in targDataList:
             targStore = target.TargetStore(self, self, self._dataSource, targData)
             d = targStore.initialize()
-            d.addCallbacks(self.__cbTargetInitialized, 
+            d.addCallbacks(self.__cbTargetInitialized,
                            self.__ebTargetInitFailed,
                            errbackArgs=(targStore,))
             # Ensure no failure slips through
@@ -196,13 +196,13 @@ class ProfileStore(base.NotifyStore):
         # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
-    
+
     def __cbTargetInitialized(self, targStore):
         self.debug("Target '%s' initialized; adding it to profile '%s' store",
                    targStore.label, self.label)
         if (targStore.identifier in self._targets):
             msg = ("Profile '%s' already have a target '%s', "
-                   "dropping the new one" 
+                   "dropping the new one"
                    % (self.name, targStore.name))
             self.warning(msg)
             error = admerrs.StoreError(msg)
@@ -215,12 +215,12 @@ class ProfileStore(base.NotifyStore):
         targStore._activate()
         # Keep the callback chain result
         return targStore
-    
+
     def __ebTargetInitFailed(self, failure, targStore):
         #FIXME: Better Error Handling ?
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "Target '%s' of profile '%s' failed "
-                          "to initialize; dropping it", 
+                          "to initialize; dropping it",
                           targStore.label, self.label)
         targStore._abort(failure)
         # Don't propagate failures, will be dropped anyway

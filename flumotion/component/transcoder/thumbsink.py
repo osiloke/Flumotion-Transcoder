@@ -21,10 +21,10 @@ from flumotion.inhouse import log
 
 
 class IThumbnailSampler(Interface):
-    
+
     def prepare(self, startTime):
         pass
-        
+
     def update(self, streamTime, buffer):
         pass
 
@@ -53,7 +53,7 @@ class ThumbSink(gst.BaseSink):
 
 
     ## Public Methods ##
-    
+
     def postError(self, msg, debug=None):
         error = gst.GError(gst.STREAM_ERROR,
                            gst.STREAM_ERROR_FAILED, msg)
@@ -61,7 +61,7 @@ class ThumbSink(gst.BaseSink):
         self.post_message(message)
         self._error = True
 
-    
+
     ## Overriden Methods ##
 
     def do_event(self, event):

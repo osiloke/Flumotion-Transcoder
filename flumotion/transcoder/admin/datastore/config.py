@@ -18,15 +18,15 @@ from flumotion.transcoder.admin.datastore import base
 
 
 class IConfigStore(base.IBaseStore):
-    
+
     type = Attribute("The type of taget config")
-    
+
     def getCustomerStore(self):
         pass
-    
+
     def getProfileStore(self):
         pass
-    
+
     def getTargetStore(self):
         pass
 
@@ -36,7 +36,7 @@ class IIdentityConfigStore(IConfigStore):
 
 
 class IAudioConfigStore(IConfigStore):
-    
+
     muxer         = Attribute("Muxing pipeline")
     audioEncoder  = Attribute("Audio encoding pipeline")
     audioRate     = Attribute("Audio rate")
@@ -44,7 +44,7 @@ class IAudioConfigStore(IConfigStore):
 
 
 class IVideoConfigStore(IConfigStore):
-    
+
     muxer               = Attribute("Muxing pipeline")
     videoEncoder        = Attribute("Video encoding pipeline")
     videoWidth          = Attribute("Video width")
@@ -59,7 +59,7 @@ class IVideoConfigStore(IConfigStore):
 
 
 class IAudioVideoConfigStore(IAudioConfigStore, IVideoConfigStore):
-    
+
     tolerance = Attribute("Audio/Video tolerance")
 
 
@@ -72,47 +72,47 @@ class IThumbnailsConfigStore(IConfigStore):
     maxCount     = Attribute("Maximum number of snapshots to take")
     ensureOne    = Attribute("Ensure they will be at least on thumbnail")
     format       = Attribute("Thumbnails image format")
-    
+
 
 class ConfigStore(base.DataStore):
     implements(IConfigStore)
-    
+
     type = base.ReadOnlyProxy("type")
 
     def __init__(self, targStore, data):
         label = "%s config" % targStore.label
         base.DataStore.__init__(self, targStore, data, label=label)
-    
+
     def getAdminStore(self):
         return self.parent.getAdminStore()
-    
+
     def getCustomerStore(self):
         return self.parent.getCustomerStore()
-    
+
     def getProfileStore(self):
         return self.parent.getProfileStore()
-    
+
     def getTargetStore(self):
         return self.parent
 
 
 class IdentityConfigStore(ConfigStore):
     implements(IIdentityConfigStore)
-    
+
     def __init__(self, targStore, data):
         super(ConfigStore, self).__init__(targStore, data)
-        
+
 
 class AudioConfigStore(ConfigStore):
     """
     muxer (str)
     audioEncoder (str)
-    audioRate (str) 
+    audioRate (str)
     audioChannels (str)
     """
-    
+
     implements(IAudioConfigStore)
-    
+
     muxer         = base.ReadOnlyProxy("muxer")
     audioEncoder  = base.ReadOnlyProxy("audioEncoder")
     audioRate     = base.ReadOnlyProxy("audioRate")
@@ -120,7 +120,7 @@ class AudioConfigStore(ConfigStore):
 
     def __init__(self, targStore, data):
         super(AudioConfigStore, self).__init__(targStore, data)
-    
+
 
 class VideoConfigStore(ConfigStore):
     """
@@ -135,9 +135,9 @@ class VideoConfigStore(ConfigStore):
     videoPAR (int[2])
     videoFramerate (int[2])
     """
-    
+
     implements(IVideoConfigStore)
-    
+
     muxer               = base.ReadOnlyProxy("muxer")
     videoEncoder        = base.ReadOnlyProxy("videoEncoder")
     videoWidth          = base.ReadOnlyProxy("videoWidth")
@@ -149,14 +149,14 @@ class VideoConfigStore(ConfigStore):
     videoPAR            = base.ReadOnlyProxy("videoPAR")
     videoFramerate      = base.ReadOnlyProxy("videoFramerate")
     videoScaleMethod    = base.ReadOnlyProxy("videoScaleMethod")
-    
+
     def __init__(self, targStore, data):
         super(VideoConfigStore, self).__init__(targStore, data)
 
 
 class AudioVideoConfigStore(AudioConfigStore, VideoConfigStore):
     implements(IAudioVideoConfigStore)
-    
+
     tolerance = base.ReadOnlyProxy("tolerance")
 
     def __init__(self, targStore, data):
@@ -170,10 +170,10 @@ class ThumbnailsConfigStore(ConfigStore):
     maxCount (int)
     format (str) in ['png', 'jpg']
     ensureOne (bool)
-    """    
-    
+    """
+
     implements(IThumbnailsConfigStore)
-    
+
     thumbsWidth  = base.ReadOnlyProxy("thumbsWidth")
     thumbsHeight = base.ReadOnlyProxy("thumbsHeight")
     periodValue  = base.ReadOnlyProxy("periodValue")
@@ -181,7 +181,7 @@ class ThumbnailsConfigStore(ConfigStore):
     maxCount     = base.ReadOnlyProxy("maxCount")
     ensureOne    = base.ReadOnlyProxy("ensureOne")
     format       = base.ReadOnlyProxy("format")
-    
+
     def __init__(self, targStore, data):
         super(ThumbnailsConfigStore, self).__init__(targStore, data)
 

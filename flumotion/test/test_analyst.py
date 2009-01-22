@@ -62,12 +62,12 @@ def _checkFloat(f1, f2, t=FLOAT_THRESHOLD):
                            abs(_toFloat(f1) - _toFloat(f2))))
 
 
-class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin): 
-    
+class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
+
     def tearDown(self):
         #FIXME: This shouldn't be used
-        comptest.cleanup_reactor()    
-    
+        comptest.cleanup_reactor()
+
     def cbAnalyse(self, generator, shouldWork, analyst, timeout):
         d = analyst.analyse(generator.path, timeout)
         args = (generator,)
@@ -78,23 +78,23 @@ class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
             d.addCallbacks(self.cbShouldHaveFailed, self.ebTimeoutExpected,
                            callbackArgs=args, errbackArgs=args)
         return d
-        
+
     def bbRemoveTempFile(self, result, generator):
         if os.path.isfile(generator.path):
             os.remove(generator.path)
         return result
-    
+
     def cbShouldHaveFailed(self, result, generator):
         raise Exception("Should have failed")
-    
+
     def cbExpectedResult(self, result, generator):
         return generator
-    
+
     def ebTimeoutExpected(self, failure, generator):
         if failure.check(MediaAnalysisTimeoutError):
             return generator
         return failure
-    
+
     def ebHasFailed(self, failure, generator):
         raise Exception("Has failed (%s)" % str(failure))
 
@@ -114,7 +114,7 @@ class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
         return d
 
     def testParallelizedAnalysisTimeout(self):
-        
+
         def generated(generator):
             defs = []
             defs.append(self.cbAnalyse(generator, True, analyst, None))
@@ -126,7 +126,7 @@ class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
             d.addBoth(self.bbRemoveTempFile, generator)
             d.addErrback(lambda f: f.value.subFailure)
             return d
-        
+
         generator = gsttestutils.MediaGenerator(duration=10,
                                                 videoCodec="theoraenc",
                                                 audioCodec="vorbisenc",
@@ -138,25 +138,25 @@ class TestAnalyst(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
 
 
 class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
-    
+
     def tearDown(self):
         #FIXME: This shouldn't be used
-        comptest.cleanup_reactor()    
-    
+        comptest.cleanup_reactor()
+
     def checkMedia(self, result=None, analyst=None, timeout=None, *args, **kwargs):
         generator = gsttestutils.MediaGenerator(*args, **kwargs)
         d = generator.generate()
         d.addCallback(self.cbAnalyse, analyst, timeout, result)
         d.addBoth(self.bbRemoveTempFile, generator)
         return d
-    
+
     def cbAnalyse(self, generator, analyst, timeout=None, oldResult=None):
         if not analyst:
             analyst = MediaAnalyst()
         d = analyst.analyse(generator.path, timeout)
         d.addCallback(self.cbCheckValid, generator, oldResult)
         return d
-    
+
     def cbCheckValid(self, analysis, generator, oldResult):
         _checkFloat(generator.duration, analysis.getMediaDuration(),
                         DURATION_THRESHOLD)
@@ -172,18 +172,18 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
             _checkEqual(generator.audioRate, analysis.audioRate)
             _checkEqual(generator.audioChannels, analysis.audioChannels)
         return oldResult
-    
+
     def bbRemoveTempFile(self, result, generator):
         if os.path.isfile(generator.path):
             os.remove(generator.path)
         return result
-    
+
     def bbRemoveTempFiles(self, result, generators):
         for generator in generators:
             if os.path.isfile(generator.path):
                 os.remove(generator.path)
         return result
-    
+
     def multipleSerialTests(self, times, analyst, vcodec, acodec, muxer, duration,
                             width, height, par, vrate, arate, channels):
         generator = gsttestutils.MediaGenerator(duration=duration,
@@ -201,10 +201,10 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
             d.addCallback(self.cbAnalyse, analyst, None, generator)
         d.addBoth(self.bbRemoveTempFile, generator)
         return d
-    
+
     def multipleParallelTests(self, times, analyst, vcodec, acodec, muxer, duration,
                               width, height, par, vrate, arate, channels):
-        
+
         def generated(generator, times, analyst):
             deferreds = []
             for i in range(times):
@@ -213,7 +213,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
                                    fireOnOneErrback=True, consumeErrors=False)
             d.addErrback(lambda f: f.value.subFailure)
             return d
-        
+
         generator = gsttestutils.MediaGenerator(duration=duration,
                                                 videoCodec=vcodec,
                                                 audioCodec=acodec,
@@ -228,7 +228,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
         d.addCallback(generated, times, analyst)
         d.addBoth(self.bbRemoveTempFile, generator)
         return d
-    
+
     def genTestFiles(self, codecs, durations, widths, heights,
                      pars, vrates, arates, channels):
         generators = []
@@ -259,10 +259,10 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
         d.addErrback(self.bbRemoveTempFiles, generators)
         d.callback(None)
         return d
-    
+
     def serialTests(self, analyst, codecs, durations, widths, heights,
                     pars, vrates, arates, channels):
-        
+
         def generated(generators, analyst):
             d = defer.Deferred()
             for gen in generators:
@@ -270,7 +270,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
             d.addBoth(self.bbRemoveTempFiles, generators)
             d.callback(None)
             return d
-        
+
         d = self.genTestFiles(codecs, durations, widths, heights, pars,
                               vrates, arates, channels)
         d.addCallback(generated, analyst)
@@ -288,12 +288,12 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
             d.addBoth(self.bbRemoveTempFiles, generators)
             d.addErrback(lambda f: f.value.subFailure)
             return d
-        
+
         d = self.genTestFiles(codecs, durations, widths, heights, pars,
                               vrates, arates, channels)
         d.addCallback(generated, analyst)
         return d
-    
+
     def testSerializedWithDifferentAnalyst(self):
         return self.serialTests(None,
                                 (("theoraenc", "vorbisenc", "oggmux"),),
@@ -303,7 +303,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
                                 ((1, 1),),
                                 (20, (25, 2)),
                                 (44100,),
-                                (2,))                
+                                (2,))
 
     def testSerializedWithSameAnalyst(self):
         return self.serialTests(MediaAnalyst(),
@@ -314,7 +314,7 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
                                 ((1, 1),),
                                 (20, (25, 2)),
                                 (44100,),
-                                (2,))                
+                                (2,))
 
     def testParallelizedWithDifferentAnalyst(self):
         return self.parallelTests(None,
@@ -325,8 +325,8 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
                                   ((1, 1),),
                                   ((25, 2),),
                                   (44100,),
-                                  (1,))                
-        
+                                  (1,))
+
     def testParallelizedWithSameAnalyst(self):
         return self.parallelTests(MediaAnalyst(),
                                   (("theoraenc", "vorbisenc", "oggmux"),),
@@ -336,8 +336,8 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
                                   ((1, 1),),
                                   ((25, 2),),
                                   (44100,),
-                                  (1,))                
-    
+                                  (1,))
+
     def testMultipleSerialAnalysisOfTheSameFile(self):
         return self.multipleSerialTests(5, None,
                                         "theoraenc", "vorbisenc", "oggmux",
@@ -357,38 +357,38 @@ class TestAnalystWithGoodFiles(unittest.TestCase, gsttestutils.GstreamerUnitTest
         return self.multipleParallelTests(5, MediaAnalyst(),
                                           "theoraenc", "vorbisenc", "oggmux",
                                           4, 320, 240, (1,1), 25, 22050, 2)
-    
-        
+
+
 class TestAnalystWithBadFiles(unittest.TestCase, gsttestutils.GstreamerUnitTestMixin):
-    
+
     def tearDown(self):
         #FIXME: This shouldn't be used
-        comptest.cleanup_reactor()    
-    
+        comptest.cleanup_reactor()
+
     def analyse(self, path, analyst=None):
-        
+
         def cbShouldFail(result):
             raise Exception("Should have failed")
-        
+
         def ebExpectedFailure(failure, result):
             if failure.check(MediaAnalysisUnknownTypeError):
                 return result
             return failure
-        
+
         if not analyst:
             analyst = MediaAnalyst()
         d = analyst.analyse(path)
         d.addCallbacks(cbShouldFail, ebExpectedFailure,
                        errbackArgs=(path,))
         return d
-    
+
     def serialTests(self, times, path, analyst=None):
         d = defer.Deferred()
         for t in range(times):
             d.addCallback(self.analyse, analyst)
         d.callback(path)
         return d
-    
+
     def parallelTests(self, times, path, analyst=None):
         defs = []
         for t in range(times):
@@ -397,17 +397,17 @@ class TestAnalystWithBadFiles(unittest.TestCase, gsttestutils.GstreamerUnitTestM
                                fireOnOneErrback=True, consumeErrors=False)
         d.addErrback(lambda f: f.value.subFailure)
         return d
-        
+
     def bbRemoveFile(self, result, path):
         if os.path.isfile(path):
             os.remove(path)
         return result
-    
+
     def makeEmptyFile(self):
         handle, path = tempfile.mkstemp()
         os.close(handle)
         return path
-    
+
     def makeGarbageFile(self, size=256*1024):
         handle, path = tempfile.mkstemp()
         try:
@@ -423,70 +423,69 @@ class TestAnalystWithBadFiles(unittest.TestCase, gsttestutils.GstreamerUnitTestM
         finally:
             os.close(handle)
         return path
-    
+
     def testOneEmptyFile(self):
         path = self.makeEmptyFile()
         d = self.serialTests(1, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-        
+
     def testSerialMultipleEmptyFiles(self):
         path = self.makeEmptyFile()
         d = self.serialTests(8, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testParallelMultipleEmptyFiles(self):
         path = self.makeEmptyFile()
         d = self.parallelTests(8, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testSerialMultipleEmptyFilesOneAnalyst(self):
         analyst = MediaAnalyst()
         path = self.makeEmptyFile()
         d = self.serialTests(8, path, analyst)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testParallelMultipleEmptyFilesOneAnalyst(self):
         analyst = MediaAnalyst()
         path = self.makeEmptyFile()
         d = self.parallelTests(8, path, analyst)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testOneGarbageFile(self):
         path = self.makeGarbageFile()
         d = self.serialTests(1, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-        
+
     def testSerialMultipleGarbageFiles(self):
         path = self.makeGarbageFile()
         d = self.serialTests(8, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testParallelMultipleGarbageFiles(self):
         path = self.makeGarbageFile()
         d = self.parallelTests(8, path)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testSerialMultipleGarbageFilesOneAnalyst(self):
         analyst = MediaAnalyst()
         path = self.makeGarbageFile()
         d = self.serialTests(8, path, analyst)
         d.addBoth(self.bbRemoveFile, path)
         return d
-    
+
     def testParallelMultipleGarbageFilesOneAnalyst(self):
         analyst = MediaAnalyst()
         path = self.makeGarbageFile()
         d = self.parallelTests(8, path, analyst)
         d.addBoth(self.bbRemoveFile, path)
-    
-        
- 
-    
+
+
+

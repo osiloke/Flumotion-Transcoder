@@ -18,7 +18,7 @@ from flumotion.transcoder.admin.context import base, worker, notifier, store, ap
 
 
 class AdminContext(base.BaseContext):
-    
+
     def __init__(self, clusterConfig):
         base.BaseContext.__init__(self, None)
         self.config = clusterConfig
@@ -30,30 +30,30 @@ class AdminContext(base.BaseContext):
     def getReportsDataSource(self):
         sqlSourceConfig = self.config.admin.reportsdatasource
         return sqlsource.SQLDataSource(sqlSourceConfig)
-    
+
     def getNotifierContext(self):
         notifierConfig = self.config.admin.notifier
         return notifier.NotifierContext(self, notifierConfig)
-    
+
     def getSchedulerContext(self):
         return None
-        
+
     def getLocal(self):
         return local.Local("admin", self.config.admin.roots)
-        
+
     def getManagerContext(self):
         managerConfig = self.config.manager
         return manager.ManagerContext(self, managerConfig)
-    
+
     def getWorkerContextByName(self, workername):
         workerConfig = self.config.workers.get(workername, None)
         workerDefaults = self.config.workerDefaults
         return worker.WorkerContext(self, workername, workerConfig, workerDefaults)
-    
+
     def getAPIContext(self):
         apiConfig = self.config.admin.api
         return api.APIContext(self, apiConfig)
-    
+
     def getStoreContextFor(self, admiStore):
         return store.StoreContext(self, admiStore)
 

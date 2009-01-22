@@ -25,16 +25,16 @@ from flumotion.transcoder.admin.datastore import base, profile, notification
 
 
 class IActivityStore(base.IBaseStore):
-    
+
     type      = Attribute("The type of activity")
     subtype   = Attribute("The sub-type of activity")
     startTime = Attribute("The time the activity was started")
     lastTime  = Attribute("The last time the activity was attempted")
     state     = Attribute("Activity's state")
-    
+
     def store(self):
         pass
-    
+
     def delete(self):
         pass
 
@@ -43,18 +43,18 @@ class IActivityStore(base.IBaseStore):
 
 
 class ITranscodingActivityStore(IActivityStore):
-    
+
     inputRelPath = Attribute("Transcoded file relative path")
-    
+
     def getCustomerStore(self):
         pass
-    
+
     def getProfileStore(self):
         pass
 
 
 class INotificationActivityStore(IActivityStore):
-    
+
     trigger    = Attribute("What has triggered this notification")
     timeout    = Attribute("Timeout to perform the notification")
     retryCount = Attribute("How many times the notification has been attempted")
@@ -64,18 +64,18 @@ class INotificationActivityStore(IActivityStore):
 
 class IHTTPActivityStore(INotificationActivityStore):
 
-    url = Attribute("URL used to notify over HTTP") 
+    url = Attribute("URL used to notify over HTTP")
 
 
 class IMailActivityStore(INotificationActivityStore):
-    
+
     senderAddr = Attribute("Sender e-mail addresse")
     subject    = Attribute("Mail subject")
     body       = Attribute("Mail body")
 
 
 class ISQLActivityStore(INotificationActivityStore):
-    
+
     databaseURI  = Attribute("Database connection URI")
     sqlStatement = Attribute("SQL statement to execute")
 
@@ -120,7 +120,7 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
     startTime = base.ReadOnlyProxy("startTime")
     lastTime  = base.ReadOnlyProxy("lastTime")
     state     = ReadWriteProxy("state")
-    
+
     def __init__(self, logger, stateStore, data, isNew=True):
         log.LoggerProxy.__init__(self, logger)
         base.DataStore.__init__(self, stateStore, data, label=data.label)
@@ -129,16 +129,16 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
 
     def getAdminStore(self):
         return self.parent.getAdminStore()
-    
+
     def getStateStore(self):
         return self.parent
-        
+
     def store(self):
         assert not self._deleted
         d = self.parent._storeActivity(self, self._isNew)
         d.addErrback(self.__ebActivityStoreFailed)
         self._new = False
-    
+
     def delete(self):
         assert not self._deleted
         self._deleted = True
@@ -148,25 +148,25 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
     def reset(self):
         assert not self._deleted
         return self.parent._resetActivity(self)
-    
-    
+
+
     ## Protected Methods ##
-    
+
     def _touche(self):
         self._data.lastTime = datetime.datetime.now()
-    
+
     def _getData(self):
         return self._data
 
 
     ## Private Methods ##
-    
+
     def __ebActivityStoreFailed(self, failure):
         log.notifyFailure(self, failure,
                           "Fail to store %s activity '%s'",
                           self._data and self._data.type and self._data.type.nick,
                           self._data and self._data.label)
-        
+
     def __ebActivityDeleteFailed(self, failure):
         log.notifyFailure(self, failure,
                           "Fail to delete %s activity '%s'",
@@ -176,18 +176,18 @@ class ActivityStore(base.DataStore, log.LoggerProxy):
 
 class TranscodingActivityStore(ActivityStore):
     implements(ITranscodingActivityStore)
-    
+
     inputRelPath = base.ReadOnlyProxy("inputRelPath")
-    
+
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
-        
+
     def getCustomerStore(self):
         assert not self._deleted
         custIdent = self._data.customerIdentifier
         adminStore = self.getAdminStore()
         return adminStore.getCustomerStore(custIdent, None)
-    
+
     def getProfileStore(self):
         custStore = self.getCustomerStore()
         if not custStore:
@@ -197,26 +197,26 @@ class TranscodingActivityStore(ActivityStore):
         return profStore
 
     ## Protected Methods ##
-    
+
     def _setup(self, profStore, relPath):
         assert isinstance(profStore, profile.ProfileStore)
         assert (not relPath) or isinstance(relPath, str)
         custStore = profStore.getCustomerStore()
         self._data.customerIdentifier = custStore.identifier
         self._data.profileIdentifier = profStore.identifier
-        self._data.inputRelPath = relPath       
+        self._data.inputRelPath = relPath
         self._touche()
 
 
 class NotificationActivityStore(ActivityStore):
     implements(INotificationActivityStore)
-    
+
     trigger    = base.ReadOnlyProxy("trigger")
     timeout    = ReadWriteProxy("timeout")
     retryCount = ReadWriteProxy("retryCount")
     retryMax   = ReadWriteProxy("retryMax")
     retrySleep = ReadWriteProxy("retrySleep")
-    
+
     def __init__(self, logger, stateStore, data, isNew=True):
         ActivityStore.__init__(self, logger, stateStore, data, isNew)
 
@@ -224,7 +224,7 @@ class NotificationActivityStore(ActivityStore):
         assert not self._deleted
         self._data.retryCount += 1
         self._touche()
-    
+
 
     ## Protected Methods ##
 
@@ -241,7 +241,7 @@ class NotificationActivityStore(ActivityStore):
         self._data.retryCount = 0
         self._touche()
 
-    
+
 class HTTPActivityStore(NotificationActivityStore):
     implements(IHTTPActivityStore)
 
@@ -257,7 +257,7 @@ class MailActivityStore(NotificationActivityStore):
     senderAddr = ReadWriteDataProxy("senderAddr")
     subject    = ReadWriteDataProxy("subject")
     body       = ReadWriteDataProxy("body")
-    
+
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
 
@@ -289,16 +289,16 @@ class SQLActivityStore(NotificationActivityStore):
 
 
     ## Protected Methods ##
-    
+
     def _setup(self, notifStore, trigger):
         NotificationActivityStore._setup(self, notifStore, trigger)
         uri = notifStore.databaseURI
         if uri is not None: self._data.data["uri"] = uri
 
 
-_activityLookup = {ActivityTypeEnum.transcoding: 
+_activityLookup = {ActivityTypeEnum.transcoding:
                    {TranscodingTypeEnum.normal:        TranscodingActivityStore},
-                   ActivityTypeEnum.notification: 
+                   ActivityTypeEnum.notification:
                    {NotificationTypeEnum.http_request: HTTPActivityStore,
                     NotificationTypeEnum.email:        MailActivityStore,
                     NotificationTypeEnum.sql:          SQLActivityStore}}

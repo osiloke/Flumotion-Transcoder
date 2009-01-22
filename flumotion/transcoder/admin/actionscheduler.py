@@ -18,8 +18,8 @@ from flumotion.common import enum
 
 
 class Action(object):
-    
-    def __init__(self, identifier, 
+
+    def __init__(self, identifier,
                  callback, *args, **kwargs):
         self._scheduler = None
         self._delayed = None
@@ -27,24 +27,24 @@ class Action(object):
         self._callback = callback
         self._args = args
         self._kwargs = kwargs
-        
+
     def cancel(self):
         if self._scheduler:
             self._scheduler.cancelActions(self)
-            
+
     def _setup(self, scheduler, delayed):
         self._scheduler = scheduler
         self._delayed = delayed
-            
+
     def _perform(self):
         self._callback(*self._args, **self._kwargs)
-        
+
     def _cancel(self):
         if self._delayed:
             self._delayed.cancel()
         self._scheduler = None
         self._delayed = None
-        
+
 
 class ActionScheduler(object):
     """
@@ -54,10 +54,10 @@ class ActionScheduler(object):
     action. If more than one action are added with the same
     (identifier,callback) only the earliest one is keeped.
     """
-    
+
     def __init__(self):
         self._actions = {} # {identifier: {callback: Action}}
-        
+
     def cancelActions(self, *actions):
         for action in actions:
             assert isinstance(action, Action)
@@ -65,7 +65,7 @@ class ActionScheduler(object):
             action._cancel()
             self.__removeActions(action)
             return action
-    
+
     def getActions(self, identifier, callback=None):
         """
         Retrieve the actions with specified identifier and callback.
@@ -78,14 +78,14 @@ class ActionScheduler(object):
             else:
                 return [a for a in tmp.itervalues()]
         return []
-    
+
     def cancelByIdentifier(self, identifier, callback=None):
         actions = self.getActions(identifier, callback)
         self.cancelActions(*actions)
-        
+
     def addAction(self, delay, action):
         """
-        Add an action to be sheduled if another action with 
+        Add an action to be sheduled if another action with
         identical identifier and callback and smaller delay.
         """
         assert isinstance(action, Action)
@@ -99,17 +99,17 @@ class ActionScheduler(object):
         delayed = reactor.callLater(delay, self.__performAction, action)
         action._setup(self, delayed)
         return action
-    
+
     def __getAction(self, identifier, callback):
         tmp = self._actions.get(identifier, None)
         if tmp:
             return tmp.get(callback, None)
         return None
-    
+
     def __addAction(self, action):
         i = action._identifier
         self._actions.setdefault(i, {})[action._callback] = action
-    
+
     def __removeActions(self, *actions):
         for action in actions:
             if action._identifier in self._actions:
@@ -118,9 +118,9 @@ class ActionScheduler(object):
                     del self._actions[action._identifier][action._callback]
                     if not self._actions[action._identifier]:
                         del self._actions[action._identifier]
-    
+
     def __performAction(self, action):
         self.__removeActions(action)
         action._perform()
-            
-    
+
+

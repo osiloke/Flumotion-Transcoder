@@ -14,7 +14,7 @@ from flumotion.common.enum import EnumClass
 
 
 ComponentDomainEnum = EnumClass('ComponentDomainEnum',
-                                ('atmosphere', 
+                                ('atmosphere',
                                  'flow'))
 
 TaskStateEnum = EnumClass("TaskStateEnum",

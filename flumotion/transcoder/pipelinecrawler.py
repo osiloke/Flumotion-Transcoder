@@ -29,25 +29,25 @@ class PipelineVisitor(object):
 class PipelineCrawler(PipelineVisitor):
     """
     Crawls the pipeline assuming that the elements form a DAG.
-    It guarentee than each added element's sources 
+    It guarentee than each added element's sources
     has been previously added.
     """
-    
+
     def __init__(self, visitor=None):
         self._visitor = visitor or self
         self._crawled = {}
         self._pending = {}
-        
+
     def clean(self):
         self._crawled.clear()
         self._pending.clear()
-        
+
     def crawlPipeline(self, pipeline):
         sources = list(pipeline.iterate_sources())
         for index, source in enumerate(sources):
             self._visitor.startBranch((index,), None, source)
             self._enterElement(source, (index,))
-    
+
     def crawlBin(self, bin):
         index = 0
         for pad in bin.sink_pads():
@@ -55,26 +55,26 @@ class PipelineCrawler(PipelineVisitor):
             self._visitor.startBranch((index,), None, element)
             self._enterElement(element, (index,), True)
             index += 1
-        
+
     def crawlElement(self, element):
         self._enterElement(element, (0,), True)
 
     def _sourcesOf(self, element):
-        pads = [p for p in element.pads() 
+        pads = [p for p in element.pads()
                 if p.is_linked() and (p.get_direction() == gst.PAD_SINK)]
         elements = [self._padElement(p, gst.PAD_SINK) for p in pads]
         #Reduce None elements in case of GStreamer internal changes
         return [e for e in elements if e != None]
-    
+
     def _sinksOf(self, element):
-        pads = [p for p in element.pads() 
+        pads = [p for p in element.pads()
                 if p.is_linked() and (p.get_direction() == gst.PAD_SRC)]
         elements = [self._padElement(p, gst.PAD_SRC) for p in pads]
         #Reduce None elements in case of GStreamer internal changes
         return [e for e in elements if e != None]
-        
+
     def _padElement(self, pad, direction):
-        if not pad: 
+        if not pad:
             gst.warning("GStreamer internal behavior changed, "
                         + "cannot properly crawl the pipline")
             return None
@@ -88,7 +88,7 @@ class PipelineCrawler(PipelineVisitor):
                         + "cannot properly crawl the pipline")
             return None
         if isinstance(parent, gst.GhostPad):
-            return self._padElement(parent.get_peer(), direction)        
+            return self._padElement(parent.get_peer(), direction)
         return parent
 
     def _enterElement(self, element, branch, force=False):
@@ -137,18 +137,18 @@ class PipelineCrawler(PipelineVisitor):
 class PrintVisitor(PipelineVisitor):
     def __init__(self, file=sys.stdout):
         self._out = file
-    
+
     def _write(self, *args):
         for a in args:
             self._out.write(a)
         self._out.write("\n")
-        
+
     def _getFactoryName(self, element):
         factory = element.get_factory()
         if factory:
             return factory.get_name()
         return element.__class__.__name__
-    
+
     def startBranch(self, branch, node, element):
         if len(branch) > 1:
             self._write("|   " * (len(branch) - 2) + "+---+")

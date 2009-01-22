@@ -18,8 +18,8 @@ from zope.interface import Interface, implements
 
 from flumotion.inhouse import utils
 
-    
-    
+
+
 class IComponentProperties(Interface):
 
     def getDigest(self):
@@ -33,17 +33,17 @@ class IComponentProperties(Interface):
 
     def asLaunchArguments(self, workerCtx):
         pass
-    
+
 
 class ComponentPropertiesMixin(object):
-    
+
     def __hash__(self):
         return hash(self.getDigest())
-    
+
     def __eq__(self, props):
         return (IComponentProperties.providedBy(props)
                 and (props.getDigest() == self.getDigest()))
-        
+
     def __ne__(self, props):
         return not self.__eq__(props)
 
@@ -52,28 +52,28 @@ class ComponentPropertiesMixin(object):
 
 
 class GenericComponentProperties(ComponentPropertiesMixin):
-    
+
     implements(IComponentProperties)
-    
+
     @classmethod
     def createFromComponentDict(cls, workerCtx, props):
         return GenericComponentProperties(props)
-    
+
     def __init__(self, props):
         self._properties = copy.deepcopy(props)
         self._digest = utils.digestParameters(self._properties)
-        
-    
+
+
     ## IComponentProperties Implemenetation ##
-    
+
     def getDigest(self):
         return self._digest
-    
+
     def prepare(self, workerCtx):
         pass
-    
+
     def asComponentProperties(self, workerCtx):
         raise NotImplementedError()
-    
+
     def asLaunchArguments(self, workerCtx):
         raise NotImplementedError()

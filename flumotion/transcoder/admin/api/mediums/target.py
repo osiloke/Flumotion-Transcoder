@@ -19,12 +19,12 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class TargetMedium(api.IdentifiedMedium):
-    
+
     implements(interfaces.IConfigMedium)
-    
+
     api.register_medium(interfaces.IConfigMedium,
                         target.ITargetStore)
-    
+
     api.readonly_property("name")
     api.readonly_property("subdir")
     api.readonly_property("outputDir")
@@ -38,12 +38,12 @@ class TargetMedium(api.IdentifiedMedium):
     api.readonly_property("enablePostprocessing")
     api.readonly_property("enableLinkFiles")
     api.readonly_property("postprocessCommand")
-    api.readonly_property("postprocessTimeout")    
-    
+    api.readonly_property("postprocessTimeout")
+
     def __init__(self, targStore):
         api.IdentifiedMedium.__init__(self, targStore)
-    
-    
+
+
     ## ITargetsMedium Methodes ##
 
     @api.make_remote()

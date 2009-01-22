@@ -33,7 +33,7 @@ SOURCE_ANALYSE_TIMEOUT = 60
 TARGET_ANALYSE_TIMEOUT = 60
 
 # Maximum time to wait for an error message when changing
-# transcoding pipeline state to PLAYING failed 
+# transcoding pipeline state to PLAYING failed
 TRANSCODER_PLAY_ERROR_TIMEOUT = 20
 # Maximum time to wait for the transcoding pipeline to change to PLAYING state
 TRANSCODER_PLAYING_TIMEOUT = 60
@@ -47,7 +47,7 @@ TRANSCODER_FINALIZE_TIMEOUT = 60
 TRANSCODER_ABORT_TIMEOUT = 60
 
 # Maximum time to wait for an error message when changing
-# thumbnailing pipeline state to PLAYING failed 
+# thumbnailing pipeline state to PLAYING failed
 THUMBNAILER_PLAY_ERROR_TIMEOUT = 20
 # Maximum time to wait for the thumbnailing pipeline to change to PLAYING state
 THUMBNAILER_PLAYING_TIMEOUT = 30

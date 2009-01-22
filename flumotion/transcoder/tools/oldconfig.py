@@ -15,10 +15,10 @@ import os
 import ConfigParser
 
 class SectionParser(object):
-    
+
     def __init__(self, logger):
         self.logger = logger
-    
+
     def parseFromTable(self, name, table, confDict):
         for k, (attr, required, parser, default) in table.items():
             if required and k not in confDict:
@@ -40,7 +40,7 @@ def bool(s):
     if s.lower() in ("0", "false", "no"):
         return False
     raise TypeError("Invalid boolean value '%s'" % s)
-        
+
 class Profile(SectionParser):
     """
     Encoding profile, describing settings for audio and video.
@@ -52,7 +52,7 @@ class Profile(SectionParser):
                          syntax)
     @param muxer:        name and parameters of the muxer (gst-launch syntax)
     @param extension:    extension to give to the output files
-    
+
     @param videowidth:      Width of the output video
     @param videoheight:     Height of the output video
     @param maxwidth:        Maximum width of the output video
@@ -198,7 +198,7 @@ class Config(SectionParser):
                 if section.lower() == 'global':
                     # the global configuration
                     self.parseFromTable('global', globalParseTable,
-                                        contents) 
+                                        contents)
                 else:
                     # a customer
                     self.customers[section] = Customer(self.logger, section, contents)

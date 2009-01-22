@@ -22,9 +22,9 @@ from flumotion.transcoder.admin import adminconsts, taskmanager, monbalancer
 
 
 class Monitoring(taskmanager.TaskManager):
-    
+
     logCategory = adminconsts.MONITORING_LOG_CATEGORY
-    
+
     def __init__(self, workerPxySet, monitorPxySet):
         taskmanager.TaskManager.__init__(self)
         self._workerPxySet = workerPxySet
@@ -33,10 +33,10 @@ class Monitoring(taskmanager.TaskManager):
         # Registering Events
         self._register("task-added")
         self._register("task-removed")
-        
+
 
     ## Public Method ##
-    
+
     def initialize(self):
         self.log("Initializing Monitoring Manager")
         self._workerPxySet.connectListener("worker-added", self,
@@ -51,7 +51,7 @@ class Monitoring(taskmanager.TaskManager):
         self._monitorPxySet.refreshListener(self)
         return taskmanager.TaskManager.initialize(self)
 
-    
+
     ## Overrided Virtual Methods ##
 
     def _doStart(self):
@@ -59,18 +59,18 @@ class Monitoring(taskmanager.TaskManager):
         d = self._monitorPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeMonitoring)
         return d
-    
+
     def _doResume(self):
         self.log("Ready to resume monitoring, waiting monitors to become idle")
         d = self._monitorPxySet.waitIdle(adminconsts.WAIT_IDLE_TIMEOUT)
         d.addBoth(self.__cbStartResumeMonitoring)
         return d
-    
+
     def _doPause(self):
         self.log("Pausing monitoring manager")
         for task in self.iterTasks():
             self._balancer.removeTask(task)
-    
+
     def _doAbort(self):
         self.log("Aborting monitoring")
         self._balancer.clearTasks()
@@ -80,21 +80,21 @@ class Monitoring(taskmanager.TaskManager):
             self._balancer.addTask(task)
             self._balancer.balance()
         self.emit("task-added", task)
-    
+
     def _onTaskRemoved(self, task):
         if self.isStarted():
             self._balancer.removeTask(task)
             self._balancer.balance()
         self.emit("task-removed", task)
 
-            
+
     ## WorkerSet Event Listeners ##
-    
+
     def __onWorkerAddedToSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' added to monitoring", workerPxy.label)
         self._balancer.addWorker(workerPxy)
         self._balancer.balance()
-    
+
     def __onWorkerRemovedFromSet(self, workerPxySet, workerPxy):
         self.log("Worker '%s' removed from monitoring", workerPxy.label)
         self._balancer.removeWorker(workerPxy)
@@ -102,12 +102,12 @@ class Monitoring(taskmanager.TaskManager):
 
 
     ## MonitorSet Event Listeners ##
-    
+
     def __onMonitorAddedToSet(self, monitorPxySet, monitorPxy):
         self.log("Monitor '%s' added to monitoring", monitorPxy.label)
         d = self.addComponent(monitorPxy)
         d.addErrback(self.__ebAddComponentFailed, monitorPxy.getName())
-    
+
     def __onMonitorRemovedFromSet(self, monitorPxySet, monitorPxy):
         self.log("Monitor '%s' removed from monitoring", monitorPxy.label)
         d = self.removeComponent(monitorPxy)
@@ -115,16 +115,16 @@ class Monitoring(taskmanager.TaskManager):
 
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         for t in self._tasks.itervalues():
             self.emitTo("task-added", listener, t)
 
 
     ## Private Methods ##
-    
+
     def __cbStartResumeMonitoring(self, result):
-        if (isinstance(result, Failure) 
+        if (isinstance(result, Failure)
             and not result.check(iherrors.TimeoutError)):
             log.notifyFailure(self, result,
                               "Failure waiting monitor set "
@@ -137,16 +137,16 @@ class Monitoring(taskmanager.TaskManager):
         d.addErrback(self.__ebStartupResumingFailure)
         d.callback(None)
         return d
-    
+
     def __cbAddBalancedTask(self, _, task):
         timeout = adminconsts.MONITORING_POTENTIAL_WORKER_TIMEOUT
         d = task.waitPotentialWorker(timeout)
         # Call self._balancer.addTask(task, workerPxy)
         d.addCallback(defer.shiftResult, self._balancer.addTask, 1, task)
         return d
-    
+
     def __ebStartupResumingFailure(self, failure):
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "Failure during monitoring startup/resuming")
         return failure
 
@@ -154,7 +154,7 @@ class Monitoring(taskmanager.TaskManager):
         log.notifyFailure(self, failure,
                           "Failed to add monitor '%s' "
                           "to monitoring manager", name)
-    
+
     def __ebRemoveComponentFailed(self, failure, name):
         log.notifyFailure(self, failure,
                           "Failed to remove monitor '%s' "

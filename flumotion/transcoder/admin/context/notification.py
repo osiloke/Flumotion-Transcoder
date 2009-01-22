@@ -22,9 +22,9 @@ class INotificationContext(base.IBaseStoreContext):
 
     type       = Attribute("Type of notification")
     triggers   = Attribute("What's trigger the notification")
-    timeout    = Attribute("Maximum time to perform the notification") 
+    timeout    = Attribute("Maximum time to perform the notification")
     retryMax   = Attribute("How many times the notification should be attempted")
-    retrySleep = Attribute("Time to sleep between notification attempts") 
+    retrySleep = Attribute("Time to sleep between notification attempts")
 
     def getStoreContext(self):
         pass
@@ -44,20 +44,20 @@ class IHTTPNotificationContext(INotificationContext):
 
 
 class ISQLNotificationContext(INotificationContext):
-    
+
     databaseURI = Attribute("Database connection URI")
     sqlTemplate = Attribute("SQL statement template")
 
 
 class NotifyStoreMixin(object):
-    
+
     store = None
-    
+
     def getNotificationContexts(self, trigger):
         notifyStore = storebase.INotificationProvider(self.store)
         notifiactions = notifyStore.getNotificationStores(trigger)
         return [NotificationContextFactory(self, n) for n in notifiactions]
-    
+
     def iterNotificationContexts(self, trigger):
         notifyStore = storebase.INotificationProvider(self.store)
         iter = notifyStore.iterNotificationStores(trigger)
@@ -65,18 +65,18 @@ class NotifyStoreMixin(object):
 
 
 class NotificationContext(base.BaseStoreContext):
-    
+
     implements(INotificationContext)
-    
+
     type       = base.StoreProxy("type")
     triggers   = base.StoreProxy("triggers")
-    
+
     def __init__(self, parentCtx, notifStore):
         base.BaseStoreContext.__init__(self, parentCtx, notifStore)
-    
+
     def getAdminContext(self):
         return self.parent.getAdminContext()
-    
+
     def getStoreContext(self):
         return self.parent.getStoreContext()
 
@@ -92,34 +92,34 @@ class MailNotificationContext(NotificationContext):
     timeout         = base.StoreAdminProxy("timeout",         "mailTimeout")
     retryMax        = base.StoreAdminProxy("retryMax",        "mailRetryMax")
     retrySleep      = base.StoreAdminProxy("retrySleep",      "mailRetrySleep")
-    
+
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)
 
 
 class HTTPNotificationContext(NotificationContext):
-    
+
     implements(IHTTPNotificationContext)
-    
+
     urlTemplate = base.StoreProxy("urlTemplate")
     timeout     = base.StoreAdminProxy("timeout",    "HTTPRequestTimeout")
     retryMax    = base.StoreAdminProxy("retryMax",   "HTTPRequestRetryMax")
-    retrySleep  = base.StoreAdminProxy("retrySleep", "HTTPRequestRetrySleep")    
-    
+    retrySleep  = base.StoreAdminProxy("retrySleep", "HTTPRequestRetrySleep")
+
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)
 
 
 class SQLNotificationContext(NotificationContext):
-    
+
     implements(ISQLNotificationContext)
-    
+
     databaseURI = base.StoreProxy("databaseURI")
-    sqlTemplate = base.StoreProxy("sqlTemplate")    
+    sqlTemplate = base.StoreProxy("sqlTemplate")
     timeout     = base.StoreAdminProxy("timeout",    "sqlTimeout")
     retryMax    = base.StoreAdminProxy("retryMax",   "sqlRetryMax")
-    retrySleep  = base.StoreAdminProxy("retrySleep", "sqlRetrySleep")    
-    
+    retrySleep  = base.StoreAdminProxy("retrySleep", "sqlRetrySleep")
+
     def __init__(self, parentCtx, notifStore):
         NotificationContext.__init__(self, parentCtx, notifStore)
 

@@ -21,12 +21,12 @@ from flumotion.transcoder.enums import TranscoderStatusEnum
 
 
 class UsageProperty(properties.ValueProperty):
-    
+
     def __init__(self, descriptor, default=None, required=False):
         properties.ValueProperty.__init__(self, descriptor, default, required)
-    
+
     def checkValue(self, value):
-        return (isinstance(value, tuple) 
+        return (isinstance(value, tuple)
                 and (len(value) == 3)
                 and isinstance(value[0], (float, int, long))
                 and isinstance(value[1], (float, int, long))
@@ -36,7 +36,7 @@ class UsageProperty(properties.ValueProperty):
         ratio, percent = strval.split(' ~ ')
         cpuTime, realTime = ratio.split(' / ')
         return (float(cpuTime), float(realTime), float(percent))
-    
+
     def val2str(self, value):
         return "%.2f / %.2f ~ %.2f" % value
 
@@ -59,7 +59,7 @@ class AnalysisReport(properties.PropertyBag):
     audioChannels = properties.Integer('audio-channels')
     audioLength = properties.Integer('audio-length')
     audioDuration = properties.Float('audio-duration')
-    
+
     hasVideo = properties.Boolean("has-video", False)
     videoCaps = properties.String("video-caps")
     videoWidth = properties.Integer('video-width')
@@ -104,29 +104,29 @@ class TargetReport(TaskReport):
 
 
 class LocalReport(properties.PropertyBag):
-    
+
     roots = properties.Dict(properties.String('roots'))
     name = properties.String('name')
-    
+
     def loadFromLocal(self, local):
         # PyChecker doesn't like dynamic attributes
         __pychecker__ = "no-classattr"
         self.name = local.getName()
         for name, value in local.iterVirtualRoots():
             self.roots[name] = value
-            
+
     def getLocal(self):
         # PyChecker doesn't like dynamic attributes
         __pychecker__ = "no-classattr"
         return local.Local(self.name, self.roots)
-                            
+
 
 class TranscodingReport(properties.RootPropertyBag, TaskReport):
 
     VERSION = (1,0)
-    
+
     state = properties.Enum('state', JobStateEnum, JobStateEnum.pending)
-    status = properties.Enum('status', TranscoderStatusEnum, 
+    status = properties.Enum('status', TranscoderStatusEnum,
                              TranscoderStatusEnum.pending)
     startTime = properties.DateTime('time-start')
     doneTime = properties.DateTime('time-done')
@@ -141,7 +141,7 @@ class TranscodingReport(properties.RootPropertyBag, TaskReport):
     cpuUsagePreprocess = UsageProperty('cpu-usage-preprocess')
     cpuUsageTranscoding = UsageProperty('cpu-usage-transcoding')
     reportPath = virtualpath.VirtualPathProperty('report-path', None, True)
-    
+
     def init(self, config):
         # PyChecker doesn't like dynamic attributes
         __pychecker__ = "no-classattr"

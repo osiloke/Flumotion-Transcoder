@@ -21,27 +21,27 @@ class MonitorBalancer(object):
     """
     Handle the distribution of monitoring tasks to a set of worker.
     """
-    
+
     def __init__(self):
         self._workerTasks = {} # {workerPxy: [task]}
         self._orphanes = []
         self._total = 0
-        
+
     def clearTasks(self):
         self._total = 0
         del self._orphanes[:]
         for tasks in self._workerTasks.itervalues():
             del tasks[:]
-        
+
     def addWorker(self, workerPxy):
         assert not (workerPxy in self._workerTasks)
         self._workerTasks[workerPxy] = []
-        
+
     def removeWorker(self, workerPxy):
         assert workerPxy in self._workerTasks
         self._orphanes.extend(self._workerTasks[workerPxy])
         del self._workerTasks[workerPxy]
-    
+
     def addTask(self, task, workerPxy=None):
         assert admintask.IAdminTask.providedBy(task)
         assert (workerPxy == None) or (workerPxy in self._workerTasks)
@@ -51,7 +51,7 @@ class MonitorBalancer(object):
             task.suggestWorker(workerPxy)
         else:
             self._orphanes.append(task)
-    
+
     def removeTask(self, task):
         assert admintask.IAdminTask.providedBy(task)
         if task in self._orphanes:

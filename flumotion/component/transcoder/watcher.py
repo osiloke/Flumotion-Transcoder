@@ -81,7 +81,7 @@ class PeriodicalWatcher(Watcher):
         self.timeout = timeout
         self._sigid = None
         self._files = {}
-        
+
     def start(self, reset=False):
         self._stopChecking()
         if reset:
@@ -90,16 +90,16 @@ class PeriodicalWatcher(Watcher):
 
     def stop(self):
         self._stopChecking()
-    
+
     def _stopChecking(self):
         if self._sigid:
             self._sigid.cancel()
             self._sigid = None
-    
+
     def _scheduleCheck(self):
         if self._sigid is None:
             self._sigid = reactor.callLater(self.timeout, self._checkForChanges)
-    
+
     def _checkForChanges(self):
         self.log("Watching...")
         self._sigid = None
@@ -108,12 +108,12 @@ class PeriodicalWatcher(Watcher):
             d.addCallbacks(self.__cbGotFiles, self.__ebListFileFailed)
             return d
         return self.__cbGotFiles(d)
-        
+
     def __ebListFileFailed(self, failure):
         log.notifyFailure(self, failure, "Failure during file listing")
         # Continue anyway
         self._scheduleCheck()
-    
+
     def __fileProcessingGenerator(self, currFiles, newFiles):
         for f in currFiles.keys():
             if f in newFiles:
@@ -127,7 +127,7 @@ class PeriodicalWatcher(Watcher):
             oldfilesize = None
             if f in currFiles and currFiles[f]:
                 oldfilesize = currFiles[f][stat.ST_SIZE]
-            self.log("File '%s' size change from %s to %s", 
+            self.log("File '%s' size change from %s to %s",
                      f, str(oldfilesize), str(s[stat.ST_SIZE]))
             #new file
             if not (f in currFiles):
@@ -155,7 +155,7 @@ class PeriodicalWatcher(Watcher):
 
     def __processFiles(self, processor):
         try:
-            for i in range(FILE_PROCESSING_BLOCK): 
+            for i in range(FILE_PROCESSING_BLOCK):
                 processor.next()
             reactor.callLater(0.01, self.__processFiles, processor)
         except StopIteration, e:
@@ -166,14 +166,14 @@ class PeriodicalWatcher(Watcher):
         """
         Returns a dict of filename->(stat tuple) mapping.
         """
-        raise NotImplementedError        
+        raise NotImplementedError
 
 
 class DirectoryWatcher(PeriodicalWatcher):
     """
     Directory Watcher
     Watches a directory for new files.
-    path : path to check for new/removed files        
+    path : path to check for new/removed files
     """
     def __init__(self, logger, path, *args, **kwargs):
         PeriodicalWatcher.__init__(self, logger, *args, **kwargs)
@@ -184,9 +184,9 @@ class DirectoryWatcher(PeriodicalWatcher):
         d = threads.deferToThread(os.path.walk, self.path, self._step, result)
         d.addCallback(lambda x: result)
         return d
-    
+
     def _step(self, results, dirname, content):
-        abs_content = [os.path.join(dirname, f) 
+        abs_content = [os.path.join(dirname, f)
                        for f in content]
         file_stat = [f for f in abs_content if os.path.isfile(f)]
         for file in file_stat:
@@ -196,7 +196,7 @@ class DirectoryWatcher(PeriodicalWatcher):
                 continue
             results[file[len(self.path):]] = stat
 
-        
+
 class FilesWatcher(PeriodicalWatcher):
     """
     Watches a collection of files for modifications.

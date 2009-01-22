@@ -103,9 +103,9 @@ def createTranscodingConfigFromContext(profCtx):
 
 
 class TranscoderProperties(base.ComponentPropertiesMixin):
-    
+
     implements(base.IComponentProperties)
-    
+
     @classmethod
     def createFromComponentDict(cls, workerCtx, props):
         niceLevel = props.get("nice-level", None)
@@ -129,7 +129,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
             log.warning("%s", message)
             raise admerrs.PropertiesError(message)
         return cls(name, configPath, config, niceLevel, pathAttr)
-    
+
     @classmethod
     def createFromContext(cls, profCtx):
         custCtx = profCtx.getCustomerContext()
@@ -140,7 +140,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         priority = profCtx.processPriority
         # for priority in [0,100] the nice level will be in  [19,0]
         # and for priority in [100-200] the nice level will be in [0,-15]
-        niceLevel = (19 - (19 * min(100, max(0, priority)) / 100) 
+        niceLevel = (19 - (19 * min(100, max(0, priority)) / 100)
                      - (15 * (min(200, max(100, priority)) - 100) / 100))
         return cls(name, configPath, config, niceLevel, pathAttr)
 
@@ -152,8 +152,8 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         self._niceLevel = niceLevel
         self._pathAttr = pathAttr
         # For now only use the configPath property in the digest
-        self._digest = utils.digestParameters(self._name, 
-                                              self._configPath, 
+        self._digest = utils.digestParameters(self._name,
+                                              self._configPath,
                                               self._niceLevel,
                                               self._pathAttr)
 
@@ -165,10 +165,10 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
 
 
     ## base.IComponentProperties Implementation ##
-        
+
     def getDigest(self):
         return self._digest
-        
+
     def prepare(self, workerCtx):
         adminCtx = workerCtx.getAdminContext()
         adminLocal = adminCtx.getLocal()
@@ -176,7 +176,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         saver = inifile.IniFile()
         # Set the datetime of file creation
         self._config.touch()
-        try:            
+        try:
             fileutils.ensureDirExists(os.path.dirname(localPath),
                                       "transcoding config", self._pathAttr)
             saver.saveToFile(self._config, localPath)
@@ -187,7 +187,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
             raise admerrs.PropertiesError(message)
         if self._pathAttr:
             self._pathAttr.apply(localPath)
-        
+
     def asComponentProperties(self, workerContext):
         props = []
         local = workerContext.getLocal()

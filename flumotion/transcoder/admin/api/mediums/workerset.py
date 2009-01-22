@@ -19,16 +19,16 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class WorkerSetMedium(api.Medium):
-    
+
     implements(interfaces.IWorkerSetMedium)
-    
+
     api.register_medium(interfaces.IWorkerSetMedium,
                         workerset.IWorkerSet)
-    
+
     def __init__(self, workerPxySet):
         api.Medium.__init__(self, workerPxySet)
-    
-    
+
+
     ## IWorkerSetMedium Methodes ##
 
     @api.make_remote()

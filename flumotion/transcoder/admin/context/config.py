@@ -17,18 +17,18 @@ from flumotion.transcoder.admin.datastore import config
 
 
 class IConfigContext(base.IBaseStoreContext):
-    
+
     type = Attribute("The type of taget config")
-    
+
     def getStoreContext(self):
         pass
-    
+
     def getCustomerContext(self):
         pass
-    
+
     def getProfileContext(self):
         pass
-    
+
     def getTargetContext(self):
         pass
 
@@ -38,7 +38,7 @@ class IIdentityConfigContext(IConfigContext):
 
 
 class IAudioConfigContext(IConfigContext):
-    
+
     muxer         = Attribute("Muxing pipeline")
     audioEncoder  = Attribute("Audio encoding pipeline")
     audioRate     = Attribute("Audio rate")
@@ -46,7 +46,7 @@ class IAudioConfigContext(IConfigContext):
 
 
 class IVideoConfigContext(IConfigContext):
-    
+
     muxer               = Attribute("Muxing pipeline")
     videoEncoder        = Attribute("Video encoding pipeline")
     videoWidth          = Attribute("Video width")
@@ -61,12 +61,12 @@ class IVideoConfigContext(IConfigContext):
 
 
 class IAudioVideoConfigContext(IAudioConfigContext, IVideoConfigContext):
-    
+
     tolerance = Attribute("Audio/Video tolerance")
 
 
 class IThumbnailsConfigContext(IConfigContext):
-    
+
     thumbsWidth  = Attribute("Thumbnails' width")
     thumbsHeight = Attribute("Thumbnails' height")
     periodValue  = Attribute("Period between thumbnails snapshots")
@@ -80,31 +80,31 @@ class ConfigContext(base.BaseStoreContext):
 
     implements(IConfigContext)
 
-    type = base.StoreProxy("type")   
+    type = base.StoreProxy("type")
 
     def __init__(self, targCtx, confStore):
         base.BaseStoreContext.__init__(self, targCtx, confStore)
 
     def getAdminContext(self):
         return self.parent.getAdminContext()
-    
+
     def getStoreContext(self):
         return self.parent.getStoreContext()
-    
+
     def getCustomerContext(self):
         return self.parent.getCustomerContext()
-    
+
     def getProfileContext(self):
         return self.parent.getProfileContext()
-    
+
     def getTargetContext(self):
         return self.parent
-       
+
 
 class IdentityConfigContext(ConfigContext):
-    
+
     implements(IIdentityConfigContext)
-    
+
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 
@@ -120,20 +120,20 @@ class ThumbnailsConfigContext(ConfigContext):
     maxCount     = base.StoreProxy("maxCount")
     ensureOne    = base.StoreProxy("ensureOne")
     format       = base.StoreProxy("format")
-    
+
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 
 
 class AudioConfigContext(ConfigContext):
-    
+
     implements(IAudioConfigContext)
-    
+
     muxer         = base.StoreProxy("muxer")
     audioEncoder  = base.StoreProxy("audioEncoder")
     audioRate     = base.StoreProxy("audioRate")
     audioChannels = base.StoreProxy("audioChannels")
-    
+
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 
@@ -153,7 +153,7 @@ class VideoConfigContext(ConfigContext):
     videoPAR            = base.StoreProxy("videoPAR")
     videoFramerate      = base.StoreProxy("videoFramerate")
     videoScaleMethod    = base.StoreProxy("videoScaleMethod")
-    
+
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 
@@ -177,7 +177,7 @@ class AudioVideoConfigContext(ConfigContext):
     videoFramerate      = base.StoreProxy("videoFramerate")
     videoScaleMethod    = base.StoreProxy("videoScaleMethod")
     tolerance           = base.StoreProxy("tolerance")
-        
+
     def __init__(self, targCtx, confStore):
         ConfigContext.__init__(self, targCtx, confStore)
 

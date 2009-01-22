@@ -46,10 +46,10 @@ class ITargetContext(base.IBaseStoreContext):
 
     def getStoreContext(self):
         pass
-    
+
     def getCustomerContext(self):
         pass
-    
+
     def getProfileContext(self):
         pass
 
@@ -63,7 +63,7 @@ class ReadOnlyProperty(object):
     def __set__(self, obj, value):
         raise AttributeError("Attribute is read-only")
     def __delete__(self, obj):
-        raise AttributeError("Attribute cannot be deleted")    
+        raise AttributeError("Attribute cannot be deleted")
 
 
 class BaseDir(ReadOnlyProperty):
@@ -122,9 +122,9 @@ class FilePath(ReadOnlyProperty):
 
 class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
-    The target context define the target-specific directories, files, 
+    The target context define the target-specific directories, files,
     relative path and contextual path.
-    
+
         Ex: customer data => store.xxxDir()=None
                              name = "Fluendo"
                              subdir = None
@@ -139,22 +139,22 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                 outputBase: default:/fluendo/files/outgoing/ogg/
                 linkBase: default:/fluendo/files/links/ogg/
                 workBase: temp:/fluendo/files/links/ogg/
-                
+
                 outputDir: default:/fluendo/files/outgoing/ogg/subdir/high/
                 linkDir: default:/fluendo/files/links/ogg/subdir/high/
-                
+
                 outputFile: file.avi.ogg
                 linkFile: file.avi.link
-                
+
                 outputRelPath: /subdir/high/file.avi.ogg
                 linkRelPath: /subdir/high/file.avi.link
-                
+
                 outputPath: default:/fluendo/files/outgoing/ogg/subdir/file.avi.ogg
                 linkPath: default:/fluendo/files/link/ogg/subdir/file.avi.link
     """
-    
+
     implements(ITargetContext)
-    
+
     name                 = base.StoreProxy("name")
     linkFileTemplate     = base.StoreParentProxy("linkFileTemplate")
     linkTemplate         = base.StoreParentProxy("linkTemplate")
@@ -175,7 +175,7 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     linkFile      = FileName("link")
     outputPath    = FilePath("output")
     linkPath      = FilePath("link")
-    
+
     def __init__(self, profCtx, targStore):
         base.BaseStoreContext.__init__(self, profCtx, targStore)
         self._variables.addVar("targetName", self.name)
@@ -188,16 +188,16 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                     + self._variables["sourceFile"])
         self._variables.addFileVars(fileutils.ensureRelPath(targPath),
                                     "target", extension=self.extension)
-        
+
     def getAdminContext(self):
         return self.parent.getAdminContext()
 
     def getStoreContext(self):
         return self.parent.getStoreContext()
-    
+
     def getCustomerContext(self):
         return self.parent.getCustomerContext()
-    
+
     def getProfileContext(self):
         return self.parent
 
@@ -218,17 +218,17 @@ class TargetContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     @property
     def subdir(self):
         return self._variables["targetSubdir"]
-    
+
     @property
     def extension(self):
         ext = self.store.extension
         if ext :
             return '.' + ext.lstrip('.')
         return ""
-    
-    
-    # Private Methodes ## 
-    
+
+
+    # Private Methodes ##
+
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
         return folder

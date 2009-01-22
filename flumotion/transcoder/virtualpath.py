@@ -23,12 +23,12 @@ from flumotion.transcoder import constants, errors
 _rootPattern = re.compile("(\w*):(.*)")
 
 class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
-    
+
     @classmethod
     def transpose(cls, path, fromLocal, toLocal):
         vp = cls.virtualize(path, fromLocal)
         return vp.localize(toLocal)
-    
+
     @classmethod
     def virtualize(cls, path, local):
         """
@@ -42,7 +42,7 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
                 return VirtualPath(path, name)
         raise errors.VirtualPathError("Cannot virtualize local path '%s', "
                                       "no compatible virtual root found" % path)
-    
+
     def __init__(self, path, defaultRoot=None):
         if isinstance(path, str):
             m = _rootPattern.match(path)
@@ -59,10 +59,10 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
 
     def getPath(self):
         return self._path
-    
+
     def getRoot(self):
         return self._root
-    
+
     def localize(self, local):
         """
         The parameters are a local with virtual roots.
@@ -74,27 +74,27 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
             return fileutils.joinPath(roots[self._root], self._path)
         raise errors.VirtualPathError("Cannot localize virtual path '%s', "
                                       " virtual root not found for this local" % self)
-    
+
     def __str__(self):
         return "%s:%s" % (self._root, self._path)
-    
+
     def __hash__(self):
         return hash(self._root) ^ hash(self._path)
-    
+
     def __eq__(self, virtPath):
-        return (isinstance(virtPath, VirtualPath) 
+        return (isinstance(virtPath, VirtualPath)
                 and (virtPath._path == self._path)
                 and (virtPath._root == self._root))
-        
+
     def __ne__(self, virtPath):
         return not self.__eq__(virtPath)
-    
+
     def __add__(self, path):
         if not isinstance(path, str):
             raise TypeError("cannot concatenate '%s' to VirtualPath"
                             % path.__class__.__name__)
         return VirtualPath(self).append(path)
-        
+
     def join(self, virtPath):
         #FIXME: Maybe better to raise an exception
         assert virtPath._root == self._root
@@ -116,10 +116,10 @@ class VirtualPath(object, jelly.Jellyable, jelly.Unjellyable):
             qual(self.__class__),
             self._root, self._path])
         return jellier.preserve(self, sxp)
-    
-    
+
+
     ## Unjellyable Overriden Methods ##
-    
+
     def unjellyFor(self, unjellier, jellyList):
         self._root, self._path = jellyList[1:]
         return self
@@ -129,15 +129,15 @@ jelly.setUnjellyableForClass(qual(VirtualPath), VirtualPath)
 
 
 class VirtualPathProperty(properties.ValueProperty):
-    
+
     def __init__(self, descriptor, default=None, required=False):
         properties.ValueProperty.__init__(self, descriptor, default, required)
-    
+
     def checkValue(self, value):
         return isinstance(value, VirtualPath)
-    
+
     def str2val(self, strval):
         return VirtualPath(strval)
-    
+
     def val2str(self, value):
         return str(value)

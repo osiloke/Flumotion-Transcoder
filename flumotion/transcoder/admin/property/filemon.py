@@ -22,9 +22,9 @@ from flumotion.transcoder.admin.property import base
 
 
 class MonitorProperties(base.ComponentPropertiesMixin):
-    
+
     implements(base.IComponentProperties)
-    
+
     @classmethod
     def createFromComponentDict(cls, workerCtx, props):
         scanPeriod = props.get("scan-period", None)
@@ -32,7 +32,7 @@ class MonitorProperties(base.ComponentPropertiesMixin):
         pathAttr = fileutils.PathAttributes.createFromComponentProperties(props)
         name = props.get("admin-id", "")
         return cls(name, directories, scanPeriod, pathAttr)
-    
+
     @classmethod
     def createFromContext(cls, custCtx):
         folders = []
@@ -41,25 +41,25 @@ class MonitorProperties(base.ComponentPropertiesMixin):
         period = custCtx.monitoringPeriod
         pathAttr = custCtx.pathAttributes
         return cls(custCtx.name, folders, period, pathAttr)
-    
+
     def __init__(self, name, virtDirs, scanPeriod=None, pathAttr=None):
         assert isinstance(virtDirs, list) or isinstance(virtDirs, tuple)
         self._name = name
         self._directories = tuple(virtDirs)
         self._scanPeriod = scanPeriod
         self._pathAttr = pathAttr
-        self._digest = utils.digestParameters(self._name, self._directories, 
+        self._digest = utils.digestParameters(self._name, self._directories,
                                               self._scanPeriod, self._pathAttr)
-        
+
 
     ## base.IComponentProperties Implementation ##
-        
+
     def getDigest(self):
         return self._digest
-        
+
     def prepare(self, workerCtx):
         pass
-        
+
     def asComponentProperties(self, workerCtx):
         props = []
         local = workerCtx.getLocal()
@@ -72,7 +72,7 @@ class MonitorProperties(base.ComponentPropertiesMixin):
         props.append(("admin-id", self._name))
         props.extend(local.asComponentProperties())
         return props
-    
+
     def asLaunchArguments(self, workerCtx):
         args = []
         local = workerCtx.getLocal()

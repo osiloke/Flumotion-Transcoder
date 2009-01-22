@@ -20,7 +20,7 @@ from flumotion.transcoder import virtualpath
 
 class TranscoderEnvironmentPlug(base.ManagerPlug):
     """
-    This plug is only used to import transcoder 
+    This plug is only used to import transcoder
     related modules in the manager.
     This permit to add custome jellyable types without
     having to add them directly in the manager.

@@ -22,16 +22,16 @@ from flumotion.transcoder.admin import adminconsts, admintask
 from flumotion.transcoder.admin.property import filemon
 from flumotion.transcoder.admin.proxy import monitor
 
-#TODO: Schedule the component startup to prevent starting 
+#TODO: Schedule the component startup to prevent starting
 #      lots of component at the same time.
 #      Because when starting lots of components, the monitors
 #      happy timeout may be triggered. For now, just using a large timeout.
 
 
 class MonitoringTask(admintask.AdminTask):
-    
+
     MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
-    
+
     def __init__(self, logger, custCtx):
         admintask.AdminTask.__init__(self, logger, custCtx.monitorLabel,
                                      filemon.MonitorProperties.createFromContext(custCtx))
@@ -45,11 +45,11 @@ class MonitoringTask(admintask.AdminTask):
         self._register("file-added")
         self._register("file-state-changed")
         self._register("file-removed")
-        
 
-    
+
+
     ## Public Methods ##
-    
+
     def setFileState(self, virtBase, relPath, state):
         monPxy = self.getActiveComponent()
         if not monPxy:
@@ -60,19 +60,19 @@ class MonitoringTask(admintask.AdminTask):
         self.log("Monitoring task '%s' file '%s' state changed to %s",
                  self.label, virtBase.append(relPath), state.name)
         monPxy.setFileStateBuffered(virtBase, relPath, state)
-        
+
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         args = virtSrcBase, virtDestBase, relFiles
         self._pendingMoves.append(args)
         if not self._movingFiles:
-            self.__asyncMovePendingFiles()        
-    
+            self.__asyncMovePendingFiles()
+
 
     ## Component Event Listeners ##
-    
+
     def __onComponentMoodChanged(self, monPxy, mood):
         if not self.isStarted(): return
-        self.log("Monitoring task '%s' monitor '%s' goes %s", 
+        self.log("Monitoring task '%s' monitor '%s' goes %s",
                  self.label, monPxy.getName(), mood.name)
         if self._isPendingComponent(monPxy):
             # Currently beeing started up
@@ -83,16 +83,16 @@ class MonitoringTask(admintask.AdminTask):
                     self._restoreLostComponent(monPxy)
                 return
             self.warning("Monitoring task '%s' selected monitor '%s' "
-                         "gone %s", self.label, 
+                         "gone %s", self.label,
                          monPxy.getName(), mood.name)
             if mood == moods.lost:
                 # If the monitor goes lost, wait a fixed amount of time
                 # to cope with small transient failures.
-                self._holdLostComponent(monPxy)                
+                self._holdLostComponent(monPxy)
                 return
             self._abort()
         if mood == moods.waking:
-            # Keep the waking components 
+            # Keep the waking components
             return
         if mood == moods.sleeping:
             self._deleteComponent(monPxy)
@@ -104,7 +104,7 @@ class MonitoringTask(admintask.AdminTask):
 
 
     ## Monitor Event Listeners ##
-    
+
     def __onMonitorFileRemoved(self, monPxy, virtDir, file, state):
         if not self._isElectedComponent(monPxy): return
         if (state == MonitorFileStateEnum.downloading): return
@@ -115,7 +115,7 @@ class MonitoringTask(admintask.AdminTask):
                          self._custCtx.name)
             return
         self.emit("file-removed", profCtx, state)
-    
+
     def __onMonitorFileAdded(self, monPxy, virtDir, file, state, fileinfo,
                              detection_time, mime_type, checksum):
         if not self._isElectedComponent(monPxy): return
@@ -142,7 +142,7 @@ class MonitoringTask(admintask.AdminTask):
 
 
     ## Virtual Methods Implementation ##
-    
+
     def _onComponentAdded(self, compPxy):
         compPxy.connectListener("mood-changed", self,
                                 self.__onComponentMoodChanged)
@@ -169,7 +169,7 @@ class MonitoringTask(admintask.AdminTask):
         self.emit("monitoring-deactivated", compPxy)
 
     def _onComponentStartupCanceled(self, compPxy):
-        # Because the monitor was pending to start, 
+        # Because the monitor was pending to start,
         # this event was ignored
         # So resend the mood changing event
         mood = compPxy.getMood()
@@ -179,7 +179,7 @@ class MonitoringTask(admintask.AdminTask):
     def _onStarted(self):
         for compPxy in self.iterComponentProxies():
             self.__onComponentMoodChanged(compPxy, compPxy.getMood())
-    
+
     def _doAcceptSuggestedWorker(self, workerPxy):
         currWorkerPxy = self.getWorkerProxy()
         monPxy = self.getActiveComponent()
@@ -187,25 +187,25 @@ class MonitoringTask(admintask.AdminTask):
 
     def _doAborted(self):
         self.emit("fail-to-run", self.getWorkerProxy())
-    
+
     def _doSelectPotentialComponent(self, compPxys):
         targWorkerPxy = self.getWorkerProxy()
         for compPxy in compPxys:
-            # If it exists an happy monitor on the target worker, 
+            # If it exists an happy monitor on the target worker,
             # or there not target worker set, just elect it
-            if ((not targWorkerPxy or (compPxy.getWorkerProxy() == targWorkerPxy)) 
+            if ((not targWorkerPxy or (compPxy.getWorkerProxy() == targWorkerPxy))
                 and (compPxy.getMood() == moods.happy)):
                 return compPxy
         return None
-    
+
     def _doLoadComponent(self, workerPxy, compName, compLabel,
                          compProperties, loadTimeout):
-        return monitor.MonitorProxy.loadTo(workerPxy, compName, compLabel, 
+        return monitor.MonitorProxy.loadTo(workerPxy, compName, compLabel,
                                            compProperties, loadTimeout)
 
 
     ## Private Methods ##
-    
+
     def __file2profileContext(self, virtDir, file):
         virtPath = virtDir + file
         for profCtx in self._custCtx.iterProfileContexts(file):
@@ -229,10 +229,10 @@ class MonitoringTask(admintask.AdminTask):
                    monPxy.getName(), virtSrcBase, virtDestBase)
         d = monPxy.moveFiles(virtSrcBase, virtDestBase, relFiles)
         args = (monPxy, virtSrcBase, virtDestBase, relFiles)
-        d.addCallbacks(self.__cbFileMoved, self.__ebMoveFilesFailed, 
+        d.addCallbacks(self.__cbFileMoved, self.__ebMoveFilesFailed,
                        callbackArgs=args, errbackArgs=args)
 
-    def __cbFileMoved(self, result, monPxy, 
+    def __cbFileMoved(self, result, monPxy,
                       virtSrcBase, virtDestBase, relFiles):
         for relFile in relFiles:
             self.log("File '%s' moved to '%s'",
@@ -240,7 +240,7 @@ class MonitoringTask(admintask.AdminTask):
                       virtDestBase.append(relFile))
         # Continue moving files
         self.__asyncMovePendingFiles()
-        
+
     def __ebMoveFilesFailed(self, failure, monPxy,
                             virtSrcBase, virtDestBase, relFiles):
         if not failure.check("twisted.spread.pb.PBConnectionLost",
@@ -248,7 +248,7 @@ class MonitoringTask(admintask.AdminTask):
             log.notifyFailure(self, failure,
                               "Monitoring task '%s' monitor "
                               "'%s' fail to move files from '%s' to '%s'",
-                              self.label, monPxy.getName(), virtSrcBase, 
+                              self.label, monPxy.getName(), virtSrcBase,
                               virtDestBase)
         # Continue moving files anyway
         self.__asyncMovePendingFiles()

@@ -27,20 +27,20 @@ class IMonitorProxy(base.IBaseProxy):
 
 class MonitorProxy(component.ComponentProxy):
     implements(IMonitorProxy)
-    
+
     properties_factory = filemon.MonitorProperties
-    
+
     @classmethod
     def loadTo(cls, workerPxy, name, label, properties, timeout=None):
         managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
-        return atmoPxy._loadComponent('file-monitor', 
-                                      name,  label, workerPxy, 
+        return atmoPxy._loadComponent('file-monitor',
+                                      name,  label, workerPxy,
                                       properties, timeout)
-    
+
     def __init__(self, logger, parentPxy, identifier,
                  managerPxy, compCtx, compState, domain):
-        component.ComponentProxy.__init__(self, logger, parentPxy,  
+        component.ComponentProxy.__init__(self, logger, parentPxy,
                                           identifier, managerPxy,
                                           compCtx, compState, domain)
         self._alreadyAdded = {} # {file: None}
@@ -52,34 +52,34 @@ class MonitorProxy(component.ComponentProxy):
         self._register("file-removed")
         self._register("file-changed")
 
-        
+
     ## Public Methods ##
-    
+
     def waitFiles(self, timeout=None):
         d = self._waitUIState(timeout)
         d.addCallback(self.__cbRetrieveFiles)
         return d
-            
+
     def setFileStateBuffered(self, virtBase, relFile, state):
         self.log("Schedule to set file %s%s state to %s", virtBase, relFile, state.nick)
         self._stateUpdateDelta[(virtBase, relFile)] = state
         self.__updateFilesState()
-    
+
     def setFileState(self, virtBase, relFile, state):
         self.log("Set file %s%s state to %s", virtBase, relFile, state.nick)
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "setFileState",
                                   virtBase, relFile, state)
-        return d    
-    
+        return d
+
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "moveFiles",
                                   virtSrcBase, virtDestBase, relFiles)
         return d
-    
+
     ## Overriden Methods ##
-    
+
     def _doBroadcastUIState(self, uiState):
         pending = uiState.get("pending-files", None)
         if pending:
@@ -88,25 +88,25 @@ class MonitorProxy(component.ComponentProxy):
                 state, fileinfo, detection_time, mime_type, checksum = value
                 self.emit("file-added", virtBase, relFile, state, fileinfo,
                           detection_time, mime_type, checksum)
-    
+
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
-    
+
     def _onUIStateAppend(self, uiState, key, value):
         self.log("Monitor UI State '%s' value '%s' appened", key, value)
-    
+
     def _onUIStateRemove(self, uiState, key, value):
         self.log("Monitor UI State '%s' value '%s' removed", key, value)
-    
+
     def _onUIStateSetitem(self, uiState, key, subkey, value):
-        self.log("Monitor UI State '%s' item '%s' set to '%s'", 
+        self.log("Monitor UI State '%s' item '%s' set to '%s'",
                  key, subkey, value)
         if key == "pending-files":
             virtBase, relFile = subkey
             self._onMonitorSetFile(virtBase, relFile, value)
-    
+
     def _onUIStateDelitem(self, uiState, key, subkey, value):
-        self.log("Monitor UI State '%s' item '%s' deleted", 
+        self.log("Monitor UI State '%s' item '%s' deleted",
                  key, subkey)
         if key == "pending-files":
             virtBase, relFile = subkey
@@ -116,13 +116,13 @@ class MonitorProxy(component.ComponentProxy):
         component.ComponentProxy._onUnsetUIState(self, uiState)
         self._alreadyAdded.clear()
 
-    
+
     ## UI State Handlers Methods ##
-    
+
     def _onMonitorSetFile(self, virtBase, relFile, filedata):
         state, fileinfo, detection_time, mime_type, checksum = filedata
         ident = (virtBase, relFile)
-        
+
         if ident in self._alreadyAdded:
             self.emit("file-changed", virtBase, relFile, state, fileinfo,
                       mime_type, checksum)
@@ -130,7 +130,7 @@ class MonitorProxy(component.ComponentProxy):
             self._alreadyAdded[ident] = None
             self.emit("file-added", virtBase, relFile, state, fileinfo,
                       detection_time, mime_type, checksum)
-            
+
     def _onMonitorDelFile(self, virtBase, relFile, filedata):
         state, _fileinfo, _detection_time, _mime_type, _checksum = filedata
         ident = (virtBase, relFile)
@@ -141,16 +141,16 @@ class MonitorProxy(component.ComponentProxy):
 
     ## Overriden Methods ##
 
-    
+
     ## Private Methods ##
-    
+
     def __updateFilesState(self):
         if self._stateUpdateDelay or not self._stateUpdateDelta:
             return
         period = adminconsts.MONITOR_STATE_UPDATE_PERIOD
         to = utils.createTimeout(period, self.__doFilesStateUpdate)
         self._stateUpdateDelay = to
-        
+
     def __doFilesStateUpdate(self):
         self._stateUpdateDelay = None
         if self._stateUpdateResult != None:
@@ -163,9 +163,9 @@ class MonitorProxy(component.ComponentProxy):
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "setFilesState", delta)
         self._stateUpdateResult = d
-        d.addCallbacks(self.__cbFilesStateUpdateSucceed, 
+        d.addCallbacks(self.__cbFilesStateUpdateSucceed,
                        self.__ebFilesStateUpdateFailed)
-        
+
     def __cbFilesStateUpdateSucceed(self, result):
         self.log("Buffered files state update succeed")
         self._stateUpdateResult = None
@@ -176,7 +176,7 @@ class MonitorProxy(component.ComponentProxy):
         log.notifyFailure(self, failure,
                           "Failed to update file states")
         self.__updateFilesState()
-    
+
     def __cbRetrieveFiles(self, ui):
         files = []
         workerPxy = self.getWorkerProxy()
@@ -187,6 +187,6 @@ class MonitorProxy(component.ComponentProxy):
         for (p, f), s in ui.get("pending-files", {}).iteritems():
             files.append((virtualpath.VirtualPath.virtualize(p, local), f, s))
         return files
-    
+
 
 component.registerProxy("file-monitor", MonitorProxy)

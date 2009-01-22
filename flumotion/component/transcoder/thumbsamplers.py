@@ -24,7 +24,7 @@ from flumotion.component.transcoder.thumbsink import IThumbnailSampler
 
 
 class IThumbnailer(Interface):
-    
+
     def push(self, buffer, vars):
         pass
 
@@ -38,15 +38,15 @@ class BaseSampler(log.LoggerProxy):
         %(key)d  => key number (starting at 1)
         %(index)d  => index of the thumbnail (starting at 1)
         %(timestamp)d => timestamp of the thumbnail
-        %(time)s => composed time of the thumbnail, 
+        %(time)s => composed time of the thumbnail,
                     like %(hours)02d:%(minutes)02d:%(seconds)02d
         %(hours)d => hours from start
         %(minutes)d => minutes from start
         %(seconds)d => seconds from start
     """
-    
+
     implements(IThumbnailSampler)
-    
+
     def __init__(self, logger, thumbnailer, analysis, ensureOne, maxThumb):
         log.LoggerProxy.__init__(self, logger)
         assert IThumbnailer.providedBy(thumbnailer)
@@ -62,12 +62,12 @@ class BaseSampler(log.LoggerProxy):
         self._keyIndex = 0
         self._thumbIndex = 0
 
-    
+
     ## IThumbnailSampler Methods ##
-    
+
     def prepare(self, startTime):
         self._doPrepare(startTime)
-        
+
     def update(self, streamTime, buffer):
         if (self._maxThumb > 0)  and (self._thumbIndex >= self._maxThumb):
             return
@@ -89,14 +89,14 @@ class BaseSampler(log.LoggerProxy):
 
 
     ## Protected Virtual Methods ##
-    
+
     def _doPrepare(self, startTime):
         pass
-    
+
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
         return False
-    
+
     def _doFinalize(self):
         pass
 
@@ -107,7 +107,7 @@ class BaseSampler(log.LoggerProxy):
         self._frameIndex += 1
         if not buffer.flag_is_set(gst.BUFFER_FLAG_DELTA_UNIT):
             self._keyIndex += 1
-        frameIndex = self._frameIndex 
+        frameIndex = self._frameIndex
         keyIndex = self._keyIndex
         thumbIndex = self._thumbIndex + 1
         streamLength = self._streamLength
@@ -119,7 +119,7 @@ class BaseSampler(log.LoggerProxy):
                                     frameDuration, streamTime, streamLength)
             self._thumbnailer.push(buffer, vars)
             self._thumbIndex = thumbIndex
-   
+
     def __keepFixedFrames(self, frameIndex, keyIndex, frameDuration,
                           streamTime, streamLength, buffer):
         if self._ensureOne:
@@ -127,8 +127,8 @@ class BaseSampler(log.LoggerProxy):
             if frameIndex in _fixedFramesIndex:
                 self._fixedFrame = (frameIndex, keyIndex, frameDuration,
                                     streamTime, streamLength, buffer)
-        
-    
+
+
     def __ensureOne(self):
         if not self._ensureOne: return
         if self._thumbIndex > 0: return
@@ -143,7 +143,7 @@ class BaseSampler(log.LoggerProxy):
         self._thumbnailer.push(buffer, vars)
         self._thumbIndex = 1
 
-    
+
     def __buildVars(self, thumbIndex, frameIndex, keyIndex,
                            frameDuration, streamTime, streamLength):
         if streamLength and (streamLength > 0):
@@ -168,10 +168,10 @@ class BaseSampler(log.LoggerProxy):
         vars.addVar("time", time)
         vars.addVar("index", thumbIndex)
         return vars
-    
+
 
 class FrameSampler(BaseSampler):
-    
+
     def __init__(self, logger, thumbnailer, analysis,
                  ensureOne, maxThumb, frames):
         BaseSampler.__init__(self, logger, thumbnailer, analysis,
@@ -181,30 +181,30 @@ class FrameSampler(BaseSampler):
                  (self._maxThumb and ("to a maximum of %s thumbnails"
                                       % str(self._maxThumb)))
                  or "without limitation")
-    
-    
+
+
     ## Overriden Protected Methods ##
-    
+
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
         return not (frameIndex % self._period)
 
 
 class KeyFrameSampler(BaseSampler):
-    
+
     def __init__(self, logger, thumbnailer, analysis,
                  ensureOne, maxThumb, keyFrames):
-        BaseSampler.__init__(self, logger, thumbnailer, analysis, 
+        BaseSampler.__init__(self, logger, thumbnailer, analysis,
                              ensureOne, maxThumb)
         self._period = keyFrames
-        self.log("Sample thumbnails each %s keyframes %s", str(keyFrames), 
+        self.log("Sample thumbnails each %s keyframes %s", str(keyFrames),
                  (self._maxThumb and ("to a maximum of %s thumbnails"
                                       % str(self._maxThumb)))
                  or "without limitation")
-    
-    
+
+
     ## Overriden Protected Methods ##
-    
+
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
         return not (keyIndex % self._period)
@@ -214,7 +214,7 @@ class TimeSampler(BaseSampler):
     """
     Sample thumbnails periodicaly every specified nanoseconds.
     """
-    
+
     def __init__(self, logger, thumbnailer, analysis,
                  ensureOne, maxThumb, seconds):
         BaseSampler.__init__(self, logger, thumbnailer, analysis,
@@ -225,9 +225,9 @@ class TimeSampler(BaseSampler):
                                       % str(self._maxThumb)))
                  or "without limitation")
 
-        
+
     ## Overriden Protected Methods ##
-    
+
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
         # Check if the nanosecond before the frame and the last
@@ -243,10 +243,10 @@ class PercentSampler(BaseSampler):
                  ensureOne, maxThumb, percents):
         BaseSampler.__init__(self, logger, thumbnailer, analysis,
                              ensureOne, maxThumb)
-        if self._streamLength and (self._streamLength > 0): 
+        if self._streamLength and (self._streamLength > 0):
             self._period = self._streamLength * percents / 100
             self.log("Setup to creates thumbnails each %s percent of total "
-                     "length %s seconds %s", str(percents), 
+                     "length %s seconds %s", str(percents),
                      str(self._streamLength / gst.SECOND),
                      (self._maxThumb and ("to a maximum of %s thumbnails"
                                     % str(self._maxThumb)))
@@ -261,7 +261,7 @@ class PercentSampler(BaseSampler):
                 newMax = min(self._maxThumb, newMax)
             fallbackSeconds = compconsts.FALLING_BACK_THUMBS_PERIOD_VALUE
             self._period = fallbackSeconds * gst.SECOND
-            self._maxThumb = newMax 
+            self._maxThumb = newMax
             self.log("Sample thumbnails each %d seconds %s",
                      int(self._period / gst.SECOND),
                      (self._maxThumb and ("to a maximum of %s thumbnails"
@@ -270,11 +270,11 @@ class PercentSampler(BaseSampler):
 
 
     ## Overriden Protected Methods ##
-    
+
     def _onKeepThumbnail(self, thumbIndex, frameIndex, keyIndex,
                          frameDuration, streamTime, streamLength):
         # Check if the nanosecond before the frame and the last
         # nanosecond of the frame are in different sections
         start = max(0, streamTime - 1) / self._period
         end = (streamTime + frameDuration) / self._period
-        return start != end    
+        return start != end

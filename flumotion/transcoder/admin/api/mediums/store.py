@@ -19,16 +19,16 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class StoreMedium(api.Medium):
-    
+
     implements(interfaces.IStoreMedium)
-    
+
     api.register_medium(interfaces.IStoreMedium,
                         store.IStoreContext)
-    
+
     def __init__(self, storeCtx):
         api.Medium.__init__(self, storeCtx)
-    
-    
+
+
     ## IWorkersMedium Methodes ##
 
     @api.make_remote()

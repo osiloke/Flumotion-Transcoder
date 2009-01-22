@@ -27,7 +27,7 @@ from flumotion.component.transcoder.transcoder import ITranscoderProducer
 
 
 class BaseTarget(log.LoggerProxy):
-    
+
     def __init__(self, targetContext):
         log.LoggerProxy.__init__(self, targetContext)
         self._context = targetContext
@@ -47,7 +47,7 @@ class BaseTarget(log.LoggerProxy):
 
 
     ## Protected Methods ##
-    
+
     def _targetFailed(self, failure):
         pass
 
@@ -80,18 +80,18 @@ class TargetProcessing(BaseTarget):
             f = Failure()
             self._targetFailed(f)
             return defer.fail(f)
-        
-    
+
+
     ## Protected Methods ##
-    
+
     def _doProcessing(self):
         raise NotImplementedError()
-    
-        
+
+
 class TranscodingTarget(BaseTarget):
-    
+
     implements(ITranscoderProducer)
-    
+
     def __init__(self, targetContext):
         BaseTarget.__init__(self, targetContext)
         self._bins = {}
@@ -118,10 +118,10 @@ class TranscodingTarget(BaseTarget):
 
 
     ## ITranscoderProducer Methods ##
-    
+
     def raiseError(self, msg, *args):
         raise TranscoderError(msg % args, data=self.getContext())
-    
+
     def getMonitoredFiles(self):
         return []
 
@@ -136,21 +136,21 @@ class TranscodingTarget(BaseTarget):
 
     def finalize(self, timeout=None):
         return defer.succeed(self)
-    
+
     def abort(self, timeout=None):
         return defer.succeed(self)
 
     def onTranscodingFailed(self, failure):
         self._transcoder = None
         self._targetFailed(failure)
-    
+
     def onTranscodingDone(self):
         self._transcoder = None
         self._targetDone()
-        
-    
+
+
     ## Protected Methods ##
-    
+
     def _checkConfAttr(self, name, checkValue=False):
         if hasattr(self._config, name):
             if (not checkValue) or getattr(self._config, name):
@@ -161,26 +161,26 @@ class TranscodingTarget(BaseTarget):
 
     def _getTranscodingTag(self):
         return self.getContext().getName()
-    
+
     def _getTranscodingConfig(self):
         return self._config
-    
+
     def _getOutputPath(self):
         return self._outputPath
-    
+
 
 
 class IdentityTarget(TargetProcessing):
-    
+
     def __init__(self, targetContext):
         """
         This target only copy the source file to the target file.
         """
         TargetProcessing.__init__(self, targetContext)
-        
-    
+
+
     ## Protected Virtual Methods Overriding ##
-    
+
     def _doProcessing(self):
         targCtx = self.getContext()
         context = targCtx.context

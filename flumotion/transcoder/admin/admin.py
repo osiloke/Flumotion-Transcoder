@@ -46,9 +46,9 @@ from flumotion.transcoder.admin.api import apiserver
 
 
 class TranscoderAdmin(log.Loggable):
-    
+
     logCategory = adminconsts.ADMIN_LOG_CATEGORY
-    
+
     def __init__(self, config):
         self._adminCtx = AdminContext(config)
         self._datasource = self._adminCtx.getDataSource()
@@ -58,7 +58,7 @@ class TranscoderAdmin(log.Loggable):
         self._transcodeReports = {}
         self._storeCtx = self._adminCtx.getStoreContextFor(self._adminStore)
         notifierCtx = self._adminCtx.getNotifierContext()
-        self._notifier = Notifier(notifierCtx, self._storeCtx) 
+        self._notifier = Notifier(notifierCtx, self._storeCtx)
         self._managerPxySet = ManagerSet(self._adminCtx)
         self._compPxySet = ComponentSet(self._managerPxySet)
         self._workerPxySet = WorkerSet(self._managerPxySet)
@@ -71,16 +71,16 @@ class TranscoderAdmin(log.Loggable):
         self._monitoring = Monitoring(self._workerPxySet, self._monPxySet)
         self._transcoding = Transcoding(self._workerPxySet, self._transPxySet)
         schedulerCtx = self._adminCtx.getSchedulerContext()
-        self._scheduler = Scheduler(schedulerCtx, self._storeCtx, self._notifier, 
+        self._scheduler = Scheduler(schedulerCtx, self._storeCtx, self._notifier,
                                     self._transcoding, self._diagnostician)
         self._translator = i18n.Translator()
         self._api = apiserver.Server(self._adminCtx.getAPIContext(), self)
         self._state = TaskStateEnum.stopped
         reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
 
-    
+
     ## Public Methods ##
-    
+
     def initialize(self):
         self.info("Initializing Transcoder Administration")
         d = defer.Deferred()
@@ -99,7 +99,7 @@ class TranscoderAdmin(log.Loggable):
         d.addCallback(defer.dropResult, self._janitor.initialize)
         d.addCallback(defer.dropResult, self._diagnostician.initialize)
         d.addCallback(defer.dropResult, self._api.initialize)
-        d.addCallbacks(self.__cbAdminInitialized, 
+        d.addCallbacks(self.__cbAdminInitialized,
                        self.__ebAdminInitializationFailed)
         # Register listeners
         self._adminStore.connectListener("customer-added", self,
@@ -145,14 +145,14 @@ class TranscoderAdmin(log.Loggable):
 
 
     ## ManagerSet Event Listeners ##
-    
+
     def __onDetached(self, managerPxySet):
         if self._state == TaskStateEnum.started:
             self.debug("Transcoder admin has been detached, "
                        "pausing transcoding")
             self.__pause()
-        
-        
+
+
     def __onAttached(self, managerPxySet):
         if self._state == TaskStateEnum.paused:
             self.debug("Transcoder admin attached, "
@@ -165,7 +165,7 @@ class TranscoderAdmin(log.Loggable):
     def __onComponentAddedToSet(self, compPxySet, compPxy):
         compPxy.connectListener("message", self,
                                 self.__onComponentMessage)
-    
+
     def __onComponentRemovedFromSet(self, compPxySet, compPxy):
         compPxy.disconnectListener("message", self)
 
@@ -180,10 +180,10 @@ class TranscoderAdmin(log.Loggable):
         level = {1: "ERROR", 2: "WARNING", 3: "INFO"}[message.level]
         workerPxy = compPxy.getWorkerProxy()
         if workerPxy:
-            msg = ("Component '%s' on worker '%s' post a %s message" 
+            msg = ("Component '%s' on worker '%s' post a %s message"
                    % (compPxy.label, workerPxy.label, level))
         else:
-            msg = ("Orphan component '%s' post a %s message" 
+            msg = ("Orphan component '%s' post a %s message"
                    % (compPxy.label, level))
         d = self._diagnostician.diagnoseComponentMessage(compPxy, message)
         args = (msg, text, debug)
@@ -193,7 +193,7 @@ class TranscoderAdmin(log.Loggable):
 
 
     ## Store Event Listeners ##
-    
+
     def __onCustomerStoreAdded(self, admin, custStore):
         self.debug("Customer '%s' Added", custStore.label)
         custStore.connectListener("profile-added", self,
@@ -204,18 +204,18 @@ class TranscoderAdmin(log.Loggable):
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
         task = MonitoringTask(self._monitoring, custCtx)
         self._monitoring.addTask(custCtx.identifier, task)
-        
-        
+
+
     def __onCustomerStoreRemoved(self, admin, custStore):
         self.debug("Customer '%s' Removed", custStore.label)
         custStore.disconnectListener("profile-added", self)
         custStore.disconnectListener("profile-removed", self)
         custCtx = self._storeCtx.getCustomerContextFor(custStore)
         self._monitoring.removeTask(custCtx.identifier)
-        
-        
+
+
     ## CustomerStore Event Listeners ##
-    
+
     def __onProfileStoreAdded(self, custStore, profStore):
         self.debug("Profile '%s' Added", profStore.label)
         profStore.connectListener("target-added", self,
@@ -223,24 +223,24 @@ class TranscoderAdmin(log.Loggable):
         profStore.connectListener("target-removed", self,
                                   self.__onTargetStoreRemoved)
         profStore.refreshListener(self)
-        
+
     def __onProfileStoreRemoved(self, custStore, profStore):
         self.debug("Profile '%s' Removed", profStore.label)
         profStore.disconnectListener("target-added", self)
         profStore.disconnectListener("target-removed", self)
-        
-    
+
+
     ## ProfileStore Event Listeners ##
-    
+
     def __onTargetStoreAdded(self, profStore, targStore):
         self.debug("Target '%s' Added", targStore.label)
-        
+
     def __onTargetStoreRemoved(self, profStore, targStore):
         self.debug("Target '%s' Removed", targStore.label)
 
 
     ## Monitoring Event Listeners ##
-    
+
     def __onMonitoringTaskAdded(self, takser, task):
         self.debug("Monitoring task '%s' added", task.label)
         task.connectListener("file-added", self,
@@ -252,7 +252,7 @@ class TranscoderAdmin(log.Loggable):
         task.connectListener("fail-to-run", self,
                              self.__onFailToRunOnWorker)
         task.refreshListener(self)
-    
+
     def __onMonitoringTaskRemoved(self, tasker, task):
         self.debug("Monitoring task '%s' removed", task.label)
         task.disconnectListener("file-added", self)
@@ -262,7 +262,7 @@ class TranscoderAdmin(log.Loggable):
 
 
     ## MonitoringTask Event Listeners ##
-    
+
     def __onMonitoredFileAdded(self, montask, profCtx, state, fileinfo,
                                detection_time, mime_type, checksum):
         self.log("Monitoring task '%s' added profile '%s'",
@@ -292,11 +292,11 @@ class TranscoderAdmin(log.Loggable):
             self._transcodeReports[key] = transcodeReportStore
 
         self.__fileStateChanged(montask, profCtx, state)
-        
+
     def __onMonitoredFileStateChanged(self, montask, profCtx, state,
                                       fileinfo, mime_type, checksum):
         self.log("Monitoring task '%s' profile '%s' state "
-                 "changed to %s with fileinfo %r", montask.label, 
+                 "changed to %s with fileinfo %r", montask.label,
                  profCtx.inputPath, state, fileinfo)
 
         key = profCtx.inputBase, profCtx.inputRelPath
@@ -308,7 +308,7 @@ class TranscoderAdmin(log.Loggable):
             transcodeReportStore.fileChecksum = checksum
 
         self.__fileStateChanged(montask, profCtx, state)
-    
+
     def __onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
                  montask.label, profCtx.inputPath)
@@ -318,19 +318,19 @@ class TranscoderAdmin(log.Loggable):
         msg = ("Monitoring task '%s' could not be started on worker '%s'"
                % (task.label, workerPxy.label))
         notifyEmergency(msg)
-        
-    
+
+
     ## Scheduler Event Listeners ##
-    
+
     def __onProfileQueued(self, scheduler, profCtx):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
             now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
             transcodeReportStore.queueingTime = now
-            
+
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
-        
+
     def __onTranscodingStarted(self, scheduler, task):
         profCtx = task.getProfileContext()
         key = profCtx.inputBase, profCtx.inputRelPath
@@ -338,10 +338,10 @@ class TranscoderAdmin(log.Loggable):
         if transcodeReportStore:
             now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
             transcodeReportStore.transcodingStartTime = now
-    
+
         self.__setInputFileState(profCtx,
                                  MonitorFileStateEnum.transcoding)
-    
+
     def __onTranscodingFailed(self, scheduler, task, report):
         # mind that report might be None, if the scheduler failed to retrieve it!
         profCtx = task.getProfileContext()
@@ -363,7 +363,7 @@ class TranscoderAdmin(log.Loggable):
                 self.__prognose(report, transcodeReportStore)
 
             transcodeReportStore.store()
-            
+
             del self._transcodeReports[key]
 
         self.__setInputFileState(profCtx,
@@ -377,7 +377,7 @@ class TranscoderAdmin(log.Loggable):
             self.debug("Transcoding task for '%s' segfaulted "
                        "or has been kill", profCtx.inputPath)
             self.__moveFailedInputFiles(profCtx)
-    
+
     def __onTranscodingDone(self, scheduler, task, report):
         # mind that report might be None, if the scheduler failed to retrieve it!
         profCtx = task.getProfileContext()
@@ -408,7 +408,7 @@ class TranscoderAdmin(log.Loggable):
         self.__setInputFileState(task.getProfileContext(),
                                  MonitorFileStateEnum.done)
 
-    
+
     ## Private Methods ##
 
     """Gets information from the report and inserts it into the DB"""
@@ -421,7 +421,7 @@ class TranscoderAdmin(log.Loggable):
             cpuTime, realTime, percent = usage
             store.totalCpuTime = cpuTime
             store.totalRealTime = realTime
-        
+
         if report.source:
             store.fileType = report.source.fileType
             store.machineName = report.source.machineName
@@ -450,13 +450,13 @@ class TranscoderAdmin(log.Loggable):
     def __ebMessageDiagnosticFailed(self, failure, msg, text, debug):
         notifyDebug(msg, info=text, debug=debug)
         log.notifyFailure(self, failure, "Failure during component message diagnostic")
-    
+
         print "File Types: %s" % self.file_types
     def __fileStateChanged(self, montask, profCtx, state):
 
         def changeState(newState):
             inputBase = profCtx.inputBase
-            relPath = profCtx.inputRelPath        
+            relPath = profCtx.inputRelPath
             montask.setFileState(inputBase, relPath, newState)
 
         # Schedule new file if not already scheduled
@@ -488,7 +488,7 @@ class TranscoderAdmin(log.Loggable):
                 return
             self._scheduler.addProfile(profCtx)
             return
-    
+
     def __moveFailedInputFiles(self, profCtx):
         custCtx = profCtx.getCustomerContext()
         inputBase = profCtx.inputBase
@@ -501,7 +501,7 @@ class TranscoderAdmin(log.Loggable):
                          custCtx.label, inputBase, failedBase)
             return
         task.moveFiles(inputBase, failedBase, [relPath])
-    
+
     def __setInputFileState(self, profCtx, state):
         custCtx = profCtx.getCustomerContext()
         inputBase = profCtx.inputBase
@@ -511,9 +511,9 @@ class TranscoderAdmin(log.Loggable):
                          "cannot set file '%s' state to %s",
                          custCtx.label, inputBase, state.name)
             return
-        relPath = profCtx.inputRelPath        
+        relPath = profCtx.inputRelPath
         task.setFileState(inputBase, relPath, state)
-    
+
     def __startup(self):
         if not (self._state == TaskStateEnum.stopped):
             raise errors.TranscoderError("Cannot start transcoder admin when %s"
@@ -545,7 +545,7 @@ class TranscoderAdmin(log.Loggable):
                       adminconsts.NOTIFIER_START_TIMEOUT)
         d.addCallbacks(self.__cbSartupSucceed, self.__ebSartupFailed)
         d.callback(None)
-        
+
     def __resume(self):
         if not (self._state == TaskStateEnum.paused):
             raise errors.TranscoderError("Cannot resume transcoder admin when %s"
@@ -553,7 +553,7 @@ class TranscoderAdmin(log.Loggable):
         self.info("Resuming Transcoder Administration")
         self._state = TaskStateEnum.resuming
         d = defer.Deferred()
-        # Wait a moment to let the workers the oportunity 
+        # Wait a moment to let the workers the oportunity
         # to log back to the manager.
         d.addCallback(defer.bridgeResult, self.debug,
                       "Waiting for workers to log back")
@@ -578,7 +578,7 @@ class TranscoderAdmin(log.Loggable):
                       adminconsts.SCHEDULER_RESUME_TIMEOUT)
         d.addCallbacks(self.__cbResumingSucceed, self.__ebResumingFailed)
         return d.callback(None)
-        
+
     def __pause(self):
         if not (self._state == TaskStateEnum.started):
             raise errors.TranscoderError("Cannot pause transcoder admin when %s"
@@ -599,12 +599,12 @@ class TranscoderAdmin(log.Loggable):
                       adminconsts.MONITORING_PAUSE_TIMEOUT)
         d.addCallbacks(self.__cbPausingSucceed, self.__ebPausingFailed)
         d.callback(None)
-        
+
     def __abort(self):
         if self._state == TaskStateEnum.terminated:
             return
         self._state = TaskStateEnum.terminated
-        
+
     def __cbAdminInitialized(self, result):
         self.info("Waiting Transcoder Administration to become Idle")
         self.debug("Waiting store to become idle")
@@ -613,13 +613,13 @@ class TranscoderAdmin(log.Loggable):
                      "Data store didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting managers to become idle")
-        d.addBoth(defer.dropResult, self._managerPxySet.waitIdle, 
+        d.addBoth(defer.dropResult, self._managerPxySet.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
         d.addErrback(defer.bridgeResult, self.warning,
                      "Managers didn't became idle; trying to continue")
         d.addBoth(defer.bridgeResult, self.debug,
                   "Waiting components to become idle")
-        d.addBoth(defer.dropResult, self._compPxySet.waitIdle, 
+        d.addBoth(defer.dropResult, self._compPxySet.waitIdle,
                   adminconsts.WAIT_IDLE_TIMEOUT)
         d.addErrback(defer.bridgeResult, self.warning,
                      "Components didn't became idle; trying to continue")
@@ -643,7 +643,7 @@ class TranscoderAdmin(log.Loggable):
                      "Scheduler didn't became idle; trying to continue")
         d.addBoth(defer.dropResult, self.__startup)
         return d.addCallback(defer.overrideResult, self)
-    
+
     def __ebAdminInitializationFailed(self, failure):
         log.notifyFailure(self, failure,
                           "Failure during Transcoder Administration Initialization")
@@ -672,7 +672,7 @@ class TranscoderAdmin(log.Loggable):
         log.notifyFailure(self, failure,
                           "Failed to resume administration")
         self._state = TaskStateEnum.paused
-        
+
     def __cbPausingSucceed(self, result):
         self.info("Transcoder Administration Successfully Paused")
         self._state = TaskStateEnum.paused

@@ -18,10 +18,10 @@ from flumotion.transcoder.admin.api import interfaces, api, mediums
 
 
 class Avatar(avatars.Avatar):
-    
+
     classProvides(avatars.IAvatarFactory)
     implements(interfaces.ITranscoderGateway)
-    
+
     def __init__(self, service, avatarId, mind):
         avatars.Avatar.__init__(self, service, avatarId, mind)
         self._admin = service.getAdmin()
@@ -31,16 +31,16 @@ class Avatar(avatars.Avatar):
 
     def getWorkerSet(self):
         return api.adapt(self._admin.getWorkerProxySet())
-    
+
     def getStore(self):
         return api.adapt(self._admin.getStoreContext())
-    
+
     def getScheduler(self):
         return api.adapt(self._admin.getScheduler())
 
-    
+
     ## Make the method remote ##
-    
+
     perspective_getWorkerSet = getWorkerSet
     perspective_getStore = getStore
     perspective_getScheduler = getScheduler

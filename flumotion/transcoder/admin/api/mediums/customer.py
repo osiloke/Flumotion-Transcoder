@@ -19,9 +19,9 @@ from flumotion.transcoder.admin.api import interfaces, api
 
 
 class CustomerMedium(api.IdentifiedMedium):
-    
+
     implements(interfaces.ICustomerMedium)
-    
+
     api.register_medium(interfaces.ICustomerMedium,
                         customer.ICustomerStore)
 
@@ -60,17 +60,17 @@ class CustomerMedium(api.IdentifiedMedium):
     api.readonly_property("accessForceGroup")
     api.readonly_property("accessForceDirMode")
     api.readonly_property("accessForceFileMode")
-    
+
     def __init__(self, custStore):
         api.IdentifiedMedium.__init__(self, custStore)
-    
-    
+
+
     ## ICustomerMedium Methodes ##
 
     @api.make_remote()
     def getProfiles(self):
         return self.reference.getProfileStores()
-    
+
     @api.make_remote()
     def getProfile(self, identifier):
         return self.reference.getProfileStore(identifier)

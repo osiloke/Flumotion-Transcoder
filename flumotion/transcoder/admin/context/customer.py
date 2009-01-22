@@ -71,28 +71,28 @@ class ICustomerContext(base.IBaseStoreContext):
 
     def getUnboundProfileContextByName(self, profName):
         pass
-    
+
     def getUnboundProfileContextFor(self, profStore):
         pass
-    
+
     def iterUnboundProfileContexts(self):
         pass
-        
+
     def getProfileContexts(self, input):
         pass
-    
+
     def getProfileContext(self, identifier, input):
         pass
-    
+
     def getProfileContextByName(self, profName, input):
         pass
-    
+
     def getProfileContextFor(self, profStore, input):
         pass
 
     def iterProfileContexts(self, input):
         pass
-        
+
 
 class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     """
@@ -101,7 +101,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     or deduced from constants and customer name/subdir values.
     The return values are virtualpath.VirtualPath instances that abstract
     local filesystems root points.
-    
+
         Ex: customer data => store.get...Dir()=None
                              name="Fluendo"
                              subdir=None
@@ -115,7 +115,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                 tempRepBase: default:/fluendo/reports/pending/
                 failedRepBase: default:/fluendo/reports/failed/
                 doneRepBase: default:/fluendo/reports/done/
-    
+
         Ex: customer data => store.xxxDir()=None
                              name="Big/Comp (1)"
                              subdir=None
@@ -123,7 +123,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                 outputBase: default:/big_comp_(1)/files/outgoing/
                 workBase: temp:/big_comp_(1)/working/
                 ...
-    
+
         Ex: customer data => store.xxxDir()=None
                              name="RTVE"
                              subdir="rtve/l2n"
@@ -132,9 +132,9 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
                 workBase: temp:/rtve/l2n/working/
                 ...
     """
-    
+
     implements(ICustomerContext)
-    
+
     name                 = base.StoreProxy("name")
     customerPriority     = base.StoreProxy("customerPriority",
                                            adminconsts.DEFAULT_CUSTOMER_PRIORITY)
@@ -161,42 +161,42 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     accessForceDirMode   = base.StoreParentProxy("accessForceDirMode")
     accessForceFileMode  = base.StoreParentProxy("accessForceFileMode")
 
-    
+
     def __init__(self, storeCtx, custStore):
         base.BaseStoreContext.__init__(self, storeCtx, custStore)
         self._variables.addVar("customerName", self.name)
 
     def getAdminContext(self):
         return self.parent.getAdminContext()
-    
+
     def getStoreContext(self):
         return self.parent
 
     def getUnboundProfileContexts(self):
         return [profile.UnboundProfileContext(self, s)
-                for s in self.store.getProfileStores()] 
+                for s in self.store.getProfileStores()]
 
     def getUnboundProfileContext(self, identifier):
         profStore = self.store.getProfileStore(identifier)
-        if profStore is None: return None 
+        if profStore is None: return None
         return profile.UnboundProfileContext(self, profStore)
 
     def getUnboundProfileContextByName(self, profName):
         profStore = self.store.getProfileStoreByName(profName)
         if profStore is None: return None
         return profile.UnboundProfileContext(self, profStore)
-    
+
     def getUnboundProfileContextFor(self, profStore):
         assert profStore.parent == self.store
         return profile.UnboundProfileContext(self, profStore)
-    
+
     def iterUnboundProfileContexts(self):
         profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.UnboundProfileContext, profIter)
-        
+
     def getProfileContexts(self, input):
         return [profile.ProfileContext(self, s, input)
-                for s in self.store.getProfileStores()] 
+                for s in self.store.getProfileStores()]
 
     def getProfileContext(self, identifier, input):
         profStore = self.store.getProfileStore(identifier)
@@ -207,7 +207,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
         profStore = self.store.getProfileStoreByName(profName)
         if profStore is None: return None
         return profile.ProfileContext(self, profStore, input)
-    
+
     def getProfileContextFor(self, profStore, input):
         assert profStore.parent == self.store
         return profile.ProfileContext(self, profStore, input)
@@ -215,7 +215,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def iterProfileContexts(self, input):
         profIter = self.store.iterProfileStores()
         return base.LazyContextIterator(self, profile.ProfileContext, profIter, input)
-    
+
     @property
     def pathAttributes(self):
         return fileutils.PathAttributes(self.accessForceUser,
@@ -227,7 +227,7 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
     def monitorLabel(self):
         template = self.getAdminContext().config.monitorLabelTemplate
         return self._variables.substitute(template)
-    
+
     @property
     def subdir(self):
         subdir = self.store.subdir
@@ -237,74 +237,74 @@ class CustomerContext(base.BaseStoreContext, notification.NotifyStoreMixin):
             return fileutils.cleanupPath(subdir)
         subdir = fileutils.str2filename(self.store.name)
         return fileutils.ensureDirPath(subdir)
-            
+
     @property
     def inputBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.inputDir, 
+                            self.store.inputDir,
                             adminconsts.DEFAULT_INPUT_DIR)
 
     @property
     def outputBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.outputDir, 
+                            self.store.outputDir,
                             adminconsts.DEFAULT_OUTPUT_DIR)
-    
+
     @property
     def failedBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.failedDir, 
+                            self.store.failedDir,
                             adminconsts.DEFAULT_FAILED_DIR)
-    
+
     @property
     def doneBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.doneDir, 
+                            self.store.doneDir,
                             adminconsts.DEFAULT_DONE_DIR)
-    
+
     @property
     def linkBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
                             self.store.linkDir,
                             adminconsts.DEFAULT_LINK_DIR)
-    
+
     @property
     def workBase(self):
         return self._getDir(constants.TEMP_ROOT,
-                            self.store.workDir, 
+                            self.store.workDir,
                             adminconsts.DEFAULT_WORK_DIR)
-    
+
     @property
     def configBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.configDir, 
+                            self.store.configDir,
                             adminconsts.DEFAULT_CONFIG_DIR)
-    
+
     @property
     def tempRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.tempRepDir, 
+                            self.store.tempRepDir,
                             adminconsts.DEFAULT_TEMPREP_DIR)
 
     @property
     def failedRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.failedRepDir, 
+                            self.store.failedRepDir,
                             adminconsts.DEFAULT_FAILEDREP_DIR)
-    
+
     @property
     def doneRepBase(self):
         return self._getDir(constants.DEFAULT_ROOT,
-                            self.store.doneRepDir, 
+                            self.store.doneRepDir,
                             adminconsts.DEFAULT_DONEREP_DIR)
-    
+
 
     ## Private Methodes ##
-    
+
     def _expandDir(self, folder):
         #FIXME: Do variable substitution here.
         return folder
-        
+
     def _getDir(self, rootName, folder, template):
         if folder != None:
             folder = self._expandDir(folder)

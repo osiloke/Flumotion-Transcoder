@@ -28,41 +28,41 @@ def makeMuxerEncodeBin(file, config, analysis, tag,
     logger = logger or log
     pipelineParts = list()
     encBin = gst.Bin("encoding-%s" % tag)
-    
+
     # muxer elements
     muxer = gst.parse_launch(config.muxer)
     pipelineParts.extend(map(str.strip, config.muxer.split('!')))
-    
+
     # filesink element
     filesink = gst.element_factory_make("filesink", "filesink-%s" % tag)
     if file:
-        filesink.props.location = file    
+        filesink.props.location = file
         pipelineParts.append("filesink location=$FILE_PATH")
     else:
         pipelineParts.append("filesink")
-    
+
     # Add and link elements
     encBin.add(muxer, filesink)
     muxer.link(filesink)
-    
+
     if audioEncodeBin:
         encBin.add(audioEncodeBin)
         audioEncodeBin.link(muxer)
         pad = gst.GhostPad("audiosink", audioEncodeBin.get_pad("sink"))
         encBin.add_pad(pad)
-    
+
     if videoEncodeBin:
         encBin.add(videoEncodeBin)
         videoEncodeBin.link(muxer)
         pad = gst.GhostPad("videosink", videoEncodeBin.get_pad("sink"))
         encBin.add_pad(pad)
-    
+
     pipelineDesc = ' ! '.join(pipelineParts)
     logger.debug("Muxer pipeline: %s", pipelineDesc)
-    
+
     if pipelineInfo != None:
        pipelineInfo["muxer"] = pipelineDesc
-    
+
     return encBin
 
 def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
@@ -78,26 +78,26 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     inqueue.props.max_size_time = 0
     inqueue.props.max_size_buffers = 200
     pipelineParts.append("queue")
-    
+
     # audioconvert element
-    convert = gst.element_factory_make("audioconvert", 
+    convert = gst.element_factory_make("audioconvert",
                                        "audioconvert-%s" % tag)
     pipelineParts.append("audioconvert")
-    
+
     # audiorate element
     if withRateControl:
         rate = gst.element_factory_make("audiorate", "audiorate-%s" % tag)
         pipelineParts.append("audiorate")
     else:
         rate = None
-    
+
     # audioresample element
-    resample = gst.element_factory_make("audioresample", 
+    resample = gst.element_factory_make("audioresample",
                                         "audioresample-%s" % tag)
     pipelineParts.append("audioresample")
-    
+
     # capsfilter element
-    capsfilter = gst.element_factory_make("capsfilter", 
+    capsfilter = gst.element_factory_make("capsfilter",
                                           "audiocapsfilter-%s" % tag)
     # Because the analysis not reliably give channel
     # and rate info, do not not rely on it.
@@ -111,37 +111,37 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
             capsList.append("channels=%d" % config.audioChannels)
         elif analysis.audioChannels:
             capsList.append("channels=%d" % analysis.audioChannels)
-        caps = ", ".join(capsList)        
+        caps = ", ".join(capsList)
         if caps:
-            fullcaps = ("audio/x-raw-int, %s;audio/x-raw-float, %s" 
+            fullcaps = ("audio/x-raw-int, %s;audio/x-raw-float, %s"
                         % (caps, caps))
             logger.debug("Audio capsfilter: '%s'", fullcaps)
             pipelineParts.append("'%s'" % fullcaps)
             capsfilter.props.caps = gst.caps_from_string(fullcaps)
         else:
             logger.debug("No audio capsfilter")
-    
+
     # encoder elements
     encode = gstutils.parse_bin_from_description(config.audioEncoder, True)
     pipelineParts.extend(map(str.strip, config.audioEncoder.split('!')))
-    
+
     # output queue element
     outqueue = gst.element_factory_make("queue", "audioutqueue-%s" % tag)
     outqueue.props.max_size_time = gst.SECOND * 20
-    outqueue.props.max_size_buffers = 0        
+    outqueue.props.max_size_buffers = 0
     pipelineParts.append("queue")
 
     if rate:
-        bin.add(inqueue, convert, rate, resample, 
+        bin.add(inqueue, convert, rate, resample,
                 capsfilter, encode, outqueue)
-        gst.element_link_many(inqueue, convert, rate, resample, 
+        gst.element_link_many(inqueue, convert, rate, resample,
                               capsfilter, encode, outqueue)
     else:
-        bin.add(inqueue, convert, resample, 
+        bin.add(inqueue, convert, resample,
                 capsfilter, encode, outqueue)
-        gst.element_link_many(inqueue, convert, resample, 
+        gst.element_link_many(inqueue, convert, resample,
                               capsfilter, encode, outqueue)
-    
+
     bin.add_pad(gst.GhostPad("sink", inqueue.get_pad("sink")))
     bin.add_pad(gst.GhostPad("src", outqueue.get_pad("src")))
 
@@ -154,11 +154,11 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     return bin
 
 def _logPreferredSize(logFunc, config, msg):
-    if config.videoWidth: 
+    if config.videoWidth:
         ws = str(config.videoWidth)
     else:
         ws = "???"
-    if config.videoHeight: 
+    if config.videoHeight:
         hs = str(config.videoHeight)
     else:
         hs = "???"
@@ -185,7 +185,7 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
     logger = logger or log
     pipelineParts = list()
     bin = gst.Bin()
-    
+
     # input queue element
     inqueue = gst.element_factory_make("queue", "videoinqueue-%s" % tag)
     # Cannot specify max_size_time property because of some buggy buffers
@@ -193,36 +193,36 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
     inqueue.props.max_size_time = 0
     inqueue.props.max_size_buffers = 200
     pipelineParts.append("queue")
-    
+
     # ffmpegcolorspace element
     cspace = gst.element_factory_make("ffmpegcolorspace", "cspace-%s" % tag)
     pipelineParts.append("ffmpegcolorspace")
-    
+
     # videorate element
     if withRateControl:
         rate = gst.element_factory_make("videorate", "videorate-%s" % tag)
         pipelineParts.append("videorate")
     else:
         rate = None
-    
+
     # videoscale element
     scale = gst.element_factory_make("videoscale", "videoscale-%s" % tag)
     # use bilinear scaling for better image quality
     scale.props.method = 1
     pipelineParts.append("videoscale method=1")
-    
+
     # capsfilter element
-    capsfilter = gst.element_factory_make("capsfilter", 
+    capsfilter = gst.element_factory_make("capsfilter",
                                           "videocapsfilter-%s" % tag)
     inputSize = _getInputVideoSize(config, analysis)
     logger.debug("makeVideoEncodeBin - Input Video Size: %dx%d %d/%d"
-                 % (inputSize[0], inputSize[1], 
+                 % (inputSize[0], inputSize[1],
                     inputSize[2].num, inputSize[2].denom))
     _logPreferredSize(logger.debug, config,
-                      "makeVideoEncodeBin - Preferred Video Size:")                    
+                      "makeVideoEncodeBin - Preferred Video Size:")
     outputSize = _getOutputVideoSize(config, analysis, inputSize)
     logger.debug("makeVideoEncodeBin - Output Video Size: %dx%d %d/%d"
-                 % (outputSize[0], outputSize[1], 
+                 % (outputSize[0], outputSize[1],
                     outputSize[2].num, outputSize[2].denom))
     caps = _getOutputVideoCaps(config, analysis, outputSize)
     if caps:
@@ -231,7 +231,7 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
         pipelineParts.append("'%s'" % caps)
     else:
         logger.debug("No video capsfilter")
-    
+
     # videobox and videocrop elements
     box = _getOutputVideoBox(config, analysis, outputSize)
     videocrop = None
@@ -260,18 +260,18 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
             videocrop.props.bottom = crop[3]
             pipelineParts.append("videocrop left=%d top=%d "
                                  "right=%d bottom=%d" % crop[:4])
-    
-    
+
+
     # encoder elements
     encode = gstutils.parse_bin_from_description(config.videoEncoder, True)
     pipelineParts.extend(map(str.strip, config.videoEncoder.split('!')))
-    
+
     # output queue element
     outqueue = gst.element_factory_make("queue", "videooutqueue-%s" % tag)
     outqueue.props.max_size_time = gst.SECOND * 20
     outqueue.props.max_size_buffers = 0
     pipelineParts.append("queue")
-    
+
     # Add to pipeline and link all the elements
     bin.add(inqueue, cspace, scale, capsfilter, encode, outqueue)
     if rate:
@@ -288,14 +288,14 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
             gst.element_link_many(capsfilter, videobox, encode)
     else:
         gst.element_link_many(capsfilter, encode)
-    gst.element_link_many(encode, outqueue)   
-    
+    gst.element_link_many(encode, outqueue)
+
     bin.add_pad(gst.GhostPad("sink", inqueue.get_pad("sink")))
     bin.add_pad(gst.GhostPad("src", outqueue.get_pad("src")))
 
     pipelineDesc = ' ! '.join(pipelineParts)
     logger.debug("Video pipeline: %s", pipelineDesc)
-    
+
     if pipelineInfo != None:
         pipelineInfo["video"] = pipelineDesc
 
@@ -307,7 +307,7 @@ def _getInputVideoSize(config, analysis):
     iw = analysis.videoWidth
     ih = analysis.videoHeight
     return iw, ih, ipar
-    
+
 def _getOutputVideoSize(config, analysis, inputSize):
     """
     Returns the output video (width, height, PAR)
@@ -315,8 +315,8 @@ def _getOutputVideoSize(config, analysis, inputSize):
     """
     iw, ih, ipar = inputSize
     ow, oh, opar = videosize.getVideoSize(iw, ih, (ipar.num, ipar.denom),
-                                          config.videoWidth, 
-                                          config.videoHeight, 
+                                          config.videoWidth,
+                                          config.videoHeight,
                                           config.videoPAR,
                                           config.videoMaxWidth,
                                           config.videoMaxHeight,
@@ -325,8 +325,8 @@ def _getOutputVideoSize(config, analysis, inputSize):
 
 def _getOutputVideoBox(config, analysis, outputSize):
     """
-    Returns the ouput video box according 
-    to the information from the analysis 
+    Returns the ouput video box according
+    to the information from the analysis
     and the configuration as (left, top, right, bottom).
     """
     width, height = outputSize[:2]
@@ -353,9 +353,9 @@ def _getOutputVideoBox(config, analysis, outputSize):
 
 def _getOutputVideoCaps(config, analysis, outputSize):
     """
-    Returns the output video caps according 
-    to the information from the analysis 
-    and the configuration.    
+    Returns the output video caps according
+    to the information from the analysis
+    and the configuration.
     """
     width, height, par = outputSize
 
@@ -364,8 +364,8 @@ def _getOutputVideoCaps(config, analysis, outputSize):
         rate = gst.Fraction(*config.videoFramerate)
     else:
         rate = analysis.videoRate
-        
-    svtempl = ("width=%d, height=%d, pixel-aspect-ratio=%d/%d, framerate=%d/%d" 
+
+    svtempl = ("width=%d, height=%d, pixel-aspect-ratio=%d/%d, framerate=%d/%d"
                % (width, height, par.num, par.denom, rate.num, rate.denom))
     fvtempl = "video/x-raw-yuv, %s;video/x-raw-rgb, %s" % (svtempl, svtempl)
     return fvtempl

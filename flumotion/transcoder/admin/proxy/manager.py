@@ -21,13 +21,13 @@ class IManagerProxy(base.IBaseProxy):
 
     def getAtmosphereProxy(self):
         pass
-    
+
     def waitAtmosphereProxy(self, timeout=None):
         pass
 
     def getFlowProxies(self):
         pass
-    
+
     def getManagerContext(self):
         pass
 
@@ -36,7 +36,7 @@ class IManagerProxy(base.IBaseProxy):
 
     def getWorkerProxy(self, identifier):
         pass
-    
+
     def getWorkerProxyByName(self, name):
         pass
 
@@ -47,8 +47,8 @@ class IManagerProxy(base.IBaseProxy):
 
 class ManagerProxy(base.ProxyElement):
     implements(IManagerProxy)
-    
-    def __init__(self, logger, managerPxySet, identifier, 
+
+    def __init__(self, logger, managerPxySet, identifier,
                  admin, managerCtx, planetState):
         name = planetState.get('name')
         base.ProxyElement.__init__(self, logger, managerPxySet,
@@ -67,22 +67,22 @@ class ManagerProxy(base.ProxyElement):
         self._register("atmosphere-unset")
         self._register("flow-added")
         self._register("flow-removed")
-    
-    
+
+
     ## Public Methods ##
-    
+
     def getManagerContext(self):
         return self._managerCtx
-    
+
     def getAtmosphereProxy(self):
         return self._atmoPxy.getValue()
-    
+
     def waitAtmosphereProxy(self, timeout=None):
         return self._atmoPxy.wait(timeout)
 
     def getFlowProxies(self):
         return self._flowPxys.values()
-    
+
     def getWorkerProxies(self):
         return self._workerPxys.getItems()
 
@@ -97,12 +97,12 @@ class ManagerProxy(base.ProxyElement):
         workerId = self.__getWorkerUniqueIdByName(name)
         return self._workerPxys.wait(workerId, timeout)
 
-    
+
     ## Overriden Public Methods ##
-    
+
 
     ## Overriden Methods ##
-    
+
     def refreshListener(self, listener):
         assert self._planetState, "Manager has been removed"
         self._refreshProxiesListener("_workerPxys", listener, "worker-added")
@@ -116,23 +116,23 @@ class ManagerProxy(base.ProxyElement):
         if atmoPxy:
             childs.append(atmoPxy)
         return childs
-    
+
     def _onActivated(self):
         whs = self._admin.getWorkerHeavenState()
-        whs.addListener(self, None, 
-                        self._heavenStateAppend, 
+        whs.addListener(self, None,
+                        self._heavenStateAppend,
                         self._heavenStateRemove)
         ps = self._planetState
-        ps.addListener(self, 
+        ps.addListener(self,
                        self._planetStateSet,
-                       self._planetStateAppend, 
+                       self._planetStateAppend,
                        self._planetStateRemove)
         for workerState in whs.get('workers'):
             self.__workerStateAdded(workerState)
         self.__atmosphereSetState(ps.get('atmosphere'))
         for flowState in ps.get('flows'):
             self.__flowStateAdded(flowState)
-            
+
     def _onRemoved(self):
         assert self._planetState, "Manager has already been removed"
         if self.isActive():
@@ -143,71 +143,71 @@ class ManagerProxy(base.ProxyElement):
         self._removeProxies("_flowPxys", "flow-removed")
         self._removeProxies("_atmoPxy", "atmosphere-unset")
         self._removeProxies("_workerPxys", "worker-removed")
-    
+
     def _doDiscard(self):
         assert self._planetState, "Manager has already been discarded"
         self._discardProxies("_flowPxys", "_atmoPxy", "_workerPxys")
         self._admin = None
         self._planetState = None
-    
+
 
     ## WorkerHeavenState Listeners ##
-    
-    def _heavenStateAppend(self, state, key, value):        
+
+    def _heavenStateAppend(self, state, key, value):
         if key == 'workers':
             assert value != None
             self.log("Worker state %s added", value.get('name'))
             if self.isActive():
                 self.__workerStateAdded(value)
-    
+
     def _heavenStateRemove(self, state, key, value):
         if key == 'workers':
             assert value != None
             self.log("Worker state %s removed", value.get('name'))
             if self.isActive():
                 self.__workerStateRemoved(value)
-               
-               
+
+
     ## PlanetState Listeners ##
-               
+
     def _planetStateAppend(self, state, key, value):
         if key == 'flows':
             assert value != None
             self.log("Flow state %s added", value.get('name'))
             if self.isActive():
                 self.__flowStateAdded(value)
-    
+
     def _planetStateRemove(self, state, key, value):
         if key == 'flows':
             assert value != None
             self.log("Flow state %s removed", value.get('name'))
             if self.isActive():
                 self.__flowStateRemoved(value)
-               
+
     def _planetStateSet(self, state, key, value):
         if key == 'atmosphere':
             assert value != None
             self.log("Atmosphere state %s changed", value.get('name'))
             if self.isActive():
                 self.__atmosphereSetState(value)
-    
-    
+
+
     ## Protected Methods ##
-    
+
     def _callRemote(self, methodName, *args, **kwargs):
         return self._admin.callRemote(methodName, *args, **kwargs)
-    
+
     def _workerCallRemote(self, workerName, methodName, *args, **kwargs):
-        return self._admin.workerCallRemote(workerName, methodName, 
+        return self._admin.workerCallRemote(workerName, methodName,
                                             *args, **kwargs)
-    
-    def _componentCallRemote(self, componentState, methodName, 
+
+    def _componentCallRemote(self, componentState, methodName,
                              *args, **kwargs):
-        return self._admin.componentCallRemote(componentState, methodName, 
+        return self._admin.componentCallRemote(componentState, methodName,
                                                *args, **kwargs)
 
     ## Private Methods ##
-    
+
     def __updateIdleTarget(self):
         state = self._planetState
         count = 1  # The atmosphere
@@ -215,15 +215,15 @@ class ManagerProxy(base.ProxyElement):
         whs = self._admin.getWorkerHeavenState()
         count += len(whs.get("workers", []))
         self._setIdleTarget(count)
-    
+
     def __getWorkerUniqueId(self, managerPxy, workerCtx, workerState):
         if workerState == None:
             return None
         return self.__getWorkerUniqueIdByName(workerState.get('name'))
-        
+
     def __getWorkerUniqueIdByName(self, name):
         return "%s.%s" % (self.identifier, name)
-        
+
     def __getAtmosphereUniqueId(self, managerPxy, atmoCtx, atmoState):
         if atmoState == None:
             return None
@@ -241,7 +241,7 @@ class ManagerProxy(base.ProxyElement):
         self._addProxyState(worker, "_workerPxys", self.__getWorkerUniqueId,
                             "worker-added", self, workerCtx, workerState)
         self.__updateIdleTarget()
-    
+
     def __workerStateRemoved(self, workerState):
         name = workerState.get('name')
         admnCtx = self._managerCtx.getAdminContext()
@@ -257,14 +257,14 @@ class ManagerProxy(base.ProxyElement):
                             self.__getAtmosphereUniqueId,
                             "atmosphere-unset", "atmosphere-set",
                             self, atmoCtx, atmoState)
-    
+
     def __flowStateAdded(self, flowState):
         name = flowState.get('name')
         flowCtx = self._managerCtx.getFlowContextByName(name)
         self._addProxyState(flow, "_flowPxys", self.__getFlowUniqueId,
                             "flow-added", self, flowCtx, flowState)
         self.__updateIdleTarget()
-    
+
     def __flowStateRemoved(self, flowState):
         name = flowState.get('name')
         flowContext = self._managerCtx.getFlowContextByName(name)
@@ -273,7 +273,7 @@ class ManagerProxy(base.ProxyElement):
         self.__updateIdleTarget()
 
 
-def instantiate(logger, managerPxySet, identifier, admin, 
+def instantiate(logger, managerPxySet, identifier, admin,
                 managerCtx, planetState, *args, **kwargs):
     return ManagerProxy(logger, managerPxySet, identifier, admin,
                         managerCtx, planetState, *args, **kwargs)

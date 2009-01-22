@@ -14,13 +14,13 @@ from flumotion.transcoder import substitution
 from flumotion.transcoder.admin.enums import NotificationTriggerEnum
 
 class NotificationVariables(substitution.Variables):
-    
+
     def __init__(self, parent, prefix, analysisReport, fileSize=None):
         substitution.Variables.__init__(self, parent)
         self._addAnalysisResult(prefix, analysisReport, fileSize)
 
     ## Protected Methods ##
-            
+
     def _addAnalysisResult(self, p, a, s=None):
         mimeType = ""
         hasVideo = 0
@@ -33,7 +33,7 @@ class NotificationVariables(substitution.Variables):
         hours = 0
         minutes = 0
         seconds = 0
-        
+
         if a:
             mimeType = a.mimeType or ""
             hasVideo = (a.hasVideo and 1) or 0
@@ -41,7 +41,7 @@ class NotificationVariables(substitution.Variables):
             if a.hasVideo:
                 videoWidth = a.videoWidth or 0
                 videoHeight = a.videoHeight or 0
-        
+
             if (a.videoDuration == None) and (a.audioDuration == None):
                 duration = 0.0
             elif a.videoDuration and a.audioDuration:
@@ -69,7 +69,7 @@ class NotificationVariables(substitution.Variables):
             minutes = seconds / 60
             seconds -= minutes * 60
             hours = minutes / 60
-            minutes -= hours * 60        
+            minutes -= hours * 60
 
         self.addVar(p + "Mime", mimeType)
         self.addVar(p + "HasAudio", hasAudio)
@@ -85,7 +85,7 @@ class NotificationVariables(substitution.Variables):
 
 
 class SourceNotificationVariables(NotificationVariables):
-    
+
     def __init__(self, profCtx, trigger, report):
         analysisReport = report and report.source.analysis
         fileSize = report and report.source.fileSize
@@ -104,7 +104,7 @@ class SourceNotificationVariables(NotificationVariables):
         for targCtx in profCtx.iterTargetContexts():
             key = targCtx.name
             targReport = report and report.targets[key]
-            vars = TargetNotificationVariables(self, targCtx, 
+            vars = TargetNotificationVariables(self, targCtx,
                                                trigger, targReport)
             self._targets[key] = vars
         if self["sourceDuration"] <= 0:
@@ -122,14 +122,14 @@ class SourceNotificationVariables(NotificationVariables):
             self.addVar('mediaHours', self["sourceHours"])
             self.addVar('mediaMinutes', self["sourceMinutes"])
             self.addVar('mediaSeconds', self["sourceSeconds"])
-         
+
     def getTargetVariables(self, targCtx):
         key = targCtx.name
         return self._targets[key]
 
 
 class TargetNotificationVariables(NotificationVariables):
-    
+
     def __init__(self, sourceVars, targCtx, trigger, targReport):
         analysisReport = targReport and targReport.analysis
         fileSize = targReport and targReport.fileSize
@@ -143,7 +143,7 @@ class TargetNotificationVariables(NotificationVariables):
         self.addVar("linkFile", targCtx.linkFile)
         self.addVar("linkRelPath", targCtx.linkRelPath)
         self.addVar("targetName", targCtx.name)
-            
+
         if self["targetDuration"] > 0:
             self.addVar('mediaDuration', self["targetDuration"])
             self.addVar('mediaLength', self["targetLength"])

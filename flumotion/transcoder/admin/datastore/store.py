@@ -51,16 +51,16 @@ class IAdminStore(base.IBaseStore):
 
     def getCustomerStores(self):
         pass
-    
+
     def getCustomerStore(self, custIdent, default=None):
         pass
 
     def getCustomerStoreByName(self, custName, default=None):
         pass
-        
+
     def iterCustomerStores(self):
         pass
-    
+
     def getStateStore(self):
         pass
 
@@ -71,7 +71,7 @@ class StoreLogger(log.Loggable):
 
 class AdminStore(base.NotifyStore):
     implements(IAdminStore)
-    
+
     outputMediaTemplate   = base.ReadOnlyProxy("outputMediaTemplate")
     outputThumbTemplate   = base.ReadOnlyProxy("outputThumbTemplate")
     linkFileTemplate      = base.ReadOnlyProxy("linkFileTemplate")
@@ -105,25 +105,25 @@ class AdminStore(base.NotifyStore):
         label = "Admin Store"
         ## Root element, no parent
         base.NotifyStore.__init__(self, StoreLogger(), None, dataSource, None,
-                                  identifier=identifier, label=label) 
+                                  identifier=identifier, label=label)
         self._customers = {} # {CUSTOMER_IDENTIFIER: CustomerStore}
         self._state = state.StateStore(self, self, dataSource)
         # Registering Events
         self._register("customer-added")
         self._register("customer-removed")
 
-        
+
     ## Public Methods ##
- 
+
     def getAdminStore(self):
         return self
-    
+
     def getStateStore(self):
         return self._state
 
     def getCustomerStores(self):
         return self._customers.values()
-    
+
     def getCustomerStore(self, custIdent, default=None):
         return self._customers.get(custIdent, default)
 
@@ -132,11 +132,11 @@ class AdminStore(base.NotifyStore):
             if custName == custStore.name:
                 return custStore
         return default
-        
+
     def iterCustomerStores(self):
         self._customers.itervalues()
-        
-    
+
+
     ## Overridden Methods ##
 
     def refreshListener(self, listener):
@@ -144,10 +144,10 @@ class AdminStore(base.NotifyStore):
         for custStore in self._customers.itervalues():
             if custStore.isActive():
                 self.emitTo("customer-added", listener, custStore)
-        
+
     def _doGetChildElements(self):
         return self.getCustomerStores()
-        
+
     def _doPrepareInit(self, chain):
         base.NotifyStore._doPrepareInit(self, chain)
         # Ensure that the defaults are received
@@ -158,39 +158,39 @@ class AdminStore(base.NotifyStore):
 
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveGlobalNotifications()
-        
+
     def _doWrapNotification(self, notifData):
         return notification.NotificationFactory(notifData, self,
                                                 None, None, None)
-        
-        
+
+
     ## Private Methods ##
-    
+
     def __cbRetrieveDefaults(self, result):
         d = self._dataSource.retrieveDefaults()
-        d.addCallbacks(self.__cbDefaultsReceived, 
+        d.addCallbacks(self.__cbDefaultsReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-        
+
     def __cbDefaultsReceived(self, defaultsData, oldResult):
         self._data = defaultsData
         return oldResult
-    
+
     def __cbRetrieveCustomers(self, result):
         d = self._dataSource.retrieveCustomers()
-        d.addCallbacks(self.__cbCustomersReceived, 
+        d.addCallbacks(self.__cbCustomersReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-    
+
     def __cbCustomersReceived(self, custDataList, oldResult):
         deferreds = []
         self._setIdleTarget(len(custDataList))
         for custData in custDataList:
             custStore = customer.CustomerStore(self, self, self._dataSource, custData)
             d = custStore.initialize()
-            d.addCallbacks(self.__cbCustomerInitialized, 
+            d.addCallbacks(self.__cbCustomerInitialized,
                            self.__ebCustomerInitFailed,
                            errbackArgs=(custStore,))
             # Ensure no failure slips through
@@ -203,7 +203,7 @@ class AdminStore(base.NotifyStore):
         # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
-    
+
     def __cbCustomerInitialized(self, custStore):
         self.debug("Customer '%s' initialized; adding it to the admin store",
                    custStore.label)
@@ -221,10 +221,10 @@ class AdminStore(base.NotifyStore):
         custStore._activate()
         # Keep the callback chain result
         return custStore
-    
+
     def __ebCustomerInitFailed(self, failure, custStore):
         #FIXME: Better Error Handling ?
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "Customer '%s' failed to initialize; dropping it",
                           custStore.label)
         custStore._abort(failure)

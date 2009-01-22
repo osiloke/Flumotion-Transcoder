@@ -19,9 +19,9 @@ from flumotion.transcoder.admin import adminconsts
 
 
 class Janitor(log.Loggable):
-    
+
     logCategory = adminconsts.JANITOR_LOG_CATEGORY
-    
+
     def __init__(self, adminCtx, compPxySet):
         self._adminCtx = adminCtx
         self._compPxySet = compPxySet
@@ -30,7 +30,7 @@ class Janitor(log.Loggable):
         self._neutralMoods = set([moods.sleeping, moods.waking])
         self._bags = {} # {workername: ringbuffer.RingBuffer}
         self._deleted = set()
-        
+
     def initialize(self):
         self._compPxySet.connectListener("component-added", self,
                                          self.__onComponentAddedToSet)
@@ -44,9 +44,9 @@ class Janitor(log.Loggable):
 
     def __onComponentAddedToSet(self, compPxySet, compPxy):
         compPxy.connectListener("mood-changed", self,
-                                self.__onComponentMoodChanged)    
+                                self.__onComponentMoodChanged)
         compPxy.refreshListener(self)
-    
+
     def __onComponentRemovedFromSet(self, compPxySet, compPxy):
         compPxy.disconnectListener("mood-changed", self)
         bag = self.__getComponentBag(compPxy)
@@ -88,10 +88,10 @@ class Janitor(log.Loggable):
                     d = old.forceStop()
                     # Catch all failures
                     d.addErrback(defer.resolveFailure)
-    
+
 
     ## Private Methods ##
-    
+
     def __getComponentBag(self, compPxy):
         workerName = compPxy.getRequestedWorkerName()
         if not workerName: return None
@@ -104,7 +104,7 @@ class Janitor(log.Loggable):
         bag = ringbuffer.RingBuffer(capacity)
         self._bags[workerName] = bag
         return bag
-    
+
     def __forceComponentDeletion(self, compPxy):
         if compPxy not in self._deleted:
             # Already deleted by the components managers.
@@ -113,4 +113,4 @@ class Janitor(log.Loggable):
                      compPxy.label)
         d = compPxy.forceDelete()
         # Catch all failures
-        d.addErrback(defer.resolveFailure) 
+        d.addErrback(defer.resolveFailure)

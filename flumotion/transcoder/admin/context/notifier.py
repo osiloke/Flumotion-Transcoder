@@ -14,7 +14,7 @@ from flumotion.transcoder.admin.context import base
 
 
 class NotifierContext(base.BaseContext):
-    
+
     def __init__(self, storeContext, config):
         base.BaseContext.__init__(self, storeContext)
         self.config = config

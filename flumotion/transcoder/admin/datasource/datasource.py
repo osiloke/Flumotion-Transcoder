@@ -86,7 +86,7 @@ class IDataSource(Interface):
         All the objecte are stored atomically if the
         store support it.
         """
-    
+
     def reset(self, *data):
         """
         Returns a deferred.
@@ -95,7 +95,7 @@ class IDataSource(Interface):
         If a specified container was never stored,
         its values are not changed.
         """
-    
+
     def delete(self, *data):
         """
         Return a deferred.
@@ -137,7 +137,7 @@ class IInformationSource(IDataSource):
     def retrieveDefaults(self):
         """
         Returns a deferred.
-        The result on success is a "container" object 
+        The result on success is a "container" object
         with the following fields:
             outputMediaTemplate (str) can be None
             outputThumbTemplate (str) can be None
@@ -148,10 +148,10 @@ class IInformationSource(IDataSource):
             accessForceUser (str) can be None
             accessForceDirMode (int) can be None
             accessForceFileMode (int) can be None
-            monitoringPeriod (int) can be None: 
+            monitoringPeriod (int) can be None:
                 Gives the default period used to monitor the filesystem.
             processPriority (int) can be None:
-                Gives the default process priority for the transcoding job 
+                Gives the default process priority for the transcoding job
             transcodingPriority (int) can be None:
                 Gives the default scheduler priority of the transcoding jobs.
             transcodingTimeout (int) can be None:
@@ -169,13 +169,13 @@ class IInformationSource(IDataSource):
             mailRetryCount (int) can be None:
                 Gives the default retry count for mail notifications.
             mailRetrySleep (int) can be None:
-                Gives the default time between retry for mail notifications.                
+                Gives the default time between retry for mail notifications.
             HTTPRequestTimeout (int) can be None:
                 Gives the default timeout for HTTP request notifications.
             HTTPRequestRetryCount (int) can be None:
                 Gives the default retry count for HTTP request notifications.
             HTTPRequestRetrySleep (int) can be None:
-                Gives the default time between retry 
+                Gives the default time between retry
                 for HTTP request notifications.
             sqlTimeout (int) can be None:
                 Gives the default timeout for sql notifications.
@@ -184,7 +184,7 @@ class IInformationSource(IDataSource):
             sqlRetrySleep (int) can be None:
                 Gives the default time between retry for sql notifications.
         """
-        
+
     def retrieveCustomers(self):
         """
         Returns a deferred.
@@ -228,7 +228,7 @@ class IInformationSource(IDataSource):
             accessForceDirMode (int) can be None
             accessForceFileMode (int) can be None
         """
-        
+
     def retrieveCustomerInfo(self, custData):
         """
         Returns a deferred.
@@ -240,7 +240,7 @@ class IInformationSource(IDataSource):
             phone (str) can be None
             email (str) can be None
         """
-        
+
     def retrieveProfiles(self, custData):
         """
         Returns a deferred.
@@ -278,7 +278,7 @@ class IInformationSource(IDataSource):
             transcodingTimeout (int) can be None
             monitoringPeriod (int) can be None
         """
-        
+
     def retrieveTargets(self, profData):
         """
         Returns a deferred.
@@ -300,7 +300,7 @@ class IInformationSource(IDataSource):
             postprocessCommand (str) can be None
             postprocessTimeout (int) can be None
         """
-       
+
     def retrieveTargetConfig(self, targData):
         """
         Returns a deferred.
@@ -311,7 +311,7 @@ class IInformationSource(IDataSource):
         For an Audio and Audio/Video targets, it has the following fields:
             muxer (str)
             audioEncoder (str)
-            audioRate (str) 
+            audioRate (str)
             audioChannels (str)
         For a video and Audio/Video targets, it has the following fields:
             muxer (str)
@@ -336,7 +336,7 @@ class IInformationSource(IDataSource):
             format (ThumbOutputTypeEnum)
             ensureOne (bool)
         """
-        
+
     def retrieveGlobalNotifications(self):
         """
         Returns a deferred.
@@ -360,9 +360,9 @@ class IInformationSource(IDataSource):
                 requestTemplate (str)
             For type == NotificationTypeEnum.sql:
                 databaseURI (str)
-                sqlTemplate (str)                
+                sqlTemplate (str)
         """
-        
+
     def retrieveCustomerNotifications(self, custData):
         """
         Returns a deferred.
@@ -383,12 +383,12 @@ class IInformationSource(IDataSource):
         The returned list contains all targets' notifications.
         See retrieveGlobalNotifications for result specifications.
         """
-        
+
     def retrieveActivities(self, type, states=None):
         """
         Returns a deferred.
         The result on success is a list of the activities
-        with the specified type and state in the specified 
+        with the specified type and state in the specified
         list states (if not None or empty)
         as "container" objects with the following fields:
            type (ActivityTypeEnum)
@@ -428,12 +428,12 @@ class IInformationSource(IDataSource):
         It's not added to the store, it should be
         filled and then the store method should be call.
         """
-    
+
     def newNotification(self, type, data):
         """
-        Creates a new notification container 
+        Creates a new notification container
         of the specified type (NotificationTypeEnum).
-        The specified data must be customer data, 
+        The specified data must be customer data,
         profile data, target data or None.
             None: apply to all customers transcoding
             Customer data: apply to all profiles transcoding
@@ -444,7 +444,7 @@ class IInformationSource(IDataSource):
         It's not added to the store, it should be
         filled and then the store method should be call.
         """
-    
+
     def newTarget(self, profData):
         """
         Creates a new target container object.
@@ -454,17 +454,17 @@ class IInformationSource(IDataSource):
         """
         Creates a new target config container object.
         """
-        
+
     def newReport(self, profData):
         """
         Creates a new report container object.
         """
-        
+
     def newTargetReport(self, repData):
         """
         Creates a new target report container object.
         """
-        
+
     def newNotificationReport(self, repData, notifData):
         """
         Creates a new notification report container object.

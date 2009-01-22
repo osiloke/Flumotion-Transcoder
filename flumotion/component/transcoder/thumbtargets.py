@@ -40,9 +40,9 @@ from flumotion.component.transcoder.binmaker import makeVideoEncodeBin
 
 
 class ThumbnailTarget(TranscodingTarget):
-    
+
     implements(IThumbnailer)
-    
+
     class EncoderConfig(object):
         def __init__(self, config):
             self.videoWidth = config.thumbsWidth
@@ -53,7 +53,7 @@ class ThumbnailTarget(TranscodingTarget):
             self.videoHeightMultiple = None
             self.videoScaleMethod = VideoScaleMethodEnum.upscale
             self.videoFramerate = None
-            self.videoPAR = (1, 1)            
+            self.videoPAR = (1, 1)
             format = config.outputFormat
             if format == ThumbOutputTypeEnum.png:
                 self.videoEncoder = "ffmpegcolorspace ! pngenc snapshot=false"
@@ -61,7 +61,7 @@ class ThumbnailTarget(TranscodingTarget):
                 self.videoEncoder = "ffmpegcolorspace ! jpegenc"
             else:
                 raise TranscoderConfigError("Unknown thumbnails output "
-                                            "format '%s'" % format)        
+                                            "format '%s'" % format)
 
     def __init__(self, targetContext):
         """
@@ -70,7 +70,7 @@ class ThumbnailTarget(TranscodingTarget):
             %(keyframe)d  => key-frame number (starting at 1)
             %(index)d  => index of the thumbnail (starting at 1)
             %(timestamp)d => timestamp of the thumbnail
-            %(time)s => composed time of the thumbnail, 
+            %(time)s => composed time of the thumbnail,
                         like %(hours)02d:%(minutes)02d:%(seconds)02d
             %(hours)d => hours from start
             %(minutes)d => minutes from start
@@ -109,10 +109,10 @@ class ThumbnailTarget(TranscodingTarget):
 
     def getOutputFiles(self):
         return self._thumbnails.keys()
-        
+
 
     ## ITranscoderProducer Overriden Methods ##
-    
+
     def checkSourceMedia(self, sourcePath, sourceAnalysis):
         if not sourceAnalysis.hasVideo:
             self.raiseError("Source media doesn't have video stream")
@@ -133,7 +133,7 @@ class ThumbnailTarget(TranscodingTarget):
         queue = gst.element_factory_make("queue", "thumbqueue-%s" % tag)
         pipeline.add(queue, thumbSink)
         gst.element_link_many(tees['videosink'], queue, thumbSink)
-        
+
         # Then create the thumbnailing pipeline with a custom thumnail source
         config = self._getTranscodingConfig()
         thumbPipeName = "thumbnailing-" + tag
@@ -141,7 +141,7 @@ class ThumbnailTarget(TranscodingTarget):
         thumbSrc = ThumbSrc("ThumbSrc-" + tag)
         encoderConf = self.EncoderConfig(config)
         videoEncBin = makeVideoEncodeBin(encoderConf, analysis, tag,
-                                         withRateControl=False, 
+                                         withRateControl=False,
                                          logger=self)
         fileSink = gst.element_factory_make("filesink", "filesink-%s" % tag)
         thumbPipeline.add(thumbSrc, videoEncBin, fileSink)
@@ -159,7 +159,7 @@ class ThumbnailTarget(TranscodingTarget):
         if self._working or self._pending:
             return self._waiters.wait(timeout)
         return defer.succeed(self)
-    
+
     def abort(self, timeout=None):
         self.log("Aborting thumbnail target '%s'", self._getTranscodingTag())
         self.__shutdownPipeline()
@@ -167,7 +167,7 @@ class ThumbnailTarget(TranscodingTarget):
 
 
     ## IThumbnailer Methods ##
-    
+
     def push(self, buffer, vars):
         """
         Warning, this is not called from the main thread.
@@ -191,7 +191,7 @@ class ThumbnailTarget(TranscodingTarget):
             if message.type == gst.MESSAGE_ERROR:
                 gstgerror, debug = message.parse_error()
                 self.__onPipelineError(gstgerror.message, debug)
-                return            
+                return
             self.log("Unhandled GStreamer message in thumbnailing pipeline "
                      "'%s': %s", self._getTranscodingTag(), message)
         except Exception, e:
@@ -202,7 +202,7 @@ class ThumbnailTarget(TranscodingTarget):
 
 
     ## Private Methods ##
-    
+
     def __shutdownPipeline(self):
         self.log("Shutting down thumbnailing pipeline '%s'",
                  self._getTranscodingTag())
@@ -227,14 +227,14 @@ class ThumbnailTarget(TranscodingTarget):
                  self._getTranscodingTag())
         self._thumbSrc.addBuffer(buffer)
         self._fileSink.props.location = thumbPath
-        
+
         ret = self._pipeline.set_state(gst.STATE_PLAYING)
         if ret == gst.STATE_CHANGE_FAILURE:
             timeout = compconsts.THUMBNAILER_PLAY_ERROR_TIMEOUT
             to = utils.createTimeout(timeout, self.__errorNotReceived)
             self._playErrorTimeout = to
             return
-        
+
         timeout = compconsts.THUMBNAILER_PLAYING_TIMEOUT
         to = utils.createTimeout(timeout, self.__playPipelineTimeout)
         self._prerollTimeout = to
@@ -260,7 +260,7 @@ class ThumbnailTarget(TranscodingTarget):
                     continue
                 fileutils.ensureDirExists(os.path.dirname(thumbPath),
                                           "thumbnails")
-                self.__startupPipeline(buffer, thumbPath) 
+                self.__startupPipeline(buffer, thumbPath)
                 return
         finally:
             self._startLock.release()
@@ -268,14 +268,14 @@ class ThumbnailTarget(TranscodingTarget):
     def __postError(self, message, debug=None):
         self._thumbSink.postError(message, debug)
         self.__shutdownPipeline()
-        
+
     def __errorNotReceived(self):
         msg = "Could not play thumbnailing pipeline"
         self.__postError(msg)
 
     def __playPipelineTimeout(self):
         self.log("Thumbnailing pipeline '%s' stalled at prerolling",
-                 self._getTranscodingTag())        
+                 self._getTranscodingTag())
         msg = "Thumbnailing pipeline stalled at prerolling"
         self.__postError(msg)
 
@@ -288,12 +288,12 @@ class ThumbnailTarget(TranscodingTarget):
 
     def __onPipelinePrerolled(self):
         self.log("Thumbnailing pipeline '%s' prerolled",
-                 self._getTranscodingTag())   
+                 self._getTranscodingTag())
         utils.cancelTimeout(self._prerollTimeout)
 
     def __onPipelineEOS(self):
         self.log("Thumbnailing pipeline '%s' reach end of stream",
-                 self._getTranscodingTag())        
+                 self._getTranscodingTag())
         self._thumbnails[self._fileSink.props.location] = None
         self.__resetPipeline()
         self.__startThumbnailer()
@@ -306,4 +306,4 @@ class ThumbnailTarget(TranscodingTarget):
     def __createSampler(self, maxCount, unit, value, ensureOne, analysis):
         samplerClass = self._samplerLookup.get(unit, None)
         assert samplerClass != None
-        return samplerClass(self, self, analysis, ensureOne, maxCount, value)  
+        return samplerClass(self, self, analysis, ensureOne, maxCount, value)

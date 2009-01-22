@@ -23,16 +23,16 @@ class INotificationStore(base.IBaseStore):
 
     type       = Attribute("Type of notification")
     triggers   = Attribute("What's trigger the notification")
-    timeout    = Attribute("Maximum time to perform the notification") 
+    timeout    = Attribute("Maximum time to perform the notification")
     retryMax   = Attribute("How many times the notification should be attempted")
-    retrySleep = Attribute("Time to sleep between notification attempts") 
+    retrySleep = Attribute("Time to sleep between notification attempts")
 
     def getCustomerStore(self):
         pass
-    
+
     def getProfileStore(self):
         pass
-    
+
     def getTargetStore(self):
         pass
 
@@ -52,7 +52,7 @@ class IHTTPNotificationStore(INotificationStore):
 
 
 class ISQLNotificationStore(INotificationStore):
-    
+
     databaseModule   = Attribute("DBAPI 2.0 Python Module")
     databaseHost     = Attribute("Database host")
     databasePort     = Attribute("Database port")
@@ -64,13 +64,13 @@ class ISQLNotificationStore(INotificationStore):
 
 class NotificationStore(base.DataStore):
     implements(INotificationStore)
-    
+
     type       = base.ReadOnlyProxy("type")
     triggers   = base.ReadOnlyProxy("triggers")
     timeout    = base.ReadOnlyProxy("timeout")
     retryMax   = base.ReadOnlyProxy("retryMax")
     retrySleep = base.ReadOnlyProxy("retrySleep")
-    
+
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore, label=None):
         base.DataStore.__init__(self, parentStore, data, label)
@@ -84,35 +84,35 @@ class NotificationStore(base.DataStore):
 
     def getCustomerStore(self):
         return self._custStore
-    
+
     def getProfileStore(self):
         return self._profStore
-    
+
     def getTargetStore(self):
         return self._targStore
-    
+
 
 class MailNotificationStore(NotificationStore):
     implements(IMailNotificationStore)
-    
+
     attachments     = base.ReadOnlyProxy("attachments", set([]))
     recipients      = base.ReadOnlyProxy("recipients", dict())
     subjectTemplate = base.ReadOnlyProxy("subjectTemplate")
     bodyTemplate    = base.ReadOnlyProxy("bodyTemplate")
-    
+
     def __init__(self, parentStore, data, adminStore,
                  custStore, profStore, targStore):
         emails = [e[1] for v in data.recipients.values() for e in v]
         label = "Mail Notification to %s" % ", ".join(emails)
         NotificationStore.__init__(self, parentStore, data, adminStore,
                                    custStore, profStore, targStore, label=label)
-        
-        
+
+
 class HTTPNotificationStore(NotificationStore):
     implements(IHTTPNotificationStore)
-    
+
     urlTemplate = base.ReadOnlyProxy("requestTemplate")
-    
+
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
         label = "HTTP Notification to %s" % data.urlTemplate
         NotificationStore.__init__(self, parentStore, data, adminStore,
@@ -121,15 +121,15 @@ class HTTPNotificationStore(NotificationStore):
 
 class SQLNotificationStore(NotificationStore):
     implements(ISQLNotificationStore)
-    
+
     databaseURI = base.ReadOnlyProxy("databaseURI")
     sqlTemplate = base.ReadOnlyProxy("sqlTemplate")
-    
+
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
         label = "SQL Notification to %s" % database.filter_uri(data.databaseURI)
         NotificationStore.__init__(self, parentStore, data, adminStore,
                                    custStore, profStore, targStore, label=label)
-    
+
 
 _notifLookup = {NotificationTypeEnum.http_request: HTTPNotificationStore,
                 NotificationTypeEnum.email:        MailNotificationStore,

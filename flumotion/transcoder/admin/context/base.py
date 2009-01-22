@@ -17,34 +17,34 @@ from flumotion.transcoder.admin import interfaces
 
 
 class IBaseContext(interfaces.IAdminInterface):
-    
+
     parent = Attribute("Parent context")
-    
+
     def getAdminContext(self):
         pass
 
 
 class IBaseStoreContext(IBaseContext):
-    
+
     identifier = Attribute("Context identifier")
     label      = Attribute("Context label")
     store      = Attribute("context store reference")
-        
+
 
 class LazyContextIterator(object):
-    
+
     def __init__(self, parent, cls, iterator, *args, **kwargs):
         self.parent = parent
         self._cls = cls
         self._iterator = iterator
         self._args = args
         self._kwargs = kwargs
-    
+
     def __iter__(self):
         return self
-        
+
     def next(self):
-        nextValue = self._iterator.next()        
+        nextValue = self._iterator.next()
         return self._cls(self.parent, nextValue, *self._args, **self._kwargs)
 
 
@@ -67,7 +67,7 @@ class StoreProxy(object):
 class StoreParentProxy(object):
     def __init__(self, propertyName, parentPropertyName=None):
         self._propertyName = propertyName
-        self._parentPropertyName = parentPropertyName or propertyName         
+        self._parentPropertyName = parentPropertyName or propertyName
     def __get__(self, obj, type=None):
         value = getattr(obj.store, self._propertyName)
         if value != None: return value
@@ -83,7 +83,7 @@ class StoreParentProxy(object):
 class StoreAdminProxy(object):
     def __init__(self, propertyName, adminPropertyName=None):
         self._propertyName = propertyName
-        self._adminPropertyName = adminPropertyName or propertyName         
+        self._adminPropertyName = adminPropertyName or propertyName
     def __get__(self, obj, type=None):
         value = getattr(obj.store, self._propertyName)
         if value != None: return value
@@ -95,11 +95,11 @@ class StoreAdminProxy(object):
         raise AttributeError("Attribute read-only")
     def __delete__(self, obj):
         raise AttributeError("Attribute cannot be deleted")
-        
+
 
 class BaseContext(object):
     implements(IBaseContext)
-    
+
     def __init__(self, parentContext):
         object.__setattr__(self, "parent", parentContext)
         parentVars = getattr(parentContext, "_variables", None)
@@ -107,11 +107,11 @@ class BaseContext(object):
 
     def getAdminContext(self):
         raise NotImplementedError()
-    
+
 
 class BaseStoreContext(BaseContext):
     implements(IBaseStoreContext)
-    
+
     def __init__(self, parent, store, identifier=None, label=None):
         BaseContext.__init__(self, parent)
         object.__setattr__(self, "store", store)
@@ -121,7 +121,7 @@ class BaseStoreContext(BaseContext):
     def __setattr__(self, attr, value):
         """
         Prevent adding new attributes.
-        Allow early detection of attributes spelling mistakes. 
+        Allow early detection of attributes spelling mistakes.
         """
         if attr.startswith("_") or hasattr(self, attr):
             return object.__setattr__(self, attr, value)

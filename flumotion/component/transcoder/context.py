@@ -29,55 +29,55 @@ WORK_FILE_TEMPLATE = "%s.%s.tmp"
 WORK_FILE_PATTERN = "(.*)\.%s\.tmp"
 
 class BaseContext(LoggerProxy):
-    
+
     def __init__(self, logger, label=None):
         LoggerProxy.__init__(self, logger, context=self)
         self._label = label
-        
+
     def getLabel(self):
         return self._label
-        
+
     def getTag(self):
         return "(%s) " % self.getLabel()
 
 
 class TaskContext(BaseContext):
-    
+
     def __init__(self, logger, reporter, label):
         BaseContext.__init__(self, logger, label)
         self.reporter = reporter
-    
+
 
 class SourceContext(BaseContext):
-    
+
     def __init__(self, context):
-        label = "%s:%s" % (context.config.customer.name, 
+        label = "%s:%s" % (context.config.customer.name,
                            context.config.profile.label)
         BaseContext.__init__(self, context._logger, label)
         self.local = context.local
         self._profile = context.config.profile
-        self.config = context.config.source    
+        self.config = context.config.source
         self.reporter = context.reporter.getSourceReporter()
         self._altInputDir = None
         self._random = os.getpid()
 
     def setAltInputDir(self, altInputDir):
         self._altInputDir = altInputDir
-    
+
     def getInputFile(self):
         return self.config.inputFile
-    
+
     def getReportFile(self):
         vars = {"id": self._random}
         template = self.config.reportTemplate
         format = utils.filterFormat(template, vars)
         return format % vars
-        
+
     def getTempReportPath(self):
         file = self.getReportFile()
         path = self._profile.tempReportsDir.append(file)
         return path.localize(self.local)
-        
+
     def getFailedReportPath(self):
         file = self.getReportFile()
         path = self._profile.failedReportsDir.append(file)
@@ -87,13 +87,13 @@ class SourceContext(BaseContext):
         file = self.getReportFile()
         path = self._profile.doneReportsDir.append(file)
         return path.localize(self.local)
-        
+
     def getInputPath(self):
         if self._altInputDir:
             return os.path.join(self._altInputDir, self.config.inputFile)
         path = self._profile.inputDir.append(self.config.inputFile)
         return path.localize(self.local)
-        
+
     def getDoneInputPath(self):
         path = self._profile.doneDir.append(self.config.inputFile)
         return path.localize(self.local)
@@ -101,8 +101,8 @@ class SourceContext(BaseContext):
     def getFailedInputPath(self):
         path = self._profile.failedDir.append(self.config.inputFile)
         return path.localize(self.local)
-        
-        
+
+
 class TargetContext(TaskContext):
     # {TargetTypeEnum: (HAVE_AUDIO, HAVE_VIDEO, ANALYSE, GEN_LINK)}
     _typeInfo = {TargetTypeEnum.audio:      (True,  False, True,  True),
@@ -110,7 +110,7 @@ class TargetContext(TaskContext):
                  TargetTypeEnum.audiovideo: (True,  True,  True,  True),
                  TargetTypeEnum.thumbnails: (False, False, False, False),
                  TargetTypeEnum.identity:   (None, None,   False, True)}
-    
+
     def __init__(self, context, targetKey):
         label = "%s:%s:%s" % (context.config.customer.name,
                               context.config.profile.label,
@@ -132,7 +132,7 @@ class TargetContext(TaskContext):
         return self.config.config
 
     def hasLinkConfig(self):
-        return self._profile.linkDir and self.config.linkFile        
+        return self._profile.linkDir and self.config.linkFile
 
     def getOutputDir(self):
         return self.config.outputDir or self._profile.outputDir
@@ -148,20 +148,20 @@ class TargetContext(TaskContext):
 
     def getOutputWorkFile(self):
         return WORK_FILE_TEMPLATE % (self.config.outputFile, self._random)
-    
+
     def getOutputWorkPath(self):
         file = WORK_FILE_TEMPLATE % (self.config.outputFile , self._random)
         return self.getWorkDir().append(file).localize(self.local)
-        
+
     def getOutputPath(self):
         path = self.getOutputDir().append(self.config.outputFile)
         return path.localize(self.local)
-        
+
     def getLinkWorkFile(self):
         if self.config.linkFile:
             return WORK_FILE_TEMPLATE % (self.config.linkFile, self._random)
         return None
-    
+
     def getLinkWorkPath(self):
         linkDir = self.getLinkDir()
         linkFile = self.config.linkFile
@@ -170,17 +170,17 @@ class TargetContext(TaskContext):
             path = self.getWorkDir().append(file)
             return path.localize(self.local)
         return None
-    
+
     def getLinkFile(self):
         return self.config.linkFile
-    
+
     def getLinkPath(self):
         linkDir = self.getLinkDir()
         linkFile = self.config.linkFile
         if linkDir and linkFile:
             return linkDir.append(linkFile).localize(self.local)
         return None
-    
+
     def _getFileFromWork(self, path):
         workDir = self.getWorkDir().localize(self.local)
         workDir = fileutils.ensureAbsDirPath(workDir)
@@ -191,8 +191,8 @@ class TargetContext(TaskContext):
         if not match:
             raise Exception("'%s' is not a temporary file" % path)
         return match.group(1)
-        
-    
+
+
     def getOutputFromWork(self, workPath):
         outputFile = self._getFileFromWork(workPath)
         path = self.getOutputDir().append(outputFile)
@@ -230,7 +230,7 @@ class TargetContext(TaskContext):
                 return None
             return True
         return self._typeInfo[self.config.type][0]
-    
+
     #Maybe it should go out of this class
     def shouldHaveVideo(self):
         """
@@ -249,9 +249,9 @@ class TargetContext(TaskContext):
 
 
 class Context(TaskContext):
-    
+
     def __init__(self, logger, local, config, report):
-        label = "%s:%s" % (config.customer.name, 
+        label = "%s:%s" % (config.customer.name,
                            config.profile.label)
         reporter = Reporter(local, report)
         TaskContext.__init__(self, logger, reporter, label)
@@ -260,41 +260,41 @@ class Context(TaskContext):
         self._sourceCtx = SourceContext(self)
         self._altInputDir = None
         reporter.init(self)
-        
+
     def setAltInputDir(self, altInputDir):
         self._altInputDir = altInputDir
         self._sourceCtx.setAltInputDir(altInputDir)
-        
+
     def getSourceContext(self):
         return self._sourceCtx
-    
+
     def getTargetContext(self, targetKey):
         return TargetContext(self, targetKey)
-    
+
     def getTargetContexts(self):
-        return [TargetContext(self, key) 
+        return [TargetContext(self, key)
                 for key, config in self.config.targets.items()
                 if config != None]
 
-    def getInputDir(self):        
+    def getInputDir(self):
         if self._altInputDir:
             return self._altInputDir
         return self.config.profile.inputDir.localize(self.local)
-    
+
     def getOutputDir(self):
         return self.config.profile.outputDir.localize(self.local)
-    
+
     def getLinkDir(self):
         return self.config.profile.linkDir.localize(self.local)
-    
+
     def getOutputWorkDir(self):
         return self.config.profile.workDir.localize(self.local)
-    
+
     def getLinkWorkDir(self):
         return self.config.profile.workDir.localize(self.local)
 
     def getDoneDir(self):
         return self.config.profile.doneDir.localize(self.local)
-    
+
     def getFailedDir(self):
         return self.config.profile.failedDir.localize(self.local)

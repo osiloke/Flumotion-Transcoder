@@ -42,23 +42,23 @@ T_ = gettexter('flumotion-transcoder')
 
 
 class FileMonitorMedium(component.BaseComponentMedium):
-    
+
     def remote_setFileState(self, virtBase, relFile, status):
         self.comp.setFileState(virtBase, relFile, status)
-        
+
     def remote_setFilesState(self, states):
         for virtBase, relFile, status in states:
             self.comp.setFileState(virtBase, relFile, status)
-        
+
     def remote_moveFiles(self, virtSrcBase, virtDestBase, relFiles):
         self.comp.moveFiles(virtSrcBase, virtDestBase, relFiles)
-        
+
 
 class FileMonitor(component.BaseComponent):
     """
     Monitor a list of directory.
     """
-    
+
     componentMediumClass = FileMonitorMedium
     logCategory = compconsts.MONITOR_LOG_CATEGORY
 
@@ -72,11 +72,11 @@ class FileMonitor(component.BaseComponent):
                 self.warning("Forbidden to move files from '%s'", virtSrcBase)
                 raise TranscoderError("Forbidden to move a file from other "
                                       "directories than the monitored ones")
-        
+
         def moveFile(result, src, dest, attr=None):
 
             def moveFailed(failure):
-                msg = ("Fail to move file '%s' to '%s': %s" 
+                msg = ("Fail to move file '%s' to '%s': %s"
                        % (src, dest, log.getFailureMessage(failure)))
                 self.warning("%s", msg)
                 if isinstance(result, Failure):
@@ -92,11 +92,11 @@ class FileMonitor(component.BaseComponent):
             return d
 
         def moveFailed(failure, src, dest):
-            msg = ("Fail to move file '%s' to '%s': %s" 
+            msg = ("Fail to move file '%s' to '%s': %s"
                    % (src, dest, log.getFailureMessage(failure)))
             self.warning("%s", msg)
             raise TranscoderError(msg, cause=e)
-        
+
         d = defer.succeed(self)
         for relFile in relFiles:
             locSrcPath = virtSrcBase.append(relFile).localize(self._local)
@@ -105,7 +105,7 @@ class FileMonitor(component.BaseComponent):
             locDestPath = os.path.realpath(locDestPath)
             d.addBoth(moveFile, locSrcPath, locDestPath, self._pathAttr)
         return d
-    
+
     ## Overriden Methods ##
 
     def init(self):
@@ -122,12 +122,12 @@ class FileMonitor(component.BaseComponent):
         self._pathAttr = None
 
     def do_check(self):
-        
+
         def monitor_checks(result):
             props = self.config["properties"]
             self._local = Local.createFromComponentProperties(props)
             return result
-        
+
         try:
             d = component.BaseComponent.do_check(self)
             d.addCallback(monitor_checks)
@@ -148,13 +148,13 @@ class FileMonitor(component.BaseComponent):
                 localDir = virtDir.localize(self._local)
                 fileutils.ensureDirExists(localDir, "monitored",
                                           self._pathAttr)
-                watcher = DirectoryWatcher(self, localDir, 
+                watcher = DirectoryWatcher(self, localDir,
                                            timeout=self._scanPeriod)
-                watcher.connect('file-added', 
+                watcher.connect('file-added',
                                 self._file_added, virtDir)
-                watcher.connect('file-completed', 
+                watcher.connect('file-completed',
                                 self._file_completed, virtDir)
-                watcher.connect('file-removed', 
+                watcher.connect('file-removed',
                                 self._file_removed, virtDir)
                 watcher.start()
                 self.watchers.append(watcher)
@@ -167,10 +167,10 @@ class FileMonitor(component.BaseComponent):
             w.stop()
         self.watchers = []
         return component.BaseComponent.do_stop(self)
-    
+
 
     ## Public Methods ##
-                
+
     def setFileState(self, virtBase, relFile, status):
         key = (virtBase, relFile)
         state = self.uiState.get('pending-files')
@@ -198,10 +198,10 @@ class FileMonitor(component.BaseComponent):
         # as time in UTC without tzinfo. We have less to transfer over
         # the wire and don't have to worry about jellifiers for tzinfo.
         detection_time = detection_time.replace(tzinfo=None)
-        self.__setUIItem('pending-files', (virtBase, file), 
+        self.__setUIItem('pending-files', (virtBase, file),
                          (MonitorFileStateEnum.downloading, fileinfo,
                           detection_time, None, None))
-    
+
     def _file_completed(self, watcher, file, fileinfo, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         d = threads.deferToThread(self.__getFileInfo, file, watcher.path,
@@ -214,26 +214,26 @@ class FileMonitor(component.BaseComponent):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File removed '%s'", localFile)
         self.__delUIItem('pending-files', (virtBase, file))
-    
-    
+
+
     ## Private Methods ##
-    
+
     def __updateUIItem(self, key, subkey, value):
         self._uiItemDelta[(key, subkey)] = ("file state updating",
                                             self.__doUpdateItem, (value,))
         self.__smoothUpdate()
-    
+
     def __setUIItem(self, key, subkey, value):
         self._uiItemDelta[(key, subkey)] = ("file state setting",
                                             self.uiState.setitem, (value,))
         self.__smoothUpdate()
-    
+
     def __delUIItem(self, key, subkey):
         if (subkey in self.uiState.get(key)):
             self.uiState.delitem(key, subkey)
         if (key, subkey) in self._uiItemDelta:
             del self._uiItemDelta[(key, subkey)]
-    
+
     def __doUpdateItem(self, key, subkey, value):
         state = self.uiState.get(key)
         if (subkey in state) and (state.get(subkey) != value):
@@ -243,7 +243,7 @@ class FileMonitor(component.BaseComponent):
         if (not self._uiItemDelay) and self._uiItemDelta:
             delay = compconsts.SMOOTH_UPTDATE_DELAY
             self._uiItemDelay = reactor.callLater(delay, self.__doSmoothUpdate)
-    
+
     def __doSmoothUpdate(self):
         self._uiItemDelay = None
         if self._uiItemDelta:
@@ -256,7 +256,7 @@ class FileMonitor(component.BaseComponent):
                 log.notifyException(self, e, "Failed during %s", desc,
                                     cleanTraceback=True)
         self.__smoothUpdate()
-    
+
     def __notifyDebug(self, msg, info=None, debug=None, failure=None,
                       exception=None, documents=None):
         infoMsg = ["File Monitor Debug Notification: %s" % msg]
@@ -276,7 +276,7 @@ class FileMonitor(component.BaseComponent):
         m = messages.Warning(T_("\n\n".join(infoMsg)),
                              debug="\n\n".join(debugMsg))
         self.addMessage(m)
-    
+
     def __ebErrorFilter(self, failure, task=None):
         if failure.check(FlumotionError):
             return self.__monitorError(failure, task)
@@ -291,7 +291,7 @@ class FileMonitor(component.BaseComponent):
                           cleanTraceback=True)
         self.setMood(moods.sad)
         return failure
-        
+
     def __unexpectedError(self, failure=None, task=None):
         if not failure:
             failure = Failure()
@@ -299,7 +299,7 @@ class FileMonitor(component.BaseComponent):
                           "Unexpected error%s",
                           (task and " during %s" % task) or "",
                           cleanTraceback=True)
-        m = messages.Error(T_(failure.getErrorMessage()), 
+        m = messages.Error(T_(failure.getErrorMessage()),
                            debug=log.getFailureMessage(failure))
         self.addMessage(m)
         return failure

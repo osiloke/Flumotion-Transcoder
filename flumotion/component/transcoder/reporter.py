@@ -31,7 +31,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
     the encoder bin of a target to have the complete commands.
     To use it again with a diffrent target it must be cleaned.
     """
-    
+
     _hiddenElements = set(["typefind", "identity"])
     _hiddenProperties = set(["name", "fd", "copyright", "qos", "buffer-size", "sync"])
     _hiddenCompProps = {"queue":           set(["current-level-buffers",
@@ -68,11 +68,11 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
         self.commands.clear()
         del self._pending[:]
         self._lastType = None
-    
+
     def getCommands(self):
         result = dict(self.commands)
         # If there is pending element,
-        # Add them to the last command type        
+        # Add them to the last command type
         if len(self._pending) > 0:
             type = self._lastType
             if type == None:
@@ -84,7 +84,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
             cmd += self._separator.join(self._pending)
             result[type] = cmd
         return result
-    
+
     def _elem2str(self, element):
         desc = ""
         factory = element.get_factory()
@@ -106,7 +106,7 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
             if p.name == "location":
                 desc += " location=$FILE_PATH"
                 continue
-            defVal = p.default_value            
+            defVal = p.default_value
             currVal = element.get_property(p.name)
             if currVal != defVal:
                 #For enums
@@ -140,9 +140,9 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
                 video = video or ("video/" in caps)
             return self._genericTypes[audio][video]
         return None
-            
+
     def enterElement(self, branch, previous, element, next):
-        # When crawling the whole pipeline, we should stop at the tee elements 
+        # When crawling the whole pipeline, we should stop at the tee elements
         # to not crawl the target parts of the pipeline
         factory = element.get_factory()
         if factory and (factory.get_name() == "tee"):
@@ -150,29 +150,29 @@ class ReportVisitor(pipelinecrawler.PipelineVisitor):
         # And we may ignore some elements
         if factory and (factory.get_name() in self._hiddenElements):
             return True
-        
-        # Find the element type. 
+
+        # Find the element type.
         # If the type is not found, store it for later triage
         type = self._getElementType(element)
         if type == None:
             self._pending.append(self._elem2str(element))
             return True
         self._lastType = type
-        
+
         # retrieve the command for the current type
         if type in self.commands:
             cmd = self.commands[type] + self._separator
         else:
             cmd = ""
-            
+
         # If there is pending element, add them to the command
         if len(self._pending) > 0:
             cmd += self._separator.join(self._pending) + self._separator
             del self._pending[:]
-            
+
         # Add the current element command
         cmd += self._elem2str(element)
-        
+
         # And store back the command
         self.commands[type] = cmd
         return True
@@ -221,17 +221,17 @@ def _loadAnalysis(report, analysis):
         report.audioChannels = analysis.audioChannels
         report.audioLength = analysis.audioLength
         report.audioDuration = analysis.getAudioDuration()
-        
+
     report.hasVideo = analysis.hasVideo
     if report.hasVideo:
         report.videoCaps = analysis.getVideoCapsAsString()
         report.videoWidth = analysis.videoWidth
         report.videoHeight = analysis.videoHeight
-        report.videoRate = (analysis.videoRate.num, 
+        report.videoRate = (analysis.videoRate.num,
                             analysis.videoRate.denom)
         report.videoLength = analysis.videoLength
         report.videoDuration = analysis.getVideoDuration()
-        
+
     for s in analysis.otherStreams:
         report.otherStreams.append(str(s))
     for t, v in analysis.audioTags.iteritems():
@@ -243,17 +243,17 @@ def _loadAnalysis(report, analysis):
 
 
 class CPUUsageMixin(object):
-    
+
     def __init__(self, report, measures):
         self._measures = dict(measures)
         self._startTimes = dict()
         self._report = report
-    
+
     def startUsageMeasure(self, measureName):
         if not measureName in self._measures:
             raise Exception("Unknown mesure '%s'" % measureName)
         self._startTimes[measureName] = (time.clock(), time.time())
-    
+
     def stopUsageMeasure(self, measureName):
         if not measureName in self._measures:
             raise Exception("Unknown mesure '%s'" % measureName)
@@ -265,46 +265,46 @@ class CPUUsageMixin(object):
             percent = -1
         usage = (deltaCPU, deltaReal, percent)
         setattr(self._report, self._measures[measureName], usage)
-    
+
 
 class SourceReporter(object):
-    
+
     def __init__(self, rootReport):
         self.report = rootReport.source
-        
+
     def getMediaLength(self):
         return _getMediaLength(self.report.analysis)
-    
+
     def getMediaDuration(self):
         return _getMediaDuration(self.report.analysis)
-    
+
     def setMediaAnalysis(self, analysis):
         _loadAnalysis(self.report.analysis, analysis)
-        
+
 
 class TargetReporter(CPUUsageMixin):
-    
+
     def __init__(self, local, rootReport, targetKey):
         report = rootReport.targets[targetKey]
-        CPUUsageMixin.__init__(self, report, 
+        CPUUsageMixin.__init__(self, report,
                                {"postprocess": "cpuUsagePostprocess",
                                 "analysis": "cpuUsageAnalysis"})
         self.local = local
         self.report = report
         self._postprocessStartTime = None
-    
+
     def addError(self, error=None):
         _addTaskError(self.report, error)
-        
+
     def setFatalError(self, error):
         self.report.fatalError = error
-        
+
     def hasFatalError(self, targetKey=None):
         return self.report.fatalError != None
-    
+
     def getMediaLength(self):
         return _getMediaLength(self.report.analysis)
-    
+
     def getMediaDuration(self):
         return _getMediaDuration(self.report.analysis)
 
@@ -321,7 +321,7 @@ class TargetReporter(CPUUsageMixin):
         virtOutput = VirtualPath.virtualize(output, self.local)
         self.report.workFiles.append(virtWork)
         self.report.outputFiles.append(virtOutput)
-        
+
     def getFiles(self):
         return [(work.localize(self.local), output.localize(self.local))
                 for work, output in zip(self.report.workFiles,
@@ -329,12 +329,12 @@ class TargetReporter(CPUUsageMixin):
 
 
 class Reporter(CPUUsageMixin):
-    
+
     def __init__(self, local, report):
-        CPUUsageMixin.__init__(self, report, 
-                               {"job": "cpuUsageTotal",                                
+        CPUUsageMixin.__init__(self, report,
+                               {"job": "cpuUsageTotal",
                                 "preprocess": "cpuUsagePreprocess",
-                                "transcoding": "cpuUsageTranscoding"})        
+                                "transcoding": "cpuUsageTranscoding"})
         self.local = local
         self.report = report
 
@@ -362,19 +362,19 @@ class Reporter(CPUUsageMixin):
 
     def getSourceReporter(self):
         return SourceReporter(self.report)
-    
+
     def getTargetReporter(self, targetKey):
         return TargetReporter(self.local, self.report, targetKey)
 
     def addError(self, error=None):
         _addTaskError(self.report, error)
-        
+
     def setFatalError(self, error):
         self.report.fatalError = error
-        
+
     def hasFatalError(self, targetKey=None):
         return self.report.fatalError != None
-        
+
     def crawlPipeline(self, pipeline, targetBins):
         visitor = ReportVisitor()
         crawler = pipelinecrawler.PipelineCrawler(visitor)
@@ -388,5 +388,5 @@ class Reporter(CPUUsageMixin):
                 crawler.crawlBin(bin)
             for c, v in visitor.getCommands().iteritems():
                 self.report.targets[targetKey].pipelineAudit[c] = v
-    
-        
+
+

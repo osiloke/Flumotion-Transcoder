@@ -30,7 +30,7 @@ class PropertiesError(errors.TranscoderError):
 class APIError(errors.TranscoderError):
     def __init__(self, *args, **kwargs):
         errors.TranscoderError.__init__(self, *args, **kwargs)
-    
+
 
 class OperationTimedOutError(iherrors.TimeoutError):
     """

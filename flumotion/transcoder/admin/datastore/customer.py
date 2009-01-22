@@ -13,7 +13,7 @@
 from zope.interface import implements, Attribute
 
 from flumotion.inhouse import log, defer, utils
- 
+
 from flumotion.transcoder.admin import adminconsts, admerrs
 from flumotion.transcoder.admin.datastore import base, profile, notification
 
@@ -58,13 +58,13 @@ class ICustomerStore(base.IBaseStore):
 
     def getProfileStores(self):
         pass
-    
+
     def getProfileStore(self, profIdent, default=None):
-        pass    
-    
+        pass
+
     def getProfileStoreByName(self, profName, default=None):
-        pass    
-    
+        pass
+
     def iterProfileStores(self):
         pass
 
@@ -112,31 +112,31 @@ class CustomerStore(base.NotifyStore):
     def __init__(self, logger, adminStore, dataSource, custData):
         base.NotifyStore.__init__(self, logger, adminStore, dataSource, custData)
         self._customerInfo = None
-        self._profiles = {} # {PROFILE_IDENTIFIER: ProfileStore} 
+        self._profiles = {} # {PROFILE_IDENTIFIER: ProfileStore}
         # Registering Events
         self._register("profile-added")
         self._register("profile-removed")
-        
-        
+
+
     ## Public Methods ##
 
     def getProfileStores(self):
         return self._profiles.values()
-    
+
     def getProfileStore(self, profIdent, default=None):
-        return self._profiles.get(profIdent, default)    
-    
+        return self._profiles.get(profIdent, default)
+
     def getProfileStoreByName(self, profName, default=None):
         for profStore in self._profiles.itervalues():
             if profName == profStore.name:
                 return profStore
-        return default    
-    
+        return default
+
     def iterProfileStores(self):
         return self._profiles.itervalues()
 
     def getAdminStore(self):
-        return self.parent    
+        return self.parent
 
 
     ## Overridden Methods ##
@@ -146,26 +146,26 @@ class CustomerStore(base.NotifyStore):
         for profStore in self._profiles.itervalues():
             if profStore.isActive():
                 self.emitTo("profile-added", listener, profStore)
-        
+
     def _doGetChildElements(self):
         return self.getProfileStores()
-    
+
     def _doPrepareInit(self, chain):
         base.NotifyStore._doPrepareInit(self, chain)
         # Ensure that the customer info are received
         # before profiles initialization
         chain.addCallback(self.__cbRetrieveInfo)
         # Retrieve and initialize the profiles
-        chain.addCallback(self.__cbRetrieveProfiles)        
-        
+        chain.addCallback(self.__cbRetrieveProfiles)
+
     def _onActivated(self):
         base.NotifyStore._onActivated(self)
         self.debug("Customer '%s' activated", self.label)
-    
+
     def _onAborted(self, failure):
         base.NotifyStore._onAborted(self, failure)
         self.debug("Customer '%s' aborted", self.label)
-        
+
     def _doRetrieveNotifications(self):
         return self._dataSource.retrieveCustomerNotifications(self._data)
 
@@ -174,33 +174,33 @@ class CustomerStore(base.NotifyStore):
                                                 self.getAdminStore(),
                                                 self, None, None)
 
-        
+
     ## Private Methods ##
-    
+
     def __cbRetrieveInfo(self, result):
         d = self._dataSource.retrieveDefaults()
         d.addCallbacks(self.__cbInfoReceived, self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-        
+
     def __cbInfoReceived(self, custInfo, oldResult):
         self._customerInfo = custInfo
         return oldResult
-  
+
     def __cbRetrieveProfiles(self, result):
         d = self._dataSource.retrieveProfiles(self._data)
-        d.addCallbacks(self.__cbProfilesReceived, 
+        d.addCallbacks(self.__cbProfilesReceived,
                        self._retrievalFailed,
                        callbackArgs=(result,))
         return d
-    
+
     def __cbProfilesReceived(self, profDataList, oldResult):
         deferreds = []
         self._setIdleTarget(len(profDataList))
         for profData in profDataList:
             profStore = profile.ProfileStore(self, self, self._dataSource, profData)
             d = profStore.initialize()
-            d.addCallbacks(self.__cbProfileInitialized, 
+            d.addCallbacks(self.__cbProfileInitialized,
                            self.__ebProfileInitFailed,
                            errbackArgs=(profStore,))
             # Ensure no failure slips through
@@ -213,13 +213,13 @@ class CustomerStore(base.NotifyStore):
         # Preserve deferred result, drop all previous results even failures
         dl.addCallback(lambda result, old: old, oldResult)
         return dl
-    
+
     def __cbProfileInitialized(self, profStore):
         self.debug("Profile '%s' initialized; adding it to customer '%s' store",
                    profStore.label, self.label)
         if (profStore.identifier in self._profiles):
             msg = ("Customer '%s' already have a profile '%s', "
-                   "dropping the new one" 
+                   "dropping the new one"
                    % (self.name, profStore.name))
             self.warning(msg)
             error = admerrs.StoreError(msg)
@@ -232,10 +232,10 @@ class CustomerStore(base.NotifyStore):
         profStore._activate()
         # Keep the callback chain result
         return profStore
-    
+
     def __ebProfileInitFailed(self, failure, profStore):
         #FIXME: Better Error Handling ?
-        log.notifyFailure(self, failure, 
+        log.notifyFailure(self, failure,
                           "Profile '%s' of customer '%s' failed "
                           "to initialize; dropping it",
                           profStore.label, self.label)

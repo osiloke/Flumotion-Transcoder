@@ -14,14 +14,14 @@ from flumotion.inhouse import utils
 
 
 class Local(object):
-    
+
     @classmethod
     def createFromComponentProperties(cls, props):
-        roots = [prop.split(':', 1) 
+        roots = [prop.split(':', 1)
                  for prop in props.get("local-root", [])]
         name = props.get("local-name", "")
         return cls(name, roots)
-    
+
     def __init__(self, name, virtualRoots):
         self._name = name
         self._roots = dict(virtualRoots)
@@ -39,17 +39,17 @@ class Local(object):
 
     def iterVirtualRoots(self):
         return self._roots.iteritems()
-    
+
     def getVirtualRoots(self):
         return self._roots
-        
+
     def asComponentProperties(self):
         result = []
         result.append(("local-name", self._name))
         for root, value in self._roots.iteritems():
             result.append(("local-root", "%s:%s" % (root, value)))
         return result
-    
+
     def asLaunchArguments(self):
         args = []
         args.append(utils.mkCmdArg(str(self._name), "local-name="))

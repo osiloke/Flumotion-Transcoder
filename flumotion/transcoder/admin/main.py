@@ -48,7 +48,7 @@ def parse_options(args):
     parser.add_option('-d', '--debug',
                      action="store", dest="debug",
                      help="override the configuration debug level")
-    
+
     parser.add_option('-L', '--logdir',
                       action="store", dest="logdir",
                       help="flumotion log directory (default: %s)" %
@@ -57,7 +57,7 @@ def parse_options(args):
                       action="store", dest="rundir",
                       help="flumotion run directory (default: %s)" %
                         configure.rundir)
-    
+
     options, args = parser.parse_args(args)
 
     # Force options down configure's throat
@@ -80,12 +80,12 @@ def parse_options(args):
 
     configPath = args[1]
     if not os.path.exists(configPath):
-        raise iherrors.SystemError("Configuration file '%s' not found" 
+        raise iherrors.SystemError("Configuration file '%s' not found"
                                  % configPath)
 
     return options, configPath
 
-    
+
 def possess(daemonizeTo=None):
     fileutils.ensureDirExists(configure.logdir, "log file")
     fileutils.ensureDirExists(configure.rundir, "run file")
@@ -108,7 +108,7 @@ def possess(daemonizeTo=None):
     # here we daemonize; so we also change our pid
     if not daemonizeTo:
         daemonizeTo = '/'
-    process.daemonize(stdout=logPath, stderr=logPath, 
+    process.daemonize(stdout=logPath, stderr=logPath,
                       directory=daemonizeTo)
 
     log.info('Started daemon')
@@ -124,9 +124,9 @@ def exorcize():
 def main(args):
     log.setDefaultCategory(adminconsts.ADMIN_LOG_CATEGORY)
     log.setDebugNotifier(notifier.notifyDebug)
-    
+
     options, configPath = parse_options(args)
-    
+
     loader = inifile.IniFile()
     config = adminconfig.ClusterConfig()
     try:
@@ -134,11 +134,11 @@ def main(args):
     except Exception, e:
         sys.stderr.write('Error: %s\n' % e)
         sys.exit(1)
-    
+
     debug = options.debug or config.debug
     if debug:
         log.setFluDebug(debug)
-    
+
     if options.daemonize:
         possess(options.daemonizeTo)
 
