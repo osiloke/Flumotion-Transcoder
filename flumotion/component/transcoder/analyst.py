@@ -60,7 +60,6 @@ class MediaAnalysis(object):
         self.audioTags = dict(discoverer.audiotags)
         self.videoTags = dict(discoverer.videotags)
         self.otherTags = dict(discoverer.othertags)
-        self.otherStreams = list(discoverer.otherstreams)
 
     def getAudioCapsAsString(self):
         if self.audioCaps:

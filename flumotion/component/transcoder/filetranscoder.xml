@@ -51,6 +51,7 @@
           <filename location="pipelinecrawler.py" />
         </directory>
         <directory name="flumotion/component/transcoder">
+          <filename location="disco2.py" />
           <filename location="reporter.py" />
           <filename location="context.py" />
           <filename location="job.py" />
