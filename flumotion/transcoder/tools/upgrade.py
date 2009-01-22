@@ -67,9 +67,9 @@ class UpgradeConfig(Loggable):
 
     @classmethod
     def checkVersions(cls):
-        return ((adminconfig.ClusterConfig.VERSION == (1, 0))
-                and (dataprops.AdminData.VERSION == (1, 0))
-                and (dataprops.CustomerData.VERSION == (1, 0)))
+        return ((adminconfig.ClusterConfig.VERSION == (1, 2))
+                and (dataprops.AdminData.VERSION == (1, 1))
+                and (dataprops.CustomerData.VERSION == (1, 1)))
 
     def __init__(self, tag, oldConfigFile, newConfigDir, rootDir,
                  disableRequests=None, changeMail=None, keepConfig=None,
@@ -129,6 +129,12 @@ class UpgradeConfig(Loggable):
 
         # Datasource configuration
         adminConfig.admin.datasource.dataFile = self._adminDataPath
+
+        # Report datasource configuration
+        adminConfig.admin.reportsdatasource.connectionInfo = "mysql://username:password@hostname:3306/database"
+
+        # Diagnostic configuration
+        adminConfig.admin.prognosis.prognosisFile = "/etc/flumotion/transcoder/diagnosis.conf"
 
         # Notifier configuration
         adminConfig.admin.notifier.smtpServer = "mail.fluendo.com"
