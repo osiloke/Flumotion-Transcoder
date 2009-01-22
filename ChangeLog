@@ -1,5 +1,11 @@
 2009-01-22  Jan Urbanski  <jurbanski@flumotion.com>
 
+	* flumotion/component/transcoder/disco2.py:
+	Return just the last tag instead of all the discovered tags. Guard
+	against reieving the same caps more than once.
+
+2009-01-22  Jan Urbanski  <jurbanski@flumotion.com>
+
 	* flumotion/component/transcoder/analyst.py:
 	Remove duplicate code.
 

@@ -165,7 +165,11 @@ class PatchedDiscovererAdapter(DiscovererAdapter):
 
     @property
     def othertags(self):
-        return self._obj.tags
+        ret = dict(self._obj.tags)
+        for tag, value in ret.iteritems():
+            if isinstance(value, list):
+                ret[tag] = ([None] + value)[-1]
+        return ret
 
 
 class Analyzer(object):
@@ -390,7 +394,11 @@ class Analyzer(object):
 
         gst.debug('notified caps: %r, %r, %r' % (pad, smth,
                                                    pad.get_caps().to_string()))
-        self.pending.remove(pad)
+        # We might have been notified twice about the same caps.
+        try:
+            self.pending.remove(pad)
+        except ValueError:
+            pass
         self._pad_analysed(pad, pad.get_caps())
 
     def _cb_notify_caps_tfind(self, pad, smth):
