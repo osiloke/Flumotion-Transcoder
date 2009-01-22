@@ -399,7 +399,7 @@ class Analyzer(object):
             self.pending.remove(pad)
         except ValueError:
             pass
-        self._pad_analysed(pad, pad.get_caps())
+        self._pad_analysed(pad, caps)
 
     def _cb_notify_caps_tfind(self, pad, smth):
         gst.debug('notified caps: %r, %r, %r' % (pad, smth,
