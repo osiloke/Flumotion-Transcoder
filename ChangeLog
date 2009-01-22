@@ -1,6 +1,11 @@
 2009-01-22  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/component/transcoder/filemonitor.py:
+	Fixed NULL value for mime type in the database.
+
+2009-01-22  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
 	Changed the number of threads to be 2 at most, in order not to compute
 	too many checksums in parallel.
 

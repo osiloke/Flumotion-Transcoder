@@ -356,6 +356,7 @@ class FileMonitor(component.BaseComponent):
             mime_type = commands.getoutput("file -biL" + arg)
         except Exception, e:
             mime_type = "ERROR: %s" % str(e)
+        return mime_type
 
     def __updateChecksumState(self, new_info, file_info, local_file):
         # it is possible that the file has been removed while computing the
