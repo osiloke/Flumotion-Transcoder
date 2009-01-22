@@ -39,7 +39,8 @@ from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import DirectoryWatcher
 
 T_ = gettexter('flumotion-transcoder')
-
+# prevents from computing too many md5 at the same time
+reactor.suggestThreadPoolSize(2)
 
 class FileMonitorMedium(component.BaseComponentMedium):
 
@@ -120,6 +121,7 @@ class FileMonitor(component.BaseComponent):
         self._uiItemDelta = {}
         self._uiItemDelay = None
         self._pathAttr = None
+
 
     def do_check(self):
 
@@ -346,7 +348,6 @@ class FileMonitor(component.BaseComponent):
             m = reduce(upd, contents, md5())
         finally:
             fd.close()
-        self.debug("Checksum Done! %s", m.hexdigest())
         return m.hexdigest()
 
     def __getMimeType(self, filename, path):
