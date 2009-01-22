@@ -90,7 +90,7 @@ select
 	customer_id,
 	sum(case when outcome then 1 else 0 end) as successful_transcods,
 	sum(case when (not outcome) then 1 else 0 end) as failed_transcods,
-	sum(case when (not outcome) and (failure_id is not null) then 1 else 0 end) as failed_unexpectedly_transcods
+	sum(case when (not outcome) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
 	transcoder_reports
 group by customer_id;
@@ -101,7 +101,7 @@ select
 	profile_id,
 	sum(case when outcome then 1 else 0 end) as successful_transcods,
 	sum(case when (not outcome) then 1 else 0 end) as failed_transcods,
-	sum(case when (not outcome) and (failure_id is not null) then 1 else 0 end) as failed_unexpectedly_transcods
+	sum(case when (not outcome) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
 	transcoder_reports
 group by customer_id, profile_id;
