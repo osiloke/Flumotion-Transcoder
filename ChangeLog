@@ -1,6 +1,11 @@
 2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* doc/rst/configuration/encoder-config.rst:
+	Fixed formatting issues.
+
+2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* doc/rst/configuration/encoder-config.rst:
 	Added H.264 and AAC doc.
 
 2009-01-22  Jan Urbanski  <jurbanski@flumotion.com>

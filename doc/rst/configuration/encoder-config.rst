@@ -353,7 +353,7 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 =========== ============ ========= ============== ======== ========== ==============
 
 H.264+MP3/FLV
------------
+-------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -426,6 +426,7 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 =========== ============ ========= ============== ======== ========== ==============
 480         368          25/1      400            2        48000      48
 480         368          25/1      400            2        22050      24
+=========== ============ ========= ============== ======== ========== ==============
 
 
 H.264/FLV
@@ -455,6 +456,7 @@ Tested
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
 =========== ============ ========= ==============
 480         368          25/1      400
+=========== ============ ========= ==============
 
 
 AAC/FLV
@@ -500,6 +502,7 @@ CHANNELS SAMPLERATE AUDIO_KBITRATE
 1        44100      16
 1        22050      48
 1        22050      16
+======== ========== ==============
 
 
 WMV+WMA/ASF (pitfdll)
