@@ -1,6 +1,11 @@
 2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* doc/rst/configuration/encoder-config.rst:
+	Moved AAC doc in proper section.
+
+2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* doc/rst/configuration/encoder-config.rst:
 	Fixed formatting issues.
 
 2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
