@@ -65,7 +65,7 @@ Tested
 ========== =
 SAMPLERATE
 ========== =
-8000 
+8000
 ========== =
 
 
@@ -315,6 +315,191 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 480         368          25/1      380            2        44100      48
 384         288          25/1      300            2        22050      48
 =========== ============ ========= ============== ======== ========== ==============
+
+VP6+AAC/FLV
+-----------
+
+Dependencies
+~~~~~~~~~~~~
+
+ - gstreamer-fluendo-vp6enc
+ - gstreamer-fluendo-mcaacenc
+ - flvtool2 for indexing
+
+Configuration
+~~~~~~~~~~~~~
+
+================= ===========================================================================
+Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_KBITRATE* header-type=raw
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     videoflip method=5 ! fluvp6enc bitrate=\ *VIDEO_KBITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= ===========================================================================
+
+Tested
+~~~~~~
+
+=========== ============ ========= ============== ======== ========== ==============
+VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
+=========== ============ ========= ============== ======== ========== ==============
+768         576          30/1      512            2        44100      48
+384         288          24/1      256            2        44100      24
+384         288          24/1      1024           2        44100      64
+256         144          12/1      512            2        44100      32
+=========== ============ ========= ============== ======== ========== ==============
+
+H.264+MP3/FLV
+-----------
+
+Dependencies
+~~~~~~~~~~~~
+
+ - gstreamer-fluendo-flumch264enc
+ - flvtool2 for indexing
+
+Configuration
+~~~~~~~~~~~~~
+
+================= ===========================================================================
+Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     flumch264enc bitrate=\ *VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= ===========================================================================
+
+Tested
+~~~~~~
+
+=========== ============ ========= ============== ======== ========== ==============
+VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
+=========== ============ ========= ============== ======== ========== ==============
+480         368          25/1      1024           2        44100      96
+480         368          12/1      1024           2        44100      96
+480         368          25/1      400            2        44100      96
+480         368          12/1      400            2        44100      96
+480         368          25/1      400            2        44100      128
+480         368          25/1      400            1        22050      96
+384         288          25/1      400            2        44100      96
+320         240          25/1      400            2        44100      96
+320         240          25/1      1024           2        44100      96
+320         240          12/1      400            2        44100      96
+320         240          12/1      1024           2        44100      96
+=========== ============ ========= ============== ======== ========== ==============
+
+H.264+AAC/FLV
+-------------
+
+Dependencies
+~~~~~~~~~~~~
+
+ - gstreamer-fluendo-flumch264enc
+ - gstreamer-fluendo-mcaacenc
+ - flvtool2 for indexing
+
+Configuration
+~~~~~~~~~~~~~
+
+================= ===========================================================================
+Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_BITRATE* header-type=raw
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     flumch264enc bitrate=\ *VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= ===========================================================================
+
+Tested
+~~~~~~
+
+=========== ============ ========= ============== ======== ========== ==============
+VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
+=========== ============ ========= ============== ======== ========== ==============
+480         368          25/1      400            2        48000      48
+480         368          25/1      400            2        22050      24
+
+
+H.264/FLV
+---------
+
+Dependencies
+~~~~~~~~~~~~
+
+ - gstreamer-fluendo-flumch264enc
+ - flvtool2 for indexing
+
+Configuration
+~~~~~~~~~~~~~
+
+================= ===========================================================================
+Video Encoder     flumch264enc bitrate=\ *VIDEO_BITRATE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             fluflvmux
+================= ===========================================================================
+
+Tested
+~~~~~~
+
+=========== ============ ========= ==============
+VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
+=========== ============ ========= ==============
+480         368          25/1      400
+
+
+AAC/FLV
+-------
+
+Dependencies
+~~~~~~~~~~~~
+
+ - gstreamer-fluendo-mcaacenc
+
+Configuration
+~~~~~~~~~~~~~
+
+================= ===========================================================================
+Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_BITRATE* header-type=raw
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Muxer             fluflvmux
+================= ===========================================================================
+
+Tested
+~~~~~~
+
+======== ========== ==============
+CHANNELS SAMPLERATE AUDIO_KBITRATE
+======== ========== ==============
+2        48000      64
+2        48000      48
+2        48000      32
+2        48000      16
+2        44100      64
+2        44100      32
+2        44100      16
+2        32000      56
+2        32000      16
+2        24000      48
+2        24000      10
+2        22050      48
+2        22050      10
+2        16000      40
+2        16000      10
+1        44100      64
+1        44100      16
+1        22050      48
+1        22050      16
 
 
 WMV+WMA/ASF (pitfdll)
