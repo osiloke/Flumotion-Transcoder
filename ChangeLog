@@ -1,3 +1,9 @@
+2009-01-27  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* data/database/mysql/schema.sql:
+	Add reporting queries taking only unique files into account and
+	untabify the SQL file.
+
 2009-01-26  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* doc/rst/configuration/encoder-config.rst:
