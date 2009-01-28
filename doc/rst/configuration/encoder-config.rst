@@ -548,3 +548,19 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 480         368          25/1      400000        2        48000      48000
 =========== ============ ========= ============= ======== ========== =============
 
+
+MPEG4 + MP3 / MP4
+-----------------
+
+1. Configuration
+
+================= ===========================================================================
+Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
+Audio Samplerate  *SAMPLERATE*
+Audio Channels    *CHANNELS*
+Video Encoder     ffenc_mpeg4
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             ffmux_mp4
+================= ===========================================================================
