@@ -57,8 +57,8 @@ SAMPLERATE
 ========== =
 
 
-AMRNB
------
+AMR-NB
+------
 
 1. Dependencies
 
@@ -74,8 +74,8 @@ Muxer             ffmux_amr
 ================= ============
 
 
-AMRWB
------
+AMR-WB
+------
 
 1. Configuration
 
@@ -193,8 +193,8 @@ CHANNELS SAMPLERATE AUDIO_KBITRATE
 Video Profiles
 ==============
 
-AMRNB + H263 / 3GP
-------------------
+AMR-NB + H.263 / 3GP
+--------------------
 
 1. Dependencies
 
@@ -258,8 +258,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_KBITR
 =========== ============ ========= ============= ======== ========== ==============
 
 
-MP4 + AMRNB / MOV
------------------
+MP4 + AMR-NB / MOV
+------------------
 
 1. Dependencies
 
@@ -436,8 +436,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 =========== ============ ========= ============= ======== ========== =============
 
 
-H264 / FLV
-----------
+H.264 / FLV
+-----------
 
 1. Dependencies
 
@@ -463,8 +463,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
 =========== ============ ========= ==============
 
 
-H264 + MP3 / FLV
-----------------
+H.264 + MP3 / FLV
+-----------------
 
 1. Dependencies
 
@@ -510,8 +510,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 =========== ============ ========= ============== ======== ========== ==============
 
 
-H264 + AAC+ / FLV
------------------
+H.264 + AAC+ / FLV
+------------------
 
 1. Dependencies
 

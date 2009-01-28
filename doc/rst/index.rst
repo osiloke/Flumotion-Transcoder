@@ -20,7 +20,7 @@ For Development
 For Production
 --------------
 
-* `Install and Setup`_
+ * `Install and Setup`_
 
 Configuration
 =============
