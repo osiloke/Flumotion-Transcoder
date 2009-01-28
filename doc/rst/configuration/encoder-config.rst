@@ -35,13 +35,11 @@ Audio Profiles
 QCP
 ---
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-qcp
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================ ============
 Audio Encoder    fluqcpenc
@@ -50,8 +48,7 @@ Audio Channels   1
 Muxer            identity
 ================ ============
 
-Tested
-~~~~~~
+3. Tested
 
 ========== =
 SAMPLERATE
@@ -63,13 +60,11 @@ SAMPLERATE
 AMRNB
 -----
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - amrnb libraries
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ============
 Audio Encoder     amrnbenc
@@ -82,8 +77,7 @@ Muxer             ffmux_amr
 AMRWB
 -----
 
-Configuration
-~~~~~~~~~~~~~
+1. Configuration
 
 ================= ============
 Audio Encoder     amrwbenc
@@ -96,13 +90,11 @@ Muxer             ffmux_amr
 ADPCM / MMF
 -----------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - mmf-crc binary
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ======================================================================
 Audio Encoder     capsfilter caps=audio/x-raw-int,width=16,depth=16 ! ffenc_adpcm_yamaha
@@ -111,15 +103,13 @@ Audio Channels    *CHANNELS*
 Muxer             ffmux_mmf
 ================= ======================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the CRC, the following command should be executed as a post-processing::
 
     /usr/bin/mmf-crc %(outputWorkPath)s
 
-Tested
-~~~~~~
+4. Tested
 
 ========== ========
 SAMPLERATE CHANNELS
