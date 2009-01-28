@@ -1,6 +1,6 @@
-================================
+===========================================
 Flumotion Transcoder Production Instalation
-================================
+===========================================
 
 Prerequisites
 =============
@@ -127,4 +127,4 @@ SQL script by running::
 
 Make sure to set the correct password in the `Transcoder Admin Configuration`_ file.
 
-.. _Transcoder Admin Configuration: configuration/admin-config.rst
+.. _Transcoder Admin Configuration: ../configuration/admin-config.rst

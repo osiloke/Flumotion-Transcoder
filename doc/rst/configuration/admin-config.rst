@@ -151,7 +151,7 @@ Usage example::
   data-file = /etc/flumotion/transcoder/transcoder-data.ini
 
 Sub-Section *admin:reports-data-source*
--------------------------------
+---------------------------------------
 
 This sub-section of the transcoder administration configuration
 is used to configure the datasource in which the transcoder
@@ -160,7 +160,7 @@ reports are stored.
 For now, only the sql datasource is supported.
 
 Property *connection-info*
-....................
+..........................
 
 Specifies the database connection string. For now, only MySQL databases are
 supported. The connection string should be of the form::
@@ -423,14 +423,14 @@ Usage example::
   users#test = salt:1bc1a361f17092bc7af4b2f82bf9194ea9ee2ca49eb2e53e39f555bc1eeaed74
 
 Sub-Section *admin:diagnosis*
--------------------------------
+-----------------------------
 
 This sub-section of admin configuration is used
 to configure the diagnosis file with definitions of files that certainly will
 fail the transcoding (e.g. text files, empty files).
 
 Property *diagnosis-file*
-...............
+.........................
 
 Specifies the diagnosis file. The file should contain information on how to
 identify files that certainly will fail when transcoded.
