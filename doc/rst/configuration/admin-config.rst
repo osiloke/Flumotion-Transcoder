@@ -150,6 +150,28 @@ Usage example::
 
   data-file = /etc/flumotion/transcoder/transcoder-data.ini
 
+Sub-Section *admin:reports-data-source*
+-------------------------------
+
+This sub-section of the transcoder administration configuration
+is used to configure the datasource in which the transcoder
+reports are stored.
+
+For now, only the sql datasource is supported.
+
+Property *connection-info*
+....................
+
+Specifies the database connection string. For now, only MySQL databases are
+supported. The connection string should be of the form::
+
+  mysql://<user>:<password>@<host>:<port>/<database>
+
+This property does not have default value, and is required.
+
+Usage example::
+
+  connection-info = mysql://transcoder:transcoderpass@database03.priv:3306/transcoder
 
 Sub-Section *admin:notifier*
 ............................
@@ -400,6 +422,25 @@ Usage example::
   users#beans = spam:1f16e7daa5261b78f64e01d4904e7eb5aa78aa09c4e9a8efb33a93913757d96b
   users#test = salt:1bc1a361f17092bc7af4b2f82bf9194ea9ee2ca49eb2e53e39f555bc1eeaed74
 
+Sub-Section *admin:diagnosis*
+-------------------------------
+
+This sub-section of admin configuration is used
+to configure the diagnosis file with definitions of files that certainly will
+fail the transcoding (e.g. text files, empty files).
+
+Property *diagnosis-file*
+...............
+
+Specifies the diagnosis file. The file should contain information on how to
+identify files that certainly will fail when transcoded.
+
+This property doesn't have default value and is required.
+
+Usage example::
+
+  diagnosis-file = /etc/flumotion/transcoder/diagnosis.conf
+
 Section *manager*
 -----------------
 
@@ -551,6 +592,9 @@ Example of *transcoder-admin.ini* file::
   [admin:data-source]
   data-file = /etc/flumotion/transcoder/transcoder-data.ini
 
+  [admin:reports-data-source]
+  connection-info = mysql://transcoder:transcoderpass@database03.priv:3306/transcoder
+
   [admin:api]
   host = localhost
   port = 7600
@@ -572,6 +616,9 @@ Example of *transcoder-admin.ini* file::
   #smtp-require-tls = True
   #smtp-username =
   #smtp-password =
+
+  [admin:diagnosis]
+  diagnosis-file = /etc/flumotion/transcoder/diagnosis.conf
 
   [manager]
   host = manager.dev

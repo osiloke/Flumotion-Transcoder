@@ -1,3 +1,12 @@
+2009-01-28  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* doc/rst/configuration/admin-config.rst:
+	* doc/rst/installation/build.rst:
+	Add sections about database and diagnostician configuration.
+
+	* doc/rst/installation/production.rst (added):
+	Add documentation about running the transcoder in production.
+
 2009-01-27  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* data/database/mysql/schema.sql:
