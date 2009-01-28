@@ -121,8 +121,7 @@ SAMPLERATE CHANNELS
 MP3
 ---
 
-Configuration
-~~~~~~~~~~~~~
+1. Configuration
 
 ================= ================================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! capsfilter caps=audio/mpeg,rate=\ *SAMPLERATE*
@@ -132,8 +131,7 @@ Muxer             identity
 ================= ================================================================================
 
 
-Tested
-~~~~~~
+2. Tested
 
 ========== ======== ==============
 SAMPLERATE CHANNELS AUDIO_KBITRATE
@@ -152,13 +150,11 @@ SAMPLERATE CHANNELS AUDIO_KBITRATE
 AAC+ / FLV
 ----------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-mcaacenc
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= =============================================================
 Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_BITRATE* header-type=raw
@@ -167,8 +163,7 @@ Audio Channels    2
 Muxer             fluflvmux
 ================= =============================================================
 
-Tested
-~~~~~~
+3. Tested
 
 ======== ========== ==============
 CHANNELS SAMPLERATE AUDIO_KBITRATE
@@ -201,13 +196,11 @@ Video Profiles
 AMRNB + H263 / 3GP
 ------------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - amrnb libraries
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ====================================
 Audio Encoder     amrnbenc
@@ -220,8 +213,7 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             ffmux_3gp
 ================= ====================================
 
-Tested
-~~~~~~
+3. Tested
 
 =========== ============ ========= =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
@@ -233,13 +225,11 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
 Sorenson + MP3 / FLV
 --------------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
@@ -252,16 +242,14 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the seeking capabilities, the output file must be indexed using
 the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-Tested
-~~~~~~
+4. Tested
 
 =========== ============ ========= ============= ======== ========== ==============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
@@ -273,13 +261,11 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_KBITR
 MP4 + AMRNB / MOV
 -----------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - amrnb libraries
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= =====================================
 Audio Encoder     amrnbenc
@@ -292,8 +278,7 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             ffmux_mov
 ================= =====================================
 
-Tested
-~~~~~~
+3. Tested
 
 =========== ============ ========= =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
@@ -305,14 +290,12 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
 VP6 + MP3 / FLV
 ---------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-vp6enc
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
@@ -325,16 +308,14 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the seeking capabilities, the output file must be indexed using
 the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-Tested
-~~~~~~
+4. Tested
 
 =========== ============ ========= ============== ======== ========== ==============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
@@ -347,15 +328,13 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 VP6 + AAC+ / FLV
 ----------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-vp6enc
  - gstreamer-fluendo-mcaacenc
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_BITRATE* header-type=raw
@@ -368,16 +347,14 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the seeking capabilities, the output file must be indexed using
 the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-Tested
-~~~~~~
+4. Tested
 
 =========== ============ ========= ============== ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
@@ -398,14 +375,12 @@ Pitfdll encoder must only be used for one target at a time.
 
 Use the next WMV+WMA/ASF profile.
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-wmaenc
  - gstreamer-fluendo-asfmux
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================
 Audio Encoder     fluwmaenc bitrate=\ *AUDIO_BITRATE*
@@ -418,8 +393,7 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluasfmux
 ================= ===========================================
 
-Tested
-~~~~~~
+3. Tested
 
 =========== ============ ========= ============= ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
@@ -431,15 +405,13 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 WMV + WMA / ASF
 ---------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-wmaenc
  - gstreamer-fluendo-wmvenc
  - gstreamer-fluendo-asfmux
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===================================
 Audio Encoder     fluwmaenc bitrate=\ *AUDIO_BITRATE*
@@ -452,8 +424,7 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluasfmux
 ================= ===================================
 
-Tested
-~~~~~~
+3. Tested
 
 =========== ============ ========= ============= ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
@@ -468,14 +439,12 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 H264 / FLV
 ----------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-mch264enc
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Video Encoder     flumch264enc bitrate=\ *VIDEO_BITRATE*
@@ -485,8 +454,7 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Tested
-~~~~~~
+3. Tested
 
 =========== ============ ========= ==============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
@@ -498,14 +466,12 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
 H264 + MP3 / FLV
 ----------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-mch264enc
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Audio Encoder     lame bitrate=\ *AUDIO_KBITRATE* ! audio/mpeg,rate=\ *SAMPLERATE* ! mp3parse
@@ -518,16 +484,14 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the seeking capabilities, the output file must be indexed using
 the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-Tested
-~~~~~~
+4. Tested
 
 =========== ============ ========= ============== ======== ========== ==============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBITRATE
@@ -549,15 +513,13 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 H264 + AAC+ / FLV
 -----------------
 
-Dependencies
-~~~~~~~~~~~~
+1. Dependencies
 
  - gstreamer-fluendo-mcaacenc
  - gstreamer-fluendo-mch264enc
  - flvlib for indexing
 
-Configuration
-~~~~~~~~~~~~~
+2. Configuration
 
 ================= ===========================================================================
 Audio Encoder     flumcaacenc he=hev2 bitrate=\ *AUDIO_BITRATE* header-type=raw
@@ -570,16 +532,14 @@ Video Height      *VIDEO_HEIGHT*
 Muxer             fluflvmux
 ================= ===========================================================================
 
-Post-Processing
-~~~~~~~~~~~~~~~
+3. Post-Processing
 
 To add the seeking capabilities, the output file must be indexed using
 the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-Tested
-~~~~~~
+4.Tested
 
 =========== ============ ========= ============= ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
