@@ -93,8 +93,8 @@ Muxer             ffmux_amr
 ================= ============
 
 
-ADPCM/MMF
----------
+ADPCM / MMF
+-----------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -104,12 +104,12 @@ Dependencies
 Configuration
 ~~~~~~~~~~~~~
 
-================= ==================
-Audio Encoder     ffenc_adpcm_yamaha
+================= ======================================================================
+Audio Encoder     capsfilter caps=audio/x-raw-int,width=16,depth=16 ! ffenc_adpcm_yamaha
 Audio Samplerate  *SAMPLERATE*
 Audio Channels    *CHANNELS*
 Muxer             ffmux_mmf
-================= ==================
+================= ======================================================================
 
 Post-Processing
 ~~~~~~~~~~~~~~~
@@ -158,11 +158,9 @@ SAMPLERATE CHANNELS AUDIO_KBITRATE
 22050      1        24
 ========== ======== ==============
 
-AAC/FLV
--------
 
-AAC+/FLV
---------
+AAC+ / FLV
+----------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -206,11 +204,12 @@ CHANNELS SAMPLERATE AUDIO_KBITRATE
 1        22050      16
 ======== ========== ==============
 
+
 Video Profiles
 ==============
 
-AMRNB+H263/3GP
---------------
+AMRNB + H263 / 3GP
+------------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -241,8 +240,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
 =========== ============ ========= =============
 
 
-Sorenson+MP3/FLV
-----------------
+Sorenson + MP3 / FLV
+--------------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -281,8 +280,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_KBITR
 =========== ============ ========= ============= ======== ========== ==============
 
 
-MP4+AMRNB/MOV
--------------
+MP4 + AMRNB / MOV
+-----------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -313,8 +312,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
 =========== ============ ========= =============
 
 
-VP6+MP3/FLV
------------
+VP6 + MP3 / FLV
+---------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -355,8 +354,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 384         288          25/1      300            2        22050      48
 =========== ============ ========= ============== ======== ========== ==============
 
-VP6+AAC/FLV
------------
+VP6 + AAC+ / FLV
+----------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -400,8 +399,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_BITR
 =========== ============ ========= ============== ======== ========== =============
 
 
-WMV+WMA/ASF (pitfdll)
----------------------
+WMV + WMA / ASF (pitfdll)
+-------------------------
 
 **!! Warning !! Deprected !!**
 
@@ -439,8 +438,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 =========== ============ ========= ============= ======== ========== =============
 
 
-WMV+WMA/ASF
------------
+WMV + WMA / ASF
+---------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -476,8 +475,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRA
 =========== ============ ========= ============= ======== ========== =============
 
 
-H.264/FLV
----------
+H264 / FLV
+----------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -506,8 +505,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE
 =========== ============ ========= ==============
 
 
-H264+MP3/FLV
-------------
+H264 + MP3 / FLV
+----------------
 
 Dependencies
 ~~~~~~~~~~~~
@@ -557,8 +556,8 @@ VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_KBIT
 =========== ============ ========= ============== ======== ========== ==============
 
 
-H264+AAC/FLV
-------------
+H264 + AAC+ / FLV
+-----------------
 
 Dependencies
 ~~~~~~~~~~~~
