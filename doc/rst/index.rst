@@ -10,10 +10,17 @@ Overview
 Installation
 ============
 
+For Development
+---------------
+
  * `Building the Transcoder`_
  * `Uninstalled Transcoder`_
  * `Installed Transcoder`_
 
+For Production
+--------------
+
+* `Install and Setup`_
 
 Configuration
 =============
@@ -59,6 +66,8 @@ Testing Procedures
 .. _Building the Transcoder: installation/build.rst
 .. _Uninstalled Transcoder: installation/uninstalled.rst
 .. _Installed Transcoder: installation/installed.rst
+
+.. _Install and Setup: installation/production.rst
 
 .. _Transcoder Admin Configuration: configuration/admin-config.rst
 .. _Configuration Placeholders: configuration/placeholders.rst
