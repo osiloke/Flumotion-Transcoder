@@ -174,7 +174,7 @@ Usage example::
   connection-info = mysql://transcoder:transcoderpass@database03.priv:3306/transcoder
 
 Sub-Section *admin:notifier*
-............................
+----------------------------
 
 This sub-section of the transcoder administration configuration
 is used to set notification related properties.
