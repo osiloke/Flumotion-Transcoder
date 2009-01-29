@@ -109,8 +109,14 @@ The database schema for the transcoder will be installed in::
 
 To create the database instance and the necessary tables you need to execute::
 
-  mysql < (cat /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/preamble.sql \
-           /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/schema.sql)
+  cat /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/preamble.sql \
+      /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/schema.sql \
+      | mysql -h HOSTNAME -u USER
+
+Where HOSTNAME and USER are the hostnmae of your database and the user you
+will user to access the database. You might not have the permission to create
+the transcoder database yourself, in which case you need to ask the DBA for
+help.
 
 Then you need to copy and modify the users configuration file::
 
@@ -121,10 +127,14 @@ Edit the line beginning with `grant` and set the password for the `transcoder`
 user. Then create the `transcoder` user in the database and remove the modified
 SQL script by running::
 
-  mysql < (cat /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/preamble.sql \
-           user_setup.sql)
+  cat /usr/share/flumotion-transcoder-X.X.X.X/database/mysql/preamble.sql \
+      user_setup.sql | mysql -h HOSTNAME -u USER
   rm user_setup.sql
 
-Make sure to set the correct password in the `Transcoder Admin Configuration`_ file.
+Here also you need to provide the correct hostname and username for the
+database connection and ask the DBA for help if necessary.
+
+Make sure to then set the correct password in the
+`Transcoder Admin Configuration`_ file.
 
 .. _Transcoder Admin Configuration: ../configuration/admin-config.rst
