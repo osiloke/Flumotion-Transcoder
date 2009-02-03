@@ -1,3 +1,13 @@
+2009-02-03  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* doc/rst/testing/functional-testing.rst:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datasource/filesource.py:
+	* flumotion/transcoder/admin/datastore/notification.py:
+	Fix the incomplete refactoring when renaming requestTemplate to
+	urlTemplate. add a test case for the HTTP notifications.
+
 2009-01-28  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* doc/rst/configuration/admin-config.rst:

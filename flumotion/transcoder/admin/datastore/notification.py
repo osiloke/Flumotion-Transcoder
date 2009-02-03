@@ -111,7 +111,7 @@ class MailNotificationStore(NotificationStore):
 class HTTPNotificationStore(NotificationStore):
     implements(IHTTPNotificationStore)
 
-    urlTemplate = base.ReadOnlyProxy("requestTemplate")
+    urlTemplate = base.ReadOnlyProxy("urlTemplate")
 
     def __init__(self, parentStore, data, adminStore, custStore, profStore, targStore):
         label = "HTTP Notification to %s" % data.urlTemplate

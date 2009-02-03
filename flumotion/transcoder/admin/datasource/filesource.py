@@ -281,7 +281,7 @@ REQ_NOT_TMPL = {'type': NotificationTypeEnum.http_request,
                 'timeout': None,
                 'retryMax': None,
                 'retrySleep': None,
-                'requestTemplate': None}
+                'urlTemplate': None}
 
 
 SQL_NOT_TMPL = {'type': NotificationTypeEnum.sql,
@@ -307,7 +307,7 @@ def _createReqNotif(wrapper, succeed, reqTmpl):
         trigger = NotificationTriggerEnum.failed
     fields = utils.deepCopy(REQ_NOT_TMPL)
     fields['triggers'] = set([trigger])
-    fields['requestTemplate'] = reqTmpl
+    fields['urlTemplate'] = reqTmpl
     ident = (wrapper.identifier, trigger, "req")
     return ImmutableWrapper(ident, fields)
 

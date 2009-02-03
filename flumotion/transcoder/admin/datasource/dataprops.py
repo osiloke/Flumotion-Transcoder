@@ -268,8 +268,8 @@ class CustomerData(properties.RootPropertyBag):
 
     # HTTP GET requests to perform when a source file has been
     # successfully transcoded or failed with this profile.
-    notify-done-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelFile)s&status=%(success)d
-    notify-failed-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelFile)s&status=%(success)d
+    notify-done-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelPath)s&status=%(success)d
+    notify-failed-requests#01 = http://backoffice.flumotion.com/cgi?file=%(inputRelPath)s&status=%(success)d
 
     # Recipients of the mail send when a transcodification fail for this profile
     notify-failed-mail-recipients = Sebastien Merle <sebastien@fluendo.com>

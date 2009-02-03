@@ -144,16 +144,17 @@ Other Profiles
 --------------
 
 These profiles are only used to have more than one *file-monitor*
-component to test component load balancing.
-They are copies of the *basic* profiles.
+component to test component load balancing or when testing specific properties
+of the profiles.
+They are copies of the *basic* profile with some additional properties set.
 
 The profiles configuration can be found at::
 
-  /home/file/testing/transcoder/profiles/functional/other.ini
+  /home/file/testing/transcoder/profiles/functional/
 
 The incoming directory is::
 
-  /home/file/testing/transcoder/roots/functional/other/files/incoming/audio
+  /home/file/testing/transcoder/roots/functional/<profile_name>/files/incoming/audio
 
 Test Cases
 ==========
@@ -629,6 +630,77 @@ Profiles to use: *basic.ini* and *other.ini*
 |`Simple Transcoding`_)        |                              |
 +------------------------------+------------------------------+
 				                              
+HTTP Notifications
+------------------
+
+Profiles to use: *notifyhttp.ini*. Start a command to listen on port 1700
+on the manager1.p4.fsp.fluendo.lan machine. The recommened command is
+`nc -l 17000`.
+
++------------------------------+--------------------------------------+
+|Actions                       |Expectations                          |
++==============================+======================================+
+|                              |A *file-monitor* components           |
+|                              |for the profile from           	      |
+|                              |*httpnotify.ini* is running    	      |
+|                              |and happy, and it does not     	      |
+|                              |have any files pending or      	      |
+|                              |queued. You are listening on   	      |
+|                              |port 17000 on                  	      |
+|                              |manager1.p4.fsp.fluendo.lan    	      |
++------------------------------+--------------------------------------+
+|Transcode an audio file (See  |Transcoding should succeed.	      |
+|`Simple Transcoding`_)        |You should recieve a line in	      |
+|                              |the listening process in the	      |
+|                              |format of::                           |
+|                              |  GET /?file=<name>&status=1 HTTP/1.0 |
+|                              |  Host: manager1.p4.fsp.fluendo.lan   |
+|                              |  User-Agent: Flumotion Transcoder    |
++------------------------------+--------------------------------------+
+|Transcode an incorrect file   |Transcoding should fail.              |
+|(for instance a text file)    |You should recieve a line in          |
+|                              |the listening process in the   	      |
+|                              |format of::                           |
+|                              |  GET /?file=<name>&status=0 HTTP/1.0 |
+|                              |  Host: manager1.p4.fsp.fluendo.lan   |
+|                              |  User-Agent: Flumotion Transcoder    |
++------------------------------+--------------------------------------+
+
+.. SQL Notifications
+.. ------------------
+
+.. Profiles to use: *notifysql.ini*. Start a command to listen on port 1700
+.. on the manager1.p4.fsp.fluendo.lan machine. The recommened command is
+.. `nc -l 17000`.
+
+.. +------------------------------+--------------------------------------+
+.. |Actions                       |Expectations                          |
+.. +==============================+======================================+
+.. |                              |A *file-monitor* components           |
+.. |                              |for the profile from           	      |
+.. |                              |*httpnotify.ini* is running    	      |
+.. |                              |and happy, and it does not     	      |
+.. |                              |have any files pending or      	      |
+.. |                              |queued. You are listening on   	      |
+.. |                              |port 17000 on                  	      |
+.. |                              |manager1.p4.fsp.fluendo.lan    	      |
+.. +------------------------------+--------------------------------------+
+.. |Transcode an audio file (See  |Transcoding should succeed.	      |
+.. |`Simple Transcoding`_)        |You should recieve a line in	      |
+.. |                              |the listening process in the	      |
+.. |                              |format of::                           |
+.. |                              |  GET /?file=<name>&status=1 HTTP/1.0 |
+.. |                              |  Host: manager1.p4.fsp.fluendo.lan   |
+.. |                              |  User-Agent: Flumotion Transcoder    |
+.. +------------------------------+--------------------------------------+
+.. |Transcode an incorrect file   |Transcoding should fail.              |
+.. |(for instance a text file)    |You should recieve a line in          |
+.. |                              |the listening process in the   	      |
+.. |                              |format of::                           |
+.. |                              |  GET /?file=<name>&status=0 HTTP/1.0 |
+.. |                              |  Host: manager1.p4.fsp.fluendo.lan   |
+.. |                              |  User-Agent: Flumotion Transcoder    |
+.. +------------------------------+--------------------------------------+								      
 				                              
 
 .. _Testing Media Sets: media-sets.rst

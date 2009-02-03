@@ -357,7 +357,7 @@ class IInformationSource(IDataSource):
                     of list of tuple with (name, email)
                     where name can be None
             For type == NotificationTypeEnum.http_request:
-                requestTemplate (str)
+                urlTemplate (str)
             For type == NotificationTypeEnum.sql:
                 databaseURI (str)
                 sqlTemplate (str)
