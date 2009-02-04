@@ -1,3 +1,10 @@
+2009-02-04  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* doc/rst/testing/functional-testing.rst:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	Add testcases for HTTP Get notifier and SQL notifier and sync
+	commments with the codechanges.
+
 2009-02-03  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* doc/rst/testing/functional-testing.rst:

@@ -254,17 +254,12 @@ class CustomerData(properties.RootPropertyBag):
     #done-report-dir = /fluendo/reports/done/default/profile/
 
     # Notification Parameters
-    notify#database-module = MySQLdb
-    notify#database-host = localhost
-    notify#database-port = 3306
-    notify#database-username = user
-    notify#database-password = test
-    notify#database-name = database
+    notify#database-uri = mysql://user:test@localhost:3306/database
 
     # SQL to execute when a source file has been
     # successfully transcoded or failed with this profile
-    notify-done-sql#01 = 'INSERT INTO succeed (\'%(inputRelFile)s\')'
-    notify-failed-sql#01 = 'INSERT INTO failed (\'%(inputRelFile)s\')'
+    notify-done-sql#01 = INSERT INTO succeed VALUES('%(inputRelFile)s')
+    notify-failed-sql#01 = INSERT INTO failed VALUES('%(inputRelFile)s')
 
     # HTTP GET requests to perform when a source file has been
     # successfully transcoded or failed with this profile.
@@ -321,7 +316,7 @@ class CustomerData(properties.RootPropertyBag):
 
     # SQL to execute when when this target
     # has been successfuly transcoded.
-    notify-done-sql#01 = 'INSERT INTO succeed (\'%(outputRelFile)s\')'
+    notify-done-sql#01 = INSERT INTO succeed VALUES('%(outputRelFile)s')
 
     # The HTTP GET Requests to perform when this target
     # has been successfuly transcoded.
