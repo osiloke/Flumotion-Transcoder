@@ -90,10 +90,10 @@ can be used:
   admin, workers and manager on the corresponding machines.
   It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  should be used:: 
+  should be used::
 
     /home/file/testing/transcoder/bin/stop-all -u root
- 
+
 *cleanup-all*:
 
   It will clean all transcoder files on the different machines.
@@ -104,7 +104,7 @@ can be used:
   by copied to a safe place before running this command.
   It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  should be used:: 
+  should be used::
 
     /home/file/testing/transcoder/bin/cleanup-all -u root
 
@@ -114,7 +114,7 @@ can be used:
   workers and admin on the corresponding machines
   It can be executed from any machine including your local
   machine, and if not executed as root, the *-u* option
-  should be used:: 
+  should be used::
 
     /home/file/testing/transcoder/bin/start-all -u root
 
@@ -629,7 +629,7 @@ Profiles to use: *basic.ini* and *other.ini*
 |Transcode an audio file (See  |Transcoding should succeed.   |
 |`Simple Transcoding`_)        |                              |
 +------------------------------+------------------------------+
-				                              
+
 HTTP Notifications
 ------------------
 
@@ -693,13 +693,45 @@ are::
 |                              |queued.                               |
 +------------------------------+--------------------------------------+
 |Transcode an audio file (See  |Transcoding should succeed.  You      |
-|`Simple Transcoding`_)        |should see an entry in the succeeded  |    
+|`Simple Transcoding`_)        |should see an entry in the succeeded  |
 |                              |database table with the file name.    |
 +------------------------------+--------------------------------------+
 |Transcode an incorrect file   |Transcoding should fail.  You should  |
 |(for instance a text file)    |see an entry in the failed database   |
 |                              |table with the file name.             |
 +------------------------------+--------------------------------------+
-				                              
+
+
+HTTP Notifications Resuming
+---------------------------
+
+Profiles to use: *notifyhttp.ini*. DO NOT start a command to listen
+on ports 17000 and 17001 on the manager1.p4.fsp.fluendo.lan machine.
+
++------------------------------+-----------------------------------------------+
+|Actions                       |Expectations                                   |
++==============================+===============================================+
+|                              |A *file-monitor* components                    |
+|                              |for the profile from           	               |
+|                              |*httpnotify.ini* is running    	               |
+|                              |and happy, and it does not     	               |
+|                              |have any files pending or      	               |
+|                              |queued. You are listening on   	               |
+|                              |port 17000 on                  	               |
+|                              |manager1.p4.fsp.fluendo.lan    	               |
++------------------------------+-----------------------------------------------+
+|Transcode an audio file (See  |Transcoding should succeed.	                   |
+|`Simple Transcoding`_)        |A new activity file for notification should    |
+|                              |have been created in::                         |
+|                              | /var/cache/flumotion/transcoder/activities    |
+|                              |The HTTP notification should fail because      |
+|                              |nothing is listening.                          |
++------------------------------+-----------------------------------------------+
+|Restart the transcoder admin  |The transcoder should retry the HTTP request   |
+|with the command *service     |until the maximum retrie count is reached.     |
+|flumotion-transcoder-admin    |(Check the log)                                |
+|stop*                         |                                               |
++------------------------------+-----------------------------------------------+
+
 
 .. _Testing Media Sets: media-sets.rst

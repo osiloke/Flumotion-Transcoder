@@ -1,6 +1,6 @@
-=======================================
-Configure the Transcoder Administration
-=======================================
+========================
+Configure the Transcoder
+========================
 
 .. sectnum::
 
@@ -539,7 +539,7 @@ Configuration Example
 Example of *transcoder-data.ini* file::
 
   [HEADER]
-  version = 1.0
+  version = 1.1
 
   [global]
   access-force-group = file
