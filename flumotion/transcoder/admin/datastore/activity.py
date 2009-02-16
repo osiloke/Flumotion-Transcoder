@@ -245,7 +245,7 @@ class NotificationActivityStore(ActivityStore):
 class HTTPActivityStore(NotificationActivityStore):
     implements(IHTTPActivityStore)
 
-    url = ReadWriteDataProxy("requestURL")
+    url = ReadWriteDataProxy("request-url")
 
     def __init__(self, logger, stateStore, data, isNew=True):
         NotificationActivityStore.__init__(self, logger, stateStore, data, isNew)
@@ -254,7 +254,7 @@ class HTTPActivityStore(NotificationActivityStore):
 class MailActivityStore(NotificationActivityStore):
     implements(IMailActivityStore)
 
-    senderAddr = ReadWriteDataProxy("senderAddr")
+    senderAddr = ReadWriteDataProxy("sender-addr")
     subject    = ReadWriteDataProxy("subject")
     body       = ReadWriteDataProxy("body")
 

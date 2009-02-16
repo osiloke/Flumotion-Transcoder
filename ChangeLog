@@ -1,3 +1,9 @@
+2009-02-16  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/transcoder/admin/datastore/activity.py:
+	Fixed the custom data fields for activities to be lower case.
+	Mixed case is not supported.
+
 2009-02-04  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* doc/rst/testing/functional-testing.rst:
