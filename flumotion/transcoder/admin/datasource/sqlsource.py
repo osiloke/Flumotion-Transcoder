@@ -96,7 +96,7 @@ VALUES
     def initialize(self):
         self.debug("Initializing SQL Data Source")
         self._connection.open(self._connectionInfo)
-        self.debug("Opened an SQL connection to %s", self._connectionInfo)
+        self.debug("Opened an SQL connection to %s", database.filter_uri(self._connectionInfo))
         return defer.succeed(None)
 
     def newTranscodeReport(self):

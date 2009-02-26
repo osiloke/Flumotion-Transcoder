@@ -1,3 +1,8 @@
+2009-02-26  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/transcoder/admin/datasource/sqlsource.py:
+	Don't print password to the log.
+
 2009-02-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/datastore/activity.py:
