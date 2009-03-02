@@ -163,7 +163,23 @@ Audio Channels    2
 Muxer             fluflvmux
 ================= =============================================================
 
-3. Tested
+5. Limitations
+
+AUDIO_BITRATE limitations:
+
+========== ======== =========== ===========
+Samplerate Channels Min Bitrate Max Bitrate
+========== ======== =========== ===========
+ 16000 Hz      2     10000 bps   40000 bps
+ 22050 Hz      2     10000 bps   48000 bps
+ 24000 Hz      2     10000 bps   48000 bps
+ 32000 Hz      2     16000 bps   56000 bps
+ 44100 Hz      2     16000 bps   64000 bps
+ 48000 Hz      2     16000 bps   64000 bps
+========== ======== =========== ===========
+                                
+
+4. Tested
 
 ======== ========== ==============
 CHANNELS SAMPLERATE AUDIO_KBITRATE
@@ -354,7 +370,22 @@ the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-4. Tested
+4. Limitations
+
+AUDIO_BITRATE limitations:
+
+========== ======== =========== ===========
+Samplerate Channels Min Bitrate Max Bitrate
+========== ======== =========== ===========
+ 16000 Hz      2     10000 bps   40000 bps
+ 22050 Hz      2     10000 bps   48000 bps
+ 24000 Hz      2     10000 bps   48000 bps
+ 32000 Hz      2     16000 bps   56000 bps
+ 44100 Hz      2     16000 bps   64000 bps
+ 48000 Hz      2     16000 bps   64000 bps
+========== ======== =========== ===========
+
+5. Tested
 
 =========== ============ ========= ============== ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_KBITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
@@ -539,7 +570,22 @@ the following command should be executed as a post-processing::
 
     index-flv -U %(outputWorkPath)s
 
-4.Tested
+4. Limitations
+
+AUDIO_BITRATE limitations:
+
+========== ======== =========== ===========
+Samplerate Channels Min Bitrate Max Bitrate
+========== ======== =========== ===========
+ 16000 Hz      2     10000 bps   40000 bps
+ 22050 Hz      2     10000 bps   48000 bps
+ 24000 Hz      2     10000 bps   48000 bps
+ 32000 Hz      2     16000 bps   56000 bps
+ 44100 Hz      2     16000 bps   64000 bps
+ 48000 Hz      2     16000 bps   64000 bps
+========== ======== =========== ===========
+
+5.Tested
 
 =========== ============ ========= ============= ======== ========== =============
 VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE CHANNELS SAMPLERATE AUDIO_BITRATE
