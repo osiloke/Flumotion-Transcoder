@@ -183,7 +183,6 @@ class Analyzer(object):
 
         self.bus = None
         self.ppl = None
-        self.fakesink = None
 
         self.info = None
 
@@ -228,10 +227,6 @@ class Analyzer(object):
 
         gst.debug('pipeline created')
 
-        # adding an (unconnected!?) fakesink, as seen in PiTiVi's discoverer
-        self.fakesink = gst.element_factory_make('fakesink')
-        self.ppl.add(self.fakesink)
-
         self.bus = self.ppl.get_bus()
         self._connect(self.bus, 'message', self._cb_bus_message)
 
@@ -265,7 +260,8 @@ class Analyzer(object):
     def _maybe_finish(self):
         if self.all_pads and not self.pending:
             gst.debug('finished, calling _finish')
-            reactor.callLater(0.0, self._finish)
+            # Prevent calls from gstreamer threads
+            reactor.callFromThread(self._finish)
 
     def _finish(self, error=None):
         if self.done:
@@ -288,8 +284,6 @@ class Analyzer(object):
 
         if self.ppl:
             self.ppl.set_state(gst.STATE_NULL)
-        if self.fakesink:
-            self.fakesink.set_state(gst.STATE_NULL)
 
         if not error:
             # check if there's anything in the info, if so then add tags,
@@ -374,10 +368,6 @@ class Analyzer(object):
     def _cb_no_more_pads(self, element):
         gst.debug('no more pads')
         self.all_pads = True
-        if self.fakesink:
-            self.fakesink.set_state(gst.STATE_NULL)
-            self.ppl.remove(self.fakesink)
-            self.fakesink = None
         self._maybe_finish()
 
     def _cb_unknown_type(self, element, pad, caps):
@@ -399,7 +389,8 @@ class Analyzer(object):
             self.pending.remove(pad)
         except ValueError:
             pass
-        self._pad_analysed(pad, caps)
+        else:
+            self._pad_analysed(pad, caps)
 
     def _cb_notify_caps_tfind(self, pad, smth):
         gst.debug('notified caps: %r, %r, %r' % (pad, smth,
@@ -495,10 +486,19 @@ class Lab(object):
 
 def main(fpath):
     an = Analyzer(fpath)
+    print "%s: " % fpath,
+    sys.stdout.flush()
     d = an.analyze()
 
     def done(result):
-        print result
+        if not isinstance(result, MediaInfo):
+            print "ERROR"
+            print result
+        else:
+            print ("%d audio, %d video, %d other, %s"
+                   % (len(result.audio), len(result.video),
+                      len(result.other), result.mimetype))
+            print >> sys.stderr, result
         reactor.stop()
 
     d.addBoth(done)
