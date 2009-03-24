@@ -173,7 +173,7 @@ class PatchedDiscovererAdapter(DiscovererAdapter):
 
 
 class Analyzer(object):
-    timeout = 10.0
+    timeout = 30.0
     error_details = False
 
     def __init__(self, fpath, timeout=None):
