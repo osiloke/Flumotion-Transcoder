@@ -74,6 +74,9 @@ def parse_options(args):
                       action="store", dest="rundir",
                       help="flumotion run directory (default: %s)" %
                       configure.rundir)
+    parser.add_option('-T', '--tag',
+                      action="store", dest="tag", default=None,
+                      help="service tag, used to start more than one service")
 
     options, args = parser.parse_args(args)
 
@@ -110,11 +113,18 @@ def main(args):
 
     options, sourcePath, targetPath = parse_options(args)
 
+    if options.tag:
+        global LOG_CATEGORY
+        tag = "-%s" % options.tag
+        LOG_CATEGORY = LOG_CATEGORY + tag
+    else:
+        tag = ""
+
     if options.debug:
         log.setFluDebug(options.debug)
 
     if options.daemonize:
-        possess(options.daemonizeTo)
+        possess(tag, options.daemonizeTo)
 
     reactor.callLater(0.1, start, sourcePath, targetPath,
                       options.period, options.threshold,
@@ -122,7 +132,7 @@ def main(args):
     reactor.run()
 
     if options.daemonize:
-        exorcize()
+        exorcize(tag)
 
 def start(sourcePath, targetPath, period, threshold, count, postfix):
     try:
@@ -204,21 +214,21 @@ def ensureDirExists(dir):
             raise CreateDirError("Could not create directory '%s': %s"
                                  % (dir, log.getExceptionMessage(e)))
 
-def possess(daemonizeTo=None):
+def possess(tag, daemonizeTo=None):
     ensureDirExists(configure.logdir)
     ensureDirExists(configure.rundir)
     if not daemonizeTo:
         daemonizeTo = '/'
 
-    pid = process.getPid('progressive-move')
+    pid = process.getPid('progressive-move' + tag)
     if pid:
         if process.checkPidRunning(pid):
-            raise Exception('A progressive-move is already running '
-                            + 'as pid %d' % pid)
+            raise Exception('A progressive-move%s is already running '
+                            'as pid %d' % (tag, pid))
         else:
-            warning("progressive-move should have been "
-                    "running with pid %s.  Restarting", str(pid))
-            process.deletePidFile('progressive-move')
+            warning("progressive-move%s should have been "
+                    "running with pid %s.  Restarting", tag, str(pid))
+            process.deletePidFile('progressive-move' + tag)
 
     logPath = os.path.join(configure.logdir, 'progressive-move.log')
 
@@ -232,11 +242,11 @@ def possess(daemonizeTo=None):
 
     # from now on I should keep running, whatever happens
     debug('writing pid file')
-    process.writePidFile('progressive-move')
+    process.writePidFile('progressive-move' + tag)
 
-def exorcize():
+def exorcize(tag):
     debug('deleting pid file')
-    process.deletePidFile('progressive-move')
+    process.deletePidFile('progressive-move' + tag)
 
 if __name__ == "__main__":
     try:
