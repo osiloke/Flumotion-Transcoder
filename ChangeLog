@@ -1,6 +1,12 @@
 2009-03-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* bin/flumotion-progressive-move:
+	Fixed the progressive move script to handle links,
+	and removed mp3 as a default postfix.
+
+2009-03-25  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/flumotion-progressive-move:
 	Updated the progressive move script to be able to start more
 	than one instance at the same time.
 

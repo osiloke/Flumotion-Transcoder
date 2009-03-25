@@ -18,7 +18,7 @@ VERSION = 0.1
 DEFAULT_THRESHOLD = 100
 DEFAULT_MOVE_COUNT = 50
 DEFAULT_PERIOD = 60
-DEFAULT_POSTFIX = ".mp3"
+DEFAULT_POSTFIX = ""
 LOG_CATEGORY = "progressive-move"
 
 def debug(format, *args):
@@ -163,8 +163,10 @@ def move_files(sourcePath, targetPath, count, postfix):
     def step(done, dirname, content):
         for f in content:
             absPath = os.path.join(dirname, f)
-            if not os.path.isfile(absPath): continue
-            if not absPath.endswith(postfix): continue
+            if not (os.path.isfile(absPath) or os.path.islink(absPath)):
+                continue
+            if not (postfix or absPath.endswith(postfix)):
+                continue
             if not absPath.startswith(sourcePath):
                 warning("Invalid source path '%s'", absPath)
                 continue
