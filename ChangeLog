@@ -1,3 +1,10 @@
+2009-03-26  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/disco2.py:
+	Made the discoverer timeout bigger again.
+	For the transcoder it's worst to fail under load because of a timeout
+	than taking too much time to discover a file.
+
 2009-03-25  Sebastien Merle  <sebastien@fluendo.com>
 
 	* bin/flumotion-progressive-move:
