@@ -1,5 +1,10 @@
 2009-03-30  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/admin.py:
+	Removed a forgotten print statment.
+
+2009-03-30  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/component/transcoder/analyst.py:
 	Ensure the errback is called even in cases of unexpected errors.
 

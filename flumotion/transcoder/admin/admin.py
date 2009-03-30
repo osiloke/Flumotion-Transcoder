@@ -451,7 +451,6 @@ class TranscoderAdmin(log.Loggable):
         notifyDebug(msg, info=text, debug=debug)
         log.notifyFailure(self, failure, "Failure during component message diagnostic")
 
-        print "File Types: %s" % self.file_types
     def __fileStateChanged(self, montask, profCtx, state):
 
         def changeState(newState):
