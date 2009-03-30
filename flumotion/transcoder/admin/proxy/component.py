@@ -525,11 +525,6 @@ class BaseComponentProxy(base.BaseProxy):
             status["already_killed"] = True
             self.__asyncForceStop(None, status, label, resultDef)
             return
-        status["kill-retries"] = status.setdefault("Kill-retries", 0) + 1
-        if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
-            # if kill fail, theres nothing we can do, do we ?
-            self.__deletionFailed(status, label, resultDef)
-            return
         # Failed to kill, try again to stop or delete
         self.__stopOrDelete(None, status,
                             label, resultDef)
@@ -556,6 +551,11 @@ class BaseComponentProxy(base.BaseProxy):
                 self.__deletionFailed(status, label, resultDef)
                 return
             # If we already tried too much, kill the component
+            status["kill-retries"] = status.setdefault("kill-retries", 0) + 1
+            if status["kill-retries"] > adminconsts.FORCED_DELETION_MAX_RETRY:
+                # if kill fail, theres nothing we can do, do we ?
+                self.__deletionFailed(status, label, resultDef)
+                return
             d = self.kill()
             args = (status, label, resultDef)
             d.addCallbacks(self.__asyncRetryKillIfNeeded,

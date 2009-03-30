@@ -1,5 +1,11 @@
 2009-03-30  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/transcoder/admin/proxy/component.py:
+	Fix that prevent asking the mananger to stop a component ad vitam aeternam
+	when killing a component fail with OrphanComponentError.
+
+2009-03-30  Sebastien Merle  <sebastien@fluendo.com>
+
 	* flumotion/transcoder/admin/admin.py:
 	Removed a forgotten print statment.
 
