@@ -203,23 +203,31 @@ class NewMediaAnalyst(MediaAnalyst):
 
         def an_cb(minfo, analyzer):
             filePath, deferred, to = self._pending.pop(analyzer)
-            if minfo.audio or minfo.video:
-                deferred.callback(MediaAnalysis(filePath,
-                                                DiscovererAdapter(minfo)))
-            else:
-                msg = "Analyzed file is not a known media type"
-                error = MediaAnalysisUnknownTypeError(msg, filePath)
-                deferred.errback(error)
+            try:
+                if minfo.audio or minfo.video:
+                    deferred.callback(MediaAnalysis(filePath,
+                                                    DiscovererAdapter(minfo)))
+                else:
+                    msg = "Analyzed file is not a known media type"
+                    error = MediaAnalysisUnknownTypeError(msg, filePath)
+                    deferred.errback(error)
+            except Exception, e:
+                # Be sure to call the errback in case of unexpected errors
+                deferred.errback(e)
 
         def an_eb(failure, analyzer):
             filePath, deferred, to = self._pending.pop(analyzer)
-            if failure.check(AnalysisTimeoutError):
-                msg = "Media analyse timeout"
-                error = MediaAnalysisTimeoutError(msg, filePath)
-            else:
-                msg = "Analyzed file is not a known media type"
-                error = MediaAnalysisUnknownTypeError(msg, filePath)
-            deferred.errback(error)
+            try:
+                if failure.check(AnalysisTimeoutError):
+                    msg = "Media analyse timeout"
+                    error = MediaAnalysisTimeoutError(msg, filePath)
+                else:
+                    msg = "Analyzed file is not a known media type"
+                    error = MediaAnalysisUnknownTypeError(msg, filePath)
+                deferred.errback(error)
+            except Exception, e:
+                # Be sure to call the errback in case of unexpected errors
+                deferred.errback(e)
 
         d = an.analyze()
         d.addCallbacks(an_cb, an_eb, callbackArgs=(an,), errbackArgs=(an,))
