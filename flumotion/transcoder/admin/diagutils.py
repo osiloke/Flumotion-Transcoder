@@ -215,7 +215,7 @@ def __buildPipeline(sourceInfo, targetsInfo=[], withAudio=True, withVideo=True):
         audioReference = ""
         videoReference = ""
         sourceLocation = utils.mkCmdArg(sourceFile, "location=")
-        pipeline += "filesrc " + sourceLocation + " ! decodebin"
+        pipeline += "filesrc " + sourceLocation + " ! decodebin2"
         if not isTranscodingPipline:
             if withVideo:
                 if withAudio:
