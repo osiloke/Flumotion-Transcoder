@@ -1,3 +1,12 @@
+2009-04-16  Sebastien Merle  <sebastien@fluendo.com>
+
+	* bin/Makefile.am:
+	* bin/flumotion-progressive-move:
+	* configure.ac:
+	* bin/flumotion-progressive-move.in (added):
+	* bin/flumotion-progressive-move (deleted):
+	Fixed make distcheck.
+
 2009-03-30  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/transcoder/admin/diagutils.py:

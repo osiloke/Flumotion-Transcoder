@@ -65,6 +65,7 @@ FLUMOTION_SETUP(misc/setup.py, $FLUMOTION_DIR, $PREAMBLE, "transcoder")
 AC_CONFIG_FILES([env], [chmod +x env])
 AC_CONFIG_FILES([bin/flumotion-transcoder-admin], [chmod +x bin/flumotion-transcoder-admin])
 AC_CONFIG_FILES([bin/flumotion-transcoder-upgrade], [chmod +x bin/flumotion-transcoder-upgrade])
+AC_CONFIG_FILES([bin/flumotion-progressive-move], [chmod +x bin/flumotion-progressive-move])
 
 AC_OUTPUT(
 Makefile
