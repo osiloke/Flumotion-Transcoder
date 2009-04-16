@@ -1,5 +1,10 @@
 2009-04-16  Sebastien Merle  <sebastien@fluendo.com>
 
+	* flumotion/component/transcoder/binmaker.py:
+	Moved the rate element before convert, resample and ffmpegcs.
+
+2009-04-16  Sebastien Merle  <sebastien@fluendo.com>
+
 	* bin/Makefile.am:
 	* bin/flumotion-progressive-move:
 	* configure.ac:

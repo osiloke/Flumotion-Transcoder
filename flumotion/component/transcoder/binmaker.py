@@ -79,17 +79,18 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     inqueue.props.max_size_buffers = 200
     pipelineParts.append("queue")
 
-    # audioconvert element
-    convert = gst.element_factory_make("audioconvert",
-                                       "audioconvert-%s" % tag)
-    pipelineParts.append("audioconvert")
-
     # audiorate element
     if withRateControl:
         rate = gst.element_factory_make("audiorate", "audiorate-%s" % tag)
         pipelineParts.append("audiorate")
     else:
         rate = None
+
+    # audioconvert element
+    convert = gst.element_factory_make("audioconvert",
+                                       "audioconvert-%s" % tag)
+    pipelineParts.append("audioconvert")
+
 
     # audioresample element
     resample = gst.element_factory_make("audioresample",
@@ -132,9 +133,9 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     pipelineParts.append("queue")
 
     if rate:
-        bin.add(inqueue, convert, rate, resample,
+        bin.add(inqueue, rate, convert, resample,
                 capsfilter, encode, outqueue)
-        gst.element_link_many(inqueue, convert, rate, resample,
+        gst.element_link_many(inqueue, rate, convert, resample,
                               capsfilter, encode, outqueue)
     else:
         bin.add(inqueue, convert, resample,
