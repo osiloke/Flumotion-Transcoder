@@ -1,3 +1,9 @@
+2009-04-20  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/compconsts.py:
+	Made the timeout for pipeline playing bigger.
+	Prevent failures on loaded servers with profile with many targets.
+
 2009-04-16  Sebastien Merle  <sebastien@fluendo.com>
 
 	* configure.ac:

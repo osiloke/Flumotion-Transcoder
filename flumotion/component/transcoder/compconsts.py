@@ -36,7 +36,9 @@ TARGET_ANALYSE_TIMEOUT = 60
 # transcoding pipeline state to PLAYING failed
 TRANSCODER_PLAY_ERROR_TIMEOUT = 20
 # Maximum time to wait for the transcoding pipeline to change to PLAYING state
-TRANSCODER_PLAYING_TIMEOUT = 60
+# It's big to prevent failures when servers are loaded with profiles with
+# many transcoding targets
+TRANSCODER_PLAYING_TIMEOUT = 120
 # Maximum time producers have to prepare the transcoding task
 TRANSCODER_PREPARE_TIMEOUT = 60
 # Maximum time producers have to update the transcoding pipeline
