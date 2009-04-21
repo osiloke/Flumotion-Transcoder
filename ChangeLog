@@ -1,3 +1,8 @@
+2009-04-21  Sebastien Merle  <sebastien@fluendo.com>
+
+	* doc/rst/installation/production.rst:
+	Updated installation documentation.
+
 2009-04-20  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/compconsts.py:

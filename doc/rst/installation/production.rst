@@ -35,18 +35,22 @@ of packages installed on the flumotion platform is:
   - gstreamer-pitfdll
   - win32-codecs
   - win32-codecs-encoders
+  - gstreamer-fluendo-aacdec
+  - gstreamer-fluendo-ac3dec
   - gstreamer-fluendo-asfdemux
   - gstreamer-fluendo-asfmux
   - gstreamer-fluendo-flvmux
+  - gstreamer-fluendo-h264dec
   - gstreamer-fluendo-isodemux
-  - gstreamer-fluendo-mcaacdec
+  - gstreamer-fluendo-lpcmdec
   - gstreamer-fluendo-mcaacenc
-  - gstreamer-fluendo-mch264dec
   - gstreamer-fluendo-mch264enc
   - gstreamer-fluendo-mpeg2video
   - gstreamer-fluendo-mpeg4video
   - gstreamer-fluendo-mpegdemux
   - gstreamer-fluendo-qcp
+  - gstreamer-fluendo-sorensondec
+  - gstreamer-fluendo-vp6dec
   - gstreamer-fluendo-vp6enc
   - gstreamer-fluendo-wmadec
   - gstreamer-fluendo-wmaenc
@@ -54,7 +58,10 @@ of packages installed on the flumotion platform is:
   - gstreamer-fluendo-wmvenc
   - mmf-crc
   - flvlib
-
+  - python-twisted-core
+  - python-twisted-names
+  - python-twisted-mail
+  - python-twisted-web
 
 To install all these packages use the following command::
 
@@ -62,37 +69,28 @@ To install all these packages use the following command::
   gstreamer-plugins-base gstreamer-plugins-good gstreamer-plugins-bad \
   gstreamer-plugins-ugly gstreamer-python gstreamer-tools gstreamer-ffmpeg \
   gstreamer-pitfdll win32-codecs win32-codecs-encoders \
+  gstreamer-fluendo-aacdec gstreamer-fluendo-ac3dec \
   gstreamer-fluendo-asfdemux gstreamer-fluendo-asfmux \
-  gstreamer-fluendo-flvmux gstreamer-fluendo-isodemux \
-  gstreamer-fluendo-mcaacdec gstreamer-fluendo-mcaacenc \
-  gstreamer-fluendo-mch264dec gstreamer-fluendo-mch264enc \
+  gstreamer-fluendo-flvmux gstreamer-fluendo-h264dec \
+  gstreamer-fluendo-isodemux gstreamer-fluendo-lpcmdec \
+  gstreamer-fluendo-mcaacenc gstreamer-fluendo-mch264enc \
   gstreamer-fluendo-mpeg2video gstreamer-fluendo-mpeg4video \
-  gstreamer-fluendo-mpegdemux gstreamer-fluendo-qcp gstreamer-fluendo-vp6enc \
-  gstreamer-fluendo-wmadec gstreamer-fluendo-wmaenc gstreamer-fluendo-wmvdec \
-  gstreamer-fluendo-wmvenc mmf-crc flvlib
+  gstreamer-fluendo-mpegdemux gstreamer-fluendo-qcp \
+  gstreamer-fluendo-sorensondec gstreamer-fluendo-vp6dec \
+  gstreamer-fluendo-vp6enc gstreamer-fluendo-wmadec gstreamer-fluendo-wmaenc\
+  gstreamer-fluendo-wmvdec gstreamer-fluendo-wmvenc mmf-crc flvlib \
+  python-twisted-core python-twisted-names python-twisted-mail \
+  python-twisted-web
 
 To install the debug packages use the following command::
 
-  yum install  flumotion-debuginfo gstreamer-debuginfo \
+  yum install flumotion-debuginfo flumotion-inhouse-debuginfo \
+  flumotion-transcoder-debuginfo gstreamer-debuginfo \
   gstreamer-plugins-base-debuginfo gstreamer-plugins-good-debuginfo \
   gstreamer-plugins-bad-debuginfo gstreamer-plugins-ugly-debuginfo \
-  gstreamer-python-debuginfo gstreamer-tools-debuginfo \
-  gstreamer-ffmpeg-debuginfo gstreamer-pitfdll-debuginfo \
-  win32-codecs-debuginfo win32-codecs-encoders-debuginfo \
-  gstreamer-fluendo-asfdemux-debuginfo gstreamer-fluendo-asfmux-debuginfo \
-  gstreamer-fluendo-flvmux-debuginfo gstreamer-fluendo-isodemux-debuginfo \
-  gstreamer-fluendo-mcaacdec-debuginfo gstreamer-fluendo-mcaacenc-debuginfo \
-  gstreamer-fluendo-mch264dec-debuginfo \
-  gstreamer-fluendo-mch264enc-debuginfo \
-  gstreamer-fluendo-mpeg2video-debuginfo \
-  gstreamer-fluendo-mpeg4video-debuginfo \
-  gstreamer-fluendo-mpegdemux-debuginfo \
-  gstreamer-fluendo-qcp-debuginfo \
-  gstreamer-fluendo-vp6enc-debuginfo \
-  gstreamer-fluendo-wmadec-debuginfo \
-  gstreamer-fluendo-wmaenc-debuginfo \
-  gstreamer-fluendo-wmvdec-debuginfo \
-  gstreamer-fluendo-wmvenc-debuginfo
+  gstreamer-python-debuginfo gstreamer-ffmpeg-debuginfo \
+  gstreamer-tools-debuginfo gstreamer-pitfdll-debuginfo \
+  win32-codecs-debuginfo win32-codecs-encoders-debuginfo
 
 
 Database connection configuration
