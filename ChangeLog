@@ -1,3 +1,10 @@
+2009-04-27  Sebastien Merle  <sebastien@fluendo.com>
+
+	* flumotion/component/transcoder/binmaker.py:
+	If available, use legacyresample insteed of audioresample,
+	to fix a bug in the new audioresmaple (speexresample)
+	that cause audio/video synchronisation issues.
+
 2009-04-21  Sebastien Merle  <sebastien@fluendo.com>
 
 	* doc/rst/installation/production.rst:

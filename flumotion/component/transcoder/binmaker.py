@@ -14,6 +14,8 @@
 
 import gst
 
+from flumotion.common import gstreamer
+
 from flumotion.inhouse import log
 
 from flumotion.component.transcoder import videosize
@@ -93,9 +95,15 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
 
 
     # audioresample element
-    resample = gst.element_factory_make("audioresample",
-                                        "audioresample-%s" % tag)
-    pipelineParts.append("audioresample")
+    # Use legacyresample if available because after 0.10.22 the old
+    # audioresample element got renamed to legacyresample and replaced
+    # by speexresample that cause audio/video synchronization issues.
+    resamplerName = 'audioresample'
+    if gstreamer.element_factory_exists('legacyresample'):
+        resamplerName = 'legacyresample'
+    resample = gst.element_factory_make(resamplerName,
+                                        "%s-%s" % (resamplerName, tag))
+    pipelineParts.append(resamplerName)
 
     # capsfilter element
     capsfilter = gst.element_factory_make("capsfilter",
