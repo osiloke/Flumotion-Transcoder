@@ -1,3 +1,20 @@
+2009-05-04  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* bin/flumotion-transcoder-qos.in (added):
+	* flumotion/transcoder/tools/qos.py (added):
+	Added quality of service script. Right now only allows to update the
+	database in case a file is manually transcoded, the input file was
+	corrupted, etc.
+
+	* data/database/mysql/schema.sql:
+	Added a column (invalid_output) to the schema; updated views
+	accordingly.
+
+	* bin/Makefile.am:
+	* configure.ac:
+	* flumotion-transcoder.spec.in:
+	Added qos script.
+
 2009-04-27  Sebastien Merle  <sebastien@fluendo.com>
 
 	* flumotion/component/transcoder/binmaker.py:

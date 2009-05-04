@@ -25,7 +25,8 @@ insert into transcoder_failures values
         (1, 'Wrong mime type'),
         (2, 'Wrong file type'),
         (3, 'Video file too small'),
-        (4, 'Audio file too small');
+        (4, 'Audio file too small'),
+        (5, 'Corrupted');
 
 
 
@@ -56,6 +57,7 @@ create table if not exists transcoder_reports (
         failure_id int,
         outcome boolean not null,
         successful boolean not null,
+        invalid_output boolean default 0,
 
         comment varchar(1000),
 
@@ -83,14 +85,14 @@ from
         transcoder_reports
         natural left join transcoder_failures
 where
-        (not outcome) and successful;
+        (not outcome or invalid_output) and successful;
 
 create or replace view transcoder_outcomes_per_customer as
 select
         customer_id,
-        sum(case when outcome then 1 else 0 end) as successful_transcods,
-        sum(case when (not outcome) then 1 else 0 end) as failed_transcods,
-        sum(case when (not outcome) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
+        sum(case when (outcome and not invalid_output) then 1 else 0 end) as successful_transcods,
+        sum(case when (not outcome or invalid_output) then 1 else 0 end) as failed_transcods,
+        sum(case when (not outcome or invalid_output) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
         transcoder_reports
 group by customer_id;
@@ -99,9 +101,9 @@ create or replace view transcoder_outcomes_per_profile as
 select
         customer_id,
         profile_id,
-        sum(case when outcome then 1 else 0 end) as successful_transcods,
-        sum(case when (not outcome) then 1 else 0 end) as failed_transcods,
-        sum(case when (not outcome) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
+        sum(case when (outcome and not invalid_output) then 1 else 0 end) as successful_transcods,
+        sum(case when (not outcome or invalid_output) then 1 else 0 end) as failed_transcods,
+        sum(case when (not outcome or invalid_output) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
         transcoder_reports
 group by customer_id, profile_id;
