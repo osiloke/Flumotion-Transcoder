@@ -1,6 +1,11 @@
 2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/transcoder/tools/qos.py:
+	Update multiple reports in one query.
+
+2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/transcoder/tools/qos.py:
 	Handle incomplete input parameters.
 
 2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>

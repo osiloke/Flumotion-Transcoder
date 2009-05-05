@@ -72,29 +72,34 @@ def get_reports(conn, client, profile, file, checksum=None):
     d.addCallback(cbReportResult)
     return d
 
+def build_query_condition(ids):
+    query = "transcoder_report_id=%s" % ids[0]
+    for i in ids[1:]:
+        query += " or transcoder_report_id=%s" % i
+    return "(%s)" % query
+
 def update_reports(ids, conn, t):
     queries = {
         WRONG_TYPE: ("update transcoder_reports set failure_id=1"\
-                     " where transcoder_report_id=%s"),
+                     " where %s"),
         CORRUPTED: ("update transcoder_reports set failure_id=5"\
-                    " where transcoder_report_id=%s"),
+                    " where %s"),
         BAD_OUTPUT: ("update transcoder_reports set successful=0,"\
-                     " invalid_output=1"\
-                     " where transcoder_report_id=%s"),
+                     " invalid_output=1 where %s"),
         MANUAL: ("update transcoder_reports set successful=1"\
-                    " where transcoder_report_id=%s")
+                    " where %s")
         }
     if t not in queries.keys():
         error =  "Ooops! Unknown query type %r" % t
         raise Exception(error)
 
     template = queries[t]
+    condition = build_query_condition(ids)
+    q = template % condition
     print
     print "Alright, let's do it:"
-    for i in ids:
-        q = template % i
-        print q
-        return conn.execute(q)
+    print q
+    return conn.execute(q)
 
 def pick_reports(dic, checksum=None):
     if dic is None:
@@ -162,7 +167,7 @@ def main(argv):
 
     if host is None:
         print
-        print "Please specify a hostname."
+        print config
         print
         sys.exit()
 
@@ -174,8 +179,7 @@ def main(argv):
                                                  config.subOptions['checksum'])
         if None in (profile, client, type, file_name):
             print
-            print ("Please specify a profile, client, file name and type of"\
-                   " update")
+            print config
             print
             sys.exit()
         else:
@@ -185,7 +189,7 @@ def main(argv):
             perform_update(conn, d, type, md5)
     else:
         print
-        print "Please specify a command (-h for help)."
+        print config
         print
         sys.exit()
 
