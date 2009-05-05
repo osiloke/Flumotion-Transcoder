@@ -90,8 +90,10 @@ def update_reports(ids, conn, t):
         return conn.execute(q)
 
 def pick_reports(dic, checksum=None):
+    if dic is None:
+        raise Exception("The file could not be found in the database.")
     if checksum:
-        if dic is None or checksum not in dic.keys():
+        if checksum not in dic.keys():
             raise Exception("Checksum not found")
         else:
             return dic[checksum]
