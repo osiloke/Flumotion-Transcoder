@@ -12,19 +12,25 @@ BAD_OUTPUT = 2
 MANUAL = 3
 
 def cbExecuteSucceeded(result):
+    print
     print "Success!"
+    print
     reactor.stop()
 
 def cbError(error):
     return error
 
 def cbUnknownOption(result, update):
+    print
     print "Unknown update type %r" % update
+    print
     reactor.stop()
 
 def cbFinalError(error):
+    print
     print "Aaargh! Failure:"
     print error.value
+    print
     reactor.stop()
 
 def connect(uri):
@@ -83,6 +89,7 @@ def update_reports(ids, conn, t):
         raise Exception(error)
 
     template = queries[t]
+    print
     print "Alright, let's do it:"
     for i in ids:
         q = template % i
@@ -133,7 +140,7 @@ class UpdateOptions(usage.Options):
         ["checksum", "m", None, ("Checksum of the file. Obtained by running"\
                                  " md5sum on the file (not required).")],
         ["type", "t", None,
-         ("Type of update you want to perform: 'wrong-inpuy-type'"\
+         ("Type of update you want to perform: 'wrong-input-type'"\
          ", 'corrupted-input', 'manual-transcode' or 'bad-output'.")]
     ]
 
@@ -152,25 +159,35 @@ def main(argv):
     config = Options()
     config.parseOptions()
     host, port, db = (config['host'], config['port'], config['database'])
+
     if host is None:
-        print config
+        print
+        print "Please specify a hostname."
+        print
         sys.exit()
 
-    profile, client, type, file_name, checksum = (config.subOptions['profile'],
-                                                  config.subOptions['client'],
-                                                  config.subOptions['type'],
-                                                  config.subOptions['file'],
-                                                  config.subOptions['checksum'])
-
     if config.subCommand == "update":
+        profile, client, type, file_name, md5 = (config.subOptions['profile'],
+                                                 config.subOptions['client'],
+                                                 config.subOptions['type'],
+                                                 config.subOptions['file'],
+                                                 config.subOptions['checksum'])
         if None in (profile, client, type, file_name):
-            print config
+            print
+            print ("Please specify a profile, client, file name and type of"\
+                   " update")
+            print
             sys.exit()
         else:
             uri = "mysql://%s:%s/%s" % (host, port, db)
             conn = connect(uri)
-            d = get_reports(conn, client, profile, file_name, checksum)
-            perform_update(conn, d, type, checksum)
+            d = get_reports(conn, client, profile, file_name, md5)
+            perform_update(conn, d, type, md5)
+    else:
+        print
+        print "Please specify a command (-h for help)."
+        print
+        sys.exit()
 
     reactor.run()
 

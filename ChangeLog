@@ -1,5 +1,10 @@
 2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>
 
+	* flumotion/transcoder/tools/qos.py:
+	Handle incomplete input parameters.
+
+2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>
+
 	* flumotion/transcoder/tools/Makefile.am:
 	Take into account tools/qos.py
 	* flumotion/transcoder/tools/qos.py:
