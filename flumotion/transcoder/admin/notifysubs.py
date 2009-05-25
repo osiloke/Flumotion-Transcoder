@@ -28,6 +28,7 @@ class NotificationVariables(substitution.Variables):
         videoWidth = 0
         videoHeight = 0
         duration = 0.0
+        size = 0
         bitrate = 0
         length = 0
         hours = 0
@@ -60,6 +61,9 @@ class NotificationVariables(substitution.Variables):
             else:
                 length = a.audioLength or 0
 
+            if s:
+                size = s
+
             if s and (duration > 0.0):
                 bitrate = int(round(s / duration))
 
@@ -77,6 +81,7 @@ class NotificationVariables(substitution.Variables):
         self.addVar(p + "VideoWidth", videoWidth)
         self.addVar(p + "VideoHeight", videoHeight)
         self.addVar(p + 'Duration', duration)
+        self.addVar(p + 'Size', size)
         self.addVar(p + 'Bitrate', bitrate)
         self.addVar(p + 'Length', length)
         self.addVar(p + 'Hours', hours)
@@ -97,6 +102,7 @@ class SourceNotificationVariables(NotificationVariables):
         self.addVar("trigger", trigger.name)
         self.addVar("inputFile", profCtx.inputFile)
         self.addVar("inputRelPath", profCtx.inputRelPath)
+        self.addVar("outputFixedDir", profCtx.outputBase.getPath())
         self.addVar("customerName", custCtx.name)
         self.addVar("profileName", profCtx.name)
         self.addVar("errorMessage", (report and report.fatalError) or "")

@@ -1,3 +1,13 @@
+2009-05-25  Ricard Puig  <rpuig@flumotion.com>
+
+	reviewed by: <delete if not using a buddy>
+	patch by: <delete if not someone else's patch>
+
+	* conf/transcoder/transcoder-admin.ini:
+	* conf/transcoder/transcoder-data.ini:
+	* doc/rst/configuration/placeholders.rst:
+	* flumotion/transcoder/admin/notifysubs.py:
+
 2009-05-05  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/transcoder/tools/qos.py:
