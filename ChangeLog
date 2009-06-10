@@ -1,3 +1,8 @@
+2009-06-10  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* doc/rst/installation/production.rst:
+	Add missing space in the installation command.
+
 2009-05-25  Ricard Puig  <rpuig@flumotion.com>
 
 	reviewed by: Sebastien

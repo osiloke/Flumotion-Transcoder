@@ -77,7 +77,7 @@ To install all these packages use the following command::
   gstreamer-fluendo-mpeg2video gstreamer-fluendo-mpeg4video \
   gstreamer-fluendo-mpegdemux gstreamer-fluendo-qcp \
   gstreamer-fluendo-sorensondec gstreamer-fluendo-vp6dec \
-  gstreamer-fluendo-vp6enc gstreamer-fluendo-wmadec gstreamer-fluendo-wmaenc\
+  gstreamer-fluendo-vp6enc gstreamer-fluendo-wmadec gstreamer-fluendo-wmaenc \
   gstreamer-fluendo-wmvdec gstreamer-fluendo-wmvenc mmf-crc flvlib \
   python-twisted-core python-twisted-names python-twisted-mail \
   python-twisted-web
