@@ -14,8 +14,8 @@ Nagios 3.x
 ==========
 
  1. Log into monitor01.bcn.fluendo.net
- 2. Edit the file ``/etc/nagios/objects/integration/services/services.cfg``
- 3. Add an entry such as the one below::
+ 1. Edit the file ``/etc/nagios/objects/integration/services/services.cfg``
+ 1. Add an entry such as the one below::
 
     define service{
         use                     support-service
@@ -39,8 +39,8 @@ Nagios 2.x
 ==========
 
  1. Log into se01.bcn.fluendo.net
- 2. Edit the file ``/etc/nagios/services.cfg``
- 3. Add an entry such as the one below::
+ 1. Edit the file ``/etc/nagios/services.cfg``
+ 1. Add an entry such as the one below::
 
     define service{
         use                     support-service
