@@ -21,6 +21,7 @@ For Production
 --------------
 
  * `Install and Setup`_
+ * `Nagios Alert Configuration`_
 
 Configuration
 =============
@@ -68,6 +69,7 @@ Testing Procedures
 .. _Installed Transcoder: installation/installed.rst
 
 .. _Install and Setup: installation/production.rst
+.. _Nagios Alert Configuration: installation/nagios-config.rst
 
 .. _Transcoder Admin Configuration: configuration/admin-config.rst
 .. _Configuration Placeholders: configuration/placeholders.rst
