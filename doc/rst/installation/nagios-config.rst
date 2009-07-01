@@ -24,6 +24,7 @@ Nagios 3.x
         check_command           check_recursive_age!/home/file/<customer>/files/incoming/<subdirectory>!<alert_time>
     }
 
+
  Example::
 
     define service{
@@ -47,6 +48,7 @@ Nagios 2.x
         host_name               <encoder_name>
         check_command           check_recursive_age!/home/file/<customer>/files/incoming/<subdirectory>!<alert_time>
     }
+
 
  Example::
 
