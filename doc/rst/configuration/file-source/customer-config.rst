@@ -55,7 +55,7 @@ Example files can be found in:
   post-processing-enabled = True
   output-file-template = %(targetDir)s%(sourceBasename)s%(targetExtension)s
   
-  [profile:video:traget:high-flv:config]
+  [profile:video:target:high-flv:config]
   audio-rate = 44100
   audio-channels = 2
   audio-encoder = lame bitrate=96 ! audio/mpeg,rate=44100 ! mp3parse
@@ -73,7 +73,7 @@ Example files can be found in:
   post-processing-enabled = True
   output-file-template = %(targetDir)s%(sourceBasename)s%(targetExtension)s
 
-  [profile:video:traget:low-flv:config]
+  [profile:video:target:low-flv:config]
   audio-rate = 44100
   audio-channels = 2
   audio-encoder = lame bitrate=64 ! audio/mpeg,rate=44100 ! mp3parse
@@ -89,7 +89,7 @@ Example files can be found in:
   extention = asf
   output-file-template = %(targetDir)s%(sourceBasename)s%(targetExtension)s
 
-  [profile:video:traget:asf:config]
+  [profile:video:target:asf:config]
   audio-rate = 44100
   audio-channels = 2
   audio-encoder = fluwmaenc 64000
@@ -105,14 +105,12 @@ Example files can be found in:
   extention = jpg
   output-file-template = %(targetDir)s%(sourceBasename)s%(targetExtension)s
 
-  [profile:video:traget:thumb:config]
+  [profile:video:target:thumb:config]
   period-value = 30
   period-unit = percent
   max-count = 1
   thumbs-width = 256
   thumbs-height = 144
-
-
 
 
 .. _transcoder-data.ini: transcoder-config.rst
