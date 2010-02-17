@@ -1,3 +1,11 @@
+2010-02-17  Jan Urbanski  <jurbanski@flumotion.com>
+
+	* flumotion/component/transcoder/disco2.py:
+	Set the pipeline to PLAYING, not just to PAUSED, when
+	discovering. Should not matter, but there are files that give timeouts
+	when just going to PAUSED and are discovered successfully when going to
+	PLAYING.
+
 2009-06-10  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* doc/rst/installation/production.rst:

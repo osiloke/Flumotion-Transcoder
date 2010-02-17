@@ -249,10 +249,10 @@ class Analyzer(object):
         if not self._setup_pipeline(fpath):
             return
 
-        gst.debug('setting pipeline to PAUSED')
-        if self.ppl.set_state(gst.STATE_PAUSED) == gst.STATE_CHANGE_FAILURE:
+        gst.debug('setting pipeline to PLAYING')
+        if self.ppl.set_state(gst.STATE_PLAYING) == gst.STATE_CHANGE_FAILURE:
             # TODO: signal error and fail
-            self._finish(AnalysisError("Pipeline didn't go to PAUSED."))
+            self._finish(AnalysisError("Pipeline didn't go to PLAYING."))
             return
 
         self.toid = reactor.callLater(self.timeout, self._cb_timeout)
@@ -362,8 +362,8 @@ class Analyzer(object):
 
         self._connect(pad, 'notify::caps', self._cb_notify_caps_fixed)
 
-        q.set_state(gst.STATE_PAUSED)
-        sink.set_state(gst.STATE_PAUSED)
+        q.set_state(gst.STATE_PLAYING)
+        sink.set_state(gst.STATE_PLAYING)
 
     def _cb_no_more_pads(self, element):
         gst.debug('no more pads')
