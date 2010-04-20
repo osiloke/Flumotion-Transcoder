@@ -32,7 +32,7 @@ MIN_KF_DIST: Minimum keyframe distance
 MAX_KF_DIST: Maximum keyframe distance
 
 Frame Rate Limits
-================
+=================
 A proper behaviour can be guaranteed for the following frame rate values:
   - 12 fps
   - 15 fps
