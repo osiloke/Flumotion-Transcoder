@@ -27,6 +27,9 @@ VIDEO_HEIGHT: Height of the outgoing video.
 
 VIDEO_WIDTH: Width of the outgoing video.
 
+MIN_KF_DIST: Minimum keyframe distance
+
+MAX_KF_DIST: Maximum keyframe distance
 
 Audio Profiles
 ==============
@@ -610,3 +613,30 @@ Video Width       *VIDEO_WIDTH*
 Video Height      *VIDEO_HEIGHT*
 Muxer             ffmux_mp4
 ================= ===========================================================================
+
+
+H.264 / MP4
+------------------
+
+1. Dependencies
+
+ - gstreamer-fluendo-mch264enc
+ - gst-plugins-bad (qtmux)
+
+2. Configuration
+
+================= ========================================================================================================================
+Video Encoder     flumch264enc bitrate=\ *VIDEO_BITRATE* min-keyframe-distance=\ *MIN_KF_DISTANCE* max-keyframe-distance=\ *MAX_KF_DISTANCE*
+Video Framerate   *FRAMERATE*
+Video Width       *VIDEO_WIDTH*
+Video Height      *VIDEO_HEIGHT*
+Muxer             qtmux
+================= =========================================================================================================================
+
+5.Tested
+
+=========== ============ ========= =============
+VIDEO_WIDTH VIDEO_HEIGHT FRAMERATE VIDEO_BITRATE
+=========== ============ ========= =============
+128         96           1/2       500000       
+=========== ============ ========= =============
