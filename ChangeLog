@@ -1,3 +1,9 @@
+2010-07-15  Sébastien Merle  <sebastien@flumotion.com>
+
+	* configure.ac:
+	* flumotion-transcoder.spec.in:
+	Adapt to changes from pub:r8195.
+
 2010-02-17  Jan Urbanski  <jurbanski@flumotion.com>
 
 	* flumotion/component/transcoder/disco2.py:

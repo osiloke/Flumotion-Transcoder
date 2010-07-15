@@ -1,15 +1,19 @@
-AC_INIT(README)
+AC_INIT(flumotion-transcoder,
+		0.5.3.3,
+		https://code.area51.fluendo.com/private/trac/newticket?component=flumotion-transcoder,
+		flumotion-transcoder)
 
-AS_VERSION(flumotion-transcoder, FLUTRANS, 0, 5, 3, 3)
-AC_SUBST(RELEASE, $FLUTRANS_RELEASE)
+AM_INIT_AUTOMAKE([-Wno-portability])
+
+AS_VERSION
+
+AS_NANO
 
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
 AC_SUBST(FLUMOTION_REQ, 0.5.3)
 AC_SUBST(INHOUSE_REQ, 0.5.3)
-
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 
 dnl Add parameters for aclocal
 AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
