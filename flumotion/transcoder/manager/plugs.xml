@@ -1,7 +1,8 @@
 <registry>
   <plugs>
     <plug socket="flumotion.component.plugs.base.ManagerPlug"
-          type="manager-transcoderenvironment">
+          type="manager-transcoderenvironment"
+          _description="Register transcoder specific pb types.">
       <entry location="flumotion/transcoder/manager/plugs.py"
              function="TranscoderEnvironmentPlug"/>
       <properties>

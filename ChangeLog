@@ -1,3 +1,8 @@
+2010-07-30  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/transcoder/manager/plugs.xml:
+	Add _description.
+
 2010-07-15  Sébastien Merle  <sebastien@flumotion.com>
 
 	* configure.ac:
