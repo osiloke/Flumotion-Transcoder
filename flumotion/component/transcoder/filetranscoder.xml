@@ -1,6 +1,7 @@
 <registry>
   <components>
-    <component type="file-transcoder" base="flumotion/component/transcoder">
+    <component type="file-transcoder" base="flumotion/component/transcoder"
+	       _description="Transcode on-demand files.">
       <source location="flumotion.component.transcoder.filetranscoder"/>
     
       <entries>

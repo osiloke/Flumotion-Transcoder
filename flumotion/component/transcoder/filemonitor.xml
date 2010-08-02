@@ -1,6 +1,7 @@
 <registry>
   <components>
-    <component type="file-monitor" base="flumotion/component/transcoder">
+    <component type="file-monitor" base="flumotion/component/transcoder"
+	       _description="Monitors the progress of a transcode.">
       <source location="flumotion.component.transcoder.filemonitor"/>
     
       <entries>
