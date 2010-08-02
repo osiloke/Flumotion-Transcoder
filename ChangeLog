@@ -1,3 +1,8 @@
+2010-08-02  Sebastien Merle  <sebastien@flumotion.com>
+
+	* data/database/mysql/Makefile.am:
+	Fixed changed autotools substitution variable for package version.
+
 2010-07-30  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/transcoder/manager/plugs.xml:
