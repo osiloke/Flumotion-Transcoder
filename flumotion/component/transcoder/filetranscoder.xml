@@ -10,19 +10,38 @@
       </entries>
 
       <properties>
-        <property name="admin-id" type="string" required="no" multiple="no"/>
-        <property name="wait-acknowledge" type="bool" required="no" multiple="no"/>
-        <property name="move-input-file" type="bool" required="no" multiple="no"/>
-        <property name="config" type="string" required="no" multiple="no"/>
-        <property name="diagnose" type="string" required="no" multiple="no"/>
-        <property name="report" type="string" required="no" multiple="no"/>
-        <property name="nice-level" type="int" required="no" multiple="no"/>
-        <property name="local-root" type="string" required="no" multiple="yes"/> 
-        <property name="local-name" type="string" required="no" multiple="no"/> 
-        <property name="force-group" type="string" required="no" multiple="no"/>
-        <property name="force-user" type="string" required="no" multiple="no"/>
-        <property name="force-dir-mode" type="string" required="no" multiple="no"/>
-        <property name="force-file-mode" type="string" required="no" multiple="no"/>
+        <property name="admin-id" type="string" required="no" multiple="no"
+		  _description="Internal Property; Unique ID of the transcoder
+		  admin instance that started the component"/>
+        <property name="wait-acknowledge" type="bool" required="no"
+		  multiple="no"
+		  _description="Whether the component should wait for the admin
+		  process to acknoledge the task."/>
+        <property name="move-input-file" type="bool" required="no" multiple="no"
+		  _description="Whether to move the input file to fail or done
+		  directory."/>
+        <property name="config" type="string" required="no" multiple="no"
+		  _description="Path to the config file."/>
+        <property name="diagnose" type="string" required="no" multiple="no"
+		  _description="Local path to the report to diagnose."/>
+        <property name="report" type="string" required="no" multiple="no"
+		  _description="Local path to override the output report."/>
+        <property name="nice-level" type="int" required="no" multiple="no"
+		  _description="Transcoding process nice level."/>
+        <property name="local-root" type="string" required="no" multiple="yes"
+		  _description="Define a local root for virtual paths."/> 
+        <property name="local-name" type="string" required="no" multiple="no"
+		  _description="Name of the flumotion component."/> 
+        <property name="force-group" type="string" required="no" multiple="no"
+		  _description="Group name to use for new files."/>
+        <property name="force-user" type="string" required="no" multiple="no"
+		  _description="User name to use for new files."/>
+        <property name="force-dir-mode" type="string" required="no"
+		  multiple="no"
+		  _description="Access mode to use for new directory."/>
+        <property name="force-file-mode" type="string" required="no"
+		  multiple="no"
+		  _description="Access mode to use for new files."/>
       </properties>
 
     </component>

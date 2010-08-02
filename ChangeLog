@@ -2,6 +2,12 @@
 
 	* flumotion/component/transcoder/filemonitor.xml:
 	* flumotion/component/transcoder/filetranscoder.xml:
+	Add _description to properties too.
+
+2010-08-02  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.xml:
+	* flumotion/component/transcoder/filetranscoder.xml:
 	Add missing _description.
 
 2010-08-02  Sebastien Merle  <sebastien@flumotion.com>

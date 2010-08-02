@@ -10,15 +10,27 @@
       </entries>
 
       <properties>
-        <property name="admin-id" type="string" required="no" multiple="no"/>
-        <property name="directory" type="string" required="no" multiple="yes"/>
-        <property name="scan-period" type="int" required="yes" multiple="no"/>
-        <property name="local-root" type="string" required="no" multiple="yes"/> 
-        <property name="local-name" type="string" required="no" multiple="no"/> 
-        <property name="force-group" type="string" required="no" multiple="no"/>
-        <property name="force-user" type="string" required="no" multiple="no"/>
-        <property name="force-dir-mode" type="string" required="no" multiple="no"/>
-        <property name="force-file-mode" type="string" required="no" multiple="no"/>
+        <property name="admin-id" type="string" required="no" multiple="no"
+		  _description="Internal Property; Unique ID of the transcoder
+		  admin instance that started the component"/>
+        <property name="directory" type="string" required="no" multiple="yes"
+		  _description="Virtual directory to scan for new files."/>
+        <property name="scan-period" type="int" required="yes" multiple="no"
+		  _description="Period between directory scans."/>
+        <property name="local-root" type="string" required="no" multiple="yes"
+		  _description="Define a local root for virtual paths."/> 
+        <property name="local-name" type="string" required="no" multiple="no"
+		  _description="Name of the flumotion component."/> 
+        <property name="force-group" type="string" required="no" multiple="no"
+		  _description="Group name to use for new files."/>
+        <property name="force-user" type="string" required="no" multiple="no"
+		  _description="User name to use for new files."/>
+        <property name="force-dir-mode" type="string" required="no"
+		  multiple="no"
+		  _description="Access mode to use for new directory."/>
+        <property name="force-file-mode" type="string" required="no"
+		  multiple="no"
+		  _description="Access mode to use for new files."/>
       </properties>
 
     </component>
