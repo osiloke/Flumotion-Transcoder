@@ -1,0 +1,68 @@
+<registry>
+  <components>
+    <component type="joiner"
+               base="flumotion/component/joiner"
+               _description="A joiner component for TS files.">
+      <source location="flumotion.component.joiner.joiner" />
+
+      <entries>
+        <entry type="component" location="joiner.py"
+               function="Joiner" />
+      </entries>
+
+      <properties>
+        <property name="output-directory" type="string" required="yes"
+                  _description="The directory used to save the created files." />
+        <property name="disker-directory" type="string" required="yes"
+                  _description="The directory monitored for the index files." />
+        <property name="projects-watch-directory" type="string" required="yes"
+                  _description="The directory monitored for the projects files." />
+        <property name="callback" type="string" required="no"
+                  _description="The transcoder callback url to notify the transcoder that a new file has been created." />
+        <property name="index-scan" type="bool"
+                  _description="Whether to scan the disker directory to rebuild the internal indexes cache when the component starts." />
+        <property name="remux-format" type="string"
+                  _description="Specifies the format used to remux the generated file. Only use this property with input files in MPEG-TS (default: None)" />
+        <property name="index-max-window" type="int"
+                  _description="The maximum window of indexes to keep in the cahe, in seconds. (default: 3 * 3600)" />
+        <property name="scan-interval" type="int"
+                  _description="The interval used by the directories monitors, in seconds (default:10)" />
+        <property name="strip-gaps" type="bool"
+                  _description="Produces a file with gaps stripped. Don't use with TS files (default: False)" />
+      </properties>
+    </component>
+  </components>
+
+  <bundles>
+    <bundle name="joiner-base">
+        <dependencies>
+            <dependency name="component-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/joiner">
+                <filename location="__init__.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle name="joiner-component">
+        <dependencies>
+            <dependency name="joiner-base"/>
+        </dependencies>
+
+        <dependencies>
+            <dependency name="disker-component"/>
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/joiner">
+                <filename location="joiner.py"/>
+            </directory>
+        </directories>
+     </bundle>
+
+  </bundles>
+
+</registry>
+

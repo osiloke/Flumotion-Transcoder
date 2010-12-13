@@ -1,5 +1,17 @@
 2010-12-13  Julien Le Goff  <jlegoff@flumotion.com>
 
+	* configure.ac:
+	* flumotion/component/Makefile.am:
+	* flumotion/component/joiner (added):
+	* flumotion/component/joiner/joiner.xml (added):
+	* flumotion/component/joiner/__init__.py (added):
+	* flumotion/component/joiner/Makefile.am (added):
+	* flumotion/component/joiner/joiner.py (added):
+	Add a component that monitors a disker directory and joins recordings
+	based on an xml input.
+
+2010-12-13  Julien Le Goff  <jlegoff@flumotion.com>
+
 	* bin/Makefile.am:
 	* bin/flumotion-progressive-move:
 	* bin/flumotion-transcoder-qos:
