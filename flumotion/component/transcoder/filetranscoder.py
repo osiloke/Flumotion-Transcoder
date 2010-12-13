@@ -211,6 +211,7 @@ class FileTranscoder(component.BaseComponent, job.JobEventSink):
             else:
                 altInputDir=None
 
+            #TODO add cue points in report
             self._report = TranscodingReport()
             self._report.init(self._config)
             self._report.configPath = configPath

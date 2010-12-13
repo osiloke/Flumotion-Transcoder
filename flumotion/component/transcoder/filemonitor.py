@@ -15,26 +15,23 @@
 import os
 import shutil
 import commands
-import time
 from md5 import md5
 
-from twisted.internet import reactor, error, threads
+from twisted.internet import reactor, threads
 from twisted.python.failure import Failure
 
 from flumotion.common import messages
-from flumotion.common.i18n import gettexter, N_
+from flumotion.common.i18n import gettexter
 from flumotion.component import component
 from flumotion.component.component import moods
 
 from flumotion.inhouse import log, defer, utils, fileutils
 from flumotion.inhouse.errors import FlumotionError
 
-from flumotion.transcoder import constants
 from flumotion.transcoder.local import Local
 from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.transcoder.enums import MonitorFileStateEnum
 from flumotion.transcoder.errors import TranscoderError
-from flumotion.transcoder.errors import TranscoderConfigError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder.watcher import DirectoryWatcher
 
@@ -55,24 +52,16 @@ class FileMonitorMedium(component.BaseComponentMedium):
         self.comp.moveFiles(virtSrcBase, virtDestBase, relFiles)
 
 
-class FileMonitor(component.BaseComponent):
-    """
-    Monitor a list of directory.
-    """
-
-    componentMediumClass = FileMonitorMedium
-    logCategory = compconsts.MONITOR_LOG_CATEGORY
-
-
-    ## Public Methods ##
+class MonitorMixin(object):
 
     def moveFiles(self, virtSrcBase, virtDestBase, relFiles):
+        self.debug("MOVING: %r, %r, %r", virtSrcBase, virtDestBase, relFiles)
         if not self._local:
             raise TranscoderError("Component not properly setup yet")
-        if not (virtSrcBase in self._directories):
-                self.warning("Forbidden to move files from '%s'", virtSrcBase)
-                raise TranscoderError("Forbidden to move a file from other "
-                                      "directories than the monitored ones")
+#        if not (virtSrcBase in self._directories):
+#                self.warning("Forbidden to move files from '%s'", virtSrcBase)
+#                raise TranscoderError("Forbidden to move a file from other "
+#                                      "directories than the monitored ones")
 
         def moveFile(result, src, dest, attr=None):
 
@@ -96,7 +85,7 @@ class FileMonitor(component.BaseComponent):
             msg = ("Fail to move file '%s' to '%s': %s"
                    % (src, dest, log.getFailureMessage(failure)))
             self.warning("%s", msg)
-            raise TranscoderError(msg, cause=e)
+            raise TranscoderError(msg, cause=failure)
 
         d = defer.succeed(self)
         for relFile in relFiles:
@@ -107,11 +96,187 @@ class FileMonitor(component.BaseComponent):
             d.addBoth(moveFile, locSrcPath, locDestPath, self._pathAttr)
         return d
 
+
+    ## Private Methods ##
+
+    def _updateUIItem(self, key, subkey, value):
+        self._uiItemDelta[(key, subkey)] = ("file state updating",
+                                            self._doUpdateItem, (value,))
+        self._smoothUpdate()
+
+    def _setUIItem(self, key, subkey, value):
+        self._uiItemDelta[(key, subkey)] = ("file state setting",
+                                            self.uiState.setitem, (value,))
+        self._smoothUpdate()
+
+    def _delUIItem(self, key, subkey):
+        if (subkey in self.uiState.get(key)):
+            self.uiState.delitem(key, subkey)
+        if (key, subkey) in self._uiItemDelta:
+            del self._uiItemDelta[(key, subkey)]
+
+    def _doUpdateItem(self, key, subkey, value):
+        state = self.uiState.get(key)
+        if (subkey in state) and (state.get(subkey) != value):
+            self.uiState.setitem(key, subkey, value)
+
+    def _smoothUpdate(self):
+        if (not self._uiItemDelay) and self._uiItemDelta:
+            delay = compconsts.SMOOTH_UPTDATE_DELAY
+            self._uiItemDelay = reactor.callLater(delay, self._doSmoothUpdate)
+
+    def _doSmoothUpdate(self):
+        self._uiItemDelay = None
+        if self._uiItemDelta:
+            itemKey = self._uiItemDelta.iterkeys().next()
+            key, subkey = itemKey
+            desc, func, args = self._uiItemDelta.pop(itemKey)
+            try:
+                func(key, subkey, *args)
+            except Exception, e:
+                log.notifyException(self, e, "Failed during %s", desc,
+                                    cleanTraceback=True)
+        self._smoothUpdate()
+
+    def _notifyDebug(self, msg, info=None, debug=None, failure=None,
+                      exception=None, documents=None):
+        infoMsg = ["File Monitor Debug Notification: %s" % msg]
+        debugMsg = []
+        if info:
+            infoMsg.append("Information:\n\n%s" % info)
+        if debug:
+            debugMsg.append("Additional Debug Info:\n\n%s" % debug)
+        if failure:
+            debugMsg.append("Failure Message: %s\nFailure Traceback:\n%s"
+                            % (log.getFailureMessage(failure),
+                               log.getFailureTraceback(failure)))
+        if exception:
+            debugMsg.append("Exception Message: %s\n\nException Traceback:\n%s"
+                            % (log.getExceptionMessage(exception),
+                               log.getExceptionTraceback(exception)))
+        m = messages.Warning(T_("\n\n".join(infoMsg)),
+                             debug="\n\n".join(debugMsg))
+        self.addMessage(m)
+
+    def _ebErrorFilter(self, failure, task=None):
+        if failure.check(FlumotionError):
+            return self._monitorError(failure, task)
+        return self._unexpectedError(failure, task)
+
+    def _monitorError(self, failure=None, task=None):
+        if not failure:
+            failure = Failure()
+        log.notifyFailure(self, failure,
+                          "Monitoring error%s",
+                          (task and " during %s" % task) or "",
+                          cleanTraceback=True)
+        self.setMood(moods.sad)
+        return failure
+
+    def _unexpectedError(self, failure=None, task=None):
+        if not failure:
+            failure = Failure()
+        log.notifyFailure(self, failure,
+                          "Unexpected error%s",
+                          (task and " during %s" % task) or "",
+                          cleanTraceback=True)
+        m = messages.Error(T_(failure.getErrorMessage()),
+                           debug=log.getFailureMessage(failure))
+        self.addMessage(m)
+        return failure
+
+    def _getFileInfo(self, filename, path, virtBase, params=None):
+        self.debug("Computing checksum: %r, %r", path, filename)
+        mime = self._getMimeType(filename, path)
+        checksum = self._checksum(filename, path)
+        (key, detection_time) = self._getOldInfo(filename, virtBase)
+
+        return (key, mime, checksum, detection_time, params)
+
+    def _getOldInfo(self, file, virtBase):
+        localFile = virtBase.append(file).localize(self._local)
+        self.debug("File completed '%s'", localFile)
+        key = (virtBase, file)
+        state = self.uiState.get('pending-files')
+        substate = state.get(key)
+
+        # See a similar comment for _file_added. Here the only
+        # information that we might lose is the detection_time, that
+        # has been stored when _file_added has been called. Live with
+        # that for now...
+        if substate is None:
+            detection_time = None
+        else:
+            _state, _fileinfo, detection_time, _mime, _checksum, params = substate
+        return (key, detection_time)
+
+    def _checksum(self, filename, path):
+        if path is None:
+            self.debug("Path is empty for file %s. No checksum computed.",
+                       filename)
+            return None
+        #read the file in chunks for performance reasons
+        block_size = 0x10000
+        def upd(m, data):
+            m.update(data)
+            return m
+        fd = open(path+filename, "rb")
+        try:
+            contents = iter(lambda: fd.read(block_size), "")
+            m = reduce(upd, contents, md5())
+        finally:
+            fd.close()
+        return m.hexdigest()
+
+    def _getMimeType(self, filename, path):
+        try:
+            arg = utils.mkCmdArg(path + filename)
+            mime_type = commands.getoutput("file -biL" + arg)
+        except Exception, e:
+            mime_type = "ERROR: %s" % str(e)
+        return mime_type
+
+    def _updateChecksumState(self, new_info, file_info, local_file):
+        # it is possible that the file has been removed while computing the
+        # checksum. In this case, do not update the UI state
+        if not os.path.exists(local_file):
+            self.debug("File: %s has been removed while computing the checksum.",
+                       local_file)
+            return
+        key, mime_type, checksum, detection_time, params = new_info
+        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
+                    mime_type, checksum, params)
+        self._setUIItem('pending-files', key, substate)
+
+    def _failedChecksum(self, failure, file_info, filename, virtBase,
+                         local_file):
+        # it is possible that the file has been removed while computing the
+        # checksum. In this case, do not update the UI state
+        if not os.path.exists(local_file):
+            self.debug("File: %s has been removed while computing the checksum.",
+                       local_file)
+            return
+        log.notifyFailure(self, failure, "Failure during checksum / mime type")
+        #continue anyway
+        (key, detection_time, params) = self._getOldInfo(filename, virtBase)
+        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
+                    None, None, None)
+        self._setUIItem('pending-files', key, substate)
+
+
+class FileMonitor(component.BaseComponent, MonitorMixin):
+    """
+    Monitor a list of directory.
+    """
+
+    componentMediumClass = FileMonitorMedium
+    logCategory = compconsts.MONITOR_LOG_CATEGORY
+
     ## Overriden Methods ##
 
     def init(self):
         log.setDefaultCategory(compconsts.MONITOR_LOG_CATEGORY)
-        log.setDebugNotifier(self.__notifyDebug)
+        log.setDebugNotifier(self._notifyDebug)
         self.uiState.addListKey('monitored-directories', [])
         self.uiState.addDictKey('pending-files', {})
         self.watchers = []
@@ -133,10 +298,10 @@ class FileMonitor(component.BaseComponent):
         try:
             d = component.BaseComponent.do_check(self)
             d.addCallback(monitor_checks)
-            d.addErrback(self.__ebErrorFilter, "component checking")
+            d.addErrback(self._ebErrorFilter, "component checking")
             return d
         except:
-            self.__unexpectedError(task="component checking")
+            self._unexpectedError(task="component checking")
 
     def do_setup(self):
         try:
@@ -162,7 +327,7 @@ class FileMonitor(component.BaseComponent):
                 self.watchers.append(watcher)
             return None
         except:
-            self.__unexpectedError(task="component setup")
+            self._unexpectedError(task="component setup")
 
     def do_stop(self, *args, **kwargs):
         for w in self.watchers:
@@ -185,9 +350,10 @@ class FileMonitor(component.BaseComponent):
         if substate is None:
             return
 
-        state, fileinfo, detection_time, mime_type, checksum = substate
-        substate = (status, fileinfo, detection_time, mime_type, checksum)
-        self.__updateUIItem('pending-files', key, substate)
+        # add here the parameters that were added in _file_added
+        state, fileinfo, detection_time, mime_type, checksum, params = substate
+        substate = (status, fileinfo, detection_time, mime_type, checksum, params)
+        self._updateUIItem('pending-files', key, substate)
 
 
     ## Signal Handler Methods ##
@@ -200,187 +366,22 @@ class FileMonitor(component.BaseComponent):
         # as time in UTC without tzinfo. We have less to transfer over
         # the wire and don't have to worry about jellifiers for tzinfo.
         detection_time = detection_time.replace(tzinfo=None)
-        self.__setUIItem('pending-files', (virtBase, file),
+        # put here the parameters
+        self._setUIItem('pending-files', (virtBase, file),
                          (MonitorFileStateEnum.downloading, fileinfo,
-                          detection_time, None, None))
+                          detection_time, None, None, None))
 
     def _file_completed(self, watcher, file, fileinfo, virtBase):
         localFile = virtBase.append(file).localize(self._local)
-        d = threads.deferToThread(self.__getFileInfo, file, watcher.path,
+        d = threads.deferToThread(self._getFileInfo, file, watcher.path,
                                   virtBase)
-        d.addCallbacks(self.__updateChecksumState, self.__failedChecksum,
+        d.addCallbacks(self._updateChecksumState, self._failedChecksum,
                        callbackArgs = (fileinfo, localFile),
                        errbackArgs = (fileinfo, file, virtBase, localFile))
 
     def _file_removed(self, watcher, file, virtBase):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File removed '%s'", localFile)
-        self.__delUIItem('pending-files', (virtBase, file))
+        self._delUIItem('pending-files', (virtBase, file))
 
 
-    ## Private Methods ##
-
-    def __updateUIItem(self, key, subkey, value):
-        self._uiItemDelta[(key, subkey)] = ("file state updating",
-                                            self.__doUpdateItem, (value,))
-        self.__smoothUpdate()
-
-    def __setUIItem(self, key, subkey, value):
-        self._uiItemDelta[(key, subkey)] = ("file state setting",
-                                            self.uiState.setitem, (value,))
-        self.__smoothUpdate()
-
-    def __delUIItem(self, key, subkey):
-        if (subkey in self.uiState.get(key)):
-            self.uiState.delitem(key, subkey)
-        if (key, subkey) in self._uiItemDelta:
-            del self._uiItemDelta[(key, subkey)]
-
-    def __doUpdateItem(self, key, subkey, value):
-        state = self.uiState.get(key)
-        if (subkey in state) and (state.get(subkey) != value):
-            self.uiState.setitem(key, subkey, value)
-
-    def __smoothUpdate(self):
-        if (not self._uiItemDelay) and self._uiItemDelta:
-            delay = compconsts.SMOOTH_UPTDATE_DELAY
-            self._uiItemDelay = reactor.callLater(delay, self.__doSmoothUpdate)
-
-    def __doSmoothUpdate(self):
-        self._uiItemDelay = None
-        if self._uiItemDelta:
-            itemKey = self._uiItemDelta.iterkeys().next()
-            key, subkey = itemKey
-            desc, func, args = self._uiItemDelta.pop(itemKey)
-            try:
-                func(key, subkey, *args)
-            except Exception, e:
-                log.notifyException(self, e, "Failed during %s", desc,
-                                    cleanTraceback=True)
-        self.__smoothUpdate()
-
-    def __notifyDebug(self, msg, info=None, debug=None, failure=None,
-                      exception=None, documents=None):
-        infoMsg = ["File Monitor Debug Notification: %s" % msg]
-        debugMsg = []
-        if info:
-            infoMsg.append("Information:\n\n%s" % info)
-        if debug:
-            debugMsg.append("Additional Debug Info:\n\n%s" % debug)
-        if failure:
-            debugMsg.append("Failure Message: %s\nFailure Traceback:\n%s"
-                            % (log.getFailureMessage(failure),
-                               log.getFailureTraceback(failure)))
-        if exception:
-            debugMsg.append("Exception Message: %s\n\nException Traceback:\n%s"
-                            % (log.getExceptionMessage(exception),
-                               log.getExceptionTraceback(exception)))
-        m = messages.Warning(T_("\n\n".join(infoMsg)),
-                             debug="\n\n".join(debugMsg))
-        self.addMessage(m)
-
-    def __ebErrorFilter(self, failure, task=None):
-        if failure.check(FlumotionError):
-            return self.__monitorError(failure, task)
-        return self.__unexpectedError(failure, task)
-
-    def __monitorError(self, failure=None, task=None):
-        if not failure:
-            failure = Failure()
-        log.notifyFailure(self, failure,
-                          "Monitoring error%s",
-                          (task and " during %s" % task) or "",
-                          cleanTraceback=True)
-        self.setMood(moods.sad)
-        return failure
-
-    def __unexpectedError(self, failure=None, task=None):
-        if not failure:
-            failure = Failure()
-        log.notifyFailure(self, failure,
-                          "Unexpected error%s",
-                          (task and " during %s" % task) or "",
-                          cleanTraceback=True)
-        m = messages.Error(T_(failure.getErrorMessage()),
-                           debug=log.getFailureMessage(failure))
-        self.addMessage(m)
-        return failure
-
-    def __getFileInfo(self, filename, path, virtBase):
-        mime = self.__getMimeType(filename, path)
-        checksum = self.__checksum(filename, path)
-
-        (key, detection_time) = self.__getOldInfo(filename, virtBase)
-
-        return (key, mime, checksum, detection_time)
-
-    def __getOldInfo(self, file, virtBase):
-        localFile = virtBase.append(file).localize(self._local)
-        self.debug("File completed '%s'", localFile)
-        key = (virtBase, file)
-        state = self.uiState.get('pending-files')
-        substate = state.get(key)
-
-        # See a similar comment for _file_added. Here the only
-        # information that we might lose is the detection_time, that
-        # has been stored when _file_added has been called. Live with
-        # that for now...
-        if substate is None:
-            detection_time = None
-        else:
-            _state, _fileinfo, detection_time, _mime, _checksum = substate
-        return (key, detection_time)
-
-    def __checksum(self, filename, path):
-        if path is None:
-            self.debug("Path is empty for file %s. No checksum computed.",
-                       filename)
-            return None
-        #read the file in chunks for performance reasons
-        block_size = 0x10000
-        def upd(m, data):
-            m.update(data)
-            return m
-        fd = open(path+filename, "rb")
-        try:
-            contents = iter(lambda: fd.read(block_size), "")
-            time.sleep(60)
-            m = reduce(upd, contents, md5())
-        finally:
-            fd.close()
-        return m.hexdigest()
-
-    def __getMimeType(self, filename, path):
-        try:
-            arg = utils.mkCmdArg(path + filename)
-            mime_type = commands.getoutput("file -biL" + arg)
-        except Exception, e:
-            mime_type = "ERROR: %s" % str(e)
-        return mime_type
-
-    def __updateChecksumState(self, new_info, file_info, local_file):
-        # it is possible that the file has been removed while computing the
-        # checksum. In this case, do not update the UI state
-        if not os.path.exists(local_file):
-            self.debug("File: %s has been removed while computing the checksum.",
-                       local_file)
-            return
-        key, mime_type, checksum, detection_time = new_info
-        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
-                    mime_type, checksum)
-        self.__setUIItem('pending-files', key, substate)
-
-    def __failedChecksum(self, failure, file_info, filename, virtBase,
-                         local_file):
-        # it is possible that the file has been removed while computing the
-        # checksum. In this case, do not update the UI state
-        if not os.path.exists(local_file):
-            self.debug("File: %s has been removed while computing the checksum.",
-                       local_file)
-            return
-        log.notifyFailure(self, failure, "Failure during checksum / mime type")
-        #continue anyway
-        (key, detection_time) = self.__getOldInfo(filename, virtBase)
-        substate = (MonitorFileStateEnum.pending, file_info, detection_time,
-                    None, None)
-        self.__setUIItem('pending-files', key, substate)

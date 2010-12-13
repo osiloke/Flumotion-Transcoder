@@ -36,9 +36,9 @@ class TranscodingTask(admintask.AdminTask):
 
     MAX_RETRIES = adminconsts.TRANSCODER_MAX_RETRIES
 
-    def __init__(self, logger, profCtx):
+    def __init__(self, logger, profCtx, params=None):
         admintask.AdminTask.__init__(self, logger, profCtx.transcoderLabel,
-                           filetrans.TranscoderProperties.createFromContext(profCtx))
+                           filetrans.TranscoderProperties.createFromContext(profCtx, params))
         self._profCtx = profCtx
         self._acknowledging = False
         self._sadTimeout = None

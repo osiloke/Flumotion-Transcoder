@@ -3,7 +3,7 @@
     <component type="file-monitor" base="flumotion/component/transcoder"
 	       _description="Monitors the progress of a transcode.">
       <source location="flumotion.component.transcoder.filemonitor"/>
-    
+
       <entries>
         <entry type="component" location="filemonitor.py" function="FileMonitor"/>
         <entry type="admin/gtk" location="filemonitor_admin_gtk.py" function="GUIClass" />
@@ -18,9 +18,9 @@
         <property name="scan-period" type="int" required="yes" multiple="no"
 		  _description="Period between directory scans."/>
         <property name="local-root" type="string" required="no" multiple="yes"
-		  _description="Define a local root for virtual paths."/> 
+		  _description="Define a local root for virtual paths."/>
         <property name="local-name" type="string" required="no" multiple="no"
-		  _description="Name of the flumotion component."/> 
+		  _description="Name of the flumotion component."/>
         <property name="force-group" type="string" required="no" multiple="no"
 		  _description="Group name to use for new files."/>
         <property name="force-user" type="string" required="no" multiple="no"
@@ -34,7 +34,35 @@
       </properties>
 
     </component>
+
+    <component type="http-monitor" base="flumotion/component/transcoder"
+	       _description="Monitors the progress of a transcode.">
+      <source location="flumotion.component.transcoder.httpmonitor"/>
+
+      <entries>
+        <entry type="component" location="httpmonitor.py" function="HttpMonitor"/>
+        <entry type="admin/gtk" location="httpmonitor_admin_gtk.py" function="GUIClass" />
+      </entries>
+
+      <properties>
+        <property name="admin-id" type="string" required="no" multiple="no"
+		  _description="Internal Property; Unique ID of the transcoder
+		  admin instance that started the component"/>
+        <property name="port" type="int" required="no" multiple="no"
+		  _description="Period between directory scans."/>
+        <property name="profile" type="string" required="no" multiple="yes"
+		  _description="Profile Monitored"/>
+        <property name="local-root" type="string" required="no" multiple="yes"
+		  _description="Define a local root for virtual paths."/>
+        <property name="local-name" type="string" required="no" multiple="no"
+		  _description="Name of the flumotion component."/>
+      </properties>
+
+    </component>
+
+
   </components>
+
   <bundles>
 
     <bundle project="transcoder" name="file-monitor-admin-gtk">
@@ -44,7 +72,9 @@
       <directories>
         <directory name="flumotion/component/transcoder">
           <filename location="filemonitor_admin_gtk.py" />
+          <filename location="httpmonitor_admin_gtk.py" />
           <filename location="filemonitor.glade" />
+          <filename location="httpmonitor.glade" />
         </directory>
       </directories>
     </bundle>
@@ -56,9 +86,10 @@
       <directories>
         <directory name="flumotion/component/transcoder">
           <filename location="filemonitor.py" />
+          <filename location="httpmonitor.py" />
         </directory>
       </directories>
     </bundle>
 
   </bundles>
-</registry> 
+</registry>

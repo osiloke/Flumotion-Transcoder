@@ -50,6 +50,7 @@ class SourceConfig(properties.PropertyBag):
     inputFile = properties.String('input-file', None, True)
     reportTemplate = properties.String('report-template', None, True)
     preProcess = properties.String('pre-process', None)
+    cuePoints = properties.String('cue-points', None)
 
 
 class AudioConfig(properties.PropertyBag):

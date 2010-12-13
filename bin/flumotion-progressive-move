@@ -1,0 +1,260 @@
+#!/usr/bin/python
+
+import sys
+import os
+import optparse
+import shutil
+
+from twisted.internet import reactor
+
+FLU_DIR = "/usr/lib/flumotion/python"
+if not FLU_DIR in sys.path:
+        sys.path.insert(0, FLU_DIR)
+
+from flumotion.common import process, log
+from flumotion.configure import configure
+
+VERSION = 0.1
+DEFAULT_THRESHOLD = 100
+DEFAULT_MOVE_COUNT = 50
+DEFAULT_PERIOD = 60
+DEFAULT_POSTFIX = ""
+LOG_CATEGORY = "progressive-move"
+
+def debug(format, *args):
+    log.debug(LOG_CATEGORY, format, *args)
+
+def info(format, *args):
+    log.info(LOG_CATEGORY, format, *args)
+
+def warning(format, *args):
+    log.warning(LOG_CATEGORY, format, *args)
+
+class OptError(Exception): pass
+
+def parse_options(args):
+    usage = 'usage: progressive-move [options] SOURCE_DIR TARGET_DIR'
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option('', '--version',
+                      action="store_true", dest="version",
+                      default=False,
+                      help="show version information")
+    parser.add_option('-D', '--daemonize',
+                     action="store_true", dest="daemonize",
+                     default=False,
+                     help="run in background as a daemon")
+    parser.add_option('', '--daemonize-to',
+                     action="store", dest="daemonizeTo",
+                     help="what directory to run from when daemonizing; "
+                          "default: '/'")
+    parser.add_option('-d', '--debug',
+                     action="store", dest="debug",
+                     help="override the configuration debug level")
+    parser.add_option('-x', '--postfix', default=DEFAULT_POSTFIX,
+                     action="store", dest="postfix", type="str",
+                     help="source file postfix; "
+                          "default: '%s'" % DEFAULT_POSTFIX)
+    parser.add_option('-p', '--period', default=DEFAULT_PERIOD,
+                     action="store", dest="period", type="int",
+                     help="time period to scan source directory; "
+                          "default: %d" % DEFAULT_PERIOD)
+    parser.add_option('-m', '--min', default=DEFAULT_THRESHOLD,
+                     action="store", dest="threshold", type="int",
+                     help="target directory minimum files; "
+                          "default: %d" % DEFAULT_THRESHOLD)
+    parser.add_option('-c', '--count', default=DEFAULT_MOVE_COUNT,
+                     action="store", dest="count", type="int",
+                     help="number of files to move from source to target; "
+                          "default: %d" % DEFAULT_MOVE_COUNT)
+    parser.add_option('-L', '--logdir',
+                      action="store", dest="logdir",
+                      help="flumotion log directory (default: %s)" %
+                      configure.logdir)
+    parser.add_option('-R', '--rundir',
+                      action="store", dest="rundir",
+                      help="flumotion run directory (default: %s)" %
+                      configure.rundir)
+    parser.add_option('-T', '--tag',
+                      action="store", dest="tag", default=None,
+                      help="service tag, used to start more than one service")
+
+    options, args = parser.parse_args(args)
+
+    # Force options down configure's throat
+    for d in ['logdir', 'rundir']:
+        o = getattr(options, d, None)
+        if o:
+            setattr(configure, d, o)
+
+    if options.version:
+        print VERSION
+        sys.exit(0)
+
+    try:
+        if options.daemonizeTo and not options.daemonize:
+            raise OptError('--daemonize-to can only be used with -D/--daemonize.')
+
+        if len(args) != 3:
+            sys.exit(usage)
+
+        sourcePath, targetPath = args[1:]
+        if not (os.path.exists(sourcePath) and os.path.isdir(sourcePath)):
+            raise OptError("Source directory '%s' not found" % sourcePath)
+        if not (os.path.exists(targetPath) and os.path.isdir(targetPath)):
+            raise OptError("Target directory '%s' not found" % targetPath)
+
+        return options, sourcePath, targetPath
+    except OptError, e:
+            print "Invalid Parameter: ", str(e)
+            sys.exit(usage)
+
+def main(args):
+    log.init()
+
+    options, sourcePath, targetPath = parse_options(args)
+
+    if options.tag:
+        global LOG_CATEGORY
+        tag = "-%s" % options.tag
+        LOG_CATEGORY = LOG_CATEGORY + tag
+    else:
+        tag = ""
+
+    if options.debug:
+        log.setFluDebug(options.debug)
+
+    if options.daemonize:
+        possess(tag, options.daemonizeTo)
+
+    reactor.callLater(0.1, start, sourcePath, targetPath,
+                      options.period, options.threshold,
+                      options.count, options.postfix)
+    reactor.run()
+
+    if options.daemonize:
+        exorcize(tag)
+
+def start(sourcePath, targetPath, period, threshold, count, postfix):
+    try:
+        c = count_files(targetPath)
+        if c <= threshold:
+            move_files(sourcePath, targetPath, count, postfix)
+    except Exception, e:
+        warning("Unexpected Exception: %s", log.getExceptionMessage(e))
+    reactor.callLater(period, start, sourcePath, targetPath,
+                      period, threshold, count, postfix)
+
+def count_files(path):
+    info("Scanning '%s'...", path)
+    def step(count, dirname, content):
+        paths = [os.path.join(dirname, f) for f in content]
+        fc = sum([os.path.isfile(p) for p in paths])
+        count[0] += fc
+    count = [0]
+    os.path.walk(path, step, count)
+    info("Target directory contains %d files", count[0])
+    return count[0]
+
+class MoveDone(Exception): pass
+class CreateDirError(Exception): pass
+
+def move_files(sourcePath, targetPath, count, postfix):
+    info("Moving %d files from '%s' to '%s'...", count, sourcePath, targetPath)
+    def step(done, dirname, content):
+        for f in content:
+            absPath = os.path.join(dirname, f)
+            if not (os.path.isfile(absPath) or os.path.islink(absPath)):
+                continue
+            if not (postfix or absPath.endswith(postfix)):
+                continue
+            if not absPath.startswith(sourcePath):
+                warning("Invalid source path '%s'", absPath)
+                continue
+            relPath = absPath[len(sourcePath):]
+            destPath = targetPath + relPath
+            destDir = os.path.dirname(destPath)
+            try:
+                ensureDirExists(destDir)
+            except CreateDirError, e:
+                warning(str(e))
+                continue
+            debug("Moving %s...", relPath)
+            try:
+                shutil.move(absPath, destPath)
+            except IOError, e:
+                warning("Fail to move file %s: %s", absPath,
+                        log.getExceptionMessage(e))
+            done[0] += 1
+            if done[0] >= count:
+                raise MoveDone()
+    try:
+        done = [0]
+        os.path.walk(sourcePath, step, done)
+    except MoveDone:
+        pass
+
+
+def ensureDirExists(dir):
+    dir = os.path.abspath(dir)
+    if os.path.exists(dir):
+        if os.path.isdir(dir):
+            return
+        raise CreateDirError("Could not create directory '%s': "
+                             "it exists but it's not a directory" % dir)
+    parts = dir.split(os.sep)
+    for i in range(len(parts) - 1):
+        dir = os.sep.join(parts[0:i + 2])
+        if os.path.exists(dir):
+            if os.path.isdir(dir):
+                continue
+            raise CreateDirError("Could not create directory '%s': "
+                                 "it exists but it's not a directory" % dir)
+        try:
+            os.mkdir(dir, 0755)
+        except OSError, e:
+            if e.errno == 17: continue
+            raise CreateDirError("Could not create directory '%s': %s"
+                                 % (dir, log.getExceptionMessage(e)))
+
+def possess(tag, daemonizeTo=None):
+    ensureDirExists(configure.logdir)
+    ensureDirExists(configure.rundir)
+    if not daemonizeTo:
+        daemonizeTo = '/'
+
+    pid = process.getPid('progressive-move' + tag)
+    if pid:
+        if process.checkPidRunning(pid):
+            raise Exception('A progressive-move%s is already running '
+                            'as pid %d' % (tag, pid))
+        else:
+            warning("progressive-move%s should have been "
+                    "running with pid %s.  Restarting", tag, str(pid))
+            process.deletePidFile('progressive-move' + tag)
+
+    logPath = os.path.join(configure.logdir, 'progressive-move.log')
+
+    # here we daemonize; so we also change our pid
+    if not daemonizeTo:
+        daemonizeTo = '/'
+    process.daemonize(stdout=logPath, stderr=logPath,
+                      directory=daemonizeTo)
+
+    info('Started daemon')
+
+    # from now on I should keep running, whatever happens
+    debug('writing pid file')
+    process.writePidFile('progressive-move' + tag)
+
+def exorcize(tag):
+    debug('deleting pid file')
+    process.deletePidFile('progressive-move' + tag)
+
+if __name__ == "__main__":
+    try:
+        import flumotion
+        main(sys.argv)
+    except KeyboardInterrupt:
+        print 'Interrupted'
+
+

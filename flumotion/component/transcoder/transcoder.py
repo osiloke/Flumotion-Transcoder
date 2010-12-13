@@ -29,6 +29,7 @@ from flumotion.transcoder.errors import TranscoderError
 from flumotion.component.transcoder import compconsts
 from flumotion.component.transcoder import analyst
 from flumotion.component.transcoder.watcher import FilesWatcher
+from flumotion.component.transcoder.cuepointsfilesrc import CuePointsFileSrc
 
 
 class ITranscoderProducer(Interface):
@@ -103,6 +104,7 @@ class MediaTranscoder(log.LoggerProxy):
         self._playingCallback = playingCB
         self._progressCallback = progressCB
         self._sourcePath = None
+        self._cuePoints = None
         self._sourceAnalysis = None
         self._analyst = None
         self._pipeline = None
@@ -130,7 +132,7 @@ class MediaTranscoder(log.LoggerProxy):
     def getProducers(self):
         return self._producers.keys()
 
-    def start(self, sourcePath, sourceAnalysis=None, timeout=30):
+    def start(self, sourcePath, params=None, sourceAnalysis=None, timeout=30):
         """
         Start transcoding and return a defer.Deferred
         that will be call when all producer terminate.
@@ -147,6 +149,7 @@ class MediaTranscoder(log.LoggerProxy):
             return defer.fail(error)
 
         self._sourcePath = sourcePath
+        self._cuePoints = params.get("cue-points", None)
         self._stallTimeout = timeout
         self._deferred = defer.Deferred()
 
@@ -418,11 +421,20 @@ class MediaTranscoder(log.LoggerProxy):
         self.log('Setting up transcoding pipeline')
         pipelineName = "transcoder-%s" % self._sourcePath
         pipeline = gst.Pipeline(pipelineName)
-        src = gst.element_factory_make("filesrc")
-        src.props.location = self._sourcePath
-        dbin = gst.element_factory_make("decodebin2")
-        pipeline.add(src, dbin)
-        src.link(dbin)
+
+        self.debug("CUE_POINTS: %r", self._cuePoints)
+        if self._cuePoints:
+            dbin = CuePointsFileSrc()
+            dbin.set_property("location", self._sourcePath)
+            dbin.set_property("cuepoints", self._cuePoints)
+            self.debug("CUE POINTS: %r", dbin)
+            pipeline.add(dbin)
+        else:
+            src = gst.element_factory_make("filesrc")
+            src.props.location = self._sourcePath
+            dbin = gst.element_factory_make("decodebin2")
+            pipeline.add(src, dbin)
+            src.link(dbin)
 
         tees = {}
         if self._sourceAnalysis.hasAudio:

@@ -71,6 +71,7 @@ AC_CONFIG_FILES([bin/flumotion-transcoder-admin], [chmod +x bin/flumotion-transc
 AC_CONFIG_FILES([bin/flumotion-transcoder-upgrade], [chmod +x bin/flumotion-transcoder-upgrade])
 AC_CONFIG_FILES([bin/flumotion-progressive-move], [chmod +x bin/flumotion-progressive-move])
 AC_CONFIG_FILES([bin/flumotion-transcoder-qos], [chmod +x bin/flumotion-transcoder-qos])
+AC_CONFIG_FILES([bin/flumotion-transcoder-remux], [chmod +x bin/flumotion-transcoder-remux])
 
 AC_OUTPUT(
 Makefile

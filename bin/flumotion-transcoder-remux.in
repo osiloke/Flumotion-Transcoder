@@ -1,0 +1,7 @@
+#!/bin/bash
+
+INPUT="$1/$2"
+ORIG="$INPUT.orig"
+OUTPUT=$INPUT
+
+mv  $INPUT $ORIG ; ffmpeg -i $ORIG -acodec copy -vcodec copy -f avi $OUTPUT

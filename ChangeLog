@@ -1,3 +1,50 @@
+2010-12-13  Julien Le Goff  <jlegoff@flumotion.com>
+
+	* bin/Makefile.am:
+	* bin/flumotion-progressive-move:
+	* bin/flumotion-transcoder-qos:
+	* bin/flumotion-transcoder-remux.in:
+	* conf/Makefile.am:
+	* configure.ac:
+	* flumotion-transcoder.spec.in:
+	* flumotion/component/transcoder/Makefile.am:
+	* flumotion/component/transcoder/compconsts.py:
+	* flumotion/component/transcoder/cuepointsfilesrc.py:
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/filemonitor.xml:
+	* flumotion/component/transcoder/filetranscoder.py:
+	* flumotion/component/transcoder/httpmonitor.glade:
+	* flumotion/component/transcoder/httpmonitor.py:
+	* flumotion/component/transcoder/httpmonitor_admin_gtk.py:
+	* flumotion/component/transcoder/job.py:
+	* flumotion/component/transcoder/transcoder.py:
+	* flumotion/transcoder/admin/admin.py:
+	* flumotion/transcoder/admin/adminconsts.py:
+	* flumotion/transcoder/admin/admintask.py:
+	* flumotion/transcoder/admin/context/customer.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datastore/customer.py:
+	* flumotion/transcoder/admin/montask.py:
+	* flumotion/transcoder/admin/property/filemon.py:
+	* flumotion/transcoder/admin/property/filetrans.py:
+	* flumotion/transcoder/admin/proxy/monitor.py:
+	* flumotion/transcoder/admin/scheduler.py:
+	* flumotion/transcoder/admin/taskmanager.py:
+	* flumotion/transcoder/admin/transtask.py:
+	* flumotion/transcoder/transconfig.py:
+	* bin/flumotion-transcoder-qos (svn:executable):
+	* bin/flumotion-transcoder-remux.in (svn:executable):
+	* bin/flumotion-progressive-move (svn:executable):
+	* bin/flumotion-transcoder-remux.in (added):
+	* bin/flumotion-progressive-move (added):
+	* bin/flumotion-transcoder-qos (added):
+	* flumotion/component/transcoder/httpmonitor_admin_gtk.py (added):
+	* flumotion/component/transcoder/httpmonitor.glade (added):
+	* flumotion/component/transcoder/cuepointsfilesrc.py (added):
+	* flumotion/component/transcoder/httpmonitor.py (added):
+	Add a new monitor that handles http requests. Allow transcoding a file with
+	a list of cue points.
+
 2010-08-02  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* flumotion/component/transcoder/filemonitor.xml:

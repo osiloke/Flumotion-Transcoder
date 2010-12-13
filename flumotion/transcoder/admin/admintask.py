@@ -688,6 +688,7 @@ class AdminTask(log.LoggerProxy, events.EventSourceMixin):
             self.__loadNewComponent()
 
     def __loadNewComponent(self):
+        # component is started here
         componentName = self._pendingName
         workerName = self._workerPxy.getName()
         self.debug("Admin task '%s' loading component '%s' on  worker '%s'",

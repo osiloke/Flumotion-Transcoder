@@ -33,8 +33,17 @@ class MonitoringTask(admintask.AdminTask):
     MAX_RETRIES = adminconsts.MONITOR_MAX_RETRIES
 
     def __init__(self, logger, custCtx):
-        admintask.AdminTask.__init__(self, logger, custCtx.monitorLabel,
-                                     filemon.MonitorProperties.createFromContext(custCtx))
+        try:
+            monitor_type = custCtx.monitorType
+        except:
+            monitor_type = None
+
+        if monitor_type == adminconsts.HTTP_MONITOR:
+            props = filemon.HttpMonitorProperties.createFromContext(custCtx)
+        else:
+            props = filemon.MonitorProperties.createFromContext(custCtx)
+
+        admintask.AdminTask.__init__(self, logger, custCtx.monitorLabel, props)
         self._custCtx = custCtx
         self._pendingMoves = [] # [VirtualPath, VirutalPath, [str]]
         self._movingFiles = False
@@ -45,8 +54,6 @@ class MonitoringTask(admintask.AdminTask):
         self._register("file-added")
         self._register("file-state-changed")
         self._register("file-removed")
-
-
 
     ## Public Methods ##
 
@@ -117,7 +124,7 @@ class MonitoringTask(admintask.AdminTask):
         self.emit("file-removed", profCtx, state)
 
     def __onMonitorFileAdded(self, monPxy, virtDir, file, state, fileinfo,
-                             detection_time, mime_type, checksum):
+                             detection_time, mime_type, checksum, params=None):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -126,10 +133,10 @@ class MonitoringTask(admintask.AdminTask):
                          self._custCtx.name)
             return
         self.emit("file-added", profCtx, state, fileinfo, detection_time,
-                  mime_type, checksum)
+                  mime_type, checksum, params)
 
     def __onMonitorFileChanged(self, monPxy, virtDir, file, state, fileinfo,
-                               mime_type, checksum):
+                               mime_type, checksum, params=None):
         if not self._isElectedComponent(monPxy): return
         profCtx = self.__file2profileContext(virtDir, file)
         if not profCtx:
@@ -138,7 +145,7 @@ class MonitoringTask(admintask.AdminTask):
                          self._custCtx.name)
             return
         self.emit("file-state-changed", profCtx, state, fileinfo,
-                  mime_type, checksum)
+                  mime_type, checksum, params)
 
 
     ## Virtual Methods Implementation ##
@@ -200,8 +207,17 @@ class MonitoringTask(admintask.AdminTask):
 
     def _doLoadComponent(self, workerPxy, compName, compLabel,
                          compProperties, loadTimeout):
+        # decide, in function of the type of monitor, what type of monitor should be loaded.
+        try:
+            monitor_type = self._custCtx.monitorType
+        except:
+            monitor_type = adminconsts.FILE_MONITOR
+
+        if monitor_type == adminconsts.HTTP_MONITOR:
+            return monitor.HttpMonitorProxy.loadTo(workerPxy, compName, compLabel,
+                                                   compProperties, loadTimeout)
         return monitor.MonitorProxy.loadTo(workerPxy, compName, compLabel,
-                                           compProperties, loadTimeout)
+                                               compProperties, loadTimeout)
 
 
     ## Private Methods ##

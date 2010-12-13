@@ -100,6 +100,7 @@ fi
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-admin
 %attr(755,root,flumotion) %{_bindir}/flumotion-progressive-move
 %attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-qos
+%attr(755,root,flumotion) %{_bindir}/flumotion-transcoder-remux
 %attr(750,root,flumotion) %{_sysconfdir}/rc.d/init.d/flumotion-transcoder-admin
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/managers/transcoder/planet.xml
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/flumotion/transcoder/transcoder-admin.ini
@@ -108,7 +109,7 @@ fi
 %attr(640,root,flumotion) %config(noreplace) %{_sysconfdir}/sysconfig/flumotion-transcoder-admin
 
 %dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder
-%dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder/customers
+#%dir %attr(750,root,flumotion) %{_sysconfdir}/flumotion/transcoder/customers
 %dir %attr(770,root,flumotion) %{_localstatedir}/tmp/flumotion/transcoder
 %dir %attr(770,root,flumotion) %{_localstatedir}/cache/flumotion/transcoder
 

@@ -43,7 +43,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         self._transcoding = transcoding
         self._diagnostician = diagnostician
         self._order = [] # [puid]
-        self._queue = {} # {puid: ProfileContext}
+        self._queue = {} # {puid: (ProfileContext, params)}
         self._activities = {} # {transtask.TranscodingTask: ActivityContext}
         self._started = False
         self._paused = False
@@ -96,7 +96,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.__startup()
         return defer.succeed(self)
 
-    def addProfile(self, profCtx):
+    def addProfile(self, profCtx, params=None):
         assert isinstance(profCtx, profile.ProfileContext)
         if self.isProfileQueued(profCtx):
             self.log("Added an already queued profile '%s'", profCtx.inputPath)
@@ -104,7 +104,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
             self.log("Profile '%s' already scheduled", profCtx.inputPath)
         else:
             self.debug("Queued profile '%s'", profCtx.inputPath)
-            self.__queueProfile(profCtx)
+            self.__queueProfile(profCtx, params)
             self.__startupTasks()
             self.emit("profile-queued", profCtx)
 
@@ -204,7 +204,7 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
     ## EventSource Overriden Methods ##
 
     def refreshListener(self, listener):
-        for profCtx in self._queue.itervalues():
+        for (profCtx, params) in self._queue.itervalues():
             self.emitTo("profile-queued", listener, profCtx)
         for task in self._transcoding.iterTasks():
             self.emitTo("transcoding-started", listener, task)
@@ -322,15 +322,15 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         if available <= 0:
             self._startDelay = None
             return
-        profCtx = self.__popNextProfile()
+        profCtx, params = self.__popNextProfile()
         if not profCtx:
             self._startDelay = None
             return
-        self.__startTranscodingTask(profCtx)
+        self.__startTranscodingTask(profCtx, params=params)
         self._startDelay = utils.callNext(self.__asyncStartTask)
 
-    def __startTranscodingTask(self, profCtx, activCtx=None):
-        task = transtask.TranscodingTask(self._transcoding, profCtx)
+    def __startTranscodingTask(self, profCtx, activCtx=None, params=None):
+        task = transtask.TranscodingTask(self._transcoding, profCtx, params)
         self.info("Starting transcoding task '%s'",  task.label)
         self._transcoding.addTask(profCtx.uid, task)
         self.emit("transcoding-started", task)
@@ -349,12 +349,12 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
         return custPri * 1000 + profPri
 
     def __getKeyPriority(self, key):
-        return self.__getProfilePriority(self._queue[key])
+        return self.__getProfilePriority(self._queue[key][0])
 
-    def __queueProfile(self, profCtx):
+    def __queueProfile(self, profCtx, params=None):
         puid = profCtx.uid
         assert not (puid in self._queue)
-        self._queue[puid] =  profCtx
+        self._queue[puid] =  (profCtx, params)
         self._order.append(puid)
         self._order.sort(key=self.__getKeyPriority)
 
@@ -366,10 +366,10 @@ class Scheduler(log.Loggable, events.EventSourceMixin):
 
     def __popNextProfile(self):
         if not self._order:
-            return None
+            return (None, None)
         puid = self._order.pop()
-        profCtx = self._queue.pop(puid)
-        return profCtx
+        profCtx, params = self._queue.pop(puid)
+        return (profCtx, params)
 
     def __clearQueue(self):
         self._queue.clear()

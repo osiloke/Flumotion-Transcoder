@@ -16,6 +16,7 @@
 # Logging categories
 TRANSCODER_LOG_CATEGORY = "file-trans"
 MONITOR_LOG_CATEGORY = "file-monitor"
+HTTP_MONITOR_LOG_CATEGORY = "http-monitor"
 
 # Discoverer max interleave in seconds
 MAX_INTERLEAVE = 2

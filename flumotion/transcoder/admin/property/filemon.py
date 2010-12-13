@@ -51,7 +51,6 @@ class MonitorProperties(base.ComponentPropertiesMixin):
         self._digest = utils.digestParameters(self._name, self._directories,
                                               self._scanPeriod, self._pathAttr)
 
-
     ## base.IComponentProperties Implementation ##
 
     def getDigest(self):
@@ -84,3 +83,59 @@ class MonitorProperties(base.ComponentPropertiesMixin):
             args.extend(self._pathAttr.asLaunchArguments())
         args.extend(local.asLaunchArguments())
         return args
+
+
+class HttpMonitorProperties(base.ComponentPropertiesMixin, log.Loggable):
+
+    implements(base.IComponentProperties)
+
+    @classmethod
+    def createFromComponentDict(cls, workerCtx, props):
+        port = props.get("port", 7680)
+        profiles = props.get("profile", list())
+        name = props.get("admin-id", "")
+        return cls(name, profiles, port)
+
+    @classmethod
+    def createFromContext(cls, custCtx):
+        profiles = []
+        for profCtx in custCtx.iterUnboundProfileContexts():
+            profiles.append(profCtx.inputBase)
+
+        try:
+            port = custCtx.monitorPort
+        except:
+            port = 7680
+        return cls(custCtx.name, profiles, port)
+
+    def prepare(self, workerCtx):
+        pass
+
+    def getDigest(self):
+        return self._digest
+
+    def __init__(self, name, profiles, port):
+        self._name = name
+        self._port = port
+        self._profiles = tuple(profiles)
+        self._digest = utils.digestParameters(self._name, self._profiles,
+                                              self._port)
+
+    def asComponentProperties(self, workerCtx):
+        props = []
+        local = workerCtx.getLocal()
+        for p in self._profiles:
+            props.append(("profile", str(p)))
+        props.append(("port", self._port))
+        props.append(("admin-id", self._name))
+        props.extend(local.asComponentProperties())
+        return props
+
+    def asLaunchArguments(self, workerCtx):
+        args = []
+        local = workerCtx.getLocal()
+        args.append(utils.mkCmdArg(str(self._profiles), "profile="))
+        args.append(utils.mkCmdArg(str(self._port), "port="))
+        args.extend(local.asLaunchArguments())
+        return args
+

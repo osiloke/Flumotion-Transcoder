@@ -169,3 +169,6 @@ DEFAULT_TEMPREP_DIR = "/%s/reports/pending"
 DEFAULT_FAILEDREP_DIR = "/%s/reports/failed"
 DEFAULT_DONEREP_DIR = "/%s/reports/done"
 DEFAULT_WORK_DIR = "/%s/work"
+
+FILE_MONITOR = "file-monitor"
+HTTP_MONITOR = "http-monitor"

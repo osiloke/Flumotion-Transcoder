@@ -34,7 +34,7 @@ class MonitorProxy(component.ComponentProxy):
     def loadTo(cls, workerPxy, name, label, properties, timeout=None):
         managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
-        return atmoPxy._loadComponent('file-monitor',
+        return atmoPxy._loadComponent(adminconsts.FILE_MONITOR,
                                       name,  label, workerPxy,
                                       properties, timeout)
 
@@ -85,9 +85,9 @@ class MonitorProxy(component.ComponentProxy):
         if pending:
             for file, value in pending.iteritems():
                 virtBase, relFile = file
-                state, fileinfo, detection_time, mime_type, checksum = value
+                state, fileinfo, detection_time, mime_type, checksum, params = value
                 self.emit("file-added", virtBase, relFile, state, fileinfo,
-                          detection_time, mime_type, checksum)
+                          detection_time, mime_type, checksum, params)
 
     def _onUIStateSet(self, uiState, key, value):
         self.log("Monitor UI State '%s' set to '%s'", key, value)
@@ -120,19 +120,19 @@ class MonitorProxy(component.ComponentProxy):
     ## UI State Handlers Methods ##
 
     def _onMonitorSetFile(self, virtBase, relFile, filedata):
-        state, fileinfo, detection_time, mime_type, checksum = filedata
+        state, fileinfo, detection_time, mime_type, checksum, params = filedata
         ident = (virtBase, relFile)
 
         if ident in self._alreadyAdded:
             self.emit("file-changed", virtBase, relFile, state, fileinfo,
-                      mime_type, checksum)
+                      mime_type, checksum, params)
         else:
             self._alreadyAdded[ident] = None
             self.emit("file-added", virtBase, relFile, state, fileinfo,
-                      detection_time, mime_type, checksum)
+                      detection_time, mime_type, checksum, params)
 
     def _onMonitorDelFile(self, virtBase, relFile, filedata):
-        state, _fileinfo, _detection_time, _mime_type, _checksum = filedata
+        state, _fileinfo, _detection_time, _mime_type, _checksum, _params = filedata
         ident = (virtBase, relFile)
         if ident in self._alreadyAdded:
             del self._alreadyAdded[ident]
@@ -188,5 +188,21 @@ class MonitorProxy(component.ComponentProxy):
             files.append((virtualpath.VirtualPath.virtualize(p, local), f, s))
         return files
 
+class HttpMonitorProxy(MonitorProxy):
+    implements(IMonitorProxy)
+
+    properties_factory = filemon.HttpMonitorProperties
+
+    @classmethod
+    def loadTo(cls, workerPxy, name, label, properties, timeout=None):
+        managerPxy = workerPxy.getManagerProxy()
+        atmoPxy = managerPxy.getAtmosphereProxy()
+        return atmoPxy._loadComponent(adminconsts.HTTP_MONITOR,
+                                      name,  label, workerPxy,
+                                      properties, timeout)
+
+
+
 
 component.registerProxy("file-monitor", MonitorProxy)
+component.registerProxy("http-monitor", HttpMonitorProxy)

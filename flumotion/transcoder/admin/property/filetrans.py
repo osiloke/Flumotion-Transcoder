@@ -101,6 +101,10 @@ def createTranscodingConfigFromContext(profCtx):
             tc.config.ensureOne = confCtx.ensureOne
     return conf
 
+def update_config(config, params):
+    if params.has_key("cue-points"):
+        config.source.cuePoints = params["cue-points"]
+
 
 class TranscoderProperties(base.ComponentPropertiesMixin):
 
@@ -131,12 +135,15 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         return cls(name, configPath, config, niceLevel, pathAttr)
 
     @classmethod
-    def createFromContext(cls, profCtx):
+    def createFromContext(cls, profCtx, params=None):
         custCtx = profCtx.getCustomerContext()
         name = "%s/%s" % (custCtx.name, profCtx.name)
         configPath = profCtx.configPath
         pathAttr = custCtx.pathAttributes
         config = createTranscodingConfigFromContext(profCtx)
+        log.debug("PARAMS %r", params)
+        if params:
+            update_config(config, params)
         priority = profCtx.processPriority
         # for priority in [0,100] the nice level will be in  [19,0]
         # and for priority in [100-200] the nice level will be in [0,-15]
@@ -173,6 +180,7 @@ class TranscoderProperties(base.ComponentPropertiesMixin):
         adminCtx = workerCtx.getAdminContext()
         adminLocal = adminCtx.getLocal()
         localPath = self._configPath.localize(adminLocal)
+        # The .ini file is created here...
         saver = inifile.IniFile()
         # Set the datetime of file creation
         self._config.touch()

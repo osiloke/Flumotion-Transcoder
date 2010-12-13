@@ -615,7 +615,7 @@ class TranscodingJob(log.LoggerProxy):
         self._processes.append(p)
         vars = varsets.getPreProcessVars(context)
         context.reporter.startUsageMeasure("preprocess")
-        d = p.execute(vars, timeout=context.config.preProcessTimeout)
+        d = p.execute(vars, timeout=3600)
         d.addBoth(_stopMeasureCallback, context.reporter, "preprocess")
         d.addBoth(lambda r, e: self._processes.remove(e) or r, p)
         #Don't return Process result, but pass the received result
@@ -670,7 +670,8 @@ class TranscodingJob(log.LoggerProxy):
         sourceCtx = context.getSourceContext()
         context.reporter.startUsageMeasure("transcoding")
         stallTimeout = context.config.transcodingTimeout
-        d = transcoder.start(sourceCtx.getInputPath(), sourceAnalysis,
+        p = {"cue-points": sourceCtx.config.cuePoints}
+        d = transcoder.start(sourceCtx.getInputPath(), p, sourceAnalysis,
                              timeout=stallTimeout)
         self._transcoder = transcoder
         d.addBoth(_stopMeasureCallback, context.reporter, "transcoding")

@@ -264,12 +264,13 @@ class TranscoderAdmin(log.Loggable):
     ## MonitoringTask Event Listeners ##
 
     def __onMonitoredFileAdded(self, montask, profCtx, state, fileinfo,
-                               detection_time, mime_type, checksum):
+                               detection_time, mime_type, checksum, params):
         self.log("Monitoring task '%s' added profile '%s'",
                  montask.label, profCtx.inputPath)
 
         key = profCtx.inputBase, profCtx.inputRelPath
         if key not in self._transcodeReports:
+            # TODO add params
             transcodeReportStore = self._reportsStore.newTranscodeReportStore()
 
             custCtx = profCtx.getCustomerContext()
@@ -277,9 +278,10 @@ class TranscoderAdmin(log.Loggable):
             transcodeReportStore.customerId = custCtx.identifier
             transcodeReportStore.profileId = profCtx.identifier
             transcodeReportStore.relativePath = profCtx.inputRelPath
-            transcodeReportStore.creationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_CTIME])
-            transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
-            transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
+            if fileinfo:
+                transcodeReportStore.creationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_CTIME])
+                transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
+                transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
             transcodeReportStore.detectionTime = detection_time
             transcodeReportStore.mimeType = mime_type
             #FIXME: check if checksum is None?
@@ -291,23 +293,25 @@ class TranscoderAdmin(log.Loggable):
             # may need to add a remote method to query the dictionary size...
             self._transcodeReports[key] = transcodeReportStore
 
-        self.__fileStateChanged(montask, profCtx, state)
+        self.__fileStateChanged(montask, profCtx, state, params)
 
     def __onMonitoredFileStateChanged(self, montask, profCtx, state,
-                                      fileinfo, mime_type, checksum):
+                                      fileinfo, mime_type, checksum, params):
         self.log("Monitoring task '%s' profile '%s' state "
                  "changed to %s with fileinfo %r", montask.label,
                  profCtx.inputPath, state, fileinfo)
 
+        # TODO Add params
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
-            transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
+            if fileinfo:
+                transcodeReportStore.fileSize = fileinfo[stat.ST_SIZE]
+                transcodeReportStore.modificationTime = datetime.utcfromtimestamp(fileinfo[stat.ST_MTIME])
             transcodeReportStore.mimeType = mime_type
             transcodeReportStore.fileChecksum = checksum
 
-        self.__fileStateChanged(montask, profCtx, state)
+        self.__fileStateChanged(montask, profCtx, state, params)
 
     def __onMonitoredFileRemoved(self, montask, profCtx, state):
         self.log("Monitoring task '%s' removed profile '%s'",
@@ -451,7 +455,7 @@ class TranscoderAdmin(log.Loggable):
         notifyDebug(msg, info=text, debug=debug)
         log.notifyFailure(self, failure, "Failure during component message diagnostic")
 
-    def __fileStateChanged(self, montask, profCtx, state):
+    def __fileStateChanged(self, montask, profCtx, state, params=None):
 
         def changeState(newState):
             inputBase = profCtx.inputBase
@@ -469,7 +473,7 @@ class TranscoderAdmin(log.Loggable):
             if active:
                 changeState(MonitorFileStateEnum.transcoding)
                 return
-            self._scheduler.addProfile(profCtx)
+            self._scheduler.addProfile(profCtx, params)
             return
         if state == MonitorFileStateEnum.queued:
             if active:
@@ -477,7 +481,7 @@ class TranscoderAdmin(log.Loggable):
                 return
             if queued:
                 return
-            self._scheduler.addProfile(profCtx)
+            self._scheduler.addProfile(profCtx, params)
             return
         if state == MonitorFileStateEnum.transcoding:
             if queued:
@@ -485,8 +489,11 @@ class TranscoderAdmin(log.Loggable):
                 return
             if active:
                 return
-            self._scheduler.addProfile(profCtx)
+            self._scheduler.addProfile(profCtx, params)
             return
+
+    def pepe_es_un_capullo(self):
+        return True
 
     def __moveFailedInputFiles(self, profCtx):
         custCtx = profCtx.getCustomerContext()

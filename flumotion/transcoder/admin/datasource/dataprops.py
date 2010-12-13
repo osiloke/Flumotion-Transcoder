@@ -133,6 +133,8 @@ class ProfileData(properties.PropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    monitorType = properties.String('monitor-type', None)
+    monitorPort = properties.Integer('monitor-port', 7680, False, True)
     notifyParams = properties.Dict(properties.String('notify', None))
     notifyDoneSQL = properties.List(properties.String('notify-done-sql', None))
     notifyFailedSQL = properties.List(properties.String('notify-failed-sql', None))
@@ -410,6 +412,8 @@ class CustomerData(properties.RootPropertyBag):
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    monitorType = properties.String('monitor-type', None)
+    monitorPort = properties.Integer('monitor-port', 7680, False, True)
     accessForceGroup = properties.String('access-force-group', None)
     accessForceUser = properties.String('access-force-user', None)
     accessForceDirMode = properties.Octal('access-force-dir-mode', None)
@@ -456,6 +460,7 @@ class AdminData(properties.RootPropertyBag):
     # See section 4 of specification.odt for more information
     # about the templates variables.notifyFailedRequests =
     #monitoring-period = 5
+    #monitoring-type = http-monitor
     #process-priority = 100
     #transcoding-priority = 100
     #transcoding-timeout = 60
@@ -484,6 +489,8 @@ class AdminData(properties.RootPropertyBag):
     ------------------------------------------------------------""".split('\n')
 
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
+    monitorType = properties.String('monitor-type', None)
+    monitorPort = properties.Integer('monitor-port', 7680, False, True)
     transcodingPriority = properties.Integer('transcoding-priority', None, False, True)
     transcodingTimeout = properties.Integer('transcoding-timeout', None, False, True)
     postprocessTimeout = properties.Integer('post-process-timeout', None, False, True)

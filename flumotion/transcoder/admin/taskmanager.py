@@ -307,6 +307,7 @@ class TaskManager(log.Loggable, events.EventSourceMixin):
             task = self._tasks[props]
             task.addComponent(compPxy)
         else:
+            self.debug("PROPERTIES %r-%r", props, self._tasks)
             msg = ("Task manager '%s' ask to add component '%s' "
                    "without matching task"
                    % (self.label, compPxy.getName()))
