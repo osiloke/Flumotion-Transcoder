@@ -1,3 +1,9 @@
+2010-12-15  Thodoris Paschidis <tpaschidis@flumotion>
+
+	* flumotion/component/transcoder/binmaker.py:
+	Changed the ordering of videoscale and videorate cause there was
+	a caps negotiation problem during previous transcoder test.
+
 2010-12-13  Julien Le Goff  <jlegoff@flumotion.com>
 
 	* bin/flumotion-progressive-move (deleted):

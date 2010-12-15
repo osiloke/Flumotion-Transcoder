@@ -285,7 +285,7 @@ def makeVideoEncodeBin(config, analysis, tag, withRateControl=True,
     bin.add(inqueue, cspace, scale, capsfilter, encode, outqueue)
     if rate:
         bin.add(rate)
-        gst.element_link_many(inqueue, cspace, rate, scale, capsfilter)
+        gst.element_link_many(inqueue, cspace, scale, rate, capsfilter)
     else:
         gst.element_link_many(inqueue, cspace, scale, capsfilter)
     if videobox:
