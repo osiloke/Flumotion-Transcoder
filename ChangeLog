@@ -1,6 +1,11 @@
 2011-01-20  Andoni Morales Alastruey  <amorales@flumotion.com>
 
 	* flumotion/component/joiner/joiner.py:
+	Parse the 'record' tag properly
+
+2011-01-20  Andoni Morales Alastruey  <amorales@flumotion.com>
+
+	* flumotion/component/joiner/joiner.py:
 	Fix issues with encoding and char escaping
 
 2010-12-15  Thodoris Paschidis <tpaschidis@flumotion>

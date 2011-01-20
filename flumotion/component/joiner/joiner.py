@@ -191,6 +191,10 @@ class Joiner(component.BaseComponent):
                                                                      'ignore')
         outputFile = path.join(self._outputDirectory, filename)
         cuePoints = project.getCuePoints()
+        if len(cuePoints) == 0:
+            self.warning("This project doesn't not contain any recordable "
+                    "chunk")
+            return
         fileChunks, transCuePointsList = self._intersectIndex(cuePoints)
         # Create the file first and do the transcoder callback with the
         # results. This need to be done in a thread because it's an I/O
@@ -574,6 +578,8 @@ class Project(log.Loggable):
             return None
         cuePoints = []
         for recording in self._recordingChunks:
+            if not recording['record']:
+                continue
             cuePoint = {}
             cuePoint['start'] = recording['start']
             cuePoint['stop'] = recording['stop']
