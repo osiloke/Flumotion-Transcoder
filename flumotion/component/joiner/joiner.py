@@ -23,6 +23,7 @@ import os
 import os.path as path
 import time
 import commands
+import pipes
 from urllib import urlencode
 from xml.dom import minidom
 from xml.dom.minidom import Node
@@ -186,9 +187,9 @@ class Joiner(component.BaseComponent):
         with a new set of cue points relatives to this file, passed to
         the transcoder with a callback.
         '''
-        outputFile = path.join(self._outputDirectory,
-                               project.getProgramID().replace('/', '_'))
-        outputFile = outputFile.replace(' ', '_')
+        filename =   project.getProgramID().replace('/', '_').encode('ascii',
+                                                                     'ignore')
+        outputFile = path.join(self._outputDirectory, filename)
         cuePoints = project.getCuePoints()
         fileChunks, transCuePointsList = self._intersectIndex(cuePoints)
         # Create the file first and do the transcoder callback with the
@@ -416,8 +417,8 @@ class Joiner(component.BaseComponent):
         if self._remuxFormat is None:
             return outputFile
         aviOutput = "%s.%s" % (outputFile, self._remuxFormat[1])
-        cmd = self.REMUX_TEMPLATE % (outputFile, self._remuxFormat[0],
-                                     aviOutput)
+        cmd = self.REMUX_TEMPLATE % (pipes.quote(outputFile), self._remuxFormat[0],
+                                     pipes.quote(aviOutput))
         self.info("remuxing: %s", cmd)
         res, out = commands.getstatusoutput(cmd)
         if res != 0:
@@ -524,7 +525,7 @@ class ProjectsGroup(log.Loggable):
                 elif  name in ['record', 'complete']:
                     recordingChunk[name] = strToBool(childNodes[0].nodeValue)
                 else:
-                    recordingChunk[name] = str(childNodes[0].nodeValue)
+                    recordingChunk[name] = childNodes[0].nodeValue
         except IndexError:
             self.warning("The mandatory element '%s' is missing.", name)
             return None
