@@ -1,3 +1,9 @@
+2011-01-27  Andoni Morales Alastruey  <amorales@flumotion.com>
+
+	* flumotion/component/transcoder/cuepointsfilesrc.py:
+	Use the 'update' flag of the segment instead of checking the
+	stop to know if it's the next segment comming up
+
 2011-01-20  Andoni Morales Alastruey  <amorales@flumotion.com>
 
 	* flumotion/component/joiner/joiner.py:

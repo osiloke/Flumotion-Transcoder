@@ -145,10 +145,9 @@ class CuePointsSeeker(gst.Element):
             # the file.
             self._file_start = start
             return False
-        # Compare the stop time of this segment with the stop time of the new
-        # segment (in ms, because of some weird rounding issues in gstreamer)
-        if self._next_segment and \
-                stop / gst.MSECOND == self._next_segment['stop'] / gst.MSECOND:
+        # if it's not a segment update, it's because it's a new segment comming
+        # after the seek
+        if not update:
             # A new segment is starting now after the seek has been
             # done, so update the values of the current segment to clip the
             # incomming buffers with the values of the next segment
