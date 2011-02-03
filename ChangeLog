@@ -1,3 +1,8 @@
+2011-02-03  Theodoros Paschidis  <tpaschidis@flumotion.com>
+
+	* flumotion/component/transcoder/binmaker.py:
+	Add 20ms tolerance in audiorate to fix cracking audio
+
 2011-02-02  Xavier Queralt  <xqueralt@flumotion.com>
 
 	* flumotion/component/transcoder/filetranscoder.xml:

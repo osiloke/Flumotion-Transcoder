@@ -23,6 +23,7 @@ from flumotion.component.transcoder import gstutils
 
 DEFAULT_WIDTH_MULTIPLE = 2
 DEFAULT_HEIGHT_MULTIPLE = 2
+DEFAULT_TOLERANCE = 20000000 # 20ms
 
 def makeMuxerEncodeBin(file, config, analysis, tag,
                        audioEncodeBin, videoEncodeBin,
@@ -84,6 +85,9 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     # audiorate element
     if withRateControl:
         rate = gst.element_factory_make("audiorate", "audiorate-%s" % tag)
+        # Add a tolerance of 20ms to audiorate to fix cracking audio
+        if gstreamer.element_has_property(rate, 'tolerance'):
+            rate.set_property('tolerance', DEFAULT_TOLERANCE)
         pipelineParts.append("audiorate")
     else:
         rate = None
