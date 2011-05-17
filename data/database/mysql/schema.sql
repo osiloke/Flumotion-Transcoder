@@ -3,6 +3,7 @@
 -- schema_information must be updated and looked at before committing schema changes
 -- schema_version is YYYYMMDDXX where XX is 00 for the first schema change on
 -- particular day, extra changes same day should increment the XX
+
 create table if not exists schema_information (
         schema_version int(9) not null,
         upgrading_soon boolean default false,
@@ -12,7 +13,11 @@ create table if not exists schema_information (
 insert into schema_information(schema_version, upgrading_soon, upgrading_currently)
 values ('2008123000', false, false);
 
-
+create table if not exists test_index (
+	id int primary key auto_increment,
+	start_time timestamp not null default current_timestamp on update current_timestamp,
+	comment varchar(1000) default null
+) engine=InnoDB;
 
 -- a lookup table of possible transcode outcomes
 create table if not exists transcoder_failures (
@@ -58,15 +63,27 @@ create table if not exists transcoder_reports (
         outcome boolean not null,
         successful boolean not null,
         invalid_output boolean default 0,
-
         comment varchar(1000),
-
+	test_id int not null default 1,
         foreign key(failure_id) references transcoder_failures(failure_id),
         -- if a file has failed, but the end result is a success there
         -- should be a comment saying how we managed to finally
         -- transcode the file (innodb ignores this, though...)
         check (outcome or (not successful) or (comment is not null))
 ) engine=InnoDB;
+
+-- Trigger to insert the correct test_id on every transcoder_report.
+
+DELIMITER ;;
+CREATE TRIGGER ins_test 
+	BEFORE INSERT ON transcoder_reports 
+	FOR EACH ROW 
+BEGIN 
+	DECLARE last_test INTEGER;
+	SELECT MAX(id) INTO last_test FROM test_index;
+	SET NEW.test_id = last_test;
+END ;;
+DELIMITER ;
 
 
 -- Various helpful views follow, encompassing some QoS metrics that we keep track of
@@ -76,6 +93,7 @@ create or replace view transcoder_reports_with_failures as
 
 create or replace view transcoded_manually as
 select
+	test_id,
         customer_id,
         profile_id,
         relative_path,
@@ -89,16 +107,18 @@ where
 
 create or replace view transcoder_outcomes_per_customer as
 select
+	test_id,
         customer_id,
         sum(case when (outcome and not invalid_output) then 1 else 0 end) as successful_transcods,
         sum(case when (not outcome or invalid_output) then 1 else 0 end) as failed_transcods,
         sum(case when (not outcome or invalid_output) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
         transcoder_reports
-group by customer_id;
+group by test_id, customer_id;
 
 create or replace view transcoder_outcomes_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         sum(case when (outcome and not invalid_output) then 1 else 0 end) as successful_transcods,
@@ -106,75 +126,139 @@ select
         sum(case when (not outcome or invalid_output) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
         transcoder_reports
-group by customer_id, profile_id;
+group by test_id, customer_id, profile_id;
+
+create or replace view transcoder_outcomes_per_file as
+select
+	test_id,
+        relative_path,
+	file_type,
+	mime_type,
+        sum(case when (outcome and not invalid_output) then 1 else 0 end) as successful_transcods,
+        sum(case when (not outcome or invalid_output) then 1 else 0 end) as failed_transcods,
+        sum(case when (not outcome or invalid_output) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
+from
+        transcoder_reports
+group by test_id, relative_path;
 
 create or replace view transcoder_results_per_customer as
 select
+	test_id,
         customer_id,
         sum(case when successful then 1 else 0 end) as successful_transcods,
         sum(case when successful then 0 else 1 end) as failed_transcods
 from
         transcoder_reports
-group by customer_id;
+group by test_id, customer_id;
 
 create or replace view transcoder_results_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         sum(case when successful then 1 else 0 end) as successful_transcods,
         sum(case when successful then 0 else 1 end) as failed_transcods
 from
         transcoder_reports
-group by customer_id, profile_id;
+group by test_id, customer_id, profile_id;
 
 -- internal success rate per customer rounded to 3 decimal numbers
 create or replace view internal_success_rate_per_customer as
 select
+	test_id,
         customer_id,
         successful_transcods + failed_transcods as number_of_transcods,
         round(successful_transcods / (successful_transcods + failed_unexpectedly_transcods), 3) * 100 as success_rate
-from transcoder_outcomes_per_customer;
+from 
+	transcoder_outcomes_per_customer;
 
 -- internal success rate per customer and profile rounded to 3 decimal numbers
 create or replace view internal_success_rate_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         successful_transcods + failed_transcods as number_of_transcods,
         round(successful_transcods / (successful_transcods + failed_unexpectedly_transcods), 3) * 100 as success_rate
 from transcoder_outcomes_per_profile;
 
+-- internal success rate per customer and profile rounded to 3 decimal numbers
+create or replace view internal_success_rate_per_file as
+select
+	test_id,
+        relative_path,
+        file_type,
+	mime_type,
+	successful_transcods,
+	failed_transcods,
+	failed_unexpectedly_transcods,
+        successful_transcods + failed_transcods as number_of_transcods,
+        round(successful_transcods / (successful_transcods + failed_unexpectedly_transcods), 3) * 100 as success_rate
+from transcoder_outcomes_per_file;
+
 -- external success rate per customer rounded to 3 decimal numbers
 create or replace view external_success_rate_per_customer as
 select
+	test_id,
         customer_id,
         successful_transcods + failed_transcods as number_of_transcods,
         round(successful_transcods / (successful_transcods + failed_transcods), 3) * 100 as success_rate
 from transcoder_results_per_customer;
 
+-- external success rate per profile rounded to 3 decimal numbers
+create or replace view external_success_rate_per_profile as
+select
+	test_id,
+        customer_id,
+	profile_id,
+        successful_transcods + failed_transcods as number_of_transcods,
+        round(successful_transcods / (successful_transcods + failed_transcods), 3) * 100 as success_rate
+from transcoder_results_per_profile;
+
+
+-- external success rate per file rounded to 3 decimal numbers
+create or replace view external_success_rate_per_file as
+select
+	test_id,
+	relative_path,
+	file_type,
+	mime_type,
+	sum(case when successful then 1 else 0 end) as successful_transcods,
+	sum(case when successful then 0 else 1 end) as failed_transcods,
+        count(successful) as number_of_transcods,
+	round((sum(case when successful then 1 else 0 end) / count(successful)),3) * 100 AS success_rate
+from transcoder_reports
+group by
+	test_id,
+	relative_path;
+
 -- total time spent by files in various phases
 create or replace view average_time_spent_in_phases as
 select
+	test_id,
         avg(timestampdiff(SECOND, detection_time, queueing_time)) as waiting_for_queuing,
         avg(timestampdiff(SECOND, queueing_time, transcoding_start_time)) as in_queue,
         avg(timestampdiff(SECOND, transcoding_start_time, transcoding_finish_time)) as transcoding,
         avg(timestampdiff(SECOND, detection_time, transcoding_finish_time)) as total
-from transcoder_reports;
+from transcoder_reports
+group by test_id;
 
 -- time spent in various phases per customer
 create or replace view average_time_spent_in_phases_per_customer as
 select
+	test_id,
         customer_id,
         avg(timestampdiff(SECOND, detection_time, queueing_time)) as waiting_for_queuing,
         avg(timestampdiff(SECOND, queueing_time, transcoding_start_time)) as in_queue,
         avg(timestampdiff(SECOND, transcoding_start_time, transcoding_finish_time)) as transcoding,
         avg(timestampdiff(SECOND, detection_time, transcoding_finish_time)) as total
 from transcoder_reports
-group by customer_id;
+group by test_id, customer_id;
 
 -- time spent in various phases per customer and profile
 create or replace view average_time_spent_in_phases_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         avg(timestampdiff(SECOND, detection_time, queueing_time)) as waiting_for_queuing,
@@ -182,20 +266,21 @@ select
         avg(timestampdiff(SECOND, transcoding_start_time, transcoding_finish_time)) as transcoding,
         avg(timestampdiff(SECOND, detection_time, transcoding_finish_time)) as total
 from transcoder_reports
-group by customer_id, profile_id;
+group by test_id, customer_id, profile_id;
 
 -- reports taking into account only unique files
 
 create or replace view unique_transcoder_reports as
 select
+	test_id,
         customer_id,
         profile_id,
         case when count(transcoder_report_id) = 1 then max(relative_path) else null end as relative_path, -- no sense when groupped, but avoid NULL when there's only one thing in the group
         case when count(transcoder_report_id) = 1 then max(report_path) else null end as report_path,
         file_checksum,
-        max(file_size),
-        max(file_type),
-        max(mime_type),
+        max(file_size) as file_size,
+        max(file_type) as file_type,
+        max(mime_type) as mime_type,
         case when count(transcoder_report_id) = 1 then max(audio_codec) else null end as audio_codec,
         case when count(transcoder_report_id) = 1 then max(video_codec) else null end as video_codec,
         max(creation_time) as creation_time,
@@ -216,12 +301,14 @@ select
 from
         transcoder_reports
 group by
+	test_id,
         customer_id,
         profile_id,
         file_checksum;
 
 create or replace view unique_transcoder_outcomes_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         sum(case when outcome then 1 else 0 end) as successful_transcods,
@@ -229,10 +316,11 @@ select
         sum(case when (not outcome) and (failure_id is null) then 1 else 0 end) as failed_unexpectedly_transcods
 from
         unique_transcoder_reports
-group by customer_id, profile_id;
+group by test_id, customer_id, profile_id;
 
 create or replace view unique_internal_success_rate_per_profile as
 select
+	test_id,
         customer_id,
         profile_id,
         successful_transcods + failed_transcods as number_of_transcods,
