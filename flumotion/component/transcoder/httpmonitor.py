@@ -10,6 +10,7 @@ from twisted.internet import reactor, threads
 from flumotion.common.i18n import gettexter
 from flumotion.component import component
 from flumotion.common import eventcalendar, log
+from flumotion.common import tz
 
 from flumotion.inhouse import fileutils
 
@@ -77,7 +78,7 @@ class RequestHandler(Resource, log.Loggable):
                           " %s") % cue_points
 
         params = {"cue-points": cue_points}
-        now = datetime.now(eventcalendar.UTC)
+        now = datetime.now(tz.UTC)
 
         file_name = os.path.basename(file_path)
         vir_file = self.virt_dir.append(file_name)

@@ -21,6 +21,8 @@ from twisted.internet import threads, defer, reactor
 
 from flumotion.inhouse import log
 
+
+from flumotion.common import tz
 from flumotion.common import eventcalendar
 from flumotion.component.transcoder import compconsts
 
@@ -132,7 +134,7 @@ class PeriodicalWatcher(Watcher):
             #new file
             if not (f in currFiles):
                 self.log("File '%s' added", f)
-                now = datetime.now(eventcalendar.UTC)
+                now = datetime.now(tz.UTC)
                 self.emit('file-added', f, s, now)
                 currFiles[f] = s
                 continue

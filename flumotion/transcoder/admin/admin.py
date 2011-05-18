@@ -16,6 +16,7 @@ from datetime import datetime
 from zope.interface import implements
 from twisted.internet import reactor
 
+from flumotion.common import tz
 from flumotion.common import eventcalendar
 from flumotion.common import i18n
 from flumotion.common.enum import EnumClass
@@ -330,7 +331,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            now = datetime.now(tz.UTC).replace(tzinfo=None)
             transcodeReportStore.queueingTime = now
 
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
@@ -340,7 +341,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            now = datetime.now(tz.UTC).replace(tzinfo=None)
             transcodeReportStore.transcodingStartTime = now
 
         self.__setInputFileState(profCtx,
@@ -352,7 +353,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            now = datetime.now(tz.UTC).replace(tzinfo=None)
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = False
             transcodeReportStore.successful = False
@@ -388,7 +389,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(eventcalendar.UTC).replace(tzinfo=None)
+            now = datetime.now(tz.UTC).replace(tzinfo=None)
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = True
             transcodeReportStore.successful = True
