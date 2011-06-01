@@ -365,7 +365,7 @@ class FileMonitor(component.BaseComponent, MonitorMixin):
         # Throw away the timezone, we're storing all time information
         # as time in UTC without tzinfo. We have less to transfer over
         # the wire and don't have to worry about jellifiers for tzinfo.
-        detection_time = detection_time.replace(tzinfo=None)
+        # detection_time = detection_time.replace(tzinfo=None)
         # put here the parameters
         self._setUIItem('pending-files', (virtBase, file),
                          (MonitorFileStateEnum.downloading, fileinfo,

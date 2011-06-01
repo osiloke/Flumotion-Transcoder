@@ -13,19 +13,15 @@
 import stat
 from datetime import datetime
 
-from zope.interface import implements
 from twisted.internet import reactor
+from twisted.internet.interfaces import IReactorCore
 
-from flumotion.common import tz
-from flumotion.common import eventcalendar
 from flumotion.common import i18n
-from flumotion.common.enum import EnumClass
 
 from flumotion.inhouse import log, defer, utils, errors as iherrors
 
 from flumotion.transcoder import errors
 from flumotion.transcoder.enums import MonitorFileStateEnum
-from flumotion.transcoder.enums import TranscodingOutcomeEnum
 from flumotion.transcoder.admin import adminconsts
 from flumotion.transcoder.admin.diagnostic import Diagnostician
 from flumotion.transcoder.admin.janitor import Janitor
@@ -77,7 +73,7 @@ class TranscoderAdmin(log.Loggable):
         self._translator = i18n.Translator()
         self._api = apiserver.Server(self._adminCtx.getAPIContext(), self)
         self._state = TaskStateEnum.stopped
-        reactor.addSystemEventTrigger("before", "shutdown", self.__abort)
+        IReactorCore(reactor).addSystemEventTrigger("before", "shutdown", self.__abort)
 
 
     ## Public Methods ##
@@ -331,7 +327,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.queueingTime = now
 
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
@@ -341,7 +337,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingStartTime = now
 
         self.__setInputFileState(profCtx,
@@ -353,7 +349,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = False
             transcodeReportStore.successful = False
@@ -389,7 +385,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = True
             transcodeReportStore.successful = True
@@ -654,7 +650,7 @@ class TranscoderAdmin(log.Loggable):
     def __ebAdminInitializationFailed(self, failure):
         log.notifyFailure(self, failure,
                           "Failure during Transcoder Administration Initialization")
-        reactor.stop()
+        IReactorCore(reactor).stop()
 
     def __ebMonitoringNotReady(self, failure):
         if failure.check(iherrors.TimeoutError):

@@ -6,11 +6,11 @@ from datetime import datetime
 from twisted.web.server import Site
 from twisted.web.resource import Resource
 from twisted.internet import reactor, threads
+from twisted.internet.interfaces import IReactorThreads, IReactorTCP
 
 from flumotion.common.i18n import gettexter
 from flumotion.component import component
-from flumotion.common import eventcalendar, log
-from flumotion.common import tz
+from flumotion.common import log
 
 from flumotion.inhouse import fileutils
 
@@ -22,7 +22,7 @@ from flumotion.transcoder.enums import MonitorFileStateEnum
 
 T_ = gettexter('flumotion-transcoder')
 # prevents from computing too many md5 at the same time
-reactor.suggestThreadPoolSize(2)
+IReactorThreads(reactor).suggestThreadPoolSize(2)
 
 class HttpMonitorMedium(component.BaseComponentMedium):
 
@@ -78,7 +78,7 @@ class RequestHandler(Resource, log.Loggable):
                           " %s") % cue_points
 
         params = {"cue-points": cue_points}
-        now = datetime.now(tz.UTC)
+        now = datetime.utcnow()
 
         file_name = os.path.basename(file_path)
         vir_file = self.virt_dir.append(file_name)
@@ -150,7 +150,7 @@ class HttpMonitor(component.BaseComponent, MonitorMixin):
         factory = Site(root)
         iface = ""
         self.port = props.get("port", 7680)
-        self._twisted_port = reactor.listenTCP(self.port, factory, interface=iface)
+        self._twisted_port = IReactorTCP(reactor).listenTCP(self.port, factory, interface=iface)
         # in case port is 0 - ie. we asked for a random port.
         self.port = self._twisted_port.getHost().port
 
@@ -183,7 +183,7 @@ class HttpMonitor(component.BaseComponent, MonitorMixin):
     def _file_added(self, _, file_path, file, fileinfo, detection_time, virt_base, params):
         local_file = virt_base.append(file).localize(self._local)
         self.debug("File added : '%s'", local_file)
-        detection_time = detection_time.replace(tzinfo=None)
+        # detection_time = detection_time.replace(tzinfo=None)
         incoming_folder = os.path.dirname(file_path) + '/'
         # Set what we know in the UI. We'll set the rest after computing
         # the checksum
