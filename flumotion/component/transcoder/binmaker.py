@@ -105,6 +105,12 @@ def makeAudioEncodeBin(config, analysis, tag, withRateControl=True,
     resamplerName = 'audioresample'
     if gstreamer.element_factory_exists('legacyresample'):
         resamplerName = 'legacyresample'
+    if config.audioResampler:
+        if gstreamer.element_factory_exists(config.audioResampler):
+            resamplerName = config.audioResampler
+        else:
+            logger.warning("Audio resampler %s doesn't exist, defaulting to %s",
+                           config.audioResampler, resamplerName)
     resample = gst.element_factory_make(resamplerName,
                                         "%s-%s" % (resamplerName, tag))
     pipelineParts.append(resamplerName)

@@ -1,3 +1,17 @@
+2011-06-30  Xavier Queralt  <xqueralt@flumotion.com>
+
+	reviewed by: jlegoff
+
+	* flumotion/component/transcoder/binmaker.py:
+	* flumotion/transcoder/admin/context/config.py:
+	* flumotion/transcoder/admin/datasource/dataprops.py:
+	* flumotion/transcoder/admin/datasource/datasource.py:
+	* flumotion/transcoder/admin/datastore/config.py:
+	* flumotion/transcoder/transconfig.py:
+	Add 'audio-resampler' option to configuration. If this is set and the
+	element exists it will be used to resample the audio instead of the
+	default one.
+
 2011-02-03  Theodoros Paschidis  <tpaschidis@flumotion.com>
 
 	* flumotion/component/transcoder/binmaker.py:

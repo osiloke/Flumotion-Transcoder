@@ -55,6 +55,7 @@ class SourceConfig(properties.PropertyBag):
 
 class AudioConfig(properties.PropertyBag):
     audioEncoder = properties.String('audio-encoder', None, True)
+    audioResampler = properties.String('audio-resampler', None)
     audioRate = properties.Integer('audio-rate', None, False, True)
     audioChannels = properties.Integer('audio-channels', None, False, True)
     muxer = properties.String('muxer', None, True)

@@ -41,6 +41,7 @@ class IAudioConfigContext(IConfigContext):
 
     muxer         = Attribute("Muxing pipeline")
     audioEncoder  = Attribute("Audio encoding pipeline")
+    audioResampler= Attribute("Audio resampler")
     audioRate     = Attribute("Audio rate")
     audioChannels = Attribute("Audio channels count")
 
@@ -131,6 +132,7 @@ class AudioConfigContext(ConfigContext):
 
     muxer         = base.StoreProxy("muxer")
     audioEncoder  = base.StoreProxy("audioEncoder")
+    audioResampler= base.StoreProxy("audioResampler")
     audioRate     = base.StoreProxy("audioRate")
     audioChannels = base.StoreProxy("audioChannels")
 
@@ -164,6 +166,7 @@ class AudioVideoConfigContext(ConfigContext):
 
     muxer               = base.StoreProxy("muxer")
     audioEncoder        = base.StoreProxy("audioEncoder")
+    audioResampler      = base.StoreProxy("audioResampler")
     audioRate           = base.StoreProxy("audioRate")
     audioChannels       = base.StoreProxy("audioChannels")
     videoEncoder        = base.StoreProxy("videoEncoder")

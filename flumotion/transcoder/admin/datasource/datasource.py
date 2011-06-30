@@ -311,6 +311,7 @@ class IInformationSource(IDataSource):
         For an Audio and Audio/Video targets, it has the following fields:
             muxer (str)
             audioEncoder (str)
+            audioResampler (str)
             audioRate (str)
             audioChannels (str)
         For a video and Audio/Video targets, it has the following fields:

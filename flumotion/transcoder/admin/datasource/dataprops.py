@@ -29,6 +29,7 @@ class AudioData(properties.PropertyBag):
     type = TargetTypeEnum.audio
     muxer = properties.String('muxer', None, True)
     audioEncoder = properties.String('audio-encoder', None, True)
+    audioResampler = properties.String('audio-resampler', None)
     audioRate = properties.Integer('audio-rate', None)
     audioChannels = properties.Integer('audio-channels', None)
 
@@ -345,6 +346,7 @@ class CustomerData(properties.RootPropertyBag):
     # For Audio and Audio/Video Targets:
     audio-encoder = vorbisenc bitrate=128000
     audio-rate = 44100
+    audio-resampler = audioresample
     audio-channels = 2
 
     # For Video and Audio/Video targets:

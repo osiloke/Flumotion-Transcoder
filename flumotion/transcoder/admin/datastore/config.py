@@ -39,6 +39,7 @@ class IAudioConfigStore(IConfigStore):
 
     muxer         = Attribute("Muxing pipeline")
     audioEncoder  = Attribute("Audio encoding pipeline")
+    audioResampler= Attribute("Audio resampler")
     audioRate     = Attribute("Audio rate")
     audioChannels = Attribute("Audio channels count")
 
@@ -107,6 +108,7 @@ class AudioConfigStore(ConfigStore):
     """
     muxer (str)
     audioEncoder (str)
+    audioResampler (str)
     audioRate (str)
     audioChannels (str)
     """
@@ -115,6 +117,7 @@ class AudioConfigStore(ConfigStore):
 
     muxer         = base.ReadOnlyProxy("muxer")
     audioEncoder  = base.ReadOnlyProxy("audioEncoder")
+    audioResampler= base.ReadOnlyProxy("audioResampler")
     audioRate     = base.ReadOnlyProxy("audioRate")
     audioChannels = base.ReadOnlyProxy("audioChannels")
 
