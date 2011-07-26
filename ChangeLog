@@ -1,3 +1,11 @@
+2011-07-26  Xavier Queralt  <xqueralt@flumotion.com>
+
+	* flumotion/component/transcoder/filemonitor.py:
+	* flumotion/component/transcoder/httpmonitor.py:
+	* flumotion/component/transcoder/watcher.py:
+	* flumotion/transcoder/admin/admin.py:
+	Revert r52384 because I don't trust those changes
+
 2011-06-30  Xavier Queralt  <xqueralt@flumotion.com>
 
 	reviewed by: jlegoff

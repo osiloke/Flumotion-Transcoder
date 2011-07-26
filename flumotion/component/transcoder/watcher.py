@@ -18,9 +18,13 @@ import stat
 from datetime import datetime
 
 from twisted.internet import threads, defer, reactor
-from twisted.internet.interfaces import IReactorTime
 
 from flumotion.inhouse import log
+
+
+from flumotion.common import tz
+from flumotion.common import eventcalendar
+from flumotion.component.transcoder import compconsts
 
 FILE_PROCESSING_BLOCK = 20
 
@@ -96,7 +100,7 @@ class PeriodicalWatcher(Watcher):
 
     def _scheduleCheck(self):
         if self._sigid is None:
-            self._sigid = IReactorTime(reactor).callLater(self.timeout, self._checkForChanges)
+            self._sigid = reactor.callLater(self.timeout, self._checkForChanges)
 
     def _checkForChanges(self):
         self.log("Watching...")
@@ -130,7 +134,7 @@ class PeriodicalWatcher(Watcher):
             #new file
             if not (f in currFiles):
                 self.log("File '%s' added", f)
-                now = datetime.utcnow()
+                now = datetime.now(tz.UTC)
                 self.emit('file-added', f, s, now)
                 currFiles[f] = s
                 continue
@@ -155,7 +159,7 @@ class PeriodicalWatcher(Watcher):
         try:
             for i in range(FILE_PROCESSING_BLOCK):
                 processor.next()
-            IReactorTime(reactor).callLater(0.01, self.__processFiles, processor)
+            reactor.callLater(0.01, self.__processFiles, processor)
         except StopIteration, e:
             self._sigid = None
             self._scheduleCheck()
