@@ -23,6 +23,7 @@ class IUnboundProfileContext(base.IBaseStoreContext):
 
     name                 = Attribute("Name of the profile")
     subdir               = Attribute("Profile's sub-directory")
+    active               = Attribute("Whether the monitoring is active (filesystem-based) or passive (http-based)")
     outputMediaTemplate  = Attribute("Output media file template")
     outputThumbTemplate  = Attribute("Output thumbnail file temaplte")
     linkFileTemplate     = Attribute("Link file template")
@@ -195,6 +196,7 @@ class UnboundProfileContext(base.BaseStoreContext, notification.NotifyStoreMixin
     implements(IUnboundProfileContext)
 
     name                 = base.StoreProxy("name")
+    active               = base.StoreParentProxy("active")
     outputMediaTemplate  = base.StoreParentProxy("outputMediaTemplate")
     outputThumbTemplate  = base.StoreParentProxy("outputThumbTemplate")
     linkFileTemplate     = base.StoreParentProxy("linkFileTemplate")

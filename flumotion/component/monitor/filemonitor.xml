@@ -1,8 +1,8 @@
 <registry>
   <components>
-    <component type="file-monitor" base="flumotion/component/transcoder"
+    <component type="file-monitor" base="flumotion/component/monitor"
 	       _description="Monitors the progress of a transcode.">
-      <source location="flumotion.component.transcoder.filemonitor"/>
+      <source location="flumotion.component.monitor.filemonitor"/>
 
       <entries>
         <entry type="component" location="filemonitor.py" function="FileMonitor"/>
@@ -13,8 +13,10 @@
         <property name="admin-id" type="string" required="no" multiple="no"
 		  _description="Internal Property; Unique ID of the transcoder
 		  admin instance that started the component"/>
-        <property name="directory" type="string" required="no" multiple="yes"
+        <property name="profile" type="string" required="no" multiple="yes"
 		  _description="Virtual directory to scan for new files."/>
+        <property name="named-profile" type="string" required="no" multiple="yes"
+          _description="Profile Monitored With Name"/>
         <property name="scan-period" type="int" required="yes" multiple="no"
 		  _description="Period between directory scans."/>
         <property name="local-root" type="string" required="no" multiple="yes"
@@ -35,9 +37,9 @@
 
     </component>
 
-    <component type="http-monitor" base="flumotion/component/transcoder"
+    <component type="http-monitor" base="flumotion/component/monitor"
 	       _description="Monitors the progress of a transcode.">
-      <source location="flumotion.component.transcoder.httpmonitor"/>
+      <source location="flumotion.component.monitor.httpmonitor"/>
 
       <entries>
         <entry type="component" location="httpmonitor.py" function="HttpMonitor"/>
@@ -50,8 +52,24 @@
 		  admin instance that started the component"/>
         <property name="port" type="int" required="no" multiple="no"
 		  _description="Period between directory scans."/>
+        <property name="scan-period" type="int" required="yes" multiple="no"
+          _description="Period between directory scans."/>
+        <property name="setup-callback" type="string" required="no" multiple="no"
+          _description="Callback to get hostname of worker where to make the http call"/>
+        <property name="force-group" type="string" required="no" multiple="no"
+          _description="Group name to use for new files."/>
+        <property name="force-user" type="string" required="no" multiple="no"
+          _description="User name to use for new files."/>          
+        <property name="force-dir-mode" type="string" required="no"
+          multiple="no"
+          _description="Access mode to use for new directory."/>
+        <property name="force-file-mode" type="string" required="no"
+          multiple="no"
+          _description="Access mode to use for new files."/>
         <property name="profile" type="string" required="no" multiple="yes"
-		  _description="Profile Monitored"/>
+          _description="Profile Monitored"/>
+        <property name="named-profile" type="string" required="no" multiple="yes"
+          _description="Profile Monitored With Name"/>
         <property name="local-root" type="string" required="no" multiple="yes"
 		  _description="Define a local root for virtual paths."/>
         <property name="local-name" type="string" required="no" multiple="no"
@@ -70,10 +88,8 @@
         <dependency name="transcoder-base-admin-gtk" />
       </dependencies>
       <directories>
-        <directory name="flumotion/component/transcoder">
-          <filename location="filemonitor_admin_gtk.py" />
+        <directory name="flumotion/component/monitor">
           <filename location="httpmonitor_admin_gtk.py" />
-          <filename location="filemonitor.glade" />
           <filename location="httpmonitor.glade" />
         </directory>
       </directories>
@@ -84,9 +100,11 @@
         <dependency name="transcoder-base-component" />
       </dependencies>
       <directories>
-        <directory name="flumotion/component/transcoder">
-          <filename location="filemonitor.py" />
+        <directory name="flumotion/component/monitor">
           <filename location="httpmonitor.py" />
+          <filename location="base.py" />
+          <filename location="watcher.py" />
+          <filename location="resource.py" />
         </directory>
       </directories>
     </bundle>

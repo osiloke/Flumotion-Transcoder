@@ -1,18 +1,15 @@
 include $(top_srcdir)/common/python.mk
 
 component_PYTHON = __init__.py binmaker.py gstutils.py videosize.py \
-                   filemonitor.py filemonitor_admin_gtk.py watcher.py \
                    cuepointsfilesrc.py \
-                   httpmonitor.py httpmonitor_admin_gtk.py \
                    job.py transcoder.py basetargets.py reporter.py context.py \
-                   thumbsink.py filetranscoder.py filetranscoder_admin_gtk.py \
+                   thumbsink.py \
                    compconsts.py analyst.py disco2.py varsets.py \
-                   transtargets.py thumbtargets.py thumbsamplers.py thumbsrc.py
+                   transtargets.py thumbtargets.py thumbsamplers.py thumbsrc.py \
+                   watcher.py filetranscoder.py
 
 componentdir = $(libdir)/flumotion/python/flumotion/component/transcoder
-component_DATA = base.xml filemonitor.xml filemonitor.glade \
-                 filetranscoder.xml filetranscoder.glade \
-                 httpmonitor.glade
+component_DATA = base.xml filetranscoder.xml filetranscoder.glade
 
 clean-local:
 	rm -rf *.pyc *.pyo

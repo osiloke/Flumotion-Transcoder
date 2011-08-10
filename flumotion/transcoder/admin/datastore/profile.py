@@ -22,6 +22,7 @@ class IProfileStore(base.IBaseStore):
 
     name                 = Attribute("Name of the profile")
     subdir               = Attribute("Profile's sub-directory")
+    active               = Attribute("Whether the monitoring is active (filesystem-based) or passive (http-based)")
     inputDir             = Attribute("Input files directory")
     outputDir            = Attribute("Output files directory")
     failedDir            = Attribute("Failed files directory")
@@ -72,6 +73,7 @@ class ProfileStore(base.NotifyStore):
 
     name                 = base.ReadOnlyProxy("name")
     subdir               = base.ReadOnlyProxy("subdir")
+    active               = base.ReadOnlyProxy("active", 0)
     inputDir             = base.ReadOnlyProxy("inputDir")
     outputDir            = base.ReadOnlyProxy("outputDir")
     failedDir            = base.ReadOnlyProxy("failedDir")

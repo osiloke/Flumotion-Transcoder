@@ -15,27 +15,21 @@
 import os
 import gtk
 
-from flumotion.common import errors
-
-from flumotion.transcoder import enums
 from flumotion.transcoder.i18n import _
-from flumotion.transcoder.enums import MonitorFileStateEnum
-from flumotion.transcoder.virtualpath import VirtualPath
 from flumotion.component.base.admin_gtk import BaseAdminGtk
 from flumotion.component.base.baseadminnode import BaseAdminGtkNode
 
 
-class HttpMonitorAdminGtkNode(BaseAdminGtkNode):
+class FileMonitorAdminGtkNode(BaseAdminGtkNode):
     gladeFile = os.path.join('flumotion', 'component',
-                             'transcoder', 'httpmonitor.glade')
+                             'transcoder', 'filemonitor.glade')
     gettext_domain = "flumotion-transcoder"
 
     def __init__(self, *args, **kwargs):
         BaseAdminGtkNode.__init__(self, *args, **kwargs)
         self.view = None
         self.model = gtk.TreeStore(str, str)
-        self.profiles = {}
-        self.files = {}
+        self.directories = {}
 
     def error_dialog(self, message):
         # FIXME: dialogize
@@ -43,7 +37,7 @@ class HttpMonitorAdminGtkNode(BaseAdminGtkNode):
 
     def haveWidgetTree(self):
         self.widget = self.getWidget('monitoring-widget')
-        self.setView(self.getWidget('tvMonitoredProfiles'))
+        self.setView(self.getWidget('tvMonitoredDirectories'))
 
     def setUIState(self, state):
         BaseAdminGtkNode.setUIState(self, state)
@@ -63,26 +57,41 @@ class HttpMonitorAdminGtkNode(BaseAdminGtkNode):
         self.view.set_model(self.model)
 
     def refreshUIState(self):
-        self.profiles.clear()
+        self.directories.clear()
         self.model.clear()
-        for p in self.uiState.get("monitored-profiles"):
+        for p in self.uiState.get("monitored-profiles").items():
             self._add_profile(p)
         for i, fileinfo in self.uiState.get("pending-files").iteritems():
             self._addFile(i, fileinfo[0])
 
     def _add_profile(self, profile):
-        if self.profiles.has_key(profile):
-            self.warning("Profile '%s' already added", dir)
+        vdir = self.uiState.get('virtbase-map', {}).get(profile, None)
+        display_name = '%s (%s)' % (profile, vdir)
+        if self.directories.has_key(profile):
+            self.warning("Directory '%s' already added", display_name)
             return
-        self.profiles[profile] = [{}, self.model.append(None, (str(profile), ""))]
+        self.directories[profile] = [{}, self.model.append(None, (display_name, ""))]
+
+    def _addDirectory(self, dir):
+        if self.directories.has_key(dir):
+            self.warning("Directory '%s' already added", dir)
+            return
+        self.directories[dir] = [{}, self.model.append(None, (str(dir), ""))]
+
+    def _removeDirectory(self, dir):
+        if not self.directories.has_key(dir):
+            self.warning("Cannot remove unknown directory '%s'", dir)
+            return
+        del self.model[self.directories[dir][1]]
+        del self.directories[dir]
 
     def _addFile(self, file, status):
         base, name = file
-        if not self.profiles.has_key(base):
-            self.warning("Cannot add file '%s' to the unkown profile '%s'"
+        if not self.directories.has_key(base):
+            self.warning("Cannot add file '%s' to the unkown directory '%s'"
                          % (name, base))
             return
-        files, parent = self.profiles[base]
+        files, parent = self.directories[base]
         if files.has_key(name):
             self.model[files[name]][1] = _(status.nick)
         else:
@@ -90,46 +99,43 @@ class HttpMonitorAdminGtkNode(BaseAdminGtkNode):
 
     def _removeFile(self, file):
         base, name = file
-        if not self.files.has_key(name):
-            self.warning("Unknown file '%s'" % (base, name))
+        if not self.directories.has_key(base):
+            self.warning("Cannot remove file '%s' from the unkown directory '%s'"
+                         % (name, base))
+            return
+        files, parent = self.directories[base]
+        if not files.has_key(name):
+            self.warning("Directory '%s' do not contain file '%s'"
+                         % (base, name))
             return
         del self.model[files[name]]
         del files[name]
 
-    def _removeDirectory(self, profile):
-        if not self.profiles.has_key(profile):
-            self.warning("Cannot remove unknown profile '%s'", profile)
-            return
-        del self.model[self.profiles[profile][1]]
-        del self.profiles[profile]
-
     def stateAppend(self, state, key, value):
         if key == "monitored-profiles":
-            self._add_profile(value)
+            self._addDirectory(value)
 
     def stateRemove(self, state, key, value):
         if key == "monitored-profiles":
             self._removeDirectory(value)
 
     def stateSetitem(self, state, key, subkey, fileinfo):
-        # FIXME This function seems unused...
         if key == "pending-files":
             self._addFile(subkey, fileinfo[0])
 
     def stateDelitem(self, state, key, subkey, value):
-        # FIXME This function seems unused...
         if key == "pending-files":
             self._removeFile(subkey)
 
 
-class HttpMonitorAdminGtk(BaseAdminGtk):
+class FileMonitorAdminGtk(BaseAdminGtk):
     gettext_domain = 'flumotion-transcoder'
 
     def setup(self):
-        monitoring = HttpMonitorAdminGtkNode(self.state, self.admin,
+        monitoring = FileMonitorAdminGtkNode(self.state, self.admin,
                                              title=_('Monitoring'))
         self.nodes['Monitoring'] = monitoring
         return BaseAdminGtk.setup(self)
 
 
-GUIClass = HttpMonitorAdminGtk
+GUIClass = FileMonitorAdminGtk

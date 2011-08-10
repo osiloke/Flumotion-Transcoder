@@ -106,6 +106,7 @@ class ProfileData(properties.PropertyBag):
 
     name = properties.String('name', None)
     subdir = properties.String('subdir', None)
+    active = properties.Integer('active', 1)
     inputDir = properties.String('input-dir', None)
     outputDir = properties.String('output-dir', None)
     failedDir = properties.String('failed-dir', None)
@@ -416,6 +417,7 @@ class CustomerData(properties.RootPropertyBag):
     monitoringPeriod = properties.Integer('monitoring-period', None, False, True)
     monitorType = properties.String('monitor-type', None)
     monitorPort = properties.Integer('monitor-port', 7680, False, True)
+    setup_callback = properties.String("setup-callback", "")
     accessForceGroup = properties.String('access-force-group', None)
     accessForceUser = properties.String('access-force-user', None)
     accessForceDirMode = properties.Octal('access-force-dir-mode', None)

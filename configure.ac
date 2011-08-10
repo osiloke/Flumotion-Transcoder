@@ -99,7 +99,9 @@ flumotion/transcoder/admin/api/Makefile
 flumotion/transcoder/admin/api/mediums/Makefile
 flumotion/component/Makefile
 flumotion/component/transcoder/Makefile
+flumotion/component/monitor/Makefile
 flumotion/component/joiner/Makefile
+flumotion/ovp/Makefile
 flumotion/project/Makefile
 flumotion/project/transcoder.py
 pkgconfig/Makefile

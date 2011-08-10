@@ -11,3 +11,6 @@
 # See "LICENSE.Flumotion" in the source distribution for more information.
 
 # Headers in this file shall remain intact.
+
+from pkgutil import extend_path
+__path__ = extend_path(__path__, __name__)

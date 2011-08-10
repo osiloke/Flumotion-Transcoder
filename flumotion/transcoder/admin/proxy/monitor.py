@@ -35,7 +35,7 @@ class MonitorProxy(component.ComponentProxy):
         managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
         return atmoPxy._loadComponent(adminconsts.FILE_MONITOR,
-                                      name,  label, workerPxy,
+                                      name, label, workerPxy,
                                       properties, timeout)
 
     def __init__(self, logger, parentPxy, identifier,
@@ -60,12 +60,12 @@ class MonitorProxy(component.ComponentProxy):
         d.addCallback(self.__cbRetrieveFiles)
         return d
 
-    def setFileStateBuffered(self, virtBase, relFile, state):
+    def setFileStateBuffered(self, virtBase, relFile, state, profile_name):
         self.log("Schedule to set file %s%s state to %s", virtBase, relFile, state.nick)
-        self._stateUpdateDelta[(virtBase, relFile)] = state
+        self._stateUpdateDelta[(profile_name, relFile)] = state
         self.__updateFilesState()
 
-    def setFileState(self, virtBase, relFile, state):
+    def setFileState(self, virtBase, relFile, state, profile_name):
         self.log("Set file %s%s state to %s", virtBase, relFile, state.nick)
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
                                   self._callRemote, "setFileState",
@@ -84,9 +84,9 @@ class MonitorProxy(component.ComponentProxy):
         pending = uiState.get("pending-files", None)
         if pending:
             for file, value in pending.iteritems():
-                virtBase, relFile = file
+                profile_name, relFile = file
                 state, fileinfo, detection_time, mime_type, checksum, params = value
-                self.emit("file-added", virtBase, relFile, state, fileinfo,
+                self.emit("file-added", profile_name, relFile, state, fileinfo,
                           detection_time, mime_type, checksum, params)
 
     def _onUIStateSet(self, uiState, key, value):
@@ -119,16 +119,16 @@ class MonitorProxy(component.ComponentProxy):
 
     ## UI State Handlers Methods ##
 
-    def _onMonitorSetFile(self, virtBase, relFile, filedata):
+    def _onMonitorSetFile(self, profile_name, relFile, filedata):
         state, fileinfo, detection_time, mime_type, checksum, params = filedata
-        ident = (virtBase, relFile)
+        ident = (profile_name, relFile)
 
         if ident in self._alreadyAdded:
-            self.emit("file-changed", virtBase, relFile, state, fileinfo,
+            self.emit("file-changed", profile_name, relFile, state, fileinfo,
                       mime_type, checksum, params)
         else:
             self._alreadyAdded[ident] = None
-            self.emit("file-added", virtBase, relFile, state, fileinfo,
+            self.emit("file-added", profile_name, relFile, state, fileinfo,
                       detection_time, mime_type, checksum, params)
 
     def _onMonitorDelFile(self, virtBase, relFile, filedata):
@@ -157,7 +157,7 @@ class MonitorProxy(component.ComponentProxy):
             self.log("Buffered files state update still pending, wait more")
             self.__updateFilesState()
             return
-        delta = [(v, r, s) for (v, r), s in self._stateUpdateDelta.iteritems()]
+        delta = [(p, r, s) for (p, r), s in self._stateUpdateDelta.iteritems()]
         self._stateUpdateDelta.clear()
         self.log("Buffered state update of %d files", len(delta))
         d = utils.callWithTimeout(adminconsts.REMOTE_CALL_TIMEOUT,
@@ -198,7 +198,7 @@ class HttpMonitorProxy(MonitorProxy):
         managerPxy = workerPxy.getManagerProxy()
         atmoPxy = managerPxy.getAtmosphereProxy()
         return atmoPxy._loadComponent(adminconsts.HTTP_MONITOR,
-                                      name,  label, workerPxy,
+                                      name, label, workerPxy,
                                       properties, timeout)
 
 

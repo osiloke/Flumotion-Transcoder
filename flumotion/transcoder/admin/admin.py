@@ -16,7 +16,6 @@ from datetime import datetime
 from zope.interface import implements
 from twisted.internet import reactor
 
-from flumotion.common import tz
 from flumotion.common import eventcalendar
 from flumotion.common import i18n
 from flumotion.common.enum import EnumClass
@@ -331,7 +330,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.queueingTime = now
 
         self.__setInputFileState(profCtx, MonitorFileStateEnum.queued)
@@ -341,7 +340,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingStartTime = now
 
         self.__setInputFileState(profCtx,
@@ -353,7 +352,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = False
             transcodeReportStore.successful = False
@@ -389,7 +388,7 @@ class TranscoderAdmin(log.Loggable):
         key = profCtx.inputBase, profCtx.inputRelPath
         transcodeReportStore = self._transcodeReports.get(key, None)
         if transcodeReportStore:
-            now = datetime.now(tz.UTC).replace(tzinfo=None)
+            now = datetime.utcnow()
             transcodeReportStore.transcodingFinishTime = now
             transcodeReportStore.outcome = True
             transcodeReportStore.successful = True
@@ -461,7 +460,7 @@ class TranscoderAdmin(log.Loggable):
         def changeState(newState):
             inputBase = profCtx.inputBase
             relPath = profCtx.inputRelPath
-            montask.setFileState(inputBase, relPath, newState)
+            montask.setFileState(inputBase, relPath, newState, profCtx.name)
 
         # Schedule new file if not already scheduled
         # and synchronize the file states
@@ -519,7 +518,7 @@ class TranscoderAdmin(log.Loggable):
                          custCtx.label, inputBase, state.name)
             return
         relPath = profCtx.inputRelPath
-        task.setFileState(inputBase, relPath, state)
+        task.setFileState(inputBase, relPath, state, profCtx.name)
 
     def __startup(self):
         if not (self._state == TaskStateEnum.stopped):
