@@ -1,3 +1,8 @@
+2011-08-17  Xavier Queralt  <xqueralt@flumotion.com>
+
+	* flumotion/component/transcoder/Makefile.am:
+	Add missing file to distribution
+
 2011-07-26  Xavier Queralt  <xqueralt@flumotion.com>
 
 	* flumotion/component/transcoder/filemonitor.py:
