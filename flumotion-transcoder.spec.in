@@ -6,7 +6,7 @@ Release:        @PACKAGE_VERSION_RELEASE@%{?dist}
 Summary:        Flumotion Transcoder
 
 Group:          Applications/Internet
-License:        Proprietary
+License:        LGPL
 URL:            http://www.fluendo.com/
 Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
@@ -89,7 +89,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc ChangeLog COPYING README TODO AUTHORS LICENSE.Flumotion
+%doc ChangeLog COPYING README TODO AUTHORS LICENSE.LGPL
 %doc doc/examples
 %doc doc/rst
 %{_libdir}/flumotion

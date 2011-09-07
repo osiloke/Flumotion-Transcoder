@@ -26,5 +26,5 @@ PYCHECKER_WHITELIST = \
 PYCHECKER_BLACKLIST = 
 
 EXTRA_DIST = env.in \
-	LICENSE.Flumotion \
+	LICENSE.LGPL \
 	flumotion-transcoder.spec.in
