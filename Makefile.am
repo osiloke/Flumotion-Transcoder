@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = 1.8 dist-bzip2 no-dist-gzip
 
 ACLOCAL_AMFLAGS = -I common
 
+include $(srcdir)/common/changelog.mk
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
 include $(srcdir)/common/rpm.mk
@@ -28,3 +29,5 @@ PYCHECKER_BLACKLIST =
 EXTRA_DIST = env.in \
 	LICENSE.LGPL \
 	flumotion-transcoder.spec.in
+
+dist: changelog

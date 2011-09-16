@@ -15,6 +15,9 @@ AUTHORS=$srcdir/AUTHORS
 AC_SUBST(FLUMOTION_REQ, 0.5.3)
 AC_SUBST(INHOUSE_REQ, 0.5.3)
 
+dnl Start commit used to autogenrate ChangeLog from 'git log'
+AC_SUBST(GIT_LOG_START_COMMIT, "75f3054ffc9195f7aeed251d09486c2482632656")
+
 dnl Add parameters for aclocal
 AC_SUBST(ACLOCAL_AMFLAGS, "-I common")
 
