@@ -1,7 +1,7 @@
 %{!?gstreamer:  %define         gstreamer       gstreamer}
 
 Name:           @PACKAGE@
-Version:        @VERSION@
+Version:        @PACKAGE_VERSION_SPEC@
 Release:        @PACKAGE_VERSION_RELEASE@%{?dist}
 Summary:        Flumotion Transcoder
 
@@ -18,7 +18,7 @@ Requires:       MySQL-python
 
 # sigh, libtool
 BuildRequires:  gcc-c++
-BuildRequires:	flumotion >= @FLUMOTION_REQ@
+BuildRequires:	flumotion >= @FLU_REQ@
 BuildRequires:  flumotion-inhouse >= @INHOUSE_REQ@
 BuildRequires:  MySQL-python
 

@@ -1,0 +1,20 @@
+Source: flumotion-transcoder
+Section: net
+Priority: optional
+Maintainer: Xavier Queralt <xqueralt@flumotion.com>
+Build-Depends: cdbs (>= 0.4.43),
+               pkg-config,
+	       debhelper (>= 5.0.37.2),
+	       flumotion (>= 0.10.0),
+	       flumotion-inhouse (>= 0.10.0),
+	       python-epydoc
+XS-Python-Version: >= 2.5
+Standards-Version: 3.8.1
+
+Package: flumotion-transcoder
+Architecture: any
+Depends: ${python:Depends},
+         ${misc:Depends},
+         flumotion (>= 0.10.0),
+         flumotion-inhouse (>= 0.10.0),
+Description: Flumotion Transcoding Platform

@@ -1,0 +1,52 @@
+Release notes for Flumotion Transcoder 0.10.0 "Fugu Sashimi"
+
+The Flumotion team announces
+a new release of the stable 0.10 branch
+of the Flumotion Transcoding Platform.
+
+Download
+
+You can find source releases of flumotion in the download directory:
+http://flumotion.net/src/flumotion-transcoder/
+
+You can also find deb packages for lucid in our ppa:
+https://launchpad.net/~flumotion-dev
+
+Flumotion Homepage
+
+More details can be found on the project's website: http://flumotion.net/
+
+Support and Bugs
+
+We use an issue tracker for bug reports and feature requests (requires login):
+https://code.fluendo.com/flumotion/trac/newticket?component=flumotion-transcoder
+
+Developers
+
+You can browse the repository of git code from our tracker.
+
+All code is in git and can be checked out from there.
+https://code.flumotion.com/cgit/flumotion-transcoder/
+
+
+Contributors to this release
+
+      * Andoni Morales Alastruey
+      * Andy Wingo
+      * Edward Hervey
+      * Ioannis Aslanidis
+      * Jan Urbański
+      * Johan Dahlin
+      * Joseph Crosland
+      * Josep Joan Ribas
+      * Julien Le Goff
+      * Marc-André Lureau
+      * Michael Smith
+      * Pau Almirall
+      * Pedro Gracia
+      * Ricard Puig
+      * Saverio Trioni
+      * Sebastien Merle
+      * Theodoros Paschidis
+      * Thomas Vander Stichele
+      * Xavier Queralt

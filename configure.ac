@@ -1,19 +1,19 @@
-AC_INIT(flumotion-transcoder,
-		0.5.3.3,
-		https://code.area51.fluendo.com/private/trac/newticket?component=flumotion-transcoder,
-		flumotion-transcoder)
+AC_INIT(flumotion-transcoder, m4_esyscmd([ test -z "$VERSION" && VERSION=0.10.0;
+                              common/version-gen $VERSION .tarball-version]),
+   [flumotion-devel@lists.fluendo.com],
+   [flumotion-transcoder], [http://www.flumotion.net/])
 
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AS_VERSION
-
+AC_SUBST(PACKAGE_VERSION_SPEC, `echo $VERSION | tr '-' '_'`)
 AS_NANO
 
 AC_SUBST_FILE(AUTHORS)
 AUTHORS=$srcdir/AUTHORS
 
-AC_SUBST(FLUMOTION_REQ, 0.5.3)
-AC_SUBST(INHOUSE_REQ, 0.5.3)
+AC_SUBST(FLU_REQ, 0.10.0)
+AC_SUBST(INHOUSE_REQ, 0.10.0)
 
 dnl Start commit used to autogenrate ChangeLog from 'git log'
 AC_SUBST(GIT_LOG_START_COMMIT, "75f3054ffc9195f7aeed251d09486c2482632656")
@@ -48,7 +48,7 @@ AC_CHECK_PROG(PYCHECKER, pychecker, yes, no)
 AM_CONDITIONAL(HAVE_PYCHECKER, test "x$PYCHECKER" = "xyes")
 
 dnl check for flumotion
-PKG_CHECK_MODULES(FLUMOTION, flumotion >= $FLUMOTION_REQ)
+PKG_CHECK_MODULES(FLUMOTION, flumotion >= $FLU_REQ)
 FLUMOTION_DIR="`$PKG_CONFIG --variable=flumotiondir flumotion`"
 AC_MSG_NOTICE([Flumotion code base directory is $FLUMOTION_DIR])
 AC_SUBST(FLUMOTION_DIR)
@@ -113,3 +113,11 @@ pkgconfig/flumotion-transcoder-uninstalled.pc
 tests/Makefile
 flumotion-transcoder.spec
 )
+
+echo
+echo "    $PACKAGE_STRING ($PACKAGE_VERSION_RELEASE)"
+echo
+echo "    pychecker:              $PYCHECKER"
+echo "    epydoc:                 $EPYDOC"
+echo
+echo "Now type \"make\" to build flumotion"

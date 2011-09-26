@@ -6,6 +6,7 @@ ACLOCAL_AMFLAGS = -I common
 include $(srcdir)/common/changelog.mk
 include $(srcdir)/common/common.mk
 include $(srcdir)/common/pychecker.mk
+include $(srcdir)/common/deb.mk
 include $(srcdir)/common/rpm.mk
 
 SUBDIRS = . common conf misc bin doc data pkgconfig transcoder flumotion tests
@@ -27,7 +28,13 @@ PYCHECKER_WHITELIST = \
 PYCHECKER_BLACKLIST = 
 
 EXTRA_DIST = env.in \
+	.version \
+	RELEASE \
 	LICENSE.LGPL \
 	flumotion-transcoder.spec.in
+
+BUILT_SOURCES = $(top_srcdir)/.version
+$(top_srcdir)/.version:
+	echo $(VERSION) > $@-t && mv $@-t $@
 
 dist: changelog
