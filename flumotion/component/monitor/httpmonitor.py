@@ -97,10 +97,10 @@ class HttpMonitor(MonitorBase):
             profile_name=profile_name, params={})
         
 
-    def _file_removed(self, watcher, file, virtBase):
+    def _file_removed(self, watcher, file, virtBase, profile_name):
         localFile = virtBase.append(file).localize(self._local)
         self.debug("File removed '%s'", localFile)
-        self._del_ui_item('pending-files', (virtBase, file))
+        self._del_ui_item('pending-files', (profile_name, file))
 
 
 
