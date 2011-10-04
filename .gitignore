@@ -1,0 +1,100 @@
+# Ignore tarballs
+*.tar.bz2
+*.tar.gz
+
+# Ignore compiled files
+*pyc
+
+# Ignore all the Makefiles
+*Makefile
+*Makefile.in
+
+# Ignore autocrap
+.version
+ABOUT-NLS
+CangeLog.tmp
+ChangeLog.tmp
+INSTALL
+aclocal.m4
+autoregen.sh
+compile
+config.guess
+config.log
+config.rpath
+config.status
+config.sub
+configure
+depcomp
+env
+flu-saved-coverage.pickle
+flumotion-transcoder.spec
+install-sh
+intltool-extract
+intltool-merge
+intltool-update
+libtool
+ltmain.sh
+missing
+mkinstalldirs
+py-compile
+
+# Ignore binaries
+bin/flumotion
+bin/flumotion-admin
+bin/flumotion-admin-text
+bin/flumotion-command
+bin/flumotion-inspect
+bin/flumotion-job
+bin/flumotion-launch
+bin/flumotion-manager
+bin/flumotion-nagios
+bin/flumotion-rrdmon
+bin/flumotion-tester
+bin/flumotion-worker
+bin/runtest
+
+# Ignore folders
+_trial_coverage/
+autom4te.cache/
+cache/
+flumotion/extern/_trial_temp/
+flumotion/extern/command/.svn/*
+m4/
+locale/
+doc/reference/html/
+
+# Ignore external command
+flumotion/extern/command.revision
+flumotion/extern/command/ChangeLog
+flumotion/extern/command/README
+flumotion/extern/command/__init__.py
+flumotion/extern/command/command.py
+flumotion/extern/command/help2man.py
+flumotion/extern/command/manholecmd.py
+flumotion/extern/command/test_command.py
+
+# Misc ignores
+data/flumotion-admin.desktop
+flumotion/component/plugs/cortado/cortado_location.py
+flumotion/configure/installed.py
+flumotion/configure/uninstalled.py
+flumotion/extern/fdpass/.deps/
+flumotion/extern/fdpass/fdpass.so
+flumotion/extern/fdpass/fdpass_so-fdpass.o
+flumotion/project/flumotion.locale.xml
+misc/flumotion-verify-config
+pkgconfig/flumotion-uninstalled.pc
+pkgconfig/flumotion.pc
+
+# Ignore po generated files
+po/Makefile.in.in
+po/POTFILES
+po/Rules-quot
+po/boldquot.sed
+po/en@boldquot.header
+po/en@quot.header
+po/insert-header.sin
+po/quot.sed
+po/remove-potcdate.sin
+po/stamp-it
+po/*gmo
