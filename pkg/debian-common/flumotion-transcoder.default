@@ -1,0 +1,5 @@
+# Transcoder configuration file
+TRANSCODER_CONFIG=/etc/flumotion/transcoder/transcoder-admin.ini
+
+# Additional options
+OPTIONS="-D"
