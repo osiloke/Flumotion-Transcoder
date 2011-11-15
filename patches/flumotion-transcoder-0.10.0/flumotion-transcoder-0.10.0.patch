@@ -1,0 +1,51 @@
+diff --git a/flumotion/transcoder/admin/notifier.py b/flumotion/transcoder/admin/notifier.py
+index d245b25..a729e66 100644
+--- a/flumotion/transcoder/admin/notifier.py
++++ b/flumotion/transcoder/admin/notifier.py
+@@ -14,6 +14,9 @@
+ #
+ # Headers in this file shall remain intact.
+ 
++#modified Sun 13, November 2011 Added smtp username and password
++#modified by osiloke emoekpere
++
+ import email
+ from email.MIMEMultipart import MIMEMultipart
+ from email.MIMEBase import MIMEBase
+@@ -41,6 +44,8 @@ from flumotion.transcoder.admin.context import activity
+ # the configuration is loaded and setup
+ 
+ _smtpServer = "mail.fluendo.com"
++_smtpPassword = ""
++_smtpUser = ""
+ _smtpPort = 25
+ _smtpRequireTLS = False
+ _emergencySender = "Transcoder Emergency <transcoder-emergency@fluendo.com>"
+@@ -98,7 +103,7 @@ def _buildBody(sender, recipients, subject, msg, info=None, debug=None,
+ def _postNotification(smtpServer, smtpPort, requireTLS, sender, recipients, body):
+     senderAddr = utils.splitMailAddress(sender)[1]
+     recipientsAddr = [f[1] for f in utils.splitMailRecipients(recipients)]
+-    return Notifier._postMail(smtpServer, smtpPort, None, None, senderAddr,
++    return Notifier._postMail(smtpServer, smtpPort, _smtpUser, _smtpPassword, senderAddr,
+                               recipientsAddr, StringIO(body),
+                               requireTLS=requireTLS,
+                               timeout=adminconsts.GLOBAL_MAIL_NOTIFY_TIMEOUT,
+@@ -181,10 +186,12 @@ class Notifier(log.Loggable, events.EventSourceMixin):
+         self._retries = {} # {NotificationActivityContext: IDelayedCall}
+         self._results = {} # {NotificationActivity: Deferred}
+         # Setup global notification info
+-        global _smtpServer, _smtpRequireTLS
++        global _smtpServer, _smtpRequireTLS, _smtpUser, _smtpPassword
+         global _emergencySender, _debugSender
+         global _emergencyRecipients, _debugRecipients
+         _smtpServer = notifierContext.config.smtpServer
++        _smtpUser = notifierContext.config.smtpUsername
++        _smtpPassword = notifierContext.config.smtpPassword
+         _smtpRequireTLS = notifierContext.config.smtpRequireTLS
+         _emergencySender = notifierContext.config.mailEmergencySender
+         _debugSender = notifierContext.config.mailDebugSender
+@@ -503,3 +510,4 @@ class Notifier(log.Loggable, events.EventSourceMixin):
+         perform = self._performLookup.get(activCtx.subtype, self.__cannotPerform)
+         perform(self, activCtx)
+ 
++
